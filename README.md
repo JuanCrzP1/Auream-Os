@@ -10,6 +10,37 @@ El objetivo no es únicamente un constructor de bots, sino una plataforma operac
 
 ---
 
+## Arrancar en Windows
+
+Requisitos: Node.js y npm en el PATH.
+
+Doble clic en [`scripts\dev\start.bat`](scripts/dev/start.bat).
+
+También se puede lanzar desde consola (CMD o PowerShell), parado en la raíz del repo:
+
+```
+scripts\dev\start.bat
+```
+
+El script instala dependencias si faltan, compila backend y frontend, y levanta la API (`http://localhost:3100`) y el builder visual (`http://localhost:5173`) en segundo plano, abriendo el navegador automáticamente.
+
+---
+
+## Arrancar en macOS
+
+Requisitos: Node.js y npm en el PATH.
+
+```bash
+chmod +x scripts/dev/start.sh   # solo la primera vez, si el script no tiene permiso de ejecución
+./scripts/dev/start.sh
+```
+
+El script instala dependencias si faltan, compila backend y frontend, y levanta la API (`http://localhost:3100`) y el builder visual (`http://localhost:5173`) en segundo plano, abriendo el navegador automáticamente.
+
+> Si al clonar o copiar el repo aparece `permission denied` al ejecutar `start.sh`, o `npm run check` falla con `Permission denied` en `node_modules/.bin/tsc`, es porque el sistema de archivos de origen no preservó los bits de ejecución. Solución: `chmod +x scripts/dev/start.sh` y, si persiste en `node_modules`, reinstala con `rm -rf node_modules apps/web/node_modules && npm install && npm --prefix apps/web install`.
+
+---
+
 ## Arquitectura general
 
 Monorepo con capas planas y fronteras explícitas:
