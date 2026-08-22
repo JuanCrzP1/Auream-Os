@@ -55,6 +55,17 @@ npm run build
 echo "[5/5] Compilando builder visual..."
 npm run build:web
 
+echo "Preparando credencial de autenticación de desarrollo..."
+node "$ROOT/scripts/dev/ensure-dev-key.mjs"
+
+# Leer DEV_API_KEY generada/reutilizada por ensure-dev-key.mjs y exportarla a
+# esta sesión, para que los procesos arrancados a continuación la hereden.
+# apps/web/.env.local ya provee VITE_DEV_API_KEY al frontend (Vite la carga
+# sola); también se exporta aquí como redundancia, sin coste.
+DEV_API_KEY="$(grep -m1 '^DEV_API_KEY=' "$ROOT/.env" | cut -d= -f2- || true)"
+export DEV_API_KEY
+export VITE_DEV_API_KEY="$DEV_API_KEY"
+
 if [[ -n "$SELF_TEST" ]]; then
   echo
   echo "Self-test completado correctamente."

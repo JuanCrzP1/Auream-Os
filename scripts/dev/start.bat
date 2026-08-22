@@ -55,6 +55,19 @@ echo [5/5] Compilando builder visual...
 call npm run build:web
 if errorlevel 1 goto :failed
 
+echo Preparando credencial de autenticacion de desarrollo...
+call node "%~dp0ensure-dev-key.mjs"
+if errorlevel 1 goto :failed
+
+rem Leer DEV_API_KEY generada/reutilizada por ensure-dev-key.mjs y exportarla
+rem a esta sesion, para que las ventanas que arrancan a continuacion la hereden.
+rem apps/web/.env.local ya provee VITE_DEV_API_KEY al frontend (Vite la carga
+rem solo); tambien se exporta aqui como redundancia, sin coste.
+for /f "usebackq tokens=1,* delims==" %%A in ("%ROOT%.env") do (
+  if "%%A"=="DEV_API_KEY" set "DEV_API_KEY=%%B"
+)
+set "VITE_DEV_API_KEY=%DEV_API_KEY%"
+
 if defined SELF_TEST goto :success
 
 echo.
