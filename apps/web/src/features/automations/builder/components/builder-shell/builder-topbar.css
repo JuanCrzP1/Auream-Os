@@ -1,0 +1,110 @@
+.builder-topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50px;
+  padding: 0 20px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+  z-index: 5;
+}
+
+.builder-topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.builder-topbar__center {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.builder-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.builder-topbar__palette-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex: 0 0 auto;
+}
+
+.builder-topbar__palette-toggle svg {
+  width: 17px;
+  height: 17px;
+}
+
+.builder-topbar__palette-toggle:hover {
+  background: rgba(108, 92, 231, 0.1);
+  color: var(--primary);
+  border-color: rgba(108, 92, 231, 0.25);
+}
+
+.builder-topbar__name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.builder-topbar__save {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.builder-topbar__version {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.builder-topbar__btn {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 14px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.88rem;
+  transition: background 0.15s;
+}
+
+.builder-topbar__btn:hover {
+  background: var(--bg-strong);
+}
+
+.builder-topbar__publish {
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 18px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.88rem;
+  transition: background 0.15s;
+}
+
+.builder-topbar__publish:hover {
+  background: var(--primary-hover);
+}
+
+@media (max-width: 768px) {
+  .builder-topbar__save {
+    display: none;
+  }
+}

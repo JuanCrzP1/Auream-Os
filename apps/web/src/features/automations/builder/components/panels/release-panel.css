@@ -1,0 +1,34 @@
+/* Panel de publicación y versiones. */
+
+.release-panel__chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.release-chip {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 90px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.release-chip small {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.release-panel__timestamp {
+  margin: 12px 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.release-panel__actions {
+  display: flex;
+  gap: 8px;
+}

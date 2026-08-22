@@ -1,0 +1,51 @@
+.hub-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.hub-folder-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+  outline: none;
+}
+
+.hub-folder-card:hover {
+  border-color: rgba(108, 92, 231, 0.3);
+  background: var(--bg-strong);
+}
+
+.hub-folder-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.hub-folder-card__icon {
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+}
+
+.hub-folder-card__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.hub-folder-card__name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty state */

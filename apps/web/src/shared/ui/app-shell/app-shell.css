@@ -1,0 +1,19 @@
+/* =====================================================================
+ * App Shell — layout exclusivo del hub (automatizaciones, contactos, etc.)
+ *
+ * PROPIETARIO: components/layouts/app-shell/
+ * NO compartir con el builder. El builder usa builder-shell.css.
+ * ===================================================================== */
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.app-shell__main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}

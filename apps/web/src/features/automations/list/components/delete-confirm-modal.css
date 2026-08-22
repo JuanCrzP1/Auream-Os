@@ -1,0 +1,65 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: var(--surface, #fff);
+  border-radius: 12px;
+  padding: 32px;
+  width: min(420px, 90vw);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-box__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a2e);
+  margin: 0;
+}
+
+.modal-box__body {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.modal-box__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.modal-box__btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.modal-box__btn:hover {
+  opacity: 0.85;
+}
+
+.modal-box__btn--ghost {
+  background: var(--surface-alt, #f5f5f5);
+  color: var(--text-primary, #1a1a2e);
+}
+
+.modal-box__btn--danger {
+  background: #e74c3c;
+  color: #fff;
+}

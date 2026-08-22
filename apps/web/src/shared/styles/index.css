@@ -1,0 +1,7 @@
+/* Estilos verdaderamente globales.
+ *
+ * Cada feature es dueña de su propio CSS y lo importa desde su componente.
+ * NO añadir aquí estilos de una feature concreta.
+ */
+
+@import "./base.css";

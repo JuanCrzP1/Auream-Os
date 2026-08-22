@@ -1,0 +1,14 @@
+/* ===== CANVAS SHELL ===== */
+
+.builder-canvas-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.builder-canvas-shell__surface {
+  position: absolute;
+  inset: 0;
+}
+

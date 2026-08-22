@@ -1,0 +1,24 @@
+{
+  "name": "bots-ai-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma SaaS conversacional multi-tenant",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:web": "npm --prefix apps/web run build",
+    "dev": "scripts/dev/start.sh",
+    "dev:web": "npm --prefix apps/web run dev",
+    "start:api": "node dist/apps/api/main.js",
+    "start:worker": "node dist/apps/worker/main.js",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "check:web": "npm --prefix apps/web run check",
+    "test": "vitest run",
+    "test:web": "npm --prefix apps/web run test",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

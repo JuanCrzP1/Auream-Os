@@ -1,0 +1,22 @@
+.rename-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rename-modal__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border, #e0e0e0);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-primary, #1a1a2e);
+  background: var(--surface-alt, #f9f9f9);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.rename-modal__input:focus {
+  border-color: var(--primary, #6c5ce7);
+}

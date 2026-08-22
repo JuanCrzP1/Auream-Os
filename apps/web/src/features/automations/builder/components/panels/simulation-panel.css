@@ -1,0 +1,52 @@
+/* Simulador conversacional del builder. */
+
+.simulation-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 132px;
+  overflow: auto;
+  margin-bottom: 12px;
+}
+
+.simulation-bubble {
+  border-radius: 18px;
+  padding: 12px 14px;
+}
+
+.simulation-bubble span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.simulation-bubble p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.simulation-bubble--user {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.simulation-bubble--bot {
+  background: rgba(45, 212, 191, 0.1);
+}
+
+.simulation-form {
+  display: flex;
+  gap: 8px;
+}
+
+.simulation-form input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 10px 12px;
+}

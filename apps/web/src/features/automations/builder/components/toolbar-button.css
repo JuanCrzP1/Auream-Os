@@ -1,0 +1,15 @@
+/* Botón de acción compartido por los paneles y el editor del builder. */
+
+.toolbar-button {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 15px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+}
+
+.toolbar-button--primary {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.92), rgba(168, 85, 247, 0.84));
+  border-color: rgba(196, 181, 253, 0.38);
+}

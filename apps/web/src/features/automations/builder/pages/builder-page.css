@@ -1,0 +1,10 @@
+/* Estados de pantalla completa del builder (carga y error). */
+
+.app-state {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  font-family: var(--font-display);
+  background: var(--bg);
+}

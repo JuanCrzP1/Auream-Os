@@ -1,0 +1,58 @@
+/* ===== REACTFLOW OVERRIDES ===== */
+
+.react-flow__controls,
+.react-flow__minimap {
+  box-shadow: none;
+}
+
+.react-flow__controls {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(108, 92, 231, 0.16);
+  border-radius: 16px;
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+.react-flow__handle-connecting {
+  background: #22c55e;
+}
+
+.react-flow__handle-valid {
+  background: #22c55e;
+}
+
+.react-flow__controls button {
+  background: transparent;
+  color: var(--primary);
+  border-bottom: 1px solid rgba(108, 92, 231, 0.12);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.react-flow__controls button:hover {
+  background: rgba(108, 92, 231, 0.12);
+  color: #4f46e5;
+}
+
+.react-flow__controls button:last-child {
+  border-bottom: 0;
+}
+
+.react-flow__controls button svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.react-flow__minimap {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(108, 92, 231, 0.16);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.react-flow__edge-textbg {
+  fill: rgba(9, 16, 30, 0.94);
+}

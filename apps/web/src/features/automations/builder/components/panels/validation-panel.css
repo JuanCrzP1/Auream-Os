@@ -1,0 +1,27 @@
+/* Informe de validación del grafo. */
+
+.validation-block h3 {
+  margin: 0;
+}
+
+.validation-block li {
+  color: var(--muted);
+}
+
+.validation-block + .validation-block {
+  margin-top: 18px;
+}
+
+.validation-block ul {
+  padding-left: 18px;
+  margin: 10px 0 0;
+}
+
+.validation-block li + li {
+  margin-top: 8px;
+}
+
+.status-good {
+  margin: 10px 0 0;
+  color: var(--teal);
+}

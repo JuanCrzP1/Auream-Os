@@ -1,0 +1,21 @@
+{
+  "extends": "./config/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": [
+    "apps/api/**/*.ts",
+    "apps/worker/**/*.ts",
+    "domains/**/*.ts",
+    "flow-engine/**/*.ts",
+    "platform/**/*.ts",
+    "infrastructure/**/*.ts",
+    "contracts/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "apps/web"
+  ]
+}

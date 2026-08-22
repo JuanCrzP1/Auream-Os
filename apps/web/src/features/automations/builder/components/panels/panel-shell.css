@@ -1,0 +1,38 @@
+/* Carcasa común de los paneles flotantes del builder. */
+
+.sidebar-panel {
+  padding: 16px;
+}
+
+.sidebar-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sidebar-panel__header p,
+.sidebar-panel__header span {
+  margin: 0;
+}
+
+.sidebar-panel__header p {
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.sidebar-panel__close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.sidebar-panel__header span,
+.empty-copy {
+  color: var(--muted);
+}

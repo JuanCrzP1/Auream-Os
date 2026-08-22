@@ -1,0 +1,67 @@
+/* Formularios de inspección de nodo y edge. */
+
+.inspector-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.inspector-form label span {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.inspector-form input,
+.inspector-form textarea,
+.inspector-form select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 12px 14px;
+}
+
+.inspector-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.inspector-meta {
+  margin: 4px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.inspector-meta div {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.inspector-meta dd,
+.inspector-meta dt {
+  margin: 0;
+}
+
+.inspector-meta dt {
+  color: var(--muted);
+}
+
+.inspector-meta dd {
+  margin-top: 4px;
+  color: var(--text);
+}
+
+.inspector-tip {
+  margin: 0;
+  color: var(--amber);
+  font-size: 0.9rem;
+}
+
+.inspector-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

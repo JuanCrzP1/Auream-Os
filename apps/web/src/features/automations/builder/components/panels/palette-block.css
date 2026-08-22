@@ -1,0 +1,153 @@
+/* ===== PALETTE BLOCK LIST ===== */
+
+.palette-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(108, 92, 231, 0.25) transparent;
+}
+
+.palette-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.palette-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.palette-list::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.25);
+  border-radius: 999px;
+}
+
+.palette-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 92, 231, 0.45);
+}
+
+.palette-block {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  padding: 9px 10px;
+  text-align: left;
+  cursor: grab;
+  transition: background 0.13s, border-color 0.13s, box-shadow 0.13s;
+  position: relative;
+}
+
+.palette-block:hover {
+  background: rgba(108, 92, 231, 0.06);
+  border-color: var(--line);
+  box-shadow: 0 1px 6px rgba(108, 92, 231, 0.08);
+}
+
+.palette-block:active {
+  cursor: grabbing;
+}
+
+.palette-block__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.palette-block__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.palette-block__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.palette-block__label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.palette-block__sub {
+  font-size: 0.74rem;
+  color: var(--muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.palette-block__drag {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.13s;
+}
+
+.palette-block__drag svg {
+  width: 14px;
+  height: 14px;
+}
+
+.palette-block:hover .palette-block__drag {
+  opacity: 1;
+}
+
+/* ===== PALETTE FOOTER ===== */
+
+.palette-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.palette-footer__btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-elevated);
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  flex: 0 0 auto;
+}
+
+.palette-footer__btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.palette-footer__btn:hover {
+  background: rgba(108, 92, 231, 0.08);
+  color: var(--primary);
+  border-color: rgba(108, 92, 231, 0.25);
+}
+
+.palette-footer__tip {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
