@@ -8,20 +8,22 @@ Este documento describe lo que existe hoy. Lo pendiente aparece marcado como tal
 
 | Pieza | Ubicación | Estado |
 |---|---|---|
-| Verificación de identidad | `platform/identity` | `IMPLEMENTADO` |
+| Verificación de identidad (JWT/JWKS, Neon Auth) | `platform/identity` | `IMPLEMENTADO` |
 | Roles, scopes, policies, guards | `platform/authorization` | `IMPLEMENTADO` |
-| Aislamiento en persistencia | `infrastructure/persistence/json` | `IMPLEMENTADO` |
-| Resolver de tenant y límites | `platform/tenancy` | `PREPARADO` |
-| Modelo `User` | `platform/identity/contracts/User.ts` | `PREPARADO` |
-| Modelo `Tenant` | `platform/tenancy/contracts/Tenant.ts` | `PREPARADO` |
-| Modelo `Membership` | `domains/team/contracts/Membership.ts` | `PREPARADO` |
+| Aislamiento en persistencia SQL (tenants, memberships) | `infrastructure/persistence/sql` | `IMPLEMENTADO` |
+| Aislamiento en persistencia JSON (automations) | `infrastructure/persistence/json` | `IMPLEMENTADO` |
+| Alta inicial de tenant (onboarding transaccional e idempotente) | `domains/team` | `IMPLEMENTADO` |
+| Resolver de tenant para el runtime de simulación | `platform/tenancy` (`TenantResolver`) | `PREPARADO` — ver «Pendiente» |
+| Identidad de usuario | `platform/identity/contracts/UserIdentity.ts` | `IMPLEMENTADO` (vía Neon Auth; sin tabla propia — sólo `actorId`) |
+| Modelo `Tenant` | `platform/tenancy/contracts/Tenant.ts` | `IMPLEMENTADO` |
+| Modelo `Membership` | `domains/team/contracts/Membership.ts` | `IMPLEMENTADO` |
 | Límites por plan | `domains/billing` | `PREPARADO` |
 | Medición de consumo | `domains/billing` | `NO IMPLEMENTADO` |
 
 ## La cadena de identidad
 
 ```
-USER          quién es la persona          platform/identity/contracts/User.ts
+USER          quién es la persona          platform/identity/contracts/UserIdentity.ts
   ↓
 MEMBERSHIP    dónde y con qué rol          domains/team/contracts/Membership.ts
   ↓
@@ -45,28 +47,31 @@ User A ├── Tenant A → tenant_owner
 
 | Concepto | Dónde vive | Por qué |
 |---|---|---|
-| `User` | `platform/identity` | Es identidad de plataforma, no de tenant. No lleva rol, permisos ni facturación. |
+| `UserIdentity` | `platform/identity` | Es identidad de plataforma, no de tenant: sólo `actorId`. No lleva rol, permisos, tenant ni facturación — eso se resuelve después contra `memberships`. |
 | `Tenant` | `platform/tenancy` | La unidad de aislamiento es transversal a todos los dominios. |
 | `Role` + scopes | `platform/authorization` | Define **qué significa** un rol. Política de acceso, transversal. |
 | `Membership` | `domains/team` | Define **quién tiene cuál rol en qué tenant**. Es negocio del equipo, no política. |
 
 Esa última división es deliberada: si la pertenencia viviera en `authorization`, la capa de política acabaría gestionando invitaciones, altas y bajas de personas — responsabilidades de producto que no le corresponden.
 
-### Por qué `AuthIdentity` no cambia de forma
+### Dos formas de identidad autenticada, a propósito
 
-`AuthIdentity` mantiene `{ tenantId, actorId, scopes }`. El token se emite **para un tenant concreto**, después de resolver la membership elegida; cambiar de tenant será emitir una identidad nueva, no ampliar la existente.
+`AuthenticatedPrincipal` distingue explícitamente dos clases (`platform/identity/contracts/AuthenticatedPrincipal.ts`):
 
-`actorId` es deliberadamente polimórfico: puede ser un usuario, un cliente de API o un worker (ver `Role`). No asumir que siempre es un `User.id`.
+- **Usuario humano** (`kind: "user"`) → `UserIdentity { actorId }`. Sólo dice quién es; tenant y scopes se resuelven después contra `memberships`, en cada petición.
+- **Máquina** (`kind: "machine"`, API key) → `AuthIdentity { tenantId, actorId, scopes }`. Ya trae tenant y scopes fijos de origen, porque no hay una persona detrás eligiendo tenant.
 
-**Estado:** los tres modelos son `PREPARADO` — contratos sin persistencia, sin puerto de repositorio y sin caso de uso. `tests/security/membershipModel.test.ts` verifica que la cadena rol→scopes es completa y que dos memberships del mismo usuario en tenants distintos resuelven a permisos distintos.
+`actorId` es deliberadamente polimórfico en ambos casos: puede ser un usuario, un cliente de API o un worker (ver `Role`).
+
+**Estado:** `Tenant` y `Membership` tienen persistencia real en SQL; la identidad de usuario la resuelve Neon Auth por completo, sin tabla propia. `tests/security/membershipModel.test.ts` verifica que la cadena rol→scopes es completa y que dos memberships del mismo usuario en tenants distintos resuelven a permisos distintos; `tests/integration/tenancyPersistence.test.ts` lo verifica contra Postgres real.
 
 ## Resolución del tenant
 
-Hoy el `tenantId` se deriva de la identidad autenticada, no de la petición. `apps/api` verifica el token o la API key y construye un `RequestContext` que incluye `tenantId`, `actorId` y `scopes`.
+El `tenantId` nunca es una afirmación del cliente, pero sí puede ser una **selección** explícita: el cliente puede enviar `X-Tenant-Id` para elegir con cuál de sus tenants opera. `resolveRequestContext` (en `apps/api/middleware/`) valida esa selección contra una membership **activa** en base de datos antes de aceptarla — un tenant que el usuario no pertenece, o del que no es miembro activo, se rechaza con 403 aunque lo pida explícitamente. Sin selección y con una sola membership, se resuelve automáticamente; con varias, exige elegir (400). Detalle completo en [`auth.md`](auth.md#selección-de-tenant).
 
-El tenant nunca llega por query string, cabecera libre ni cuerpo de la petición. Esa es la regla que hace verificable el aislamiento: si el cliente no puede declarar su tenant, no puede falsificarlo.
+Eso es distinto de "declarar el tenant": el cliente propone, el servidor decide contra la base de datos. Por eso el aislamiento sigue siendo verificable pese a que el header exista.
 
-`platform/tenancy` provee además `TenantResolver`, que resuelve el contexto de un tenant con sus límites operativos. Hoy solo lo usa el runtime de simulación; la API deriva el tenant de la identidad. Unificar ambos caminos en un único resolver es trabajo pendiente y está anotado como tal.
+`platform/tenancy` provee además `TenantResolver`, un concepto **separado**: resuelve el contexto de límites operativos que necesita el runtime de simulación del builder (`BuilderSimulationRuntimeFactory`), no la identidad de una petición HTTP. No debe confundirse con `resolveRequestContext`. Unificar ambos caminos sigue pendiente (ver «Pendiente»).
 
 ## Contexto del tenant
 
@@ -88,14 +93,12 @@ En la implementación JSON cada tenant tiene su propio directorio bajo `data/bui
 
 ## Autenticación en desarrollo
 
-En local la aplicación funciona con una credencial de desarrollo registrada al arrancar la API y una sesión fija en el frontend, ambas asociadas al tenant `test-tenant`.
-
-Es la única autenticación existente y sostiene la aplicación. No es un residuo: es andamiaje deliberado que debe retirarse cuando exista identidad real. Hasta entonces, eliminarla deja la plataforma sin forma de autenticar.
+La identidad real (Neon Auth, login/registro, sesión, JWT) es la única vía de autenticación de usuario. Además, `DEV_API_KEY` registra opcionalmente una credencial de **máquina** (`X-Api-Key`) asociada a un tenant fijo — pensada para desarrollo local y scripts, nunca para un usuario humano. La API se niega a arrancar si esa variable está definida con `NODE_ENV=production`. Detalle en [`auth.md`](auth.md).
 
 ## Pendiente
 
-- Unificar el resolver de tenant: hoy `apps/api` deriva el tenant de la identidad y `TenantResolver` vive en paralelo. Debe quedar un único camino.
+- Unificar el resolver de tenant: `resolveRequestContext` deriva el tenant de la membership y `TenantResolver` (límites del runtime de simulación) vive en paralelo con un propósito distinto. Debe evaluarse si conviene un único camino.
 - Conectar los límites por tenant: `platform/tenancy` y `domains/billing` los definen, pero ningún endpoint los aplica.
-- Sustituir la autenticación de desarrollo por identidad real.
 - Añadir medición de consumo en `domains/billing` para que pueda decidir sobre datos reales.
-- Persistir `User`, `Tenant` y `Membership`: hoy son modelos conceptuales sin repositorio. Es el primer trabajo de Fase 1.
+- Ciclo de vida de usuario eliminado en Neon Auth: `memberships.user_id` no tiene FK hacia `neon_auth.user` (decisión deliberada, ver la migración `003_memberships.sql`), así que borrar un usuario desde el dashboard de Neon puede dejar memberships huérfanas. No existe webhook `user.deleted`; queda como requisito explícito de una fase posterior.
+- Configuración manual pendiente en el dashboard de Neon para producción (no cambiable por código): `allow_localhost` sigue en `true`, el proveedor OAuth de Google usa la clave compartida de desarrollo de Neon, y el proveedor de email es el compartido de Neon. Verificar con `neonctl neon-auth plugins list --branch production`.

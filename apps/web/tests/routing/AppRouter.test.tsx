@@ -1,76 +1,65 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders } from "../../src/shared/test-utils/renderWithProviders";
 import { AppRouter } from "../../src/app/router/AppRouter";
 
+// ---------------------------------------------------------------------------
+// Las rutas privadas están protegidas: sin sesión llevan a /login.
+// Estos tests fijan esa garantía, que es la razón de ser de ProtectedRoute.
+// ---------------------------------------------------------------------------
+
 function renderRouter(initialPath: string) {
-  return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <AppRouter />
-    </MemoryRouter>
+  return renderWithProviders(<AppRouter />, { initialPath });
+}
+
+/** Simula "no hay sesión": el proveedor de identidad responde sin usuario. */
+function withoutSession() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => null } as Response)
   );
 }
 
-describe("AppRouter", () => {
-  it("redirects / to /automations", () => {
-    renderRouter("/");
-    expect(screen.getByRole("heading", { name: /automatizaciones/i })).toBeInTheDocument();
+beforeEach(() => {
+  vi.restoreAllMocks();
+  withoutSession();
+});
+
+describe("AppRouter — rutas públicas", () => {
+  it("muestra el login en /login", async () => {
+    renderRouter("/login");
+
+    expect(await screen.findByRole("heading", { name: /bots ai platform/i })).toBeInTheDocument();
   });
 
-  it("redirects unknown routes to /automations", () => {
-    renderRouter("/some/unknown/path");
-    expect(screen.getByRole("heading", { name: /automatizaciones/i })).toBeInTheDocument();
+  it("muestra el registro en /register", async () => {
+    renderRouter("/register");
+
+    expect(await screen.findByRole("heading", { name: /crear cuenta/i })).toBeInTheDocument();
+  });
+});
+
+describe("AppRouter — rutas protegidas sin sesión", () => {
+  it.each([
+    ["/", "raíz"],
+    ["/automations", "hub"],
+    ["/automations/templates", "plantillas"],
+    ["/automations/archive", "archivo"],
+    ["/connections", "conexiones"],
+    ["/ai-agents", "ai agents"],
+    ["/builder/flow-1", "builder"],
+    ["/ruta/desconocida", "desconocida"]
+  ])("redirige %s a /login", async (path) => {
+    renderRouter(path);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /bots ai platform/i })).toBeInTheDocument();
+    });
   });
 
-  it("renders templates page at /automations/templates", () => {
-    renderRouter("/automations/templates");
-    expect(screen.getByText(/plantillas/i)).toBeInTheDocument();
-  });
-
-  it("renders archive page at /automations/archive", () => {
-    renderRouter("/automations/archive");
-    expect(screen.getByText(/archivo/i)).toBeInTheDocument();
-  });
-
-  it("renders hub page at /automations", () => {
+  it("no renderiza contenido privado mientras comprueba la sesión", () => {
     renderRouter("/automations");
-    expect(screen.getByRole("heading", { name: /automatizaciones/i })).toBeInTheDocument();
-  });
 
-  it("renders hub for /builder without flowKey redirect", () => {
-    renderRouter("/builder/");
-    expect(screen.getByRole("heading", { name: /automatizaciones/i })).toBeInTheDocument();
-  });
-
-  // ---- Nuevas rutas ----
-
-  it("renders ConnectionsPage at /connections", () => {
-    renderRouter("/connections");
-    expect(screen.getByRole("heading", { name: /conexiones/i })).toBeInTheDocument();
-  });
-
-  it("renders AiAgentsPage at /ai-agents", () => {
-    renderRouter("/ai-agents");
-    expect(screen.getByRole("heading", { name: /ai agents/i })).toBeInTheDocument();
-  });
-
-  it("ConnectionsPage shows correct description", () => {
-    renderRouter("/connections");
-    expect(screen.getByText(/administra instancias, estados y conexiones/i)).toBeInTheDocument();
-  });
-
-  it("AiAgentsPage shows correct description", () => {
-    renderRouter("/ai-agents");
-    expect(screen.getByText(/administra agentes inteligentes/i)).toBeInTheDocument();
-  });
-
-  it("Automatizaciones route still works after adding new routes", () => {
-    renderRouter("/automations");
-    expect(screen.getByRole("heading", { name: /automatizaciones/i })).toBeInTheDocument();
-  });
-
-  it("unknown routes still redirect to automations after new routes added", () => {
-    renderRouter("/some-totally-unknown-path");
-    expect(screen.getByRole("heading", { name: /automatizaciones/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /automatizaciones/i })).not.toBeInTheDocument();
   });
 });

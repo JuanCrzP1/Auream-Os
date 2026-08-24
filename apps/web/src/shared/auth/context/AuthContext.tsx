@@ -1,45 +1,74 @@
-import { createContext, useContext, type ReactNode } from "react";
-import type { AuthSession } from "../contracts/AuthSession";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { authClient } from "../client/authClient";
+import { tokenStore } from "../client/tokenStore";
+import type { AuthSession, SessionState } from "../contracts/AuthSession";
 
 /**
- * Sesión de desarrollo local.
+ * Estado de sesión de la aplicación.
  *
- * Se usa como valor por defecto del contexto (sin provider) y como
- * único valor real hasta que se implemente el login real.
+ * Responsabilidad única: saber si hay sesión y mantenerla al día. No renderiza
+ * pantallas ni decide rutas; de eso se encarga `ProtectedRoute`.
  *
- * TODO (producción): reemplazar por resolución real desde JWT / OAuth.
+ * Al montar intenta restaurar la sesión desde la cookie del proveedor, de modo
+ * que recargar el navegador no obliga a iniciar sesión otra vez.
  */
-const LOCAL_DEV_SESSION: AuthSession = {
-  tenantId: "test-tenant",
-  userId: "dev-user",
-  token: null
-};
 
-const AuthContext = createContext<AuthSession>(LOCAL_DEV_SESSION);
-
-interface AuthProviderProps {
-  children: ReactNode;
+interface AuthContextValue {
+  readonly state: SessionState;
+  readonly refresh: () => Promise<void>;
+  readonly signOut: () => Promise<void>;
 }
 
-/**
- * AuthProvider — proveedor de la sesión autenticada.
- *
- * Envuelve la aplicación y expone la sesión a través de useAuthSession.
- * Actualmente sirve la sesión de desarrollo local. En producción se reemplaza el valor
- * de `session` por la resolución real (JWT decode, cookie, API call).
- */
-export function AuthProvider({ children }: AuthProviderProps) {
-  // TODO: resolver sesión real desde cookie / token / OAuth
-  const session: AuthSession = LOCAL_DEV_SESSION;
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-  return <AuthContext.Provider value={session}>{children}</AuthContext.Provider>;
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<SessionState>({ status: "loading" });
+
+  const refresh = useCallback(async () => {
+    try {
+      const user = await authClient.getSession();
+
+      if (!user) {
+        tokenStore.clear();
+        setState({ status: "anonymous" });
+        return;
+      }
+
+      tokenStore.setSessionPresent(true);
+      const session: AuthSession = { userId: user.id, email: user.email, name: user.name };
+      setState({ status: "authenticated", session });
+    } catch {
+      // Un fallo al consultar la sesión se trata como "no autenticado": nunca
+      // deja al usuario dentro de la aplicación sin sesión verificada.
+      tokenStore.clear();
+      setState({ status: "anonymous" });
+    }
+  }, []);
+
+  const signOut = useCallback(async () => {
+    try {
+      await authClient.signOut();
+    } finally {
+      tokenStore.clear();
+      setState({ status: "anonymous" });
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return (
+    <AuthContext.Provider value={{ state, refresh, signOut }}>{children}</AuthContext.Provider>
+  );
 }
 
-/**
- * useAuthSession — accede a la sesión del usuario autenticado.
- *
- * NUNCA hardcodear tenantId en componentes. Siempre usar este hook.
- */
-export function useAuthSession(): AuthSession {
-  return useContext(AuthContext);
+export function useAuth(): AuthContextValue {
+  const value = useContext(AuthContext);
+
+  if (!value) {
+    throw new Error("useAuth debe usarse dentro de AuthProvider");
+  }
+
+  return value;
 }

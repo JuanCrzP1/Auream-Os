@@ -7,9 +7,11 @@ import { join } from "node:path";
 //
 // Falla de forma segura: si falta algo obligatorio, o si una credencial de
 // desarrollo aparece en producción, el proceso no arranca.
+//
+// La identidad de usuario la emite y firma Neon Auth (ver loadNeonAuthConfig);
+// esta API ya no firma tokens, así que no necesita ningún secreto propio.
 // ---------------------------------------------------------------------------
 
-const MINIMUM_JWT_SECRET_LENGTH = 32;
 /** Debe coincidir con el prefijo que exige `platform/identity/ApiKeyVerifier`. */
 const API_KEY_PREFIX = "bfk_";
 const DEFAULT_PORT = 3100;
@@ -18,7 +20,6 @@ const DEFAULT_DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"];
 export interface ApiConfig {
   readonly port: number;
   readonly isProduction: boolean;
-  readonly jwtSecret: string;
   readonly allowedOrigins: readonly string[];
   /** API key de desarrollo. Siempre null en producción. */
   readonly devApiKey: string | null;
@@ -41,20 +42,6 @@ function readOrigins(raw: string | undefined): string[] {
 
 export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   const isProduction = env["NODE_ENV"] === "production";
-
-  const jwtSecret = env["JWT_SECRET"];
-
-  if (!jwtSecret) {
-    throw new ApiConfigError(
-      "JWT_SECRET no está definido. El servidor no puede arrancar sin un secreto de firma."
-    );
-  }
-
-  if (jwtSecret.length < MINIMUM_JWT_SECRET_LENGTH) {
-    throw new ApiConfigError(
-      `JWT_SECRET debe tener al menos ${MINIMUM_JWT_SECRET_LENGTH} caracteres.`
-    );
-  }
 
   const devApiKey = env["DEV_API_KEY"] ?? null;
 
@@ -86,7 +73,6 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   return {
     port: Number(env["PORT"] ?? DEFAULT_PORT),
     isProduction,
-    jwtSecret,
     allowedOrigins,
     devApiKey: isProduction ? null : devApiKey,
     devTenantId: env["DEV_TENANT_ID"] ?? "test-tenant",

@@ -111,11 +111,11 @@ Eventos operativos y métricas de negocio. El runtime los emite a través del pu
 
 ---
 
-## team · `NO IMPLEMENTADO`
+## team · `IMPLEMENTADO`
 
-Miembros del tenant, invitaciones y asignación de roles.
+Quién pertenece a qué tenant y con qué rol: `Membership` y el alta inicial (`OnboardingPort`, transaccional e idempotente). Invitaciones y gestión de miembros más allá del alta inicial siguen sin construir.
 
-**No contiene:** definición de roles, scopes o políticas (`platform/authorization`) · autenticación (`platform/identity`).
+**No contiene:** definición de roles, scopes o políticas (`platform/authorization`) · autenticación (`platform/identity`) · el `Tenant` mismo (`platform/tenancy`).
 
 ---
 

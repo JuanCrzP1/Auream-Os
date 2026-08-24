@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
+import { ProvidersWrapper } from "../../src/shared/test-utils/renderWithProviders";
 import { useBuilderLoader } from "../../src/features/automations/builder/hooks/builder/useBuilderLoader";
 import type { PersistedBuilderWorkspace } from "@contracts/BuilderContracts";
 
@@ -46,7 +47,7 @@ beforeEach(() => {
 describe("useBuilderLoader", () => {
   it("empieza en estado loading", () => {
     vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
-    const { result } = renderHook(() => useBuilderLoader("flow-test"));
+    const { result } = renderHook(() => useBuilderLoader("flow-test"), { wrapper: ProvidersWrapper });
 
     expect(result.current.loading).toBe(true);
     expect(result.current.workspace).toBeNull();
@@ -64,7 +65,7 @@ describe("useBuilderLoader", () => {
       } as unknown as Response)
     );
 
-    const { result } = renderHook(() => useBuilderLoader("my-flow"));
+    const { result } = renderHook(() => useBuilderLoader("my-flow"), { wrapper: ProvidersWrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -77,7 +78,7 @@ describe("useBuilderLoader", () => {
   it("devuelve error cuando el fetch falla con error de red", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
-    const { result } = renderHook(() => useBuilderLoader("flow-test"));
+    const { result } = renderHook(() => useBuilderLoader("flow-test"), { wrapper: ProvidersWrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -108,6 +109,7 @@ describe("useBuilderLoader", () => {
     );
 
     const { result, rerender } = renderHook(({ key }) => useBuilderLoader(key), {
+      wrapper: ProvidersWrapper,
       initialProps: { key: "flow-a" }
     });
 
@@ -121,7 +123,7 @@ describe("useBuilderLoader", () => {
   it("setWorkspace actualiza el workspace manualmente", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
-    const { result } = renderHook(() => useBuilderLoader("flow-test"));
+    const { result } = renderHook(() => useBuilderLoader("flow-test"), { wrapper: ProvidersWrapper });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     const updated = makeWorkspace("updated-flow");

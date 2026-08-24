@@ -3,55 +3,67 @@ import type { IncomingMessage } from "node:http";
 import { authenticateRequest } from "../../apps/api/middleware/authenticateRequest.js";
 import { composeAuthService } from "../../apps/api/composition/composeAuthService.js";
 import { loadApiConfig } from "../../apps/api/config/loadApiConfig.js";
+import type { NeonAuthConfig } from "../../apps/api/config/loadNeonAuthConfig.js";
 
 // ---------------------------------------------------------------------------
-// Protege exactamente el defecto investigado: una API sin credencial DEV
-// registrada debe rechazar con 401 en el nivel de autenticación (antes de
-// tenancy), y una API con DEV_API_KEY configurada debe autenticar con el
-// mismo valor que usaría el frontend vía VITE_DEV_API_KEY.
+// Protege el camino de credencial de máquina (API key) de extremo a extremo,
+// usando la composición real que ensambla apps/api/main.ts.
 //
-// Usa composeAuthService real (el mismo que ensambla apps/api/main.ts), no un
-// doble de prueba: así valida la cadena completa env → config → registro.
+// El camino de usuario (Bearer/JWKS) se prueba en jwtCrossBranch.test.ts, que
+// no necesita red porque usa fixtures grabadas.
 // ---------------------------------------------------------------------------
+
+const AUTH_CONFIG: NeonAuthConfig = {
+  baseUrl: "https://auth.example.test/neondb/auth",
+  issuer: "https://auth.example.test",
+  audience: "https://auth.example.test",
+  jwksUrl: "https://auth.example.test/neondb/auth/.well-known/jwks.json"
+};
 
 function fakeRequest(headers: Record<string, string>): IncomingMessage {
   return { headers } as unknown as IncomingMessage;
 }
 
-const VALID_SECRET = "x".repeat(32);
-
-describe("authenticateRequest — credencial DEV", () => {
+describe("authenticateRequest — credencial de máquina", () => {
   it("sin DEV_API_KEY configurada, una peticion sin cabeceras no autentica", async () => {
-    const config = loadApiConfig({ JWT_SECRET: VALID_SECRET });
-    const authService = composeAuthService(config);
+    const authService = composeAuthService(loadApiConfig({}), AUTH_CONFIG);
 
-    const context = await authenticateRequest(fakeRequest({}), authService);
-
-    expect(context).toBeNull();
+    expect(await authenticateRequest(fakeRequest({}), authService)).toBeNull();
   });
 
-  it("con DEV_API_KEY configurada, X-Api-Key con ese mismo valor autentica", async () => {
-    const config = loadApiConfig({ JWT_SECRET: VALID_SECRET, DEV_API_KEY: "bfk_dev_test0000" });
-    const authService = composeAuthService(config);
+  it("con DEV_API_KEY configurada, X-Api-Key con ese mismo valor autentica como máquina", async () => {
+    const config = loadApiConfig({ DEV_API_KEY: "bfk_dev_test0000" });
+    const authService = composeAuthService(config, AUTH_CONFIG);
 
-    const context = await authenticateRequest(
+    const principal = await authenticateRequest(
       fakeRequest({ "x-api-key": "bfk_dev_test0000" }),
       authService
     );
 
-    expect(context).not.toBeNull();
-    expect(context?.tenantId).toBe(config.devTenantId);
+    expect(principal?.kind).toBe("machine");
+    expect(principal?.identity.actorId).toBe("dev-user");
   });
 
   it("una X-Api-Key que no coincide con DEV_API_KEY sigue sin autenticar", async () => {
-    const config = loadApiConfig({ JWT_SECRET: VALID_SECRET, DEV_API_KEY: "bfk_dev_test0000" });
-    const authService = composeAuthService(config);
+    const config = loadApiConfig({ DEV_API_KEY: "bfk_dev_test0000" });
+    const authService = composeAuthService(config, AUTH_CONFIG);
 
-    const context = await authenticateRequest(
+    const principal = await authenticateRequest(
       fakeRequest({ "x-api-key": "bfk_dev_otro-valor" }),
       authService
     );
 
-    expect(context).toBeNull();
+    expect(principal).toBeNull();
+  });
+
+  it("un Bearer con firma no verificable no autentica", async () => {
+    const authService = composeAuthService(loadApiConfig({}), AUTH_CONFIG);
+
+    const principal = await authenticateRequest(
+      fakeRequest({ authorization: "Bearer no.es.un-token" }),
+      authService
+    );
+
+    expect(principal).toBeNull();
   });
 });

@@ -1,31 +1,32 @@
 import type { IncomingMessage } from "node:http";
-import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
+import type { AuthenticatedPrincipal } from "../../../platform/identity/contracts/AuthenticatedPrincipal";
 import type { AuthService } from "../../../platform/identity/application/AuthService";
 
 // ---------------------------------------------------------------------------
 // authenticateRequest
 //
-// Extrae y verifica credenciales de la request HTTP.
-// Soporta dos métodos de autenticación:
-//   - Bearer <token>  → JWT HS256
-//   - X-Api-Key: bfk_ → API key
+// Responsabilidad única: responder "¿quién eres?".
 //
-// Devuelve RequestContext (identidad resuelta) o null (no autenticado).
-// La función nunca lanza — los errores de verificación se convierten en null.
+// Soporta dos credenciales:
+//   Authorization: Bearer <jwt>  → usuario (Neon Auth)
+//   X-Api-Key: bfk_...           → máquina (worker, integración)
 //
-// Regla de seguridad: el tenant NUNCA viene de query string o body.
-// El tenantId se extrae siempre de la identidad autenticada (JWT claims o API key).
+// Devuelve null si no hay credencial válida. Nunca lanza: un fallo de
+// verificación es "no autenticado", no un error del servidor.
+//
+// NO resuelve tenant ni permisos — eso es `resolveRequestContext`.
 // ---------------------------------------------------------------------------
 
 export async function authenticateRequest(
   request: IncomingMessage,
   authService: AuthService
-): Promise<RequestContext | null> {
+): Promise<AuthenticatedPrincipal | null> {
   const authHeader = request.headers["authorization"];
 
   if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
     try {
-      return await authService.authenticateBearer(authHeader.slice(7));
+      const identity = await authService.authenticateBearer(authHeader.slice(7));
+      return { kind: "user", identity };
     } catch {
       return null;
     }
@@ -35,7 +36,8 @@ export async function authenticateRequest(
 
   if (typeof apiKeyHeader === "string" && apiKeyHeader.length > 0) {
     try {
-      return await authService.authenticateApiKey(apiKeyHeader);
+      const identity = await authService.authenticateApiKey(apiKeyHeader);
+      return { kind: "machine", identity };
     } catch {
       return null;
     }

@@ -14,11 +14,19 @@
     "check:web": "npm --prefix apps/web run check",
     "test": "vitest run",
     "test:web": "npm --prefix apps/web run test",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "db:migrate:test": "node scripts/db/migrate.mjs",
+    "db:migrate:prod": "node scripts/db/migrate.mjs --confirm-production",
+    "db:seed:test": "node scripts/db/seed-dev.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
+    "@types/pg": "^8.23.1",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
   }
 }

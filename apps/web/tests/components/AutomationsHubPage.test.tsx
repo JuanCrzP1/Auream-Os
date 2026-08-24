@@ -2,15 +2,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "../../src/shared/auth/context/AuthContext";
+import { ActiveTenantProvider } from "../../src/shared/auth/tenant/ActiveTenantContext";
 import { AutomationsHubPage } from "../../src/features/automations/list/pages/AutomationsHubPage";
 
 function renderHub() {
   return render(
     <MemoryRouter initialEntries={["/automations"]}>
-      <Routes>
-        <Route path="/automations" element={<AutomationsHubPage />} />
-        <Route path="/builder/:flowKey" element={<div>Builder page</div>} />
-      </Routes>
+      <AuthProvider>
+        <ActiveTenantProvider>
+          <Routes>
+            <Route path="/automations" element={<AutomationsHubPage />} />
+            <Route path="/builder/:flowKey" element={<div>Builder page</div>} />
+          </Routes>
+        </ActiveTenantProvider>
+      </AuthProvider>
     </MemoryRouter>
   );
 }

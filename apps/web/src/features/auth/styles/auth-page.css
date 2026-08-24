@@ -1,0 +1,58 @@
+/* Marco de las pantallas de autenticación.
+   Usa las variables del tema global: no introduce una paleta propia. */
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
+.auth-page__panel {
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow);
+}
+
+.auth-page__header {
+  margin-bottom: 26px;
+  text-align: center;
+}
+
+.auth-page__title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.auth-page__subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.auth-page__footer {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.auth-page__footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-page__footer a:hover {
+  text-decoration: underline;
+}

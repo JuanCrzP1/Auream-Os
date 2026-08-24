@@ -1,4 +1,5 @@
 import "./app-sidebar.css";
+import { SignOutButton } from "./SignOutButton";
 ﻿import { NavLink } from "react-router-dom";
 import { sidebarItems } from "@app/navigation/sidebar/sidebar-items";
 
@@ -30,6 +31,7 @@ export function AppSidebar() {
       </nav>
 
       <footer className="app-sidebar__footer">
+        <SignOutButton />
         <button type="button" className="app-sidebar__collapse" aria-label="Contraer navegacion">
           <span /><span />
         </button>

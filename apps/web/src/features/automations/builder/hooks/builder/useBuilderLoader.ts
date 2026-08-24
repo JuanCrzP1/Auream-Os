@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchBuilderWorkspace } from "@features/automations/builder/services/fetchBuilderWorkspace";
-import { useAuthSession } from "@shared/auth/context/AuthContext";
+import { useActiveTenant } from "@shared/auth/tenant/ActiveTenantContext";
 import type { PersistedBuilderWorkspace } from "@contracts/BuilderContracts";
 
 export interface BuilderLoaderState {
@@ -17,7 +17,7 @@ export interface BuilderLoaderState {
  * No tiene conocimiento del canvas ni del autosave.
  */
 export function useBuilderLoader(flowKey: string): BuilderLoaderState {
-  const { tenantId } = useAuthSession();
+  const { activeTenantId } = useActiveTenant();
   const [workspace, setWorkspace] = useState<PersistedBuilderWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
     setLoading(true);
     setError(null);
 
-    fetchBuilderWorkspace(flowKey, tenantId)
+    fetchBuilderWorkspace(flowKey, activeTenantId ?? "")
       .then((result) => {
         if (mountedRef.current) {
           setWorkspace(result);
@@ -45,7 +45,7 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
     return () => {
       mountedRef.current = false;
     };
-  }, [flowKey, tenantId]);
+  }, [flowKey, activeTenantId]);
 
   return { workspace, loading, error, setWorkspace };
 }

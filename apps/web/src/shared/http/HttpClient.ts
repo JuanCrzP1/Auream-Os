@@ -5,10 +5,10 @@ export interface HttpClientConfig {
   /** URL base aplicada a todas las rutas (sin slash final). */
   baseUrl: string;
   /**
-   * Función que devuelve los headers por defecto en cada request.
-   * Se llama en tiempo de request para poder refrescar tokens dinámicamente.
+   * Headers por defecto de cada request.
+   * Es asíncrona porque obtener el token puede requerir renovarlo.
    */
-  defaultHeaders: () => HttpHeadersInit;
+  defaultHeaders: () => Promise<HttpHeadersInit> | HttpHeadersInit;
 }
 
 /**
@@ -61,7 +61,7 @@ export class HttpClient {
   }
 
   private async request<T>(path: string, init: RequestInit): Promise<T> {
-    const headers: HttpHeadersInit = { ...this.config.defaultHeaders() };
+    const headers: HttpHeadersInit = { ...(await this.config.defaultHeaders()) };
 
     if (init.body !== undefined) {
       headers[HttpHeader.ContentType] = MimeType.Json;

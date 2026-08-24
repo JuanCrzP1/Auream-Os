@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAutomationList } from "../hooks/useAutomationList";
 import { useAutomationActions } from "../hooks/useAutomationActions";
-import { useAuthSession } from "@shared/auth/context/AuthContext";
+import { useActiveTenant } from "@shared/auth/tenant/ActiveTenantContext";
 import { AutomationEmptyState } from "../components/AutomationEmptyState";
 import { AutomationFlowCard } from "../components/AutomationFlowCard";
 import { AutomationSection } from "../components/AutomationSection";
@@ -17,9 +17,9 @@ import type { AutomationSummary } from "@contracts/AutomationContracts";
 
 export function AutomationsHubPage() {
   const navigate = useNavigate();
-  const { tenantId } = useAuthSession();
+  const { activeTenantId } = useActiveTenant();
   const [search, setSearch] = useState("");
-  const state = useAutomationList(tenantId);
+  const state = useAutomationList(activeTenantId ?? "");
 
   const handleFlowDeleted = useCallback((flowId: string) => {
     if (state.status === "success") {

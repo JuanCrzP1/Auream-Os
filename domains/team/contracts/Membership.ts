@@ -19,8 +19,9 @@ import type { Role } from "../../../platform/authorization/contracts/Role";
  * Esa separación es deliberada: la política de acceso es transversal, la
  * pertenencia es negocio del equipo.
  *
- * Estado: PREPARADO. Modelo conceptual sin persistencia, sin puerto de
- * repositorio y sin caso de uso. Fase 1 los añadirá.
+ * Persistencia real en la tabla `memberships` (SQL), vía el puerto
+ * `MembershipRepository` (implementado por `SqlMembershipRepository`). El alta
+ * inicial la resuelve `OnboardingPort`.
  */
 
 export type MembershipStatus = "invited" | "active" | "revoked";

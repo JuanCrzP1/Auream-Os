@@ -1,0 +1,24 @@
+/* Selector de espacio de trabajo activo. */
+
+.tenant-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tenant-selector__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tenant-selector__select {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  cursor: pointer;
+}

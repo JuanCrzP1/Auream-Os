@@ -13,6 +13,7 @@
 | [`architecture/automations.md`](architecture/automations.md) | El producto: catalog, builder, validation |
 | [`architecture/flow-engine.md`](architecture/flow-engine.md) | El motor de automatizaciones: ejecución, nodos, edges, registry y sus fronteras |
 | [`architecture/ai-sales-engine.md`](architecture/ai-sales-engine.md) | El motor de ventas con IA: por qué es independiente y cómo se integrará |
+| [`architecture/auth.md`](architecture/auth.md) | Identidad, sesión, tenant, membership, roles y autorización |
 | [`architecture/tenancy.md`](architecture/tenancy.md) | Multi-tenancy: resolución, contexto, autorización, aislamiento |
 | [`architecture/persistence.md`](architecture/persistence.md) | Persistencia SQL detrás de contratos, sin acoplar proveedor |
 | [`architecture/ai-agents.md`](architecture/ai-agents.md) | Frontera con el AI Sales Engine |

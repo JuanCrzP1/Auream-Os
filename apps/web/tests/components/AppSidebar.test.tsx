@@ -1,14 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "../../src/shared/test-utils/renderWithProviders";
 import { AppSidebar } from "../../src/shared/ui/AppSidebar";
 
 function renderSidebar(initialPath = "/automations") {
-  return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <AppSidebar />
-    </MemoryRouter>
-  );
+  return renderWithProviders(<AppSidebar />, { initialPath });
 }
 
 describe("AppSidebar", () => {

@@ -3,26 +3,86 @@ import { AutomationsHubPage } from "@features/automations/list/pages/Automations
 import { BuilderPage } from "@features/automations/builder/pages/BuilderPage";
 import { ConnectionsPage } from "@features/connections/pages/ConnectionsPage";
 import { AiAgentsPage } from "@features/ai-agents/pages/AiAgentsPage";
+import { LoginPage } from "@features/auth/pages/LoginPage";
+import { RegisterPage } from "@features/auth/pages/RegisterPage";
 import { AppShell } from "@shared/ui/app-shell/AppShell";
+import { ProtectedRoute } from "./ProtectedRoute";
+import { TemplatesPage } from "./placeholders/TemplatesPage";
+import { ArchivePage } from "./placeholders/ArchivePage";
 
-function TemplatesPage() {
-  return <div style={{ padding: 40 }}>Plantillas — próximamente</div>;
-}
-
-function ArchivePage() {
-  return <div style={{ padding: 40 }}>Archivo — próximamente</div>;
-}
-
+/**
+ * Rutas de la aplicación.
+ *
+ * `/login` y `/register` son públicas; todo lo demás pasa por ProtectedRoute,
+ * la única estrategia de protección del frontend.
+ */
 export function AppRouter() {
   return (
     <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
       <Route path="/" element={<Navigate to="/automations" replace />} />
-      <Route path="/automations" element={<AppShell><AutomationsHubPage /></AppShell>} />
-      <Route path="/automations/templates" element={<AppShell><TemplatesPage /></AppShell>} />
-      <Route path="/automations/archive" element={<AppShell><ArchivePage /></AppShell>} />
-      <Route path="/connections" element={<AppShell><ConnectionsPage /></AppShell>} />
-      <Route path="/ai-agents" element={<AppShell><AiAgentsPage /></AppShell>} />
-      <Route path="/builder/:flowKey" element={<BuilderPage />} />
+
+      <Route
+        path="/automations"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <AutomationsHubPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/automations/templates"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <TemplatesPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/automations/archive"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <ArchivePage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/connections"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <ConnectionsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai-agents"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <AiAgentsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/builder/:flowKey"
+        element={
+          <ProtectedRoute>
+            <BuilderPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<Navigate to="/automations" replace />} />
     </Routes>
   );

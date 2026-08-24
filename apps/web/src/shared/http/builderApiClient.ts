@@ -1,23 +1,45 @@
 import { HttpClient } from "./HttpClient";
 import { getBuilderApiBaseUrl } from "../config/getBuilderApiBaseUrl";
 import { getDevApiKey } from "../config/getDevApiKey";
+import { tokenStore } from "../auth/client/tokenStore";
+import { activeTenantStore } from "../auth/tenant/activeTenantStore";
 import { HttpHeader } from "./HttpHeaders";
 
 /**
  * builderApiClient — instancia compartida del HttpClient para la API.
  *
- * Autenticación: en desarrollo local envía `X-Api-Key` si `VITE_DEV_API_KEY`
- * está definida. En producción no envía ninguna credencial: no existe todavía
- * login real y no se compila ningún secreto en el bundle.
+ * Autenticación por orden de preferencia:
+ *   1. `Authorization: Bearer <jwt>` cuando hay sesión de usuario.
+ *   2. `X-Api-Key` en desarrollo, para trabajar sin iniciar sesión.
  *
- * Estado: PREPARADO. Cuando exista login, sustituir por `Authorization: Bearer`
- * con el token de la sesión.
+ * `X-Tenant-Id` viaja como SELECCIÓN del tenant activo. El servidor la valida
+ * contra una membership real: enviarla no concede ningún acceso por sí sola.
  */
 export const builderApiClient = new HttpClient({
   baseUrl: getBuilderApiBaseUrl(),
-  defaultHeaders: (): Record<string, string> => {
+  defaultHeaders: async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = {};
+
+    const tenantId = activeTenantStore.read();
+
+    if (tenantId) {
+      headers[HttpHeader.XTenantId] = tenantId;
+    }
+
+    const token = await tokenStore.get();
+
+    if (token) {
+      headers[HttpHeader.Authorization] = `Bearer ${token}`;
+      return headers;
+    }
+
+    // Sin sesión de usuario: en desarrollo se recurre a la API key local.
     const devApiKey = getDevApiKey();
 
-    return devApiKey ? { [HttpHeader.XApiKey]: devApiKey } : {};
+    if (devApiKey) {
+      headers[HttpHeader.XApiKey] = devApiKey;
+    }
+
+    return headers;
   }
 });

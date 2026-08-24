@@ -1,65 +1,64 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { JwtTokenVerifier } from "../../platform/identity/application/JwtTokenVerifier.js";
-import { ApiKeyVerifier } from "../../platform/identity/application/ApiKeyVerifier.js";
+import { describe, it, expect } from "vitest";
 import { AuthService } from "../../platform/identity/application/AuthService.js";
+import { ApiKeyVerifier } from "../../platform/identity/application/ApiKeyVerifier.js";
 import { InMemoryApiKeyRegistry } from "../../infrastructure/persistence/memory/InMemoryApiKeyRegistry.js";
-import { TEST_SECRET, signJwt, makeValidPayload } from "./helpers/jwt.js";
+import type { TokenVerifier } from "../../platform/identity/application/TokenVerifier.js";
+import type { UserIdentity } from "../../platform/identity/contracts/UserIdentity.js";
 
 // ---------------------------------------------------------------------------
-// AuthService
+// AuthService devuelve dos formas distintas a propósito:
+//   Bearer  → UserIdentity  (sólo quién eres)
+//   API key → AuthIdentity  (quién, en qué tenant, con qué scopes)
 // ---------------------------------------------------------------------------
+
+const RAW_API_KEY = "bfk_service_key_000000000000000000000000000000000000";
+
+function buildAuthService(verifier: TokenVerifier): AuthService {
+  const registry = new InMemoryApiKeyRegistry();
+  registry.register(RAW_API_KEY, {
+    tenantId: "tenant-a",
+    actorId: "machine-1",
+    scopes: ["flows.read"]
+  });
+
+  return new AuthService(verifier, new ApiKeyVerifier(registry));
+}
+
+const stubVerifier: TokenVerifier = {
+  verify: async (token: string): Promise<UserIdentity> => {
+    if (token !== "token-valido") {
+      throw new Error("Firma inválida");
+    }
+    return { actorId: "user-123" };
+  }
+};
 
 describe("AuthService", () => {
-  let authService: AuthService;
-  let registry: InMemoryApiKeyRegistry;
+  it("authenticateBearer devuelve SOLO la identidad del usuario", async () => {
+    const identity = await buildAuthService(stubVerifier).authenticateBearer("token-valido");
 
-  beforeEach(() => {
-    registry = new InMemoryApiKeyRegistry();
-    authService = new AuthService(
-      new JwtTokenVerifier(TEST_SECRET),
-      new ApiKeyVerifier(registry)
-    );
+    expect(identity).toEqual({ actorId: "user-123" });
+    expect(identity).not.toHaveProperty("tenantId");
+    expect(identity).not.toHaveProperty("scopes");
   });
 
-  it("authenticateBearer construye RequestContext con método jwt", async () => {
-    const token = signJwt(makeValidPayload());
-    const context = await authService.authenticateBearer(token);
-
-    expect(context.authMethod).toBe("jwt");
-    expect(context.tenantId).toBe("test-tenant");
-    expect(context.actorId).toBe("actor-123");
-    expect(context.requestId).toBeTruthy();
-    expect(context.scopes).toContain("builder:read");
+  it("authenticateBearer propaga el fallo de verificación", async () => {
+    await expect(
+      buildAuthService(stubVerifier).authenticateBearer("token-invalido")
+    ).rejects.toThrow();
   });
 
-  it("authenticateApiKey construye RequestContext con método api_key", async () => {
-    const rawKey = "bfk_service_key_000000000000000000000000000000000000";
-    registry.register(rawKey, {
-      tenantId: "test-tenant",
-      actorId: "service-account-2",
-      scopes: ["builder:read"]
-    });
+  it("authenticateApiKey devuelve tenant y scopes de la credencial de máquina", async () => {
+    const identity = await buildAuthService(stubVerifier).authenticateApiKey(RAW_API_KEY);
 
-    const context = await authService.authenticateApiKey(rawKey);
-
-    expect(context.authMethod).toBe("api_key");
-    expect(context.tenantId).toBe("test-tenant");
-    expect(context.requestId).toBeTruthy();
+    expect(identity.tenantId).toBe("tenant-a");
+    expect(identity.actorId).toBe("machine-1");
+    expect(identity.scopes).toEqual(["flows.read"]);
   });
 
-  it("cada request autenticada recibe un requestId único", async () => {
-    const token = signJwt(makeValidPayload());
-    const ctx1 = await authService.authenticateBearer(token);
-    const ctx2 = await authService.authenticateBearer(token);
-
-    expect(ctx1.requestId).not.toBe(ctx2.requestId);
-  });
-
-  it("rechaza un Bearer token inválido", async () => {
-    await expect(authService.authenticateBearer("token.malformado")).rejects.toThrow();
+  it("rechaza una API key no registrada", async () => {
+    await expect(
+      buildAuthService(stubVerifier).authenticateApiKey("bfk_no_registrada_0000000000000000")
+    ).rejects.toThrow();
   });
 });
-
-// ---------------------------------------------------------------------------
-// InMemorySessionRepository — tenant isolation
-// ---------------------------------------------------------------------------

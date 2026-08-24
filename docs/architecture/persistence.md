@@ -38,11 +38,36 @@ Registries y repositorios en memoria: sesiones, registro de flows, credenciales 
 
 Se usa en pruebas y en el runtime de simulación del builder, donde cada simulación necesita un stack aislado y efímero. No sobrevive al reinicio, y no pretende hacerlo.
 
-### `persistence/sql` · `NO IMPLEMENTADO`
+### `persistence/sql` · `IMPLEMENTADO` (tenancy) · `NO IMPLEMENTADO` (automations)
 
-Frontera preparada, sin implementación. Es el destino de producción (SQL sobre Neon).
+Implementado para tenancy: `SqlClient` (único punto que conoce el driver `pg`),
+`SqlTenantRepository`, `SqlMembershipRepository` y `SqlOnboardingRepository`.
 
-Los puertos ya existen y están declarados por los dominios que los necesitan —`BuilderWorkspaceRepository`, `AutomationRepository`, `FolderRepository`, `SessionRepository`—, así que escribir esta capa no requiere cambiar ningún contrato.
+Los repositorios de automations siguen en `json/`: migrarlos es trabajo posterior
+y no requiere cambiar ningún contrato, porque sus puertos ya existen.
+
+#### Migraciones
+
+`infrastructure/persistence/sql/migrations/` con control en `schema_migrations`
+(nombre, checksum, fecha). El runner es `scripts/db/migrate.mjs`:
+
+```
+npm run db:migrate:test     rama test (por defecto, sin flags)
+npm run db:migrate:prod     producción — exige --confirm-production
+```
+
+Una migración modificada después de aplicarse produce checksum mismatch y aborta:
+nunca se reaplica ni se ignora en silencio.
+
+El flujo obligatorio es `test → tests de integración → revisión → producción`.
+Producción nunca se migra desde la suite de tests.
+
+#### Aislamiento de entornos
+
+`scripts/db/resolveTargetDatabase.mjs` es la ÚNICA pieza que decide el destino.
+Migraciones, seed y el setup de los tests de integración la comparten. La
+comprobación es por HOST real, así que una variable mal configurada que apunte a
+producción se detecta igual.
 
 ## Migración a SQL
 

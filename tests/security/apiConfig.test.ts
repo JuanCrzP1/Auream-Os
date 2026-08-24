@@ -1,17 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { loadApiConfig, ApiConfigError } from "../../apps/api/config/loadApiConfig.js";
+import { loadApiConfig } from "../../apps/api/config/loadApiConfig.js";
 
 const VALID_SECRET = "x".repeat(32);
 
 describe("loadApiConfig", () => {
-  it("rechaza el arranque sin JWT_SECRET", () => {
-    expect(() => loadApiConfig({})).toThrow(ApiConfigError);
-  });
-
-  it("rechaza un JWT_SECRET demasiado corto", () => {
-    expect(() => loadApiConfig({ JWT_SECRET: "corto" })).toThrow(/al menos 32/);
-  });
-
   it("rechaza credenciales de desarrollo en produccion", () => {
     expect(() =>
       loadApiConfig({

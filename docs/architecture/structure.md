@@ -83,7 +83,7 @@ Todo lo que habla con el mundo exterior: drivers, clientes, pools, migraciones, 
 ```
 infrastructure/
 ├── persistence/{json, memory}   implementaciones actuales
-├── persistence/sql              frontera preparada
+├── persistence/sql              implementado para tenancy (ver persistence.md)
 ├── cache/  queue/  storage/  providers/
 ```
 
@@ -105,7 +105,9 @@ La regla que rige qué entra: si el tipo cruza una frontera y es un dato puro de
 
 ## Carpetas vacías
 
-Varias carpetas existen como frontera arquitectónica sin contenido: los dominios `conversations`, `contacts`, `connections`, `integrations`, `team`, `ai-agents`; la capacidad `configuration`; los adapters `sql`, `cache`, `queue`, `storage`, `providers`; y nueve features del frontend.
+Varias carpetas existen como frontera arquitectónica sin contenido: los dominios `conversations`, `contacts`, `connections`, `integrations`, `ai-agents`; la capacidad `configuration`; los adapters `cache`, `queue`, `storage`, `providers`; y nueve features del frontend.
+
+`team` y `persistence/sql` dejaron de estar vacías con Fase 1: la primera implementa membership y onboarding (ver [`boundaries.md`](boundaries.md)); la segunda, tenancy (ver [`persistence.md`](persistence.md)).
 
 Git no versiona directorios vacíos, así que estas fronteras existen **en este documento**, no en el árbol clonado. No se añaden `.gitkeep`: la intención se documenta, no se simula con archivos vacíos.
 

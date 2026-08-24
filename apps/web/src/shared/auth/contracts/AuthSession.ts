@@ -1,17 +1,16 @@
 /**
- * AuthSession — contrato de la sesión autenticada del usuario.
+ * AuthSession — la sesión tal como la ve el frontend.
  *
- * El tenantId siempre viene de la sesión autenticada.
- * NUNCA hardcodeado en componentes ni hooks.
+ * `tenantId` no forma parte de la sesión: un usuario puede pertenecer a varios
+ * tenants y el activo se elige aparte (ver `tenant/ActiveTenantContext`).
  */
 export interface AuthSession {
-  /** Identificador del tenant al que pertenece el usuario autenticado. */
-  tenantId: string;
-  /** Identificador del usuario dentro del tenant. */
-  userId: string;
-  /**
-   * Token de autenticación para llamadas API.
-   * null = modo API key (dev). string = Bearer token (producción).
-   */
-  token: string | null;
+  readonly userId: string;
+  readonly email: string;
+  readonly name: string;
 }
+
+export type SessionState =
+  | { readonly status: "loading" }
+  | { readonly status: "authenticated"; readonly session: AuthSession }
+  | { readonly status: "anonymous" };

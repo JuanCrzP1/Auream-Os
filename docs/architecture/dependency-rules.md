@@ -47,7 +47,7 @@ automations  ──import type──>  flow-engine  ──puertos──>  sessio
 
 Un dominio puede depender de `platform/`. `platform/` nunca depende de un dominio.
 
-`authorization` define qué es un rol; `team` gestionará qué miembro tiene cuál. Esa separación es la prueba: si el código habla de un área de producto concreta, no pertenece a `platform/`.
+`authorization` define qué es un rol; `team` gestiona qué miembro tiene cuál. Esa separación es la prueba: si el código habla de un área de producto concreta, no pertenece a `platform/`.
 
 ### 5. `apps/` compone, no decide
 
