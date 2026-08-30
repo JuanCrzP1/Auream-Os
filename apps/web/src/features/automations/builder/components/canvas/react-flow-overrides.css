@@ -1,5 +1,24 @@
 /* ===== REACTFLOW OVERRIDES ===== */
 
+/* Punteado del lienzo y trazo de las aristas: los decide el tema, no el
+   componente. BuilderCanvas.tsx no declara ningún color. */
+.react-flow__background-pattern.dots {
+  fill: var(--canvas-dot);
+}
+
+.react-flow__edge-path {
+  stroke: var(--edge-stroke);
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--primary);
+}
+
+.react-flow__connectionline path {
+  stroke: var(--primary);
+}
+
 .react-flow__controls,
 .react-flow__minimap {
   box-shadow: none;
@@ -51,6 +70,10 @@
   border: 1px solid var(--border);
   border-radius: 18px;
   overflow: hidden;
+}
+
+.react-flow__minimap-mask {
+  fill: var(--minimap-mask);
 }
 
 .react-flow__edge-textbg {

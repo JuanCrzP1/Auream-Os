@@ -1,28 +1,31 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bots Flows Builder</title>
+    <meta name="color-scheme" content="dark light" />
+    <!-- Copia obligada de BRAND_NAME (src/shared/brand/brand.ts): este
+         documento se sirve antes de que arranque React y no puede importarlo.
+         Si cambia la marca, actualizar ambos. -->
+    <title>AUREAM OS</title>
     <script>
-      /* Tema aplicado antes del primer pintado para evitar el parpadeo blanco.
-         Espejo mínimo de src/shared/theme: si cambia la clave o el atributo,
-         actualizar también shared/theme/storage/themeStore.ts y
+      /* Tema aplicado antes del primer pintado para evitar el parpadeo.
+         Espejo mínimo de src/shared/theme: si cambia la clave, el atributo o
+         el tema por defecto, actualizar también
+         shared/theme/storage/themeStore.ts, shared/theme/contracts/Theme.ts y
          shared/theme/dom/applyThemeToDocument.ts. */
       (function () {
+        var theme = "dark";
         try {
           var stored = window.localStorage.getItem("bots-ai-theme");
-          var theme =
-            stored === "light" || stored === "dark"
-              ? stored
-              : window.matchMedia("(prefers-color-scheme: dark)").matches
-                ? "dark"
-                : "light";
-          document.documentElement.dataset.theme = theme;
-          document.documentElement.style.colorScheme = theme;
+          if (stored === "light" || stored === "dark") {
+            theme = stored;
+          }
         } catch (error) {
-          document.documentElement.dataset.theme = "light";
+          /* Sin almacenamiento se mantiene el tema por defecto. */
         }
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
       })();
     </script>
   </head>

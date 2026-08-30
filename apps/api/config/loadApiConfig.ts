@@ -15,7 +15,17 @@ import { join } from "node:path";
 /** Debe coincidir con el prefijo que exige `platform/identity/ApiKeyVerifier`. */
 const API_KEY_PREFIX = "bfk_";
 const DEFAULT_PORT = 3100;
-const DEFAULT_DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"];
+
+/**
+ * Origen canónico de desarrollo. UNO solo, y es `localhost`.
+ *
+ * No se incluye `http://127.0.0.1:5173` aunque apunte a la misma máquina:
+ * Neon Auth confía en `localhost` pero rechaza `127.0.0.1` con
+ * `INVALID_ORIGIN` (verificado contra la rama `test`). Aceptarlo aquí daría
+ * una falsa sensación de soporte — la API respondería, pero el usuario no
+ * podría iniciar sesión, que es el fallo más confuso posible.
+ */
+const DEFAULT_DEV_ORIGINS = ["http://localhost:5173"];
 
 export interface ApiConfig {
   readonly port: number;

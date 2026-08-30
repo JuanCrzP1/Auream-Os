@@ -9,6 +9,12 @@ export const THEMES = ["light", "dark"] as const;
 
 export type Theme = (typeof THEMES)[number];
 
+/**
+ * Tema con el que arranca la app mientras el usuario no elija otro.
+ * La identidad del producto es oscura; el claro es una preferencia opcional.
+ */
+export const DEFAULT_THEME: Theme = "dark";
+
 export function isTheme(value: unknown): value is Theme {
   return typeof value === "string" && (THEMES as readonly string[]).includes(value);
 }

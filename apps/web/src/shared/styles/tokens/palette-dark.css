@@ -1,0 +1,71 @@
+/* Paleta del modo oscuro — tema por defecto de la aplicación.
+ *
+ * Criterio: lienzo casi negro con temperatura violeta, escalera de elevación
+ * corta pero perceptible y acentos de croma alto. El color vivo se reserva
+ * para lo accionable (primario, estados); el resto es neutro y silencioso.
+ *
+ * Contrato: cada token declarado aquí existe también en palette-light.css.
+ */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Escalera de profundidad: lienzo → chrome → superficie → realce */
+  --bg: #08060f;
+  --bg-elevated: #110e1d;
+  --bg-panel: rgba(18, 15, 30, 0.94);
+  --bg-strong: #241d3c;
+  --surface: #12101d;
+  --surface-alt: #1a1630;
+  --surface-glass: rgba(18, 15, 30, 0.72);
+  --surface-floating: rgba(18, 15, 30, 0.86);
+  /* Transparente para que el resplandor ambiental atraviese el área de trabajo. */
+  --app-canvas: transparent;
+
+  /* Trazos: luz, no tinta. En oscuro los bordes se dibujan con blanco tenue. */
+  --line: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.11);
+
+  /* Texto */
+  --text: #f4f1ff;
+  --muted: #a29bbd;
+  --on-primary: #ffffff;
+
+  /* Acentos */
+  --primary: #8b5cf6;
+  --primary-hover: #a78bfa;
+  --primary-soft: rgba(139, 92, 246, 0.45);
+  --teal: #2ee6c5;
+  --amber: #fbbf24;
+  --rose: #fb7185;
+  --slate: #7dd3fc;
+
+  /* Luz y relieve */
+  --gradient-primary: linear-gradient(135deg, #a855f7 0%, #7c5cf7 48%, #5b6cf9 100%);
+  --glow-primary: 0 12px 30px -12px rgba(139, 92, 246, 0.85);
+  --glow-soft: 0 0 0 1px rgba(139, 92, 246, 0.28);
+  --shadow: 0 18px 48px -18px rgba(0, 0, 0, 0.85);
+  /* Filo superior iluminado: da grosor a las superficies sin subir el fondo. */
+  --elevation-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --icon-float-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.7);
+  --bg-ambient:
+    radial-gradient(900px 520px at 10% -10%, rgba(124, 92, 255, 0.22), transparent 62%),
+    radial-gradient(760px 460px at 94% 4%, rgba(56, 189, 248, 0.1), transparent 60%);
+
+  /* Chips y botones-icono discretos */
+  --chip-bg: rgba(255, 255, 255, 0.05);
+  --chip-bg-hover: rgba(139, 92, 246, 0.18);
+  --chip-neutral-bg: rgba(255, 255, 255, 0.07);
+
+  /* Estados de automatización */
+  --status-active-text: #5eead4;
+  --status-paused-text: #fcd34d;
+
+  /* Cromo del navegador y del lienzo */
+  --canvas-dot: rgba(167, 152, 255, 0.16);
+  --edge-stroke: rgba(167, 152, 255, 0.42);
+  --minimap-mask: rgba(8, 6, 15, 0.72);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.14);
+  --scrollbar-thumb-hover: rgba(139, 92, 246, 0.55);
+  --selection-bg: rgba(139, 92, 246, 0.35);
+}

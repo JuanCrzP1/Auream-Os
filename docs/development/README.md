@@ -139,7 +139,10 @@ Define la variable o usa el launcher, que la establece por ti.
 Comprueba que la API responde: `curl http://localhost:3100/health`. Si devuelve `401` en `/automations`, `DEV_API_KEY` y `VITE_DEV_API_KEY` no coinciden, o no están definidas.
 
 **El navegador bloquea las llamadas por CORS.**
-El origen del frontend no está en `CORS_ALLOWED_ORIGINS`. En desarrollo se permiten `localhost:5173` y `127.0.0.1:5173` por defecto; si Vite eligió otro puerto, añádelo a la variable.
+El origen del frontend no está en `CORS_ALLOWED_ORIGINS`. En desarrollo se permite `http://localhost:5173` por defecto; si Vite eligió otro puerto, añádelo a la variable.
+
+**El login falla con "Esta dirección no está autorizada para iniciar sesión".**
+Estás abriendo la aplicación por `http://127.0.0.1:5173`. Neon Auth sólo confía en `localhost`, así que rechaza ese origen con `INVALID_ORIGIN`. Abre `http://localhost:5173`. Es el único origen de desarrollo soportado, a propósito: ver [`../architecture/auth.md`](../architecture/auth.md).
 
 **El puerto 3100 o 5173 está ocupado.**
 Cambia `PORT` para la API. Vite elige otro puerto automáticamente y lo anuncia.

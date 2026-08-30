@@ -49,15 +49,10 @@ export async function routeApiRequest(
     return;
   }
 
-  // Rutas de descubrimiento de tenant: sólo exigen identidad.
+  // Rutas de descubrimiento de tenant: sólo exigen identidad de usuario.
+  // `routeMeRequest` rechaza las credenciales de máquina por sí mismo.
   if (url.pathname.startsWith("/me/")) {
-    const handled = await routeMeRequest(
-      request,
-      response,
-      url,
-      meServices,
-      principal.identity.actorId
-    );
+    const handled = await routeMeRequest(request, response, url, meServices, principal);
 
     if (handled) {
       return;

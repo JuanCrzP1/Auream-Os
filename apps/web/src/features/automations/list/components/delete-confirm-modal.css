@@ -22,13 +22,13 @@
 .modal-box__title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   margin: 0;
 }
 
 .modal-box__body {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--muted);
   line-height: 1.55;
   margin: 0;
 }
@@ -56,7 +56,7 @@
 
 .modal-box__btn--ghost {
   background: var(--surface-alt);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .modal-box__btn--danger {

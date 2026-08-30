@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../src/shared/test-utils/renderWithProviders";
 import { AppSidebar } from "../../src/shared/ui/AppSidebar";
+import { BRAND_NAME } from "../../src/shared/brand/brand";
 
 function renderSidebar(initialPath = "/automations") {
   return renderWithProviders(<AppSidebar />, { initialPath });
@@ -15,7 +16,7 @@ describe("AppSidebar", () => {
 
   it("renders brand name", () => {
     renderSidebar();
-    expect(screen.getByText("Bots Flows")).toBeInTheDocument();
+    expect(screen.getByText(BRAND_NAME)).toBeInTheDocument();
   });
 
   it("marks Automatizaciones as active when on /automations", () => {
@@ -36,11 +37,6 @@ describe("AppSidebar", () => {
     labels.forEach((label) => {
       expect(screen.getByText(label)).toBeInTheDocument();
     });
-  });
-
-  it("renders collapse button", () => {
-    renderSidebar();
-    expect(screen.getByRole("button", { name: /contraer/i })).toBeInTheDocument();
   });
 
   // ---- Nuevos módulos ----

@@ -1,4 +1,4 @@
-import "../styles/ai-agents-page.css";
+import { PagePlaceholder } from "@shared/ui/page-placeholder/PagePlaceholder";
 
 /**
  * AiAgentsPage — placeholder del módulo de agentes inteligentes.
@@ -10,11 +10,9 @@ import "../styles/ai-agents-page.css";
  */
 export function AiAgentsPage() {
   return (
-    <div className="ai-agents-page">
-      <h1 className="ai-agents-page__title">AI Agents</h1>
-      <p className="ai-agents-page__desc">
-        Administra agentes inteligentes, prompts y herramientas.
-      </p>
-    </div>
+    <PagePlaceholder
+      title="AI Agents"
+      description="Administra agentes inteligentes, prompts y herramientas."
+    />
   );
 }

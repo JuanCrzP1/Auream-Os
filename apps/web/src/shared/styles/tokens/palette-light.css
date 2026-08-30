@@ -1,0 +1,68 @@
+/* Paleta del modo claro.
+ *
+ * Contrato: cada token declarado aquí existe también en palette-dark.css.
+ * Se aplica en `:root` sin atributo para que el documento tenga color válido
+ * aunque el script de arranque no llegue a ejecutarse.
+ */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Escalera de profundidad: lienzo → chrome → superficie → realce */
+  --bg: #f5f3ff;
+  --bg-elevated: #ede9fb;
+  --bg-panel: rgba(237, 233, 251, 0.97);
+  --bg-strong: #e4dff8;
+  --surface: #ffffff;
+  --surface-alt: #f7f5ff;
+  --surface-glass: #ffffff;
+  --surface-floating: rgba(255, 255, 255, 0.94);
+  --app-canvas: var(--surface);
+
+  /* Trazos */
+  --line: rgba(108, 92, 231, 0.12);
+  --border: rgba(108, 92, 231, 0.16);
+
+  /* Texto */
+  --text: #1e1530;
+  --muted: #7c728e;
+  --on-primary: #ffffff;
+
+  /* Acentos */
+  --primary: #6c5ce7;
+  --primary-hover: #5b4bd4;
+  --primary-soft: rgba(108, 92, 231, 0.3);
+  --teal: #2dd4bf;
+  --amber: #f59e0b;
+  --rose: #f43f5e;
+  --slate: #60a5fa;
+
+  /* Luz y relieve */
+  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #6c5ce7 55%, #5b4bd4 100%);
+  --glow-primary: 0 10px 24px -10px rgba(108, 92, 231, 0.5);
+  --glow-soft: 0 0 0 1px rgba(108, 92, 231, 0.14);
+  --shadow: 0 8px 32px -8px rgba(108, 92, 231, 0.18);
+  --elevation-inset: 0 0 0 0 rgba(0, 0, 0, 0);
+  --icon-float-shadow: 0 2px 8px rgba(30, 21, 48, 0.16);
+  --bg-ambient:
+    radial-gradient(900px 480px at 8% -12%, rgba(108, 92, 231, 0.1), transparent 60%),
+    radial-gradient(720px 420px at 96% 0%, rgba(45, 212, 191, 0.07), transparent 60%);
+
+  /* Chips y botones-icono discretos */
+  --chip-bg: rgba(108, 92, 231, 0.06);
+  --chip-bg-hover: rgba(108, 92, 231, 0.12);
+  --chip-neutral-bg: rgba(0, 0, 0, 0.06);
+
+  /* Estados de automatización */
+  --status-active-text: #0f9b8e;
+  --status-paused-text: #b45309;
+
+  /* Cromo del navegador y del lienzo */
+  --canvas-dot: rgba(108, 92, 231, 0.18);
+  --edge-stroke: rgba(108, 92, 231, 0.45);
+  --minimap-mask: rgba(108, 92, 231, 0.12);
+  --scrollbar-thumb: rgba(108, 92, 231, 0.24);
+  --scrollbar-thumb-hover: rgba(108, 92, 231, 0.45);
+  --selection-bg: rgba(108, 92, 231, 0.2);
+}

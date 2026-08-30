@@ -1,0 +1,18 @@
+/* Escalas sin color: radios, tipografía y curvas de movimiento.
+ *
+ * Son idénticas en claro y oscuro, por eso viven fuera de las paletas.
+ * Si un token depende del tema, NO va aquí: va en tokens/palette-*.css.
+ */
+
+:root {
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+
+  --font-display: "Sora", sans-serif;
+  --font-body: "Manrope", sans-serif;
+
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --speed-fast: 140ms;
+  --speed-base: 220ms;
+}

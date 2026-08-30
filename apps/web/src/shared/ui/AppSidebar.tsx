@@ -3,6 +3,7 @@ import { SignOutButton } from "./SignOutButton";
 import { ThemeToggleButton } from "../theme/components/ThemeToggleButton";
 ﻿import { NavLink } from "react-router-dom";
 import { sidebarItems } from "@app/navigation/sidebar/sidebar-items";
+import { BRAND_NAME } from "../brand/brand";
 
 export function AppSidebar() {
   return (
@@ -12,7 +13,7 @@ export function AppSidebar() {
           <span /><span /><span /><span />
         </div>
         <div>
-          <strong>Bots Flows</strong>
+          <strong>{BRAND_NAME}</strong>
         </div>
       </div>
 
@@ -34,9 +35,6 @@ export function AppSidebar() {
       <footer className="app-sidebar__footer">
         <SignOutButton />
         <ThemeToggleButton className="app-sidebar__theme-toggle" />
-        <button type="button" className="app-sidebar__collapse" aria-label="Contraer navegacion">
-          <span /><span />
-        </button>
       </footer>
     </aside>
   );

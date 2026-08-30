@@ -1,24 +1,15 @@
 import { useCallback, useState } from "react";
 import { authClient } from "../client/authClient";
-import { AuthRequestError } from "../client/authFetch";
+import { authErrorMessage } from "../errors/authErrorMessage";
 import { useAuth } from "../context/AuthContext";
 
 /**
  * Acciones de autenticación con su estado de carga y error.
  *
  * Responsabilidad única: ejecutar login/registro y exponer cómo va. No
- * renderiza nada ni decide navegación.
+ * renderiza nada, no decide navegación y no traduce errores: de eso se encarga
+ * `authErrorMessage`.
  */
-
-function messageFor(error: unknown): string {
-  if (error instanceof AuthRequestError) {
-    return error.status === 401 || error.status === 400
-      ? "Credenciales incorrectas."
-      : error.message;
-  }
-
-  return "No se pudo conectar con el servicio de autenticación.";
-}
 
 export interface AuthActionsState {
   readonly pending: boolean;
@@ -34,6 +25,12 @@ export function useAuthActions(): AuthActionsState {
 
   const run = useCallback(
     async (action: () => Promise<unknown>): Promise<boolean> => {
+      // Un segundo envío mientras el primero sigue en vuelo se ignora: evita
+      // registrar dos veces o encadenar dos intentos de login con un doble clic.
+      if (pending) {
+        return false;
+      }
+
       setPending(true);
       setError(null);
 
@@ -42,13 +39,13 @@ export function useAuthActions(): AuthActionsState {
         await refresh();
         return true;
       } catch (caught) {
-        setError(messageFor(caught));
+        setError(authErrorMessage(caught));
         return false;
       } finally {
         setPending(false);
       }
     },
-    [refresh]
+    [pending, refresh]
   );
 
   return {

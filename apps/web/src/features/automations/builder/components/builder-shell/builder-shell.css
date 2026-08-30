@@ -9,7 +9,9 @@
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: var(--bg-ambient);
+  background-attachment: fixed;
 }
 
 /* Stage ocupa todo el espacio restante después del sidebar y la paleta. */

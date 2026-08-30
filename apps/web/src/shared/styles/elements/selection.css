@@ -1,0 +1,6 @@
+/* Selección de texto con el acento de la marca en lugar del azul del sistema. */
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--text);
+}

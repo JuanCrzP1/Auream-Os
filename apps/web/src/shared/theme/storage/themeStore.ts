@@ -4,7 +4,7 @@ import { isTheme, type Theme } from "../contracts/Theme";
  * Preferencia de tema elegida explícitamente por el usuario.
  *
  * Responsabilidad única: persistir esa elección entre recargas.
- * Ausencia de valor NO es un error: significa "seguir al sistema operativo".
+ * Ausencia de valor NO es un error: significa "usar DEFAULT_THEME".
  *
  * IMPORTANTE: la clave está duplicada en el script anti-parpadeo de
  * `apps/web/index.html`. Si se cambia aquí, cambiarla también allí.
@@ -18,7 +18,7 @@ export const themeStore = {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       return isTheme(stored) ? stored : null;
     } catch {
-      // Modo privado o almacenamiento bloqueado: se cae al tema del sistema.
+      // Modo privado o almacenamiento bloqueado: se cae al tema por defecto.
       return null;
     }
   },

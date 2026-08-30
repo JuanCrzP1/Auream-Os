@@ -1,4 +1,11 @@
+import { PagePlaceholder } from "@shared/ui/page-placeholder/PagePlaceholder";
+
 /** Archivo de automatizaciones. NO IMPLEMENTADO. */
 export function ArchivePage() {
-  return <div style={{ padding: 40 }}>Archivo — próximamente</div>;
+  return (
+    <PagePlaceholder
+      title="Archivo"
+      description="Consulta las automatizaciones que has retirado de circulación."
+    />
+  );
 }

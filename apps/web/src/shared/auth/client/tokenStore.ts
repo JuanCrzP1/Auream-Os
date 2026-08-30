@@ -17,6 +17,7 @@ const RENEW_MARGIN_SECONDS = 60;
 let cachedToken: string | null = null;
 let expiresAtSeconds = 0;
 let sessionPresent = false;
+let onSessionLost: (() => void) | null = null;
 
 function readExpiry(token: string): number {
   try {
@@ -28,6 +29,19 @@ function readExpiry(token: string): number {
 }
 
 export const tokenStore = {
+  /**
+   * Aviso de que la sesión dejó de ser válida en el proveedor.
+   *
+   * Lo registra `AuthContext`. Sin él, una sesión revocada mientras la pestaña
+   * sigue abierta dejaba al usuario dentro de la interfaz protegida: el token
+   * ya no se podía renovar, cada llamada respondía 401 y nada devolvía el
+   * estado a "anónimo" hasta recargar. Es alcanzable de verdad, porque cambiar
+   * la contraseña revoca el resto de sesiones.
+   */
+  onSessionLost(handler: (() => void) | null): void {
+    onSessionLost = handler;
+  },
+
   /** AuthContext informa de si hay sesión; sin ella no se pide token. */
   setSessionPresent(present: boolean): void {
     sessionPresent = present;
@@ -56,9 +70,13 @@ export const tokenStore = {
       expiresAtSeconds = readExpiry(token);
       return token;
     } catch {
-      // La sesión caducó entre peticiones: se trata como "sin token".
+      // La sesión caducó o fue revocada entre peticiones. Además de quedarse
+      // sin token, hay que avisar: si no, la aplicación seguiría mostrando la
+      // interfaz de un usuario que ya no lo es.
       cachedToken = null;
       expiresAtSeconds = 0;
+      sessionPresent = false;
+      onSessionLost?.();
       return null;
     }
   },

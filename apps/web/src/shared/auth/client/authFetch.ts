@@ -10,19 +10,33 @@ import { getAuthBaseUrl } from "./getAuthBaseUrl";
 export class AuthRequestError extends Error {
   public constructor(
     public readonly status: number,
-    message: string
+    message: string,
+    /** Código del proveedor (`INVALID_EMAIL_OR_PASSWORD`, ...) si vino en el
+     *  cuerpo. Es lo que permite distinguir dos fallos con el mismo status. */
+    public readonly code: string | null = null
   ) {
     super(message);
     this.name = "AuthRequestError";
   }
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
+interface ErrorBody {
+  readonly message?: string;
+  readonly code?: string;
+}
+
+async function readError(response: Response): Promise<AuthRequestError> {
   try {
-    const body = (await response.json()) as { message?: string };
-    return body.message ?? "No se pudo completar la operación";
+    const body = (await response.json()) as ErrorBody;
+    return new AuthRequestError(
+      response.status,
+      body.message ?? "No se pudo completar la operación",
+      body.code ?? null
+    );
   } catch {
-    return "No se pudo completar la operación";
+    // Sin cuerpo legible sólo queda el status: se conserva y el código queda
+    // en null, que el traductor de mensajes trata como error desconocido.
+    return new AuthRequestError(response.status, "No se pudo completar la operación");
   }
 }
 
@@ -37,7 +51,7 @@ export async function authFetch<T>(path: string, init?: RequestInit): Promise<T>
   });
 
   if (!response.ok) {
-    throw new AuthRequestError(response.status, await readErrorMessage(response));
+    throw await readError(response);
   }
 
   return (await response.json()) as T;

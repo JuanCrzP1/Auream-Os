@@ -1,0 +1,167 @@
+/* Panel de marca de las pantallas de autenticación.
+   Sólo presentación: no define nada del formulario. */
+
+.auth-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 560px;
+  padding: 8px 0;
+}
+
+/* --- Marca ---------------------------------------------------------------- */
+
+.auth-hero__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-hero__mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 6px 16px rgba(139, 92, 246, 0.45));
+}
+
+.auth-hero__mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.auth-hero__wordmark {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+/* --- Mensaje -------------------------------------------------------------- */
+
+.auth-hero__headline {
+  margin: 0;
+  max-width: 15ch;
+  font-family: var(--font-display);
+  /* Escala con el viewport pero nunca se descontrola en pantallas anchas. */
+  font-size: clamp(2.3rem, 4.4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  color: var(--text);
+}
+
+/* El énfasis va en degradado, no en cursiva: la palabra clave sin ruido. */
+.auth-hero__headline em {
+  font-style: normal;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.auth-hero__lede {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.auth-hero__capabilities {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.auth-hero__capabilities li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+/* Viñeta propia: un punto con halo, en lugar de un icono importado. */
+.auth-hero__capabilities li::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+/* --- Grafo ---------------------------------------------------------------- */
+
+.auth-hero__graph {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  margin-top: 6px;
+}
+
+.auth-hero__ring {
+  transform-origin: 220px 131px;
+  animation: auth-hero-spin 26s linear infinite;
+}
+
+@keyframes auth-hero-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sin animación para quien la ha desactivado en su sistema. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-hero__ring {
+    animation: none;
+  }
+
+  .auth-hero__pulse {
+    display: none;
+  }
+}
+
+/* --- Adaptación ----------------------------------------------------------- */
+
+/* Por debajo del layout en dos columnas el grafo y la lista sobran: la marca
+   pasa a ser una cabecera compacta sobre el formulario, no un bloque reducido. */
+@media (max-width: 940px) {
+  .auth-hero {
+    max-width: 460px;
+    gap: 14px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .auth-hero__headline {
+    max-width: 20ch;
+    font-size: clamp(1.75rem, 6vw, 2.3rem);
+  }
+
+  .auth-hero__lede {
+    font-size: 0.96rem;
+  }
+
+  .auth-hero__capabilities,
+  .auth-hero__graph {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .auth-hero__lede {
+    display: none;
+  }
+
+  .auth-hero__headline {
+    font-size: 1.6rem;
+  }
+}

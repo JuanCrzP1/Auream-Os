@@ -1,3 +1,4 @@
+import { loadEnvFile } from "./config/loadEnvFile";
 import { loadApiConfig, ApiConfigError } from "./config/loadApiConfig";
 import { loadDatabaseConfig } from "./config/loadDatabaseConfig";
 import { loadNeonAuthConfig } from "./config/loadNeonAuthConfig";
@@ -22,6 +23,7 @@ function start(): void {
   let authConfig;
 
   try {
+    loadEnvFile();
     config = loadApiConfig();
     databaseConfig = loadDatabaseConfig();
     authConfig = loadNeonAuthConfig();

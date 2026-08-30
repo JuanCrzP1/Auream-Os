@@ -48,15 +48,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       await authClient.signOut();
-    } finally {
-      tokenStore.clear();
-      setState({ status: "anonymous" });
+    } catch {
+      // Un fallo al invalidar en el proveedor no puede propagarse: quien llama
+      // aún tiene que limpiar su propio estado (tenant activo) y navegar. Si
+      // se dejara escapar el error, cerrar sesión con la red caída dejaría al
+      // usuario en la pantalla actual y con el tenant anterior guardado.
+      // La sesión local se limpia igualmente, abajo.
     }
+
+    tokenStore.clear();
+    setState({ status: "anonymous" });
   }, []);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Si el proveedor deja de renovar el token, la sesión ya no existe: se pasa a
+  // anónimo para que `ProtectedRoute` devuelva al login en vez de dejar una
+  // interfaz protegida que ninguna llamada puede completar.
+  useEffect(() => {
+    tokenStore.onSessionLost(() => setState({ status: "anonymous" }));
+
+    return () => tokenStore.onSessionLost(null);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ state, refresh, signOut }}>{children}</AuthContext.Provider>

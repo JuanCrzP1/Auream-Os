@@ -11,35 +11,44 @@ describe("ThemeToggleButton", () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it("arranca en claro cuando el sistema no pide oscuro", () => {
+  it("arranca en oscuro cuando nadie ha elegido tema", () => {
     renderWithProviders(<ThemeToggleButton />);
-    expect(screen.getByRole("button", { name: /modo oscuro/i })).toBeInTheDocument();
-    expect(document.documentElement.dataset.theme).toBe("light");
-  });
-
-  it("aplica el tema oscuro al documento al pulsar", async () => {
-    renderWithProviders(<ThemeToggleButton />);
-
-    await userEvent.click(screen.getByRole("button", { name: /modo oscuro/i }));
 
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(screen.getByRole("button", { name: /modo claro/i })).toBeInTheDocument();
   });
 
+  it("aplica el tema claro al documento al pulsar", async () => {
+    renderWithProviders(<ThemeToggleButton />);
+
+    await userEvent.click(screen.getByRole("button", { name: /modo claro/i }));
+
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(screen.getByRole("button", { name: /modo oscuro/i })).toBeInTheDocument();
+  });
+
   it("persiste la elección para la siguiente carga", async () => {
     renderWithProviders(<ThemeToggleButton />);
 
-    await userEvent.click(screen.getByRole("button", { name: /modo oscuro/i }));
+    await userEvent.click(screen.getByRole("button", { name: /modo claro/i }));
 
-    expect(themeStore.read()).toBe("dark");
+    expect(themeStore.read()).toBe("light");
   });
 
   it("respeta el tema persistido al montar", () => {
+    themeStore.write("light");
+
+    renderWithProviders(<ThemeToggleButton />);
+
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(screen.getByRole("button", { name: /modo oscuro/i })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("marca aria-pressed cuando el tema activo es oscuro", () => {
     themeStore.write("dark");
 
     renderWithProviders(<ThemeToggleButton />);
 
-    expect(document.documentElement.dataset.theme).toBe("dark");
     expect(screen.getByRole("button", { name: /modo claro/i })).toHaveAttribute("aria-pressed", "true");
   });
 });

@@ -1,7 +1,10 @@
-/* Estilos verdaderamente globales.
+/* Composición de los estilos verdaderamente globales.
  *
+ * Este archivo NO declara reglas: solo ordena las piezas.
  * Cada feature es dueña de su propio CSS y lo importa desde su componente.
  * NO añadir aquí estilos de una feature concreta.
  */
 
 @import "./base.css";
+@import "./elements/scrollbar.css";
+@import "./elements/selection.css";

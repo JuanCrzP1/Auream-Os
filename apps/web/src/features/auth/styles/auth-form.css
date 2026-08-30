@@ -3,65 +3,301 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
+
+/* --- Campos --------------------------------------------------------------- */
 
 .auth-form__field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .auth-form__field span {
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  color: var(--muted);
+  letter-spacing: 0.01em;
+  color: var(--text);
 }
 
 .auth-form__field input {
-  padding: 12px 14px;
-  border: 1px solid var(--line);
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--color-bg-primary);
+  background: var(--surface-alt);
   color: var(--text);
   font-family: var(--font-body);
   font-size: 0.95rem;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.auth-form__field input::placeholder {
+  color: var(--muted);
+}
+
+.auth-form__field input:hover:not(:focus) {
+  border-color: var(--primary-soft);
 }
 
 .auth-form__field input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.14);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
-.auth-form__error {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: rgba(244, 63, 94, 0.08);
-  color: var(--rose);
-  font-size: 0.86rem;
+/* El navegador marca en rojo sólo tras un intento de envío fallido. */
+.auth-form__field input:user-invalid {
+  border-color: var(--rose);
 }
 
-.auth-form__submit {
-  margin-top: 4px;
-  padding: 13px 16px;
+/* --- Contraseña ----------------------------------------------------------- */
+
+.auth-form__password {
+  position: relative;
+  display: flex;
+}
+
+.auth-form__password input {
+  /* Hueco para el botón de revelar, que va superpuesto. */
+  padding-right: 84px;
+}
+
+.auth-form__reveal {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  padding: 7px 10px;
   border: 0;
-  border-radius: var(--radius-md);
-  background: var(--primary);
-  color: var(--on-primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
   font-family: var(--font-body);
-  font-size: 0.96rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition:
+    color 140ms ease,
+    background 140ms ease;
+}
+
+.auth-form__reveal:hover {
+  background: var(--chip-bg-hover);
+  color: var(--text);
+}
+
+.auth-form__reveal:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  color: var(--text);
+}
+
+/* --- Requisitos de contraseña --------------------------------------------- */
+
+.auth-form__requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: -4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.auth-form__requirements li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 160ms ease;
+}
+
+.auth-form__requirements li::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.45;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.auth-form__requirements li.is-met {
+  color: var(--teal);
+}
+
+.auth-form__requirements li.is-met::before {
+  background: var(--teal);
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18);
+}
+
+/* --- Enlace secundario ---------------------------------------------------- */
+
+.auth-form__link {
+  align-self: flex-end;
+  margin-top: -6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: color 140ms ease;
+}
+
+.auth-form__link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-form__link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  color: var(--text);
+}
+
+/* --- Mensajes ------------------------------------------------------------- */
+
+.auth-form__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid rgba(244, 63, 94, 0.28);
+  border-radius: var(--radius-md);
+  background: rgba(244, 63, 94, 0.09);
+  color: var(--rose);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+/* Marca de aviso dibujada en CSS: no hace falta cargar un icono. */
+.auth-form__error::before {
+  content: "!";
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--rose);
+  color: var(--on-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.auth-form__notice {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+/* --- Envío ---------------------------------------------------------------- */
+
+.auth-form__submit {
+  position: relative;
+  margin-top: 6px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  font-family: var(--font-body);
+  font-size: 0.97rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: var(--glow-primary);
+  transition:
+    transform 140ms ease,
+    box-shadow 180ms ease,
+    filter 140ms ease;
 }
 
 .auth-form__submit:hover:not(:disabled) {
-  background: var(--primary-hover);
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow:
+    var(--glow-primary),
+    0 0 0 1px var(--primary-soft);
 }
 
+.auth-form__submit:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.97);
+}
+
+.auth-form__submit:focus-visible {
+  outline: 2px solid var(--primary-hover);
+  outline-offset: 3px;
+}
+
+/* Deshabilitado por reglas del formulario: apagado, sin sombra de acento. */
 .auth-form__submit:disabled {
-  opacity: 0.6;
+  background: var(--chip-neutral-bg);
+  color: var(--muted);
+  box-shadow: none;
   cursor: not-allowed;
+}
+
+/* En curso: conserva el color de marca y añade un indicador de actividad. */
+.auth-form__submit[aria-busy="true"]:disabled {
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  opacity: 0.82;
+  cursor: progress;
+}
+
+.auth-form__submit[aria-busy="true"]::after {
+  content: "";
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-left: 9px;
+  vertical-align: -2px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--on-primary);
+  border-radius: 50%;
+  animation: auth-form-spin 700ms linear infinite;
+}
+
+@keyframes auth-form-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-form__submit,
+  .auth-form__field input,
+  .auth-form__requirements li,
+  .auth-form__requirements li::before {
+    transition: none;
+  }
+
+  .auth-form__submit:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .auth-form__submit[aria-busy="true"]::after {
+    animation: none;
+  }
 }

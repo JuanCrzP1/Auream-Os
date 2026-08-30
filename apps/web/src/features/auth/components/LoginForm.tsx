@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { AuthErrorMessage } from "./AuthErrorMessage";
 import { AuthSubmitButton } from "./AuthSubmitButton";
+import { PasswordField } from "./PasswordField";
 import "../styles/auth-form.css";
 
 interface Props {
@@ -20,7 +22,7 @@ export function LoginForm({ pending, error, onSubmit }: Props) {
   };
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit} noValidate>
+    <form className="auth-form" onSubmit={handleSubmit}>
       <label className="auth-form__field">
         <span>Correo electrónico</span>
         <input
@@ -32,16 +34,16 @@ export function LoginForm({ pending, error, onSubmit }: Props) {
         />
       </label>
 
-      <label className="auth-form__field">
-        <span>Contraseña</span>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-          required
-        />
-      </label>
+      <PasswordField
+        label="Contraseña"
+        value={password}
+        onChange={setPassword}
+        autoComplete="current-password"
+      />
+
+      <Link className="auth-form__link" to="/forgot-password">
+        ¿Olvidaste tu contraseña?
+      </Link>
 
       <AuthErrorMessage message={error} />
       <AuthSubmitButton pending={pending} idleLabel="Entrar" pendingLabel="Entrando..." />

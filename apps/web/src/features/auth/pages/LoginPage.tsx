@@ -17,7 +17,9 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Bots AI Platform"
+      // La marca la presenta el panel lateral: el título de la tarjeta dice
+      // qué se hace aquí, no cómo se llama el producto.
+      title="Inicia sesión"
       subtitle="Entra para gestionar tus automatizaciones."
       footer={
         <>

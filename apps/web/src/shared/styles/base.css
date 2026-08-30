@@ -1,3 +1,5 @@
+/* Reajuste base del documento. Solo elementos nativos: nada de componentes. */
+
 *,
 *::before,
 *::after {
@@ -13,7 +15,7 @@ body,
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   /* Suaviza el cambio de tema sin afectar a la carga inicial. */

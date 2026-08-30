@@ -22,6 +22,7 @@
   color: var(--primary);
   border-color: var(--primary-soft);
   background: var(--chip-bg-hover);
+  box-shadow: var(--glow-soft);
 }
 
 .theme-toggle:focus-visible {

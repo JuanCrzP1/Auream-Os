@@ -29,7 +29,7 @@ describe("AppRouter — rutas públicas", () => {
   it("muestra el login en /login", async () => {
     renderRouter("/login");
 
-    expect(await screen.findByRole("heading", { name: /bots ai platform/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /inicia sesión/i })).toBeInTheDocument();
   });
 
   it("muestra el registro en /register", async () => {
@@ -53,7 +53,7 @@ describe("AppRouter — rutas protegidas sin sesión", () => {
     renderRouter(path);
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /bots ai platform/i })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /inicia sesión/i })).toBeInTheDocument();
     });
   });
 

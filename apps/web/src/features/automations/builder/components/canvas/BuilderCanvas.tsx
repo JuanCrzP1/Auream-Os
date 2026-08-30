@@ -65,7 +65,7 @@ function CanvasInner(props: BuilderCanvasProps) {
           nodeTypes={nodeTypes}
           snapGrid={[24, 24]}
           connectionLineType={ConnectionLineType.SmoothStep}
-          connectionLineStyle={{ stroke: "rgba(148,163,184,0.7)", strokeWidth: 2, strokeDasharray: "6 3" }}
+          connectionLineStyle={{ strokeWidth: 2, strokeDasharray: "6 3" }}
           onNodesChange={props.onNodesChange}
           onEdgesChange={props.onEdgesChange}
           onConnect={props.onConnect}
@@ -78,24 +78,15 @@ function CanvasInner(props: BuilderCanvasProps) {
           }}
           defaultEdgeOptions={{
             type: "smoothstep",
-            style: { stroke: "rgba(148,163,184,0.55)", strokeWidth: 2, strokeDasharray: "6 3" }
+            style: { strokeWidth: 2, strokeDasharray: "6 3" }
           }}
           proOptions={{ hideAttribution: true }}
         >
-          <MiniMap
-            pannable
-            zoomable
-            style={{
-                background: "rgba(255, 255, 255, 0.94)",
-                border: "1px solid rgba(108, 92, 231, 0.16)",
-              borderRadius: 16
-            }}
-          />
+          <MiniMap pannable zoomable />
           <Controls showInteractive={false} />
           <Background
             gap={28}
             size={1.5}
-            color="rgba(148,163,184,0.15)"
             variant={BackgroundVariant.Dots}
           />
         </ReactFlow>

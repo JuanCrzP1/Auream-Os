@@ -1,8 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { oppositeTheme, type Theme } from "../contracts/Theme";
+import { DEFAULT_THEME, oppositeTheme, type Theme } from "../contracts/Theme";
 import { applyThemeToDocument } from "../dom/applyThemeToDocument";
 import { themeStore } from "../storage/themeStore";
-import { getSystemTheme, subscribeToSystemTheme } from "../system/systemTheme";
 
 /**
  * Tema activo de la aplicación.
@@ -10,8 +9,8 @@ import { getSystemTheme, subscribeToSystemTheme } from "../system/systemTheme";
  * Responsabilidad única: mantener el tema en memoria, persistir la elección
  * del usuario y reflejarla en el documento.
  *
- * Precedencia: elección guardada > preferencia del sistema. Mientras el
- * usuario no elija, la app sigue al sistema en vivo.
+ * Precedencia: elección guardada > DEFAULT_THEME (oscuro). La app es
+ * oscura de fábrica; el claro solo aparece si alguien lo pide.
  */
 
 interface ThemeContextValue {
@@ -23,7 +22,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function resolveInitialTheme(): Theme {
-  return themeStore.read() ?? getSystemTheme();
+  return themeStore.read() ?? DEFAULT_THEME;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -32,15 +31,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     applyThemeToDocument(theme);
   }, [theme]);
-
-  useEffect(() => {
-    return subscribeToSystemTheme((systemTheme) => {
-      // Solo se sigue al sistema si el usuario no ha elegido nada.
-      if (themeStore.read() === null) {
-        setThemeState(systemTheme);
-      }
-    });
-  }, []);
 
   const setTheme = useCallback((next: Theme) => {
     themeStore.write(next);

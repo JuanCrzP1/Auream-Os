@@ -10,7 +10,7 @@
   border: 1.5px solid var(--border);
   border-radius: 8px;
   font-size: 0.9rem;
-  color: var(--text-primary);
+  color: var(--text);
   background: var(--surface-alt);
   outline: none;
   transition: border-color 0.15s;

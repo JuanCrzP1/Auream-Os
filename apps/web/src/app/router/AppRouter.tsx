@@ -5,6 +5,8 @@ import { ConnectionsPage } from "@features/connections/pages/ConnectionsPage";
 import { AiAgentsPage } from "@features/ai-agents/pages/AiAgentsPage";
 import { LoginPage } from "@features/auth/pages/LoginPage";
 import { RegisterPage } from "@features/auth/pages/RegisterPage";
+import { ForgotPasswordPage } from "@features/auth/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@features/auth/pages/ResetPasswordPage";
 import { AppShell } from "@shared/ui/app-shell/AppShell";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { TemplatesPage } from "./placeholders/TemplatesPage";
@@ -13,14 +15,20 @@ import { ArchivePage } from "./placeholders/ArchivePage";
 /**
  * Rutas de la aplicación.
  *
- * `/login` y `/register` son públicas; todo lo demás pasa por ProtectedRoute,
- * la única estrategia de protección del frontend.
+ * Las rutas de autenticación son públicas; todo lo demás pasa por
+ * ProtectedRoute, la única estrategia de protección del frontend.
+ *
+ * `/reset-password` tiene que ser pública aunque cambie una credencial: el
+ * usuario llega desde el correo sin sesión, y la autoridad es el token que
+ * verifica el proveedor, no una sesión nuestra.
  */
 export function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route path="/" element={<Navigate to="/automations" replace />} />
 

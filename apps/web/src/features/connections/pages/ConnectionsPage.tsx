@@ -1,4 +1,4 @@
-import "../styles/connections-page.css";
+import { PagePlaceholder } from "@shared/ui/page-placeholder/PagePlaceholder";
 
 /**
  * ConnectionsPage — placeholder del módulo de conexiones.
@@ -10,11 +10,9 @@ import "../styles/connections-page.css";
  */
 export function ConnectionsPage() {
   return (
-    <div className="connections-page">
-      <h1 className="connections-page__title">Conexiones</h1>
-      <p className="connections-page__desc">
-        Administra instancias, estados y conexiones WhatsApp.
-      </p>
-    </div>
+    <PagePlaceholder
+      title="Conexiones"
+      description="Administra instancias, estados y conexiones WhatsApp."
+    />
   );
 }
