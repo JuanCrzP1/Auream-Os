@@ -2,6 +2,7 @@
    Usa las variables del tema global: no introduce una paleta propia. */
 
 .auth-page {
+  position: relative;
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -55,4 +56,11 @@
 
 .auth-page__footer a:hover {
   text-decoration: underline;
+}
+
+/* El conmutador de tema se ancla a la pantalla, no al panel del formulario. */
+.auth-page__theme-toggle {
+  position: absolute;
+  top: 24px;
+  right: 24px;
 }

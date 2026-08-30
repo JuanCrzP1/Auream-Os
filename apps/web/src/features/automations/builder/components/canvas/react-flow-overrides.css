@@ -6,8 +6,8 @@
 }
 
 .react-flow__controls {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(108, 92, 231, 0.16);
+  background: var(--surface-floating);
+  border: 1px solid var(--border);
   border-radius: 16px;
   backdrop-filter: blur(14px);
   overflow: hidden;
@@ -47,8 +47,8 @@
 }
 
 .react-flow__minimap {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(108, 92, 231, 0.16);
+  background: var(--surface-floating);
+  border: 1px solid var(--border);
   border-radius: 18px;
   overflow: hidden;
 }

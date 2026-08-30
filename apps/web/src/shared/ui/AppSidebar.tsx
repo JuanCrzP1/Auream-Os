@@ -1,5 +1,6 @@
 import "./app-sidebar.css";
 import { SignOutButton } from "./SignOutButton";
+import { ThemeToggleButton } from "../theme/components/ThemeToggleButton";
 ﻿import { NavLink } from "react-router-dom";
 import { sidebarItems } from "@app/navigation/sidebar/sidebar-items";
 
@@ -32,6 +33,7 @@ export function AppSidebar() {
 
       <footer className="app-sidebar__footer">
         <SignOutButton />
+        <ThemeToggleButton className="app-sidebar__theme-toggle" />
         <button type="button" className="app-sidebar__collapse" aria-label="Contraer navegacion">
           <span /><span />
         </button>

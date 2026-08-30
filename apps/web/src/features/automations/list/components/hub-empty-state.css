@@ -77,7 +77,7 @@
 
 .hub-empty__btn--primary {
   background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 88%, white 12%), var(--primary));
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .hub-empty__btn--primary:hover {
@@ -86,7 +86,7 @@
 }
 
 .hub-empty__btn--secondary {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   border-color: color-mix(in srgb, var(--line) 78%, white 22%);
 }

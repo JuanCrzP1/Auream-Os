@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ThemeToggleButton } from "@shared/theme/components/ThemeToggleButton";
 import "../styles/auth-page.css";
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 export function AuthLayout({ title, subtitle, children, footer }: Props) {
   return (
     <main className="auth-page">
+      <ThemeToggleButton className="auth-page__theme-toggle" />
+
       <section className="auth-page__panel">
         <header className="auth-page__header">
           <h1 className="auth-page__title">{title}</h1>

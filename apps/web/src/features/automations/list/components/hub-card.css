@@ -66,10 +66,10 @@
   flex: 0 0 auto;
 }
 
-.hub-card__status--active  { background: rgba(45, 212, 191, 0.15); color: #0f9b8e; }
-.hub-card__status--paused  { background: rgba(245, 158, 11, 0.15); color: #b45309; }
-.hub-card__status--draft   { background: rgba(108, 92, 231, 0.12); color: var(--primary); }
-.hub-card__status--archived { background: rgba(0,0,0,0.06); color: var(--muted); }
+.hub-card__status--active  { background: rgba(45, 212, 191, 0.15); color: var(--status-active-text); }
+.hub-card__status--paused  { background: rgba(245, 158, 11, 0.15); color: var(--status-paused-text); }
+.hub-card__status--draft   { background: var(--chip-bg-hover); color: var(--primary); }
+.hub-card__status--archived { background: var(--chip-neutral-bg); color: var(--muted); }
 
 .hub-card__tags {
   display: flex;

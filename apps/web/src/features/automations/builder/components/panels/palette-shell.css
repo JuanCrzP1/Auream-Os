@@ -6,7 +6,7 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: var(--surface);
   border-right: 1px solid var(--line);
   overflow: hidden;
   transition:

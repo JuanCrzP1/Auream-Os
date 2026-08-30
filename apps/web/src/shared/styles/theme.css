@@ -1,6 +1,21 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap");
 
-:root {
+/* =====================================================================
+ * Paleta y tokens de diseño — FUENTE ÚNICA de color de la aplicación.
+ *
+ * Contrato: ningún componente escribe un color literal. Todo sale de aquí.
+ * El tema activo lo fija `shared/theme/dom/applyThemeToDocument.ts` como
+ * atributo `data-theme` en <html>; el script de arranque de index.html lo
+ * aplica antes del primer pintado para que no haya parpadeo.
+ *
+ * Para añadir un token: declararlo en AMBOS bloques (claro y oscuro).
+ * ===================================================================== */
+
+/* ---------- Modo claro (por defecto) ---------- */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
   --bg: #f5f3ff;
   --bg-elevated: #ede9fb;
   --bg-panel: rgba(237, 233, 251, 0.97);
@@ -10,19 +25,75 @@
   --muted: #7c728e;
   --primary: #6c5ce7;
   --primary-hover: #5b4bd4;
+  --primary-soft: rgba(108, 92, 231, 0.3);
+  --on-primary: #ffffff;
   --teal: #2dd4bf;
   --amber: #f59e0b;
   --rose: #f43f5e;
   --slate: #60a5fa;
   --shadow: 0 8px 32px -8px rgba(108, 92, 231, 0.18);
+
+  /* Superficies de contenido (tarjetas, topbars, paneles, modales) */
+  --surface: #ffffff;
+  --surface-alt: #f7f5ff;
+  --surface-floating: rgba(255, 255, 255, 0.94);
+  --border: rgba(108, 92, 231, 0.16);
+
+  /* Chips y botones-icono discretos */
+  --chip-bg: rgba(108, 92, 231, 0.06);
+  --chip-bg-hover: rgba(108, 92, 231, 0.12);
+  --chip-neutral-bg: rgba(0, 0, 0, 0.06);
+
+  /* Estados de automatización */
+  --status-active-text: #0f9b8e;
+  --status-paused-text: #b45309;
+
   --radius-lg: 26px;
   --radius-md: 18px;
   --radius-sm: 12px;
   --font-display: "Sora", sans-serif;
   --font-body: "Manrope", sans-serif;
-  --color-bg-primary: #ffffff;
+
+  /* Alias heredados: mantenidos para no romper CSS existente. */
+  --color-bg-primary: var(--surface);
   --color-bg-secondary: var(--bg);
   --color-text-primary: var(--text);
   --color-text-secondary: var(--muted);
   --color-accent: var(--primary);
+  --text-primary: var(--text);
+  --text-secondary: var(--muted);
+}
+
+/* ---------- Modo oscuro ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #120f1c;
+  --bg-elevated: #1a1628;
+  --bg-panel: rgba(26, 22, 40, 0.97);
+  --bg-strong: #241f38;
+  --line: rgba(167, 152, 255, 0.16);
+  --text: #ece9f7;
+  --muted: #a79fbd;
+  --primary: #8b7cf6;
+  --primary-hover: #a08ffb;
+  --primary-soft: rgba(139, 124, 246, 0.42);
+  --on-primary: #ffffff;
+  --teal: #2dd4bf;
+  --amber: #fbbf24;
+  --rose: #fb7185;
+  --slate: #60a5fa;
+  --shadow: 0 10px 36px -10px rgba(0, 0, 0, 0.7);
+
+  --surface: #1a1628;
+  --surface-alt: #221d34;
+  --surface-floating: rgba(26, 22, 40, 0.94);
+  --border: rgba(167, 152, 255, 0.18);
+
+  --chip-bg: rgba(167, 152, 255, 0.08);
+  --chip-bg-hover: rgba(167, 152, 255, 0.16);
+  --chip-neutral-bg: rgba(255, 255, 255, 0.08);
+
+  --status-active-text: #5eead4;
+  --status-paused-text: #fcd34d;
 }
