@@ -1,44 +1,25 @@
 .app-sidebar {
-  width: 200px;
-  flex: 0 0 200px;
+  /* 200px dejaban la marca sin respiración: con el isotipo (34px) y el nombre
+     (97px) sólo sobraban 31px, y el bloque se leía comprimido contra el borde.
+     A 220px la marca ocupa el mismo espacio pero con aire real a ambos lados. */
+  width: 220px;
+  flex: 0 0 220px;
   height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 10px 8px 12px;
+  padding: 10px 10px 12px;
   background: var(--bg-elevated);
   border-right: 1px solid var(--line);
   box-shadow: var(--elevation-inset);
 }
 
 .app-sidebar__brand {
+  /* El conjunto de marca trae su propia composición interna; aquí sólo se le
+     da sitio y se le separa de la navegación. */
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 8px 12px;
+  padding: 10px 8px 16px;
   border-bottom: 1px solid var(--line);
-}
-
-.app-sidebar__logo {
-  display: grid;
-  grid-template-columns: repeat(2, 7px);
-  grid-template-rows: repeat(2, 7px);
-  gap: 3px;
-  width: 34px;
-  height: 34px;
-  place-content: center;
-  border-radius: 10px;
-  background: var(--gradient-primary);
-  box-shadow: var(--glow-primary);
-  flex: 0 0 auto;
-}
-
-.app-sidebar__logo span {
-  display: block;
-  width: 7px;
-  height: 7px;
-  border-radius: 3px;
-  background: var(--on-primary);
 }
 
 .app-sidebar__nav {

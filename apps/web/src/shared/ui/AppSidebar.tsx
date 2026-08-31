@@ -3,19 +3,12 @@ import { SignOutButton } from "./SignOutButton";
 import { ThemeToggleButton } from "../theme/components/ThemeToggleButton";
 ﻿import { NavLink } from "react-router-dom";
 import { sidebarItems } from "@app/navigation/sidebar/sidebar-items";
-import { BRAND_NAME } from "../brand/brand";
+import { AureamLockup } from "../brand/AureamLockup";
 
 export function AppSidebar() {
   return (
     <aside className="app-sidebar">
-      <div className="app-sidebar__brand">
-        <div className="app-sidebar__logo" aria-hidden="true">
-          <span /><span /><span /><span />
-        </div>
-        <div>
-          <strong>{BRAND_NAME}</strong>
-        </div>
-      </div>
+      <AureamLockup size="sm" className="app-sidebar__brand" />
 
       <nav className="app-sidebar__nav">
         {sidebarItems.map((item) => (

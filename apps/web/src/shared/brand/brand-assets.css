@@ -1,0 +1,16 @@
+/* Presentación de los assets de marca.
+   Sólo reglas intrínsecas de la imagen: dónde se coloca lo decide quien la usa. */
+
+.auream-mark,
+.auream-logo {
+  display: block;
+  /* El alto se deriva del ancho: la marca nunca se estira. */
+  height: auto;
+  user-select: none;
+}
+
+/* El isotipo conserva su proporción apaisada: se muestra entero, sin recorte.
+   Un punto de brillo lo despega del fondo oscuro del chrome. */
+.auream-mark {
+  filter: brightness(1.1);
+}

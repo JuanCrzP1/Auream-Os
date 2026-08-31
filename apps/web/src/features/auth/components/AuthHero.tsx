@@ -1,4 +1,4 @@
-import { BRAND_NAME } from "@shared/brand/brand";
+import { AureamLogo } from "@shared/brand/AureamLogo";
 import "../styles/auth-hero.css";
 
 /**
@@ -22,26 +22,7 @@ const CAPABILITIES = [
 export function AuthHero() {
   return (
     <aside className="auth-hero">
-      <div className="auth-hero__brand">
-        <span className="auth-hero__mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" role="presentation">
-            <path
-              d="M16 3.5 27 9.75v12.5L16 28.5 5 22.25V9.75Z"
-              fill="url(#markFill)"
-              stroke="rgba(255,255,255,0.28)"
-              strokeWidth="1"
-            />
-            <circle cx="16" cy="16" r="3.6" fill="#fff" opacity="0.92" />
-            <defs>
-              <linearGradient id="markFill" x1="5" y1="3.5" x2="27" y2="28.5">
-                <stop offset="0%" stopColor="#a855f7" />
-                <stop offset="100%" stopColor="#5b6cf9" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </span>
-        <span className="auth-hero__wordmark">{BRAND_NAME}</span>
-      </div>
+      <AureamLogo width={232} className="auth-hero__logo" />
 
       <h2 className="auth-hero__headline">
         Conversaciones que <em>trabajan</em> por ti.

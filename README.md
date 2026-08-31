@@ -1,8 +1,12 @@
-# AUREAM OS
+<p align="center">
+  <img src="apps/web/src/shared/brand/auream-logo-web.png" alt="AUREAM OS" width="420">
+</p>
 
-**AI Agents · Flows · Conversations**
+<h1 align="center">AUREAM OS</h1>
 
-> La plataforma inteligente para automatizar conversaciones y procesos.
+<p align="center"><strong>AI Agents · Flows · Conversations</strong></p>
+
+<p align="center">La plataforma inteligente para automatizar conversaciones y procesos.</p>
 
 ---
 

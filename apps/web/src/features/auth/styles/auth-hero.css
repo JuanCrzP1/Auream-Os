@@ -5,51 +5,46 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  max-width: 560px;
+  /* Sin gap uniforme: cada separación se decide por la relación entre las dos
+     piezas que une, no por una medida repetida. El ritmo va abajo. */
+  gap: 0;
+  /* Ceñido al contenido real (el grafo, 440px, es lo más ancho). */
+  max-width: 480px;
   padding: 8px 0;
 }
 
 /* --- Marca ---------------------------------------------------------------- */
 
-.auth-hero__brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.auth-hero__mark {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  filter: drop-shadow(0 6px 16px rgba(139, 92, 246, 0.45));
-}
-
-.auth-hero__mark svg {
-  width: 100%;
-  height: 100%;
-}
-
-.auth-hero__wordmark {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  color: var(--text);
+/* El logotipo oficial encabeza la composición: isotipo, nombre y descriptor
+   en una sola pieza, tal como está diseñado.
+   El PNG lleva su propio relleno oscuro (el arte luminoso ocupa 528x341 de un
+   lienzo de 640x427). A 232px eso son 22px de aire a la izquierda y 14px
+   abajo: los márgenes negativos NO desplazan el logo, anulan ese relleno para
+   que se alinee el arte con el titular y no la caja. */
+.auth-hero__logo {
+  width: 290px;
+  max-width: 100%;
+  margin-left: -28px;
+  margin-bottom: -18px;
+  filter: drop-shadow(0 12px 34px rgba(139, 92, 246, 0.34)) brightness(1.08);
 }
 
 /* --- Mensaje -------------------------------------------------------------- */
 
 .auth-hero__headline {
-  margin: 0;
-  max-width: 15ch;
+  /* Separación mayor que el resto: la identidad y el mensaje son dos zonas
+     distintas de la composición, y ese aire es lo que las articula. */
+  margin: 30px 0 0;
+  /* Medido sobre el titular real: «Conversaciones» ocupa 8.06em y
+     «que trabajan por ti.» 9.35em, mientras «Conversaciones que» llega a
+     10.17em. Un límite entre ambos fuerza siempre la rotura tras
+     «Conversaciones», y al ir en `em` se mantiene a cualquier tamaño. */
+  max-width: 9.8em;
   font-family: var(--font-display);
-  /* Escala con el viewport pero nunca se descontrola en pantallas anchas. */
-  font-size: clamp(2.3rem, 4.4vw, 3.5rem);
+  font-size: clamp(1.85rem, 2.75vw, 2.4rem);
   font-weight: 700;
-  line-height: 1.06;
-  letter-spacing: -0.025em;
+  line-height: 1.08;
+  letter-spacing: -0.022em;
   color: var(--text);
 }
 
@@ -63,7 +58,8 @@
 }
 
 .auth-hero__lede {
-  margin: 0;
+  /* Cerca del titular: continúan la misma idea. */
+  margin: 14px 0 0;
   max-width: 42ch;
   font-size: 1.02rem;
   line-height: 1.6;
@@ -74,7 +70,8 @@
   display: flex;
   flex-direction: column;
   gap: 11px;
-  margin: 4px 0 0;
+  /* Bloque aparte: enumera, no continúa la frase anterior. */
+  margin: 26px 0 0;
   padding: 0;
   list-style: none;
   font-size: 0.94rem;
@@ -104,7 +101,8 @@
   width: 100%;
   max-width: 440px;
   height: auto;
-  margin-top: 6px;
+  /* El elemento gráfico cierra la columna; el aire lo separa del texto. */
+  margin-top: 34px;
 }
 
 .auth-hero__ring {
@@ -141,9 +139,14 @@
     text-align: center;
   }
 
+  /* Centrado: la compensación óptica de la alineación izquierda sobra. */
+  .auth-hero__logo {
+    margin-left: 0;
+  }
+
   .auth-hero__headline {
-    max-width: 20ch;
-    font-size: clamp(1.75rem, 6vw, 2.3rem);
+    max-width: 12em;
+    font-size: clamp(1.7rem, 5.4vw, 2.15rem);
   }
 
   .auth-hero__lede {
@@ -162,6 +165,6 @@
   }
 
   .auth-hero__headline {
-    font-size: 1.6rem;
+    font-size: 1.55rem;
   }
 }

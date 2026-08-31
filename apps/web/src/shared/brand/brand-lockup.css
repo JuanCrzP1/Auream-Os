@@ -1,0 +1,34 @@
+/* El conjunto de marca: símbolo más nombre.
+   Sólo su composición interna; dónde se coloca lo decide quien lo usa. */
+
+.auream-lockup {
+  display: inline-flex;
+  align-items: center;
+}
+
+.auream-lockup__name {
+  font-family: var(--font-display);
+  font-weight: 650;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Chrome de aplicación: acompaña a la navegación sin pesar más que ella. */
+.auream-lockup--sm {
+  gap: 12px;
+}
+
+.auream-lockup--sm .auream-lockup__name {
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+}
+
+/* Portada: la marca encabeza la composición y sostiene un titular grande. */
+.auream-lockup--lg {
+  gap: 15px;
+}
+
+.auream-lockup--lg .auream-lockup__name {
+  font-size: 1.4rem;
+  letter-spacing: 0.055em;
+}
