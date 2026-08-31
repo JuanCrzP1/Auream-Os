@@ -14,6 +14,17 @@
   background-attachment: fixed;
 }
 
+/* En claro, --bg (#f5f3ff) y el --bg-elevated del sidebar (#ede9fb) son casi
+   el mismo lila: el gutter alrededor de la tarjeta se leía como un segundo
+   bloque morado pegado al sidebar en vez de como lienzo. Se pinta blanco —el
+   mismo tono que ya usa el área de contenido vía --app-canvas— para que el
+   sidebar se recorte como tarjeta. En oscuro la escalera sí se percibe y se
+   conserva el ambiente. */
+:root[data-theme="light"] .app-shell {
+  background-color: var(--surface);
+  background-image: none;
+}
+
 .app-shell__main {
   flex: 1;
   min-width: 0;

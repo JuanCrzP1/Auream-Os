@@ -4,14 +4,24 @@
      A 220px la marca ocupa el mismo espacio pero con aire real a ambos lados. */
   width: 220px;
   flex: 0 0 220px;
-  height: 100vh;
+  height: calc(100vh - 24px);
+  margin: 12px 0 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 10px 10px 12px;
   background: var(--bg-elevated);
-  border-right: 1px solid var(--line);
-  box-shadow: var(--elevation-inset);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--elevation-inset), var(--shadow);
+}
+
+/* El contraste de la tarjeta en claro lo da el lienzo blanco del shell
+   (ver app-shell.css); aquí sólo se refuerzan borde y sombra para rematar el
+   recorte. El fondo lila del sidebar no se toca: es el que lo identifica. */
+:root[data-theme="light"] .app-sidebar {
+  border-color: var(--border);
+  box-shadow: var(--elevation-inset), 0 12px 32px -10px rgba(108, 92, 231, 0.28);
 }
 
 .app-sidebar__brand {
