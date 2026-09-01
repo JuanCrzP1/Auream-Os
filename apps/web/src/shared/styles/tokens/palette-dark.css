@@ -64,7 +64,15 @@
   /* Cromo del navegador y del lienzo */
   --canvas-dot: rgba(167, 152, 255, 0.16);
   --edge-stroke: rgba(167, 152, 255, 0.42);
-  --minimap-mask: rgba(8, 6, 15, 0.72);
+  /* Punto de anclaje válido al arrastrar una conexión. Verde porque es una
+     señal de validez, no del primario de marca; vive aquí para no repetirse
+     en el CSS del lienzo y para que el tema claro pueda separarse. */
+  --handle-valid: #22c55e;
+  /* Atenúa lo que queda fuera del viewport en el minimapa (único consumidor).
+     Es un velo, no un fondo: cubre casi toda la tarjeta, así que en cuanto sube
+     deja de leerse como cristal y pasa a ser un panel macizo. A este nivel el
+     lienzo se sigue percibiendo y el viewport se distingue igual. */
+  --minimap-mask: rgba(8, 6, 15, 0.3);
   --scrollbar-thumb: rgba(255, 255, 255, 0.14);
   --scrollbar-thumb-hover: rgba(139, 92, 246, 0.55);
   --selection-bg: rgba(139, 92, 246, 0.35);

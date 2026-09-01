@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo } from "react";
 import { mapSnapshotToCanvas } from "../adapters/mapSnapshotToCanvas";
 import { buildStats } from "../services/buildStats";
 import { validateCanvasGraph } from "../services/validateCanvasGraph";
@@ -35,8 +35,36 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
 
   const deferredNodes = useDeferredValue(nodesCtx.nodes);
   const deferredEdges = useDeferredValue(edgesCtx.edges);
-  const stats = buildStats(deferredNodes, deferredEdges);
-  const validation = validateCanvasGraph(deferredNodes, deferredEdges);
+
+  // Ambos recorren el grafo entero. Sin memoizar se recalculaban en CADA
+  // render —incluido un simple cambio del estado de guardado—, así que en un
+  // flujo grande se pagaba O(V+E) por pulsación. Con `useMemo` solo se
+  // recalculan cuando el grafo cambia de verdad.
+  //
+  // No se eliminan aunque hoy nadie los consuma: son la entrada de los paneles
+  // de validación y de estadísticas, que existen y se montarán en B6. Quitarlos
+  // ahora obligaría a reconstruirlos entonces.
+  const stats = useMemo(() => buildStats(deferredNodes, deferredEdges), [deferredNodes, deferredEdges]);
+  const validation = useMemo(
+    () => validateCanvasGraph(deferredNodes, deferredEdges),
+    [deferredNodes, deferredEdges]
+  );
+
+  /**
+   * Borra un nodo y todo lo que colgaba de él.
+   *
+   * Cada hook toca solo su propio estado; aquí se componen las dos mitades. La
+   * selección se corrige sola: `selectedNode` se deriva buscando el id en la
+   * lista, así que al desaparecer el nodo pasa a `null` sin necesidad de
+   * sincronizar un segundo estado.
+   */
+  const handleRemoveNode = useCallback(
+    (nodeId: string) => {
+      nodesCtx.removeNode(nodeId);
+      edgesCtx.removeEdgesOfNode(nodeId);
+    },
+    [nodesCtx.removeNode, edgesCtx.removeEdgesOfNode]
+  );
 
   return {
     flowName: snapshot?.flow.name ?? "Cargando flow...",
@@ -57,6 +85,7 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
       selection.selectNode(nodeId);
     },
     handleDropNode: nodesCtx.dropNode,
+    handleRemoveNode,
     handleUpdateSelectedNode: nodesCtx.updateSelectedNode,
     handleUpdateSelectedEdge: edgesCtx.updateSelectedEdge
   };

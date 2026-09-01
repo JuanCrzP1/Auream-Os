@@ -1,4 +1,5 @@
 import type { CanvasEdge, CanvasNode } from "../types/canvas";
+import { findTool } from "../tools/registry";
 
 export interface BuilderValidationReport {
   errors: string[];
@@ -62,6 +63,13 @@ export function validateCanvasGraph(nodes: CanvasNode[], edges: CanvasEdge[]): B
   // Validaciones por nodo
   for (const node of nodes) {
     const outgoing = edges.filter((edge) => edge.source === node.id);
+
+    // Un flow guardado puede traer un tipo retirado en una versión anterior.
+    // Se avisa aquí para que el usuario lo vea en el builder; el backend lo
+    // rechaza al publicar con la regla UNKNOWN_NODE_TYPE.
+    if (!findTool(node.data.nodeType)) {
+      errors.push(`El bloque "${node.data.title}" usa un tipo no soportado en esta versión.`);
+    }
 
     if (!node.data.isTerminal && outgoing.length === 0) {
       // Severidad: ERROR. Alineado con backend (GraphValidator). Un dead-end detiene el flujo.

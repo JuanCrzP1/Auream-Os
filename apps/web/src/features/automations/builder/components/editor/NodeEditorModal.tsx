@@ -2,18 +2,7 @@ import "./node-editor-modal.css";
 import "../toolbar-button.css";
 import { useEffect, useState } from "react";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
-
-const titlesByType = {
-  message: "Editar mensaje",
-  question: "Editar pregunta",
-  capture: "Editar captura",
-  action: "Editar acción",
-  condition: "Editar condición",
-  delay: "Editar espera",
-  fallback: "Editar fallback",
-  end: "Editar cierre",
-  ai: "Editar extensión encapsulada"
-} as const;
+import { resolveTool } from "@features/automations/builder/tools/registry";
 
 interface NodeEditorModalProps {
   node: CanvasNode;
@@ -24,6 +13,7 @@ interface NodeEditorModalProps {
 export function NodeEditorModal({ node, onClose, onSave }: NodeEditorModalProps) {
   const [title, setTitle] = useState(node.data.title);
   const [preview, setPreview] = useState(node.data.preview);
+  const tool = resolveTool(node.data.nodeType);
 
   useEffect(() => {
     setTitle(node.data.title);
@@ -43,7 +33,7 @@ export function NodeEditorModal({ node, onClose, onSave }: NodeEditorModalProps)
           <div className="editor-modal__heading">
             <span className={`editor-modal__type editor-modal__type--${node.data.nodeType}`}>{node.data.nodeType}</span>
             <div>
-              <h2 id="node-editor-title">{titlesByType[node.data.nodeType]}</h2>
+              <h2 id="node-editor-title">{tool.editorTitle}</h2>
               <p>Configura el contenido del bloque sin exponer paneles permanentes sobre el canvas.</p>
             </div>
           </div>

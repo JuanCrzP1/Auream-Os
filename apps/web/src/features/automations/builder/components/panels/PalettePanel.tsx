@@ -2,23 +2,13 @@ import "./palette-shell.css";
 import "./palette-block.css";
 import { useState } from "react";
 import type { NodeType } from "@contracts/FlowSnapshot";
-import { BlockIcons } from "./palette-block-icons";
+import { listPaletteTools } from "@features/automations/builder/tools/registry";
+import { getToolIcon } from "@features/automations/builder/tools/icons";
 
-
-const paletteItems: Array<{ type: NodeType; label: string; sub: string; color: string; grad: string }> = [
-  { type: "message",   label: "Mensaje",          sub: "Envía texto o media",        color: "#2563eb", grad: "linear-gradient(135deg,#3b82f6,#1d4ed8)" },
-  { type: "question",  label: "Esperar respuesta", sub: "Aguarda input del usuario",  color: "#ea580c", grad: "linear-gradient(135deg,#f97316,#c2410c)" },
-  { type: "capture",   label: "Captura",           sub: "Guarda datos del usuario",   color: "#16a34a", grad: "linear-gradient(135deg,#22c55e,#15803d)" },
-  { type: "action",    label: "Acción",            sub: "Ejecuta lógica externa",     color: "#dc2626", grad: "linear-gradient(135deg,#ef4444,#b91c1c)" },
-  { type: "condition", label: "Condicional",       sub: "Bifurca según condición",    color: "#7c3aed", grad: "linear-gradient(135deg,#a855f7,#6d28d9)" },
-  { type: "delay",     label: "Intervalo",         sub: "Pausa antes de continuar",   color: "#0891b2", grad: "linear-gradient(135deg,#22d3ee,#0e7490)" },
-  { type: "fallback",  label: "Fallback",          sub: "Ruta de rescate",            color: "#d97706", grad: "linear-gradient(135deg,#fbbf24,#b45309)" },
-  { type: "end",       label: "Finalizar",         sub: "Cierra el flujo",            color: "#16a34a", grad: "linear-gradient(135deg,#4ade80,#15803d)" },
-  { type: "ai",        label: "Extensión IA",      sub: "Procesamiento inteligente",  color: "#9333ea", grad: "linear-gradient(135deg,#c084fc,#7e22ce)" },
-];
+// Las herramientas ofrecidas las decide el registry: este panel solo las pinta.
+const paletteItems = listPaletteTools();
 
 interface PalettePanelProps {
-  isOpen: boolean;
   onAddNode: (nodeType: NodeType) => void;
 }
 
@@ -27,30 +17,51 @@ function handleDragStart(event: React.DragEvent<HTMLButtonElement>, nodeType: No
   event.dataTransfer.effectAllowed = "move";
 }
 
-export function PalettePanel({ isOpen, onAddNode }: PalettePanelProps) {
+export function PalettePanel({ onAddNode }: PalettePanelProps) {
   const [query, setQuery] = useState("");
+  // Estado puramente visual de la tarjeta: no sale de este componente ni toca
+  // el modelo de automatización.
+  //
+  // Arranca recogida: al entrar al builder lo primero debe ser el lienzo, no la
+  // lista de herramientas. El icono queda a un clic para desplegarla.
+  const [collapsed, setCollapsed] = useState(true);
   const filtered = paletteItems.filter((item) =>
     item.label.toLowerCase().includes(query.toLowerCase()) ||
-    item.sub.toLowerCase().includes(query.toLowerCase())
+    item.description.toLowerCase().includes(query.toLowerCase())
   );
 
   return (
-    <aside className={`builder-palette${isOpen ? "" : " builder-palette--closed"}`}>
+    <aside className={`builder-palette${collapsed ? " builder-palette--collapsed" : ""}`}>
 
+      {/* La marca queda FUERA del área desplazable: así permanece visible tanto
+          al desplazar la lista como al recoger la tarjeta.
+
+          El propio icono ES el control: contrae con la tarjeta abierta y la
+          vuelve a abrir cuando está recogida. Un solo botón para los dos
+          estados, en lugar de un control extra que desaparece. */}
       <div className="palette-header">
-        <div className="palette-header__brand">
-          <div className="palette-header__logo" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <div>
-            <p className="palette-header__title">Herramientas</p>
-            <p className="palette-header__sub">{filtered.length} disponibles</p>
-          </div>
-        </div>
+        <button
+          type="button"
+          className="palette-header__toggle"
+          onClick={() => setCollapsed((value) => !value)}
+          title={collapsed ? "Abrir herramientas" : "Contraer herramientas"}
+          aria-label={collapsed ? "Abrir herramientas" : "Contraer herramientas"}
+          aria-expanded={!collapsed}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </button>
+        <p className="palette-header__title">Herramientas</p>
+      </div>
+
+      {/* Lo que se desplaza y lo que se recoge: contador, buscador y lista. */}
+      <div className="palette-scroll">
+
+        <p className="palette-header__sub">{filtered.length} disponibles</p>
+
         <div className="palette-header__search">
           <svg className="palette-header__search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
             <circle cx="8.5" cy="8.5" r="5.5"/>
@@ -63,10 +74,11 @@ export function PalettePanel({ isOpen, onAddNode }: PalettePanelProps) {
             placeholder="Buscar bloque..."
           />
         </div>
-      </div>
 
-      <div className="palette-list">
-        {filtered.map((item) => (
+        <div className="palette-list">
+        {filtered.map((item) => {
+          const Icon = getToolIcon(item.type);
+          return (
           <button
             key={item.type}
             type="button"
@@ -77,14 +89,18 @@ export function PalettePanel({ isOpen, onAddNode }: PalettePanelProps) {
           >
             <span
               className="palette-block__icon"
-              style={{ background: item.grad }}
+              style={{ background: item.colors.gradient }}
               aria-hidden="true"
             >
-              {BlockIcons[item.type]}
+              {Icon ? <Icon /> : null}
             </span>
             <span className="palette-block__text">
               <span className="palette-block__label">{item.label}</span>
-              <span className="palette-block__sub">{item.sub}</span>
+              {/* La descripción es secundaria y puede recortarse; el título
+                  nativo la deja consultable completa. */}
+              <span className="palette-block__sub" title={item.description}>
+                {item.description}
+              </span>
             </span>
             <span className="palette-block__drag" aria-hidden="true">
               <svg viewBox="0 0 16 16" fill="currentColor">
@@ -93,22 +109,19 @@ export function PalettePanel({ isOpen, onAddNode }: PalettePanelProps) {
               </svg>
             </span>
           </button>
-        ))}
+          );
+        })}
+        </div>
+
       </div>
 
+      {/* Aquí vivían «Centrar canvas» y «Reiniciar zoom»: dos botones sin
+          ningún manejador, que no hacían nada al pulsarlos. No se implementan
+          porque ya existen —React Flow monta `<Controls>` con encuadre y zoom
+          en el propio lienzo—, y esta paleta se renderiza fuera del
+          `ReactFlowProvider`, así que darles comportamiento obligaría a subir
+          el provider solo para duplicar controles que ya están. */}
       <div className="palette-footer">
-        <button type="button" className="palette-footer__btn" title="Centrar canvas">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-            <rect x="2" y="2" width="16" height="16" rx="2"/>
-            <rect x="7" y="7" width="6" height="6" rx="1"/>
-          </svg>
-        </button>
-        <button type="button" className="palette-footer__btn" title="Reiniciar zoom">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 10a7 7 0 1 0 1.5-4.3"/>
-            <polyline points="1 4.5 4.5 4.5 4.5 8"/>
-          </svg>
-        </button>
         <span className="palette-footer__tip">Arrastra al canvas</span>
       </div>
 

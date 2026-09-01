@@ -108,10 +108,10 @@ import { useAuthSession } from "@shared/auth/context/AuthContext";
 
 Dentro de una misma feature se usan rutas relativas; los aliases son para cruzar entre áreas.
 
-## Autenticación en desarrollo
+## Autenticación
 
-`shared/auth` sirve hoy una sesión de desarrollo fija. `shared/config/getDevApiKey.ts` lee la API key de `VITE_DEV_API_KEY` **sólo cuando `import.meta.env.DEV` es true**, de modo que la rama se elimina del build de producción y ninguna credencial queda compilada en el bundle. Si la variable no está definida, no se envía cabecera de API key.
+`shared/auth` es la sesión real de la plataforma, contra Neon Auth: `AuthContext` la expone vía `useAuthSession()`, la cookie del proveedor sostiene la sesión y el JWT vive solo en memoria (`tokenStore`), nunca en `localStorage`. `useAuthSession()` es el único contrato que un componente debe leer — ninguno debe resolver el `tenantId` por su cuenta. Detalle completo en [`auth.md`](auth.md).
+
+Aparte de esa identidad de usuario, existe una vía separada de **credencial de máquina** para desarrollo local y scripts: `shared/config/getDevApiKey.ts` lee `VITE_DEV_API_KEY` **sólo cuando `import.meta.env.DEV` es true**, de modo que la rama se elimina del build de producción y ninguna credencial queda compilada en el bundle. Si la variable no está definida, no se envía cabecera `X-Api-Key`. No sustituye a la identidad de usuario; conviven.
 
 `getBuilderApiBaseUrl()` exige `VITE_API_BASE_URL` en producción y falla si falta: es preferible a apuntar a `localhost` desde un despliegue real.
-
-`useAuthSession()` ya es el contrato correcto: cuando exista identidad real solo cambia su implementación, no sus consumidores. Ningún componente debe leer el `tenantId` de otro sitio.

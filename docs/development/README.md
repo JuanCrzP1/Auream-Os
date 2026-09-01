@@ -65,12 +65,18 @@ scripts\dev\start.bat --self-test
 
 | Variable | Obligatoria | Descripción |
 |---|---|---|
-| `JWT_SECRET` | Sí | Secreto de firma, mínimo 32 caracteres. La API no arranca sin él. |
+| `DATABASE_URL` | Sí | Connection string de Postgres. La API no arranca sin ella. |
+| `NEON_AUTH_URL` | Sí | Proveedor de identidad (Neon Auth). La API no arranca sin él. |
+| `NEON_AUTH_ISSUER` | Sí | Emisor exigido en el JWT. Sin él, un token de otra rama sería aceptado. |
+| `NEON_AUTH_AUDIENCE` | No | Audiencia exigida. Por defecto, el propio issuer. |
+| `NEON_AUTH_JWKS_URL` | No | Endpoint del JWKS. Por defecto se deriva de `NEON_AUTH_URL`. |
 | `CORS_ALLOWED_ORIGINS` | Sí en producción | Orígenes permitidos, separados por comas. En desarrollo cae a `localhost:5173`. |
 | `PORT` | No | Puerto de la API. Por defecto `3100`. |
 | `DEV_API_KEY` | No | API key de desarrollo. Sin ella, la API no acepta autenticación por API key. |
 | `DEV_TENANT_ID` | No | Tenant de la API key de desarrollo. Por defecto `test-tenant`. |
 | `DATA_DIR` | No | Directorio de persistencia JSON. |
+
+La API **no firma tokens**: los emite y firma Neon Auth, así que no necesita ningún secreto propio de firma.
 
 ### Frontend
 
@@ -79,7 +85,7 @@ scripts\dev\start.bat --self-test
 | `VITE_API_BASE_URL` | Sí en producción | URL de la API. En desarrollo cae a `http://localhost:3100`. |
 | `VITE_DEV_API_KEY` | No | Debe coincidir con `DEV_API_KEY`. Sólo se lee en modo desarrollo. |
 
-Los launchers definen un `JWT_SECRET` de desarrollo si no existe. **Nunca** debe usarse fuera de local.
+> Los launchers (`start.sh`/`start.bat`) todavía exportan un `JWT_SECRET` de desarrollo por compatibilidad histórica, y `tests/security/apiConfig.test.ts` lo pasa como parámetro. Ninguno de los dos tiene efecto real hoy: `loadApiConfig` no lee esa variable — la identidad la resuelve Neon Auth (`NEON_AUTH_URL`/`NEON_AUTH_ISSUER` arriba). Es legacy inerte, pendiente de retirar cuando se toque ese script o ese test por otra razón; no es necesario definirlo tú mismo.
 
 Los secretos van en un `.env` local, que está ignorado por git. No se versionan.
 
@@ -117,8 +123,8 @@ Los fixtures de prueba viven en `tests/fixtures/` y son otra cosa. No deben mezc
 ## Tests
 
 ```bash
-npm test          # backend  — 207 tests
-npm run test:web  # frontend — 77 tests
+npm test          # backend  — 261 tests
+npm run test:web  # frontend — 147 tests
 ```
 
 Backend: `tests/{contract,security,unit,fixtures}`. `tests/contract/` protege las fronteras: forma de la API, paridad de validación y contratos de grafo. Los fixtures de flow viven uno por archivo en `tests/fixtures/flows/`, y los helpers compartidos en `tests/security/helpers/` y `tests/unit/helpers/`.
@@ -132,8 +138,8 @@ Antes de integrar, las comprobaciones de [`../architecture/dependency-rules.md`]
 
 ## Troubleshooting
 
-**La API no arranca y sale `[FATAL] JWT_SECRET no está definido`.**
-Define la variable o usa el launcher, que la establece por ti.
+**La API no arranca y sale `[FATAL] DATABASE_URL no está definido` / `NEON_AUTH_URL no está definido` / `NEON_AUTH_ISSUER no está definido`.**
+Falta esa variable en tu `.env`. Copia `.env.example` y complétala con los valores de la rama `test` de Neon.
 
 **El frontend carga pero no muestra automatizaciones.**
 Comprueba que la API responde: `curl http://localhost:3100/health`. Si devuelve `401` en `/automations`, `DEV_API_KEY` y `VITE_DEV_API_KEY` no coinciden, o no están definidas.

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { addEdge, applyEdgeChanges, type Connection, type OnEdgesChange } from "@xyflow/react";
 import { buildEdgePresentation } from "@features/automations/builder/services/buildEdgePresentation";
 import { ensureEdgeData } from "@features/automations/builder/services/ensureEdgeData";
@@ -44,6 +44,22 @@ export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: strin
     );
   }
 
+  /**
+   * Elimina las conexiones que entran o salen de un nodo.
+   *
+   * Es la mitad de un borrado de nodo que le corresponde a este hook, y la
+   * primera línea de defensa contra conexiones huérfanas: `mapCanvasToSnapshot`
+   * las filtra también al serializar, pero eso es una red de seguridad, no el
+   * sitio donde debe corregirse el grafo.
+   *
+   * Estable por la misma razón que `removeNode`.
+   */
+  const removeEdgesOfNode = useCallback((nodeId: string): void => {
+    setEdges((current) =>
+      current.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+    );
+  }, []);
+
   function updateSelectedEdge(
     field: "label" | "priority" | "fact" | "value" | "operator" | "fallback",
     value: string | number | boolean
@@ -83,6 +99,7 @@ export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: strin
     selectedEdge,
     handleEdgesChange,
     handleConnect,
+    removeEdgesOfNode,
     updateSelectedEdge
   };
 }

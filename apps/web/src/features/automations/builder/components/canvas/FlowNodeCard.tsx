@@ -1,40 +1,22 @@
-import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
-import type { CanvasNode, FlowNodeData } from "@features/automations/builder/types/canvas";
-import { triggerEdit } from "@features/automations/builder/services/editCallbackStore";
+import { Handle, Position, type NodeProps } from "@xyflow/react";
+import type { CanvasNode } from "@features/automations/builder/types/canvas";
+import { useBuilderEditing } from "@features/automations/builder/context/BuilderEditingContext";
+import { resolveTool } from "@features/automations/builder/tools/registry";
 
-const colorByType: Record<FlowNodeData["nodeType"], { header: string; body: string }> = {
-  message:   { header: "#2563eb", body: "#1d4ed8" },
-  question:  { header: "#ea580c", body: "#c2410c" },
-  capture:   { header: "#16a34a", body: "#15803d" },
-  action:    { header: "#dc2626", body: "#b91c1c" },
-  condition: { header: "#7c3aed", body: "#6d28d9" },
-  delay:     { header: "#0891b2", body: "#0e7490" },
-  fallback:  { header: "#d97706", body: "#b45309" },
-  end:       { header: "#16a34a", body: "#15803d" },
-  ai:        { header: "#9333ea", body: "#7e22ce" },
-};
-
-const iconByType: Record<FlowNodeData["nodeType"], string> = {
-  message:   "💬",
-  question:  "⏳",
-  capture:   "📋",
-  action:    "⚡",
-  condition: "⬡",
-  delay:     "⏱",
-  fallback:  "🔄",
-  end:       "✓",
-  ai:        "✦",
-};
-
+/**
+ * Tarjeta de un nodo en el lienzo.
+ *
+ * Solo presentación y eventos: pinta lo que dice la herramienta y pide las
+ * operaciones que necesita. No posee estado del grafo ni lo modifica: antes
+ * llamaba a `useReactFlow().setNodes/setEdges` y era un segundo dueño del
+ * estado a espaldas de `useCanvasNodes`.
+ */
 export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
-  const { setNodes, setEdges } = useReactFlow();
-  const colors = colorByType[data.nodeType];
-
-  function handleDelete(e: React.MouseEvent) {
-    e.stopPropagation();
-    setNodes((current) => current.filter((n) => n.id !== id));
-    setEdges((current) => current.filter((e) => e.source !== id && e.target !== id));
-  }
+  const { requestEdit, removeNode } = useBuilderEditing();
+  // `resolveTool` degrada a una presentación neutra si el flow guardado trae un
+  // tipo que esta versión ya no soporta, en lugar de romper el canvas entero.
+  const tool = resolveTool(data.nodeType);
+  const colors = tool.colors;
 
   if (data.isEntry) {
     return (
@@ -69,30 +51,29 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
         className="flow-node__handle flow-node__handle--target"
       />
       <header className="flow-node__header" style={{ background: colors.header }}>
-        <span className="flow-node__type-icon" aria-hidden="true">{iconByType[data.nodeType]}</span>
+        <span className="flow-node__type-icon" aria-hidden="true">{tool.glyph}</span>
         <span className="flow-node__name">{data.title}</span>
         <div className="flow-node__actions">
           <button
             type="button"
             className="flow-node__action-btn"
             title="Editar"
-            onClick={(e) => { e.stopPropagation(); triggerEdit(id); }}
+            aria-label={`Editar ${data.title}`}
+            onClick={(e) => { e.stopPropagation(); requestEdit(id); }}
           >
             ✏
           </button>
-          <button
-            type="button"
-            className="flow-node__action-btn"
-            title="Duplicar"
-            onClick={(e) => e.stopPropagation()}
-          >
-            ⧉
-          </button>
+          {/* Aquí había un botón «Duplicar» que solo detenía la propagación del
+              clic. Se retira en lugar de fingirlo: duplicar un nodo tiene
+              decisiones de producto sin acordar —qué pasa con sus conexiones,
+              con su condición de entrada— y no se inventan aquí. Volverá con
+              el editor de herramientas (B5). */}
           <button
             type="button"
             className="flow-node__action-btn flow-node__action-btn--delete"
             title="Eliminar"
-            onClick={handleDelete}
+            aria-label={`Eliminar ${data.title}`}
+            onClick={(e) => { e.stopPropagation(); removeNode(id); }}
           >
             ✕
           </button>

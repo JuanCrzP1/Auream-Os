@@ -1,0 +1,75 @@
+/* ---------------------------------------------------------------------------
+ * Minimapa: misma superficie de cristal que la Toolbox y la topbar, pero más
+ * discreta porque es la más pequeña de las tres.
+ *
+ * CÓMO SE PINTA, QUE AQUÍ ESTÁ LA TRAMPA
+ *
+ * React Flow no pinta el minimapa con valores fijos: usa una cadena de tres
+ * tramos por cada propiedad,
+ *
+ *     var(--xy-…-props, var(--xy-…, var(--xy-…-default)))
+ *      └ prop del componente  └ override de usuario  └ default de la librería
+ *
+ * y su hoja (`@xyflow/react/dist/style.css`, importada en main.tsx) se emite
+ * DESPUÉS de este archivo en el bundle. Con la misma especificidad, la última
+ * gana: declarar aquí `background` o `fill` no pinta nada, lo pisa su regla.
+ * Por eso el minimapa salía con el marco gris de fábrica.
+ *
+ * El canal correcto es el tramo intermedio: son nombres de propiedad distintos,
+ * así que no compiten en cascada y el resultado no depende del orden. Lo que
+ * React Flow no toca —borde, radio, sombra, desenfoque— sí se declara normal.
+ *
+ * El tamaño NO se fija aquí: lo decide la prop `style` del componente, porque
+ * React Flow la usa también para el SVG interno. Reducirlo desde CSS recortaba
+ * el contenido en lugar de escalarlo.
+ * ------------------------------------------------------------------------- */
+.react-flow__minimap {
+  /* Cristal: velo tenue con filo superior iluminado, sin base opaca. El fondo
+     real lo aporta el desenfoque del lienzo que hay detrás. */
+  --xy-minimap-background-color:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+
+  /* Velo de lo que queda fuera del viewport. El default de la librería es
+     `rgba(240,240,240,0.6)` —un gris claro— y, al cubrir todo el mapa salvo el
+     recorte del viewport, era literalmente el marco gris: no venía del borde.
+     Aquí va un velo del propio lienzo, tan bajo que dentro y fuera se leen como
+     una sola superficie. */
+  --xy-minimap-mask-background-color: var(--minimap-mask);
+  /* El default es `transparent`, así que sin esto el viewport no tiene contorno
+     y depende sólo del contraste del relleno. Va con `--primary-soft` y no con
+     `--primary`: cuando el flujo entra entero en pantalla el recorte coincide
+     casi con el borde de la tarjeta, y a plena saturación las dos líneas juntas
+     volvían a leerse como un marco. */
+  --xy-minimap-mask-stroke-color: var(--primary-soft);
+  --xy-minimap-mask-stroke-width: 1;
+
+  /* Sin `saturate()`, igual que la Toolbox y la topbar: sobre el minimapa era
+     además lo que encendía de más el color de los nodos. */
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  /* `--line` en vez de `--border`: el trazo fuerte competía con el contenido
+     del mapa, que es lo único que debe leerse aquí. En claro, además, `--line`
+     ya trae la tonalidad violeta del sistema. */
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  /* Sombra de elemento pequeño flotante —la misma de los iconos— en lugar de
+     la sombra de tarjeta grande, que sobre 168×116 resultaba pesada. */
+  box-shadow: var(--elevation-inset), var(--icon-float-shadow);
+  overflow: hidden;
+}
+
+/* En claro el cristal es blanco y algo más presente, porque el lienzo también
+   es claro y con un velo tan bajo como el de oscuro la tarjeta desaparecería.
+   Aun así queda translúcida: el punteado del lienzo se percibe por detrás. */
+:root[data-theme="light"] .react-flow__minimap {
+  --xy-minimap-background-color:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.18));
+  box-shadow: var(--elevation-inset), 0 6px 18px -6px rgba(108, 92, 231, 0.25);
+}
+
+/* Único ajuste del velo que no pasa por variables de React Flow, porque no
+   tiene variable: el SVG está escalado a las coordenadas del flujo, así que sin
+   esto el contorno del viewport se dibujaría a una fracción de píxel. */
+.react-flow__minimap-mask {
+  vector-effect: non-scaling-stroke;
+}

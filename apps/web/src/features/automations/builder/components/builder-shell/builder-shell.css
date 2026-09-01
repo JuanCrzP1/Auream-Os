@@ -14,11 +14,24 @@
   background-attachment: fixed;
 }
 
-/* Stage ocupa todo el espacio restante después del sidebar y la paleta. */
+/* Stage ocupa todo el espacio restante después del sidebar de la aplicación.
+   La paleta ya NO descuenta ancho aquí: flota sobre el área de trabajo. */
 .builder-stage {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+}
+
+/* Área de trabajo bajo la topbar.
+ *
+ * Responsabilidad única: ser la superficie donde vive el lienzo y el contexto
+ * de posicionamiento de los paneles que flotan sobre él. El lienzo la ocupa
+ * entera; la paleta se superpone sin restarle ancho. */
+.builder-workspace {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }

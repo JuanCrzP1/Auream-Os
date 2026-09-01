@@ -18,17 +18,32 @@
  * `handoff` NO está aquí de forma deliberada: la derivación a un asesor humano
  * es responsabilidad exclusiva del AI Sales Engine, no del motor de flows.
  * Ver docs/architecture/ai-sales-engine.md.
+ *
+ * `end` es un nodo de SISTEMA: sostiene la terminación del grafo
+ * (`validateEntryNode`, `validateNodeDegree` y el único `executionStatus:
+ * "completed"` del motor), pero no se ofrece en la paleta del builder. El
+ * usuario no lo añade; el modelo lo necesita.
+ *
+ * Retirados: `capture` — su escritura de contexto vive ahora en el nodo
+ * `question` vía `config.targetKey`; `fallback` — el rescate de una rama es
+ * una propiedad del edge (`isFallback`), no un tipo de nodo; `action` — pasó a
+ * llamarse `integration`, que es el mismo concepto con el nombre del producto.
  */
 export type NodeType =
   | "message"
   | "question"
-  | "capture"
-  | "action"
+  | "tags"
+  | "payment-proof"
   | "condition"
+  | "distributor"
+  | "pixel"
+  | "ai"
   | "delay"
-  | "fallback"
-  | "end"
-  | "ai";
+  | "sale-approved"
+  | "integration"
+  | "menu"
+  | "notification"
+  | "end";
 
 export type EdgeOperator = "always" | "eq" | "neq" | "exists";
 

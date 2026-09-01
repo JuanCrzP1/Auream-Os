@@ -42,17 +42,19 @@ export const validLeadCaptureFlow: FlowSnapshot = {
       type: "question",
       name: "Pregunta nombre",
       content: { text: "Por favor escribe tu nombre." },
-      config: {},
+      // La captura de la respuesta la hace ahora el propio nodo `question`
+      // mediante `targetKey`. Antes existía un nodo `capture` separado.
+      config: { targetKey: "context.name" },
       metadata: {}
     },
     "node-capture": {
       id: "node-capture",
       tenantId: "tenant-test",
       flowVersionId: "v1",
-      type: "capture",
-      name: "Capturar nombre",
-      content: {},
-      config: { targetKey: "context.name" },
+      type: "message",
+      name: "Confirmación de captura",
+      content: { text: "Nombre registrado." },
+      config: {},
       metadata: {}
     },
     "node-end": {

@@ -1,31 +1,16 @@
 import type { CanvasNode } from "../types/canvas";
 import type { NodeType } from "@contracts/FlowSnapshot";
+import { resolveTool } from "../tools/registry";
 
-const labelsByType: Record<NodeType, string> = {
-  message: "Mensaje",
-  question: "Esperar respuesta",
-  capture: "Captura",
-  action: "Acción",
-  condition: "Condicional",
-  delay: "Intervalo",
-  fallback: "Fallback",
-  end: "Finalizar",
-  ai: "Extensión"
-};
-
-const previewsByType: Record<NodeType, string> = {
-  message: "Mensaje al usuario",
-  question: "Pregunta esperando input",
-  capture: "Captura variable de contexto",
-  action: "Webhook o API de dominio",
-  condition: "Preprocesamiento y flags",
-  delay: "Reanudar más tarde",
-  fallback: "Recuperación de entrada",
-  end: "Cerrar rama del flujo",
-  ai: "Nodo encapsulado opcional"
-};
-
+/**
+ * Crea un nodo nuevo para el canvas a partir de la definición de su herramienta.
+ *
+ * Las etiquetas y textos por defecto los declara cada módulo de herramienta:
+ * este archivo solo construye la forma que el canvas necesita.
+ */
 export function createNodeDraft(nodeType: NodeType, index: number): CanvasNode {
+  const tool = resolveTool(nodeType);
+
   const position = {
     x: 240 + index * 36,
     y: 260 + (index % 3) * 120
@@ -39,13 +24,15 @@ export function createNodeDraft(nodeType: NodeType, index: number): CanvasNode {
     position,
     data: {
       nodeType,
-      title: labelsByType[nodeType],
-      preview: previewsByType[nodeType],
+      title: tool.label,
+      preview: tool.defaultContentText,
       configSummary: "Pendiente de configurar",
       isEntry: false,
-      isTerminal: nodeType === "end",
-      content: { text: previewsByType[nodeType] },
-      config: {},
+      isTerminal: tool.terminal,
+      content: { text: tool.defaultContentText },
+      // Copia superficial: dos nodos de la misma herramienta no deben compartir
+      // el objeto de configuración declarado en su definición.
+      config: { ...tool.defaultConfig },
       metadata: { ui: position }
     }
   };

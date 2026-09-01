@@ -68,11 +68,7 @@
   background: rgba(14, 165, 233, 0.16);
 }
 
-.editor-modal__type--capture {
-  background: rgba(16, 185, 129, 0.16);
-}
-
-.editor-modal__type--action {
+.editor-modal__type--integration {
   background: rgba(249, 115, 22, 0.16);
 }
 

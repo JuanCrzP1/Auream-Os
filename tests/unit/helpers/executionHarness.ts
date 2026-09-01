@@ -11,7 +11,6 @@ import { ContextService } from "../../../domains/sessions/application/ContextSer
 import { NodeRuntime } from "../../../flow-engine/nodes/NodeRuntime.js";
 import { MessageNodeHandler } from "../../../flow-engine/nodes/message/MessageNodeHandler.js";
 import { QuestionNodeHandler } from "../../../flow-engine/nodes/question/QuestionNodeHandler.js";
-import { CaptureNodeHandler } from "../../../flow-engine/nodes/capture/CaptureNodeHandler.js";
 import { EndNodeHandler } from "../../../flow-engine/nodes/end/EndNodeHandler.js";
 import { AnalyticsService } from "../../../domains/analytics/application/AnalyticsService.js";
 import { InMemorySessionRepository } from "../../../infrastructure/persistence/memory/InMemorySessionRepository.js";
@@ -65,7 +64,6 @@ export function buildLoop(): ExecutionLoop {
     new NodeRuntime([
       new MessageNodeHandler(),
       new QuestionNodeHandler(),
-      new CaptureNodeHandler(),
       new EndNodeHandler()
     ]),
     new EdgeEvaluator(),

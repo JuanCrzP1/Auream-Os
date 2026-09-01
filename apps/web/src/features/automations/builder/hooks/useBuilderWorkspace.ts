@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { mapCanvasToSnapshot } from "../adapters/mapCanvasToSnapshot";
 import { useBuilderAutosave } from "./builder/useBuilderAutosave";
 import { useBuilderLoader } from "./builder/useBuilderLoader";
@@ -19,18 +20,28 @@ import { useBuilderController } from "./useBuilderController";
  *  - useBuilderSimulation → simulación
  */
 export function useBuilderWorkspace(flowKey: string) {
-  const { workspace, loading, error, setWorkspace } = useBuilderLoader(flowKey);
+  const { workspace, loading, error, setWorkspace, renameFlow } = useBuilderLoader(flowKey);
 
   const controller = useBuilderController(workspace?.draft ?? null);
 
-  const currentDraft = workspace
-    ? mapCanvasToSnapshot(workspace.draft, controller.nodes, controller.edges)
-    : null;
+  // Memoizados los dos: el borrador es la entrada del autoguardado, y si su
+  // identidad cambiase en cada render el debounce nunca llegaría a cumplirse
+  // —cada render reiniciaría el temporizador—. Solo debe cambiar cuando cambia
+  // el grafo o el workspace cargado.
+  const currentDraft = useMemo(
+    () => (workspace ? mapCanvasToSnapshot(workspace.draft, controller.nodes, controller.edges) : null),
+    [workspace, controller.nodes, controller.edges]
+  );
+
+  const seedSignature = useMemo(
+    () => (workspace ? JSON.stringify(workspace.draft) : null),
+    [workspace]
+  );
 
   const autosaveStatus = useBuilderAutosave({
     flowKey,
     draft: currentDraft,
-    seedSignature: workspace ? JSON.stringify(workspace.draft) : null,
+    seedSignature,
     enabled: workspace !== null,
     onSaved: setWorkspace
   });
@@ -65,8 +76,10 @@ export function useBuilderWorkspace(flowKey: string) {
     handleSelectEdge: controller.handleSelectEdge,
     handleAddNode: controller.handleAddNode,
     handleDropNode: controller.handleDropNode,
+    handleRemoveNode: controller.handleRemoveNode,
     handleUpdateSelectedNode: controller.handleUpdateSelectedNode,
     // Acciones del workspace
+    handleRenameFlow: renameFlow,
     handlePublish,
     handleRollback,
     // Simulación

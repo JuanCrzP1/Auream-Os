@@ -16,13 +16,15 @@ apps/api/
 └── routes/        enrutado del builder
 ```
 
-`main.ts` falla al arrancar si falta `JWT_SECRET`, deliberadamente: es preferible no arrancar a arrancar sin poder verificar firmas.
+`main.ts` falla al arrancar si falta `DATABASE_URL`, `NEON_AUTH_URL` o `NEON_AUTH_ISSUER` (ver `config/loadDatabaseConfig.ts` y `config/loadNeonAuthConfig.ts`), deliberadamente: es preferible no arrancar a arrancar sin poder resolver tenancy o verificar identidad. La API **no firma tokens** — los emite y firma Neon Auth — así que no necesita ningún secreto propio de firma.
 
 ### Endpoints
 
 | Método | Ruta | Scope |
 |---|---|---|
 | `GET` | `/health` | público |
+| `GET` | `/me/tenants` | identidad de usuario, sin tenant |
+| `POST` | `/me/onboarding` | identidad de usuario, sin tenant |
 | `GET` | `/automations` | `flows.read` |
 | `PATCH` `DELETE` | `/automations/:id` | `flows.write` |
 | `GET` | `/api/builder/flows/:flowKey/workspace` | `flows.read` |
@@ -99,7 +101,7 @@ Automations produce versiones publicadas; el motor las ejecuta. La dependencia e
 | `observability` | `IMPLEMENTADO` | `StructuredLogger`, `RequestLogger` y `ErrorLogger` conectados a la API |
 | `observability` | `PREPARADO` | Auditoría, métricas, tracing, `AccessLogger` y `RuntimeLogger` existen sin consumidor |
 | `security` | `PREPARADO` | Rate limiting con tests, sin conectar |
-| `tenancy` | `PREPARADO` | Sólo `StaticTenantResolver`; la resolución dinámica no existe |
+| `tenancy` | `IMPLEMENTADO` | Resolución por membership activa (`resolveRequestContext`), validada contra Postgres real. `TenantResolver` — límites del runtime de simulación del builder — sigue `PREPARADO` y es un concepto separado; ver [`tenancy.md`](tenancy.md) |
 | `configuration` | `NO IMPLEMENTADO` | Frontera |
 
 `usage` **no** vive en `platform/`: medir consumo alimenta límites y entitlements, así que pertenece a `domains/billing`.

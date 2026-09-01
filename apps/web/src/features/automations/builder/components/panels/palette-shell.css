@@ -1,57 +1,214 @@
 /* ===== PALETTE SHELL ===== */
 
+/* Tarjeta flotante SOBRE el lienzo. No es una columna del layout.
+ *
+ * Antes era un item flex de `.builder-shell` con `flex: 0 0 242px`, y eso
+ * reservaba una franja de 260px que el lienzo no podía usar. Ahora se posiciona
+ * en absoluto dentro de `.builder-workspace`: el lienzo ocupa el área entera y
+ * la paleta se superpone sin restarle nada.
+ *
+ * Geometría tomada del sidebar de la aplicación, que ya es una tarjeta
+ * flotante; el cristal, del `builder-topbar`. No se inventa un lenguaje nuevo. */
 .builder-palette {
-  width: 260px;
-  flex: 0 0 260px;
-  height: 100vh;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+  width: 242px;
+  /* Tope, no altura fija: es lo que permite recoger la tarjeta desde abajo.
+     Con la lista completa el contenido lo supera, así que abierta llega hasta
+     el borde inferior del área de trabajo; contraída queda en cabecera + pie. */
+  max-height: calc(100% - 24px);
   display: flex;
   flex-direction: column;
-  background: transparent;
-  border-right: 1px solid var(--line);
+  /* Cristal local, NO el token global.
+   *
+   * Verificado renderizando: `--surface-floating` (0.86) y también una versión
+   * oscura al 0.52 se ven MACIZAS, porque un velo oscuro sobre un lienzo casi
+   * negro (#08060f) no se distingue del propio lienzo. La transparencia existía
+   * en el código y no en la pantalla.
+   *
+   * La solución es la de cualquier cristal sobre fondo oscuro: el velo es
+   * CLARO, no oscuro. Sin base opaca debajo, así el resplandor ambiental del
+   * shell atraviesa de verdad la tarjeta y ésta se lee como una superficie
+   * elevada y translúcida en lugar de como una columna.
+   *
+   * El token global no se toca: lo comparten la topbar y los controles del
+   * canvas, que sí deben seguir siendo opacos. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014));
+  /* Sin `saturate()`: subía el croma de todo lo que hay detrás del cristal
+     —resplandor ambiental incluido— y era lo que hacía que la interfaz se
+     leyera fluorescente. El desenfoque solo, que es lo que hace el cristal. */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* `--line` y no `--border`: es el mismo trazo que lleva la tarjeta del
+     sidebar, que es la referencia de superficie flotante del sistema. A 0.11
+     el borde se leía luminoso en vez de discreto. */
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--elevation-inset), var(--shadow);
   overflow: hidden;
+  /* El plegado anima alto y ancho a la vez: la tarjeta se transforma en el
+     botón cuadrado. Como el contenido desborda el tope, la altura real ES el
+     tope, así que la animación no tiene tramo muerto. */
   transition:
-    width 0.24s cubic-bezier(0.4, 0, 0.2, 1),
-    flex-basis 0.24s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.18s ease,
-    border-color 0.24s ease;
+    max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.builder-palette--closed {
-  width: 0;
-  flex-basis: 0;
+/* Contraída: la tarjeta se reduce a un botón cuadrado con el icono.
+   48px = icono 36 + 5 de aire a cada lado + los 2px de borde de la tarjeta.
+   Todo lo demás —título, contador, buscador, lista y pie— lo recorta el
+   `overflow: hidden`. Sigue anclada arriba a la izquierda: no se desplaza. */
+.builder-palette--collapsed {
+  width: 48px;
+  max-height: 48px;
+  border-radius: 14px;
+}
+
+.builder-palette--collapsed .palette-header {
+  padding: 5px;
+  gap: 0;
+  border-bottom-color: transparent;
+}
+
+/* El título se desvanece antes de que el recorte lo alcance. */
+.builder-palette--collapsed .palette-header__title {
   opacity: 0;
-  border-right-color: transparent;
-  pointer-events: none;
+}
+
+/* En claro el fondo es luminoso: el velo se invierte —blanco translúcido sobre
+   el lienzo— y el recorte lo dan el borde y una sombra algo más presente, igual
+   que en el sidebar. 0.62 mantiene el texto oscuro perfectamente legible. */
+:root[data-theme="light"] .builder-palette {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.2)),
+    rgba(255, 255, 255, 0.48);
+  box-shadow: var(--elevation-inset), 0 12px 32px -10px rgba(108, 92, 231, 0.28);
 }
 
 /* ===== PALETTE HEADER ===== */
 
-.palette-header {
-  padding: 16px 14px 12px;
-  border-bottom: 1px solid var(--line);
+/* Área desplazable: contador, buscador y lista. El scroll vive aquí y no en
+   `.palette-list`, que es lo que permite que la marca quede fija mientras el
+   resto se desplaza. No necesita tope propio: quien anima el plegado es la
+   `max-height` de la tarjeta, y esta zona se encoge con ella. */
+.palette-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Ancho interior de la tarjeta abierta (242 − 2px de borde). Fijarlo evita
+     que el contenido se reacomode mientras la tarjeta se estrecha al plegarse:
+     en lugar de reflowear —el contador partiéndose en dos líneas, el pie
+     comprimiéndose— simplemente queda recortado. */
+  width: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  transition: opacity 0.18s ease;
 }
 
-.palette-header__brand {
+/* Contraída: contenido y pie se desvanecen y salen del orden de tabulación una
+   vez terminada la animación. Siguen en el DOM y vuelven intactos al expandir:
+   sólo dejan de ser visibles y alcanzables. */
+.builder-palette--collapsed .palette-scroll,
+.builder-palette--collapsed .palette-footer {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, visibility 0s linear 0.28s;
+}
+
+.palette-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.palette-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.palette-scroll::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+.palette-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Marca de la tarjeta. Vive FUERA del área desplazable, así que permanece
+ * visible al desplazar la lista y también al recogerla, sin necesidad de
+ * `position: sticky` ni de una base opaca que tape el contenido: nada pasa por
+ * debajo. Eso le devuelve el cristal.
+ *
+ * Canal lateral de 18px: es donde arrancan los iconos de la lista
+ * (8px de la lista + 1px de borde + 9px del bloque). Cabecera, lista y pie
+ * comparten el mismo eje vertical. */
+.palette-header {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+  /* Padding y gap cambian al plegar. Sin transitarlos, el icono saltaba de
+     golpe de su canal de 18px al de 5px mientras la tarjeta todavía era ancha.
+     Mismo tiempo y curva que la tarjeta: el icono viaja con ella. */
+  transition:
+    padding 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    gap 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    border-bottom-color 0.28s ease;
 }
 
-.palette-header__logo {
+/* El icono de la marca ES el control de plegado: contrae la tarjeta abierta y
+   la reabre cuando está recogida. Un único botón para ambos estados. */
+.palette-header__toggle {
   width: 36px;
   height: 36px;
+  padding: 0;
+  border: 0;
   border-radius: 10px;
   background: var(--gradient-primary);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
+  cursor: pointer;
+  /* Profundidad, no aura. `--glow-primary` en reposo (violeta al 85%, 30px de
+     difuminado) sangraba por toda la cabecera de la tarjeta y era el halo más
+     visible de la interfaz: el sidebar lo reserva para el elemento ACTIVO, no
+     para todo lo que lleve el degradado de marca. Aquí el degradado ya
+     identifica la marca; la sombra solo tiene que dar relieve. */
+  box-shadow: var(--icon-float-shadow);
+  transition:
+    filter 0.15s ease,
+    transform 0.15s var(--ease-out),
+    box-shadow 0.15s ease;
+}
+
+.palette-header__toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Que se note pulsable sin gritar: realce leve, elevación mínima y el glow de
+   marca reservado para este momento. Se retiró el anillo de 3px que se sumaba
+   al glow: dos halos concéntricos sobre un icono de 36px era el efecto más
+   estridente de la Toolbox. */
+.palette-header__toggle:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px) scale(1.04);
   box-shadow: var(--glow-primary);
 }
 
-.palette-header__logo svg {
-  width: 18px;
-  height: 18px;
+/* Respuesta táctil al pulsar. */
+.palette-header__toggle:active {
+  transform: translateY(0) scale(0.96);
+  transition-duration: 0.08s;
+}
+
+.palette-header__toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .palette-header__title {
@@ -61,15 +218,21 @@
   color: var(--text);
   font-family: var(--font-display);
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: opacity 0.18s ease;
 }
 
+/* Fuera de la cabecera anclada: se desplaza con el contenido, así que lleva
+   su propio canal de 18px para seguir alineado con el resto. */
 .palette-header__sub {
   margin: 0;
+  padding: 10px 18px 0;
   font-size: 0.75rem;
   color: var(--muted);
 }
 
 .palette-header__search {
+  margin: 8px 18px 4px;
   display: flex;
   align-items: center;
   gap: 8px;

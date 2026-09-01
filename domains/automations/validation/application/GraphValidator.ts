@@ -6,6 +6,7 @@ import { validateEdgeIntegrity } from "./rules/validateEdgeIntegrity";
 import { validateEdgePriorities } from "./rules/validateEdgePriorities";
 import { validateNodeDegree } from "./rules/validateNodeDegree";
 import { validateFallbacks } from "./rules/validateFallbacks";
+import { validateKnownNodeTypes } from "./rules/validateKnownNodeTypes";
 import { detectCycles } from "./rules/detectCycles";
 import { detectUnreachable } from "./rules/detectUnreachable";
 
@@ -26,6 +27,7 @@ export class GraphValidator {
     const entryIsReachable = Boolean(entryNodeId) && nodeIds.has(entryNodeId);
 
     const errors: ValidationIssue[] = [
+      ...validateKnownNodeTypes(snapshot),
       ...validateEntryNode(snapshot, nodeIds),
       ...validateEdgeIntegrity(snapshot, nodeIds),
       ...validateEdgePriorities(snapshot),

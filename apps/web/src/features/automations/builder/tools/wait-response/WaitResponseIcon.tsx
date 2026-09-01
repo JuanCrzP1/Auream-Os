@@ -1,0 +1,11 @@
+/** Icono de la herramienta Esperar respuesta. */
+export function WaitResponseIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.5 12.5a1.67 1.67 0 0 1-1.67 1.67H5.83L2.5 17.5V4.17A1.67 1.67 0 0 1 4.17 2.5h11.66A1.67 1.67 0 0 1 17.5 4.17z"/>
+      <circle cx="7.5" cy="10" r="1" fill="white" stroke="none"/>
+      <circle cx="10" cy="10" r="1" fill="white" stroke="none"/>
+      <circle cx="12.5" cy="10" r="1" fill="white" stroke="none"/>
+    </svg>
+  );
+}

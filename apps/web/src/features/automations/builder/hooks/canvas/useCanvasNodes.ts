@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { applyNodeChanges, type OnNodesChange } from "@xyflow/react";
 import { createNodeDraft } from "@features/automations/builder/services/createNodeDraft";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
@@ -32,6 +32,25 @@ export function useCanvasNodes(initialNodes: CanvasNode[], selectedNodeId: strin
     setNodes((current) => [...current, nextNode]);
   }
 
+  /**
+   * Elimina un nodo del canvas.
+   *
+   * Existe para que las tarjetas no tengan que tocar el estado por su cuenta:
+   * antes `FlowNodeCard` llamaba a `useReactFlow().setNodes`, saltándose a este
+   * hook, que es el dueño. Con dos escritores el estado tenía dos verdades y
+   * cualquier historial futuro (deshacer, auditoría) se habría perdido los
+   * borrados hechos por el camino corto.
+   *
+   * Estable a propósito: viaja por contexto hasta cada tarjeta y una identidad
+   * nueva por render volvería a renderizar todo el lienzo en cada cambio.
+   *
+   * Las conexiones NO se tocan aquí: son de `useCanvasEdges`. Quien compone las
+   * dos operaciones es el coordinador.
+   */
+  const removeNode = useCallback((nodeId: string): void => {
+    setNodes((current) => current.filter((node) => node.id !== nodeId));
+  }, []);
+
   function updateSelectedNode(field: "title" | "preview", value: string): void {
     if (!selectedNodeId) return;
 
@@ -63,6 +82,7 @@ export function useCanvasNodes(initialNodes: CanvasNode[], selectedNodeId: strin
     handleNodesChange,
     addNode,
     dropNode,
+    removeNode,
     updateSelectedNode
   };
 }

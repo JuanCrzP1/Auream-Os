@@ -2,6 +2,7 @@ import type { CanvasEdge, CanvasNode } from "../types/canvas";
 import type { BuilderFlowSnapshot } from "@contracts/FlowSnapshot";
 import { buildEdgePresentation } from "../services/buildEdgePresentation";
 import { summarizeNode } from "../services/summarizeNode";
+import { isTerminalType } from "../tools/registry";
 
 export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
   nodes: CanvasNode[];
@@ -24,7 +25,7 @@ export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
         preview,
         configSummary,
         isEntry: snapshot.version.entryNodeId === node.id,
-        isTerminal: node.type === "end",
+        isTerminal: isTerminalType(node.type),
         content: node.content,
         config: node.config,
         metadata: node.metadata

@@ -1,0 +1,39 @@
+/* Controles de zoom y encuadre del lienzo (React Flow `<Controls>`).
+ *
+ * Misma familia de superficie flotante que la Toolbox, la topbar y el
+ * minimapa, pero sin variables propias que respetar: React Flow no
+ * parametriza este widget, así que aquí sí se declara directamente.
+ *
+ * Los colores pasaron a tokens: los valores que había escritos a mano
+ * (`#4f46e5`, y un violeta al 12%) venían del tema claro anterior y no
+ * respondían al cambio de tema. */
+
+.react-flow__controls {
+  box-shadow: none;
+  background: var(--surface-floating);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.react-flow__controls button {
+  background: transparent;
+  color: var(--primary);
+  border-bottom: 1px solid var(--line);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.react-flow__controls button:hover {
+  background: var(--chip-bg-hover);
+  color: var(--primary-hover);
+}
+
+.react-flow__controls button:last-child {
+  border-bottom: 0;
+}
+
+.react-flow__controls button svg {
+  fill: currentColor;
+  stroke: currentColor;
+}

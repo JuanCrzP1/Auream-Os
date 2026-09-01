@@ -1,0 +1,13 @@
+/* Superficie del lienzo de React Flow.
+ *
+ * Lo que se ve por debajo del grafo: el punteado de fondo y el cromo que no
+ * pertenece ni a las conexiones ni a los controles. El color lo decide el tema,
+ * nunca el componente: `BuilderCanvas.tsx` no declara ninguno. */
+
+.react-flow__background-pattern.dots {
+  fill: var(--canvas-dot);
+}
+
+.react-flow__attribution {
+  display: none;
+}

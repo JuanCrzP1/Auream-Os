@@ -1,0 +1,55 @@
+/* Conexiones del lienzo.
+ *
+ * REPARTO DE RESPONSABILIDAD, que aquí no es obvio
+ *
+ * El trazo de cada arista lo decide `buildEdgePresentation`, que es la única
+ * frontera que traduce el modelo (prioridad, condición, fallback) a algo
+ * pintable, y viaja como `style` en línea. Esta hoja solo puede declarar lo que
+ * ese `style` no cubre: el color base de arranque, el halo y la línea de
+ * conexión en curso.
+ *
+ * Por eso NO hay aquí reglas de `:hover` ni de `.selected` sobre el trazo: las
+ * había, y nunca se aplicaron —un `style` en línea gana siempre a una hoja—.
+ * Eran CSS muerto que aparentaba dar realimentación de selección. El estado
+ * visual de una conexión seleccionada se resolverá donde corresponde, en la
+ * presentación del edge (B7/B8). */
+
+.react-flow__edge-path {
+  stroke: var(--edge-stroke);
+}
+
+/* Halo de neón de las conexiones normales.
+ *
+ * Muy contenido a propósito: con muchas aristas juntas un halo grande se
+ * convierte en niebla. `:not(.animated)` deja fuera al fallback, que es ámbar
+ * y no debe teñirse de violeta.
+ *
+ * Bajado de 3px/0.45 a 2px/0.28: el neón se sigue leyendo en cada conexión,
+ * pero deja de acumularse en las zonas donde varias aristas se juntan, que es
+ * donde el lienzo se llenaba de bruma violeta. */
+.react-flow__edge:not(.animated) .react-flow__edge-path {
+  filter: drop-shadow(0 0 2px rgba(139, 92, 246, 0.28));
+}
+
+.react-flow__connectionline path {
+  stroke: var(--primary);
+}
+
+/* Punto de anclaje mientras se arrastra una conexión: verde = este destino es
+   válido. Es señal semántica, no decoración, así que no sigue al primario del
+   tema; pero el color se declara una sola vez, como token, en lugar de repetido
+   en dos reglas. */
+.react-flow__handle-connecting,
+.react-flow__handle-valid {
+  background: var(--handle-valid);
+}
+
+/* Chip de fondo de la etiqueta de una conexión. Hoy solo lo lleva el fallback.
+ *
+ * Deliberadamente oscuro en AMBOS temas, y por eso no usa `--bg-panel`: el
+ * texto de la etiqueta es ámbar en claro y en oscuro, y sobre un panel claro
+ * resultaría ilegible. Es un chip con fondo propio, no una superficie del
+ * tema. */
+.react-flow__edge-textbg {
+  fill: rgba(9, 16, 30, 0.94);
+}

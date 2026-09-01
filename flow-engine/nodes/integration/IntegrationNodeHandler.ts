@@ -4,22 +4,25 @@ import type { Session } from "../../../contracts/RuntimeContracts";
 import type { NodeHandler } from "../NodeHandler";
 
 // ---------------------------------------------------------------------------
-// ActionNodeHandler
+// IntegrationNodeHandler
 //
 // Estado: NO IMPLEMENTADO.
 //
-// Un nodo de acción debe invocar un efecto externo (webhook, API de dominio).
-// Ese ejecutor todavía no existe, así que el nodo NO se ejecuta: falla de forma
-// explícita en lugar de simular un resultado.
+// Un nodo de integración debe invocar un efecto externo (webhook, API de
+// dominio, CRM). Ese ejecutor todavía no existe, así que el nodo NO se ejecuta:
+// falla de forma explícita en lugar de simular un resultado.
 //
 // Antes este handler escribía en contexto un `config.mockResult` inventado, lo
 // que hacía parecer que la acción se había ejecutado. Se retiró: el runtime real
 // no finge integraciones.
+//
+// Se llamó `ActionNodeHandler` (tipo `action`). Es el mismo concepto con el
+// nombre que usa el producto: una sola herramienta, no dos.
 // ---------------------------------------------------------------------------
 
-export class ActionNodeHandler implements NodeHandler {
+export class IntegrationNodeHandler implements NodeHandler {
   public supports(nodeType: FlowNode["type"]): boolean {
-    return nodeType === "action";
+    return nodeType === "integration";
   }
 
   public execute(node: FlowNode, _input: RuntimeInput, _session: Session): NodeExecutionResult {
@@ -28,10 +31,10 @@ export class ActionNodeHandler implements NodeHandler {
       outputMessages: [],
       contextPatch: {},
       nodeResult: {
-        action: node.config.actionName ?? node.name,
-        reason: "action_executor_not_implemented"
+        integration: node.config.integrationName ?? node.name,
+        reason: "integration_executor_not_implemented"
       },
-      domainEvents: [`action_node_not_implemented:${node.id}`]
+      domainEvents: [`integration_node_not_implemented:${node.id}`]
     };
   }
 }

@@ -1,112 +1,298 @@
+/* Tarjeta flotante, no una franja pegada de lado a lado.
+ *
+ * LA HUELLA VERTICAL NO CAMBIA: antes la barra ocupaba 50px de la columna del
+ * stage. Ahora la tarjeta mide 42px y los 8px restantes son sus márgenes
+ * (4 arriba + 4 abajo). 4 + 42 + 4 = 50. El canvas recibe exactamente la misma
+ * altura que antes.
+ *
+ * No se convierte en overlay absoluto sobre el workspace —como sí es la
+ * Toolbox— porque la Toolbox está anclada en `top: 12px` de ese mismo
+ * workspace: una topbar superpuesta a todo el ancho la taparía.
+ *
+ * Cristal y geometría tomados de la tarjeta de la Toolbox: es el mismo lenguaje
+ * de superficie flotante, no uno nuevo. */
 .builder-topbar {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 50px;
-  padding: 0 20px;
-  background: var(--surface-glass);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line);
+  height: 42px;
+  margin: 4px 12px;
+  padding: 0 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014));
+  /* Misma corrección que en la Toolbox: sin `saturate()`, que subía el croma de
+     todo lo que quedaba detrás, y con `--line` en vez de `--border`, que es el
+     trazo que usa la tarjeta del sidebar. */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--elevation-inset), var(--shadow);
   z-index: 5;
 }
 
+/* En claro el velo se invierte —blanco translúcido sobre el lienzo— y el
+   recorte lo dan el borde y una sombra algo más presente. Nunca un fondo
+   opaco: el fondo debe seguir percibiéndose. */
+:root[data-theme="light"] .builder-topbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.2)),
+    rgba(255, 255, 255, 0.48);
+  box-shadow: var(--elevation-inset), 0 12px 32px -10px rgba(108, 92, 231, 0.28);
+}
+
+/* Puede encogerse: es el lado que cede espacio cuando el nombre es largo.
+   `min-width: 0` es lo que permite que el nombre trunque en vez de empujar
+   los controles de la derecha fuera de pantalla. */
 .builder-topbar__left {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.builder-topbar__center {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
 
-.builder-topbar__right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.builder-topbar__palette-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
+/* ===== VOLVER =====
+ *
+ * No tenía ninguna regla: el botón salía sin estilo y su SVG, sin `width` ni
+ * `height` propios ni tamaño heredado, se renderizaba a 0×0 — un cuadrado gris
+ * vacío sin flecha visible. De ahí que no se leyera como "volver". */
+.builder-topbar__back {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--bg-elevated);
   color: var(--muted);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  flex: 0 0 auto;
+  transition: background var(--speed-fast) ease, color var(--speed-fast) ease,
+    border-color var(--speed-fast) ease, transform var(--speed-fast) var(--ease-out);
 }
 
-.builder-topbar__palette-toggle svg {
-  width: 17px;
-  height: 17px;
+.builder-topbar__back svg {
+  width: 18px;
+  height: 18px;
 }
 
-.builder-topbar__palette-toggle:hover {
-  background: rgba(108, 92, 231, 0.1);
+.builder-topbar__back:hover {
+  background: var(--chip-bg-hover);
   color: var(--primary);
-  border-color: rgba(108, 92, 231, 0.25);
+  border-color: var(--primary-soft);
+  transform: translateX(-1px);
+}
+
+.builder-topbar__back:active {
+  transform: translateX(-1px) scale(0.94);
+}
+
+.builder-topbar__back:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ===== NOMBRE DE LA AUTOMATIZACIÓN ===== */
+
+.builder-topbar__flow-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* El lápiz está SIEMPRE visible: un control que sólo aparece al pasar el ratón
+   es un control que el usuario no descubre —y en táctil, que no existe—. Se
+   mantiene discreto con el color secundario y el hover sólo sube el contraste. */
+.builder-topbar__rename {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.13s ease, color 0.13s ease, border-color 0.13s ease;
+}
+
+.builder-topbar__rename svg {
+  width: 14px;
+  height: 14px;
+}
+
+.builder-topbar__rename:hover {
+  background: var(--chip-bg-hover);
+  color: var(--primary);
+  border-color: var(--primary-soft);
+}
+
+.builder-topbar__rename:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .builder-topbar__name {
   font-weight: 600;
   font-size: 0.95rem;
+  /* El nombre cede antes que los controles: se recorta y el `title` conserva
+     el texto completo. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.builder-topbar__save {
-  font-size: 0.82rem;
-  color: var(--muted);
+/* ===== EDICIÓN EN LÍNEA ===== */
+
+.builder-topbar__flow-name--editing {
+  gap: 4px;
 }
 
-.builder-topbar__version {
+.builder-topbar__name-input {
+  min-width: 0;
+  width: 260px;
+  max-width: 100%;
+  height: 30px;
+  padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
-.builder-topbar__btn {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 7px 14px;
-  background: var(--bg-elevated);
+  background: var(--surface);
   color: var(--text);
-  cursor: pointer;
-  font-size: 0.88rem;
-  transition: background 0.15s;
-}
-
-.builder-topbar__btn:hover {
-  background: var(--bg-strong);
-}
-
-.builder-topbar__publish {
-  border: 0;
-  border-radius: 10px;
-  padding: 8px 18px;
-  background: var(--gradient-primary);
-  color: var(--on-primary);
   font-weight: 600;
-  cursor: pointer;
-  font-size: 0.88rem;
-  transition: box-shadow var(--speed-fast) ease, filter var(--speed-fast) ease;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--speed-fast) ease, box-shadow var(--speed-fast) ease;
 }
 
-.builder-topbar__publish:hover {
-  box-shadow: var(--glow-primary);
-  filter: brightness(1.08);
+.builder-topbar__name-input:focus {
+  border-color: var(--primary-soft);
+  box-shadow: var(--glow-soft);
+}
+
+.builder-topbar__name-action {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.13s ease, color 0.13s ease, border-color 0.13s ease;
+}
+
+.builder-topbar__name-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.builder-topbar__name-action:hover:not(:disabled) {
+  background: var(--chip-bg-hover);
+  color: var(--primary);
+  border-color: var(--primary-soft);
+}
+
+.builder-topbar__name-action:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.builder-topbar__name-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== ESTADO DE GUARDADO =====
+ *
+ * Cápsula de ESTADO, no botón: no es pulsable y no debe parecerlo. Fondo
+ * translúcido con borde fino, del mismo lenguaje que el resto de superficies
+ * flotantes, y proporcionada al texto que contiene.
+ *
+ * El aire a su izquierda la separa del nombre para que se lean como dos cosas
+ * distintas: qué estoy editando, y en qué estado está. */
+.builder-topbar__save-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin-left: 12px;
+  padding: 4px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--speed-fast) ease, border-color var(--speed-fast) ease;
+}
+
+.builder-topbar__save-pill svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+/* Guardado: el visto toma el color de estado activo del sistema; el texto se
+   mantiene secundario para que la cápsula no compita con el nombre. */
+.builder-topbar__save-pill--idle svg,
+.builder-topbar__save-pill--saved svg {
+  color: var(--status-active-text);
+}
+
+.builder-topbar__save-pill--saving svg {
+  animation: builder-save-spin 0.9s linear infinite;
+}
+
+/* Error: es la única variante que sí debe llamar la atención. */
+.builder-topbar__save-pill--error {
+  color: var(--rose);
+  border-color: var(--rose);
+}
+
+@keyframes builder-save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .builder-topbar__save-pill--saving svg {
+    animation: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Menos ancho para el campo: el nombre sigue siendo editable pero deja de
+     competir con la versión y Rollback. */
+  .builder-topbar__name-input {
+    width: 180px;
+  }
 }
 
 @media (max-width: 768px) {
-  .builder-topbar__save {
-    display: none;
+  /* En estrecho la cápsula se reduce a su icono: el estado sigue comunicándose
+     y el nombre conserva el ancho. `role="status"` mantiene el texto accesible
+     para lectores de pantalla aunque no se pinte. */
+  .builder-topbar__save-pill {
+    margin-left: 8px;
+    padding: 5px;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .builder-topbar__name-input {
+    width: 140px;
   }
 }

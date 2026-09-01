@@ -61,7 +61,14 @@
   /* Cromo del navegador y del lienzo */
   --canvas-dot: rgba(108, 92, 231, 0.18);
   --edge-stroke: rgba(108, 92, 231, 0.45);
-  --minimap-mask: rgba(108, 92, 231, 0.12);
+  /* Mismo valor que en oscuro: el verde de validez funciona sobre los dos
+     lienzos y separarlo ahora sería una decisión de diseño sin acordar. */
+  --handle-valid: #22c55e;
+  /* Velo de lo que queda fuera del viewport en el minimapa (único consumidor).
+     Muy bajo a propósito: cubre casi toda la tarjeta, así que en cuanto sube
+     dibuja un aro alrededor del recorte y la pieza se lee como un marco. El
+     viewport lo señala el contorno, no este relleno. */
+  --minimap-mask: rgba(108, 92, 231, 0.07);
   --scrollbar-thumb: rgba(108, 92, 231, 0.24);
   --scrollbar-thumb-hover: rgba(108, 92, 231, 0.45);
   --selection-bg: rgba(108, 92, 231, 0.2);
