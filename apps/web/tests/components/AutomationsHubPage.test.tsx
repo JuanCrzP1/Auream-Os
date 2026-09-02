@@ -1,74 +1,131 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "../../src/shared/auth/context/AuthContext";
-import { ActiveTenantProvider } from "../../src/shared/auth/tenant/ActiveTenantContext";
-import { AutomationsHubPage } from "../../src/features/automations/list/pages/AutomationsHubPage";
+import {
+  FLOW,
+  FOLDER,
+  header,
+  renderHub,
+  stubApi,
+  stubEmptyApi
+} from "../helpers/automationsHub";
 
-function renderHub() {
-  return render(
-    <MemoryRouter initialEntries={["/automations"]}>
-      <AuthProvider>
-        <ActiveTenantProvider>
-          <Routes>
-            <Route path="/automations" element={<AutomationsHubPage />} />
-            <Route path="/builder/:flowKey" element={<div>Builder page</div>} />
-          </Routes>
-        </ActiveTenantProvider>
-      </AuthProvider>
-    </MemoryRouter>
-  );
-}
+// ---------------------------------------------------------------------------
+// Regla de estado del hub: EMPTY vs POPULATED.
+//
+// hasContent = flows.length > 0 || folders.length > 0. Las acciones de
+// creación existen en los dos estados, pero nunca en los dos sitios a la vez.
+//
+// La creación de carpeta se prueba en AutomationsHubFolders.test.tsx.
+// ---------------------------------------------------------------------------
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 } as Response));
+  stubEmptyApi();
 });
 
 describe("AutomationsHubPage", () => {
-  it("shows loading state initially", () => {
-    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+  // La carga inicial y la revalidación se prueban en AutomationsHubRefresh.
+
+  it("muestra las tarjetas de flujo que devuelve el servidor", async () => {
+    stubApi({ flows: [FLOW] });
     renderHub();
-    expect(screen.getByText(/cargando/i)).toBeInTheDocument();
+    expect(await screen.findByText("Flujo de prueba")).toBeInTheDocument();
+  });
+});
+
+describe("AutomationsHubPage — estado vacío", () => {
+  beforeEach(() => {
+    stubApi();
   });
 
-  it("shows empty state when no automations", async () => {
+  it("muestra el empty state sin automatizaciones ni carpetas", async () => {
     renderHub();
-    await waitFor(() => {
-      expect(screen.getByText(/sin automatizaciones/i)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/sin automatizaciones/i)).toBeInTheDocument();
   });
 
-  it("shows header with Nueva button", async () => {
+  it("ofrece Nueva automatización en el centro", async () => {
     renderHub();
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /nueva/i })).toBeInTheDocument();
-    });
+    await screen.findByText(/sin automatizaciones/i);
+    expect(header()).not.toContainElement(
+      screen.getByRole("button", { name: /nueva automatización/i })
+    );
   });
 
-  it("navigates to builder when Nueva is clicked", async () => {
+  it("ofrece Nueva carpeta en el centro", async () => {
     renderHub();
-    await waitFor(() => screen.getByText(/sin automatizaciones/i));
-    await userEvent.click(screen.getAllByRole("button", { name: /nueva/i })[0]);
-    await waitFor(() => {
-      expect(screen.getByText("Builder page")).toBeInTheDocument();
-    });
+    await screen.findByText(/sin automatizaciones/i);
+    expect(header()).not.toContainElement(
+      screen.getByRole("button", { name: /nueva carpeta/i })
+    );
   });
 
-  it("shows flow cards when server returns flows", async () => {
-    const mockData = {
-      flows: [{ id: "1", key: "k1", name: "Flujo de prueba", status: "active", updatedAt: "2024-01-01" }],
-      folders: []
-    };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => mockData
-    } as unknown as Response));
+  it("ofrece Explorar plantillas en el centro", async () => {
     renderHub();
-    await waitFor(() => {
-      expect(screen.getByText("Flujo de prueba")).toBeInTheDocument();
-    });
+    await screen.findByText(/sin automatizaciones/i);
+    expect(header()).not.toContainElement(
+      screen.getByRole("button", { name: /explorar plantillas/i })
+    );
+  });
+
+  it("NO muestra el botón Nueva en la cabecera", async () => {
+    renderHub();
+    await screen.findByText(/sin automatizaciones/i);
+    expect(within(header()).queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("la acción central de crear lleva al builder", async () => {
+    renderHub();
+    await screen.findByText(/sin automatizaciones/i);
+    await userEvent.click(screen.getByRole("button", { name: /nueva automatización/i }));
+    expect(await screen.findByText("Builder page")).toBeInTheDocument();
+  });
+
+  it("Explorar plantillas lleva a su ruta, sin inventar plantillas", async () => {
+    renderHub();
+    await screen.findByText(/sin automatizaciones/i);
+    await userEvent.click(screen.getByRole("button", { name: /explorar plantillas/i }));
+    expect(await screen.findByText("Plantillas page")).toBeInTheDocument();
+  });
+});
+
+describe("AutomationsHubPage — estado con contenido", () => {
+  it("oculta el empty state cuando hay una automatización", async () => {
+    stubApi({ flows: [FLOW] });
+    renderHub();
+    await screen.findByText("Flujo de prueba");
+    expect(screen.queryByText(/sin automatizaciones/i)).not.toBeInTheDocument();
+  });
+
+  it("oculta el empty state cuando sólo hay una carpeta", async () => {
+    stubApi({ folders: [FOLDER] });
+    renderHub();
+    await screen.findByText("Carpeta de prueba");
+    expect(screen.queryByText(/sin automatizaciones/i)).not.toBeInTheDocument();
+  });
+
+  it("muestra el botón Nueva en la cabecera", async () => {
+    stubApi({ flows: [FLOW] });
+    renderHub();
+    await screen.findByText("Flujo de prueba");
+    expect(within(header()).getByRole("button", { name: /^nueva$/i })).toBeInTheDocument();
+  });
+
+  it("el botón Nueva de la cabecera sigue llevando al builder", async () => {
+    stubApi({ flows: [FLOW] });
+    renderHub();
+    await screen.findByText("Flujo de prueba");
+    await userEvent.click(within(header()).getByRole("button", { name: /^nueva$/i }));
+    expect(await screen.findByText("Builder page")).toBeInTheDocument();
+  });
+
+  it("no duplica acciones entre cabecera y centro", async () => {
+    stubApi({ flows: [FLOW], folders: [FOLDER] });
+    renderHub();
+    await screen.findByText("Flujo de prueba");
+
+    expect(screen.getAllByRole("button", { name: /^nueva$/i })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /nueva automatización/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /explorar plantillas/i })).not.toBeInTheDocument();
   });
 });

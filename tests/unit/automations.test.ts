@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ListAutomationsService } from "../../domains/automations/catalog/application/ListAutomationsService.js";
 import { CreateFolderService } from "../../domains/automations/catalog/application/CreateFolderService.js";
+import { ValidationError } from "../../platform/observability/errors/ValidationError.js";
 import type { AutomationRepository } from "../../domains/automations/catalog/application/AutomationRepository.js";
 import type { FolderRepository } from "../../domains/automations/catalog/application/FolderRepository.js";
 import type { AutomationFlow } from "../../domains/automations/catalog/domain/AutomationFlow.js";
@@ -132,6 +133,26 @@ describe("CreateFolderService", () => {
     const folders = await folderRepo.findByTenant("tenant-1");
     expect(folders).toHaveLength(1);
     expect(folders[0].name).toBe("Carpeta persistida");
+  });
+
+  it("normaliza el nombre antes de persistir", async () => {
+    const folder = await sut.execute("tenant-1", "   Mi carpeta   ");
+    expect(folder.name).toBe("Mi carpeta");
+  });
+
+  it("rechaza un nombre vacío o en blanco sin persistir nada", async () => {
+    for (const invalid of ["", "   ", "\t\n"]) {
+      await expect(sut.execute("tenant-1", invalid)).rejects.toThrow(ValidationError);
+    }
+
+    expect(await folderRepo.findByTenant("tenant-1")).toHaveLength(0);
+  });
+
+  it("expone la invariante como error de dominio traducible a HTTP", async () => {
+    await expect(sut.execute("tenant-1", "")).rejects.toMatchObject({
+      code: "VALIDATION_ERROR",
+      statusCode: 422
+    });
   });
 
   it("creates folder with parentFolderId", async () => {

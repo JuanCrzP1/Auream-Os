@@ -58,3 +58,15 @@ export interface AutomationListResponse {
   readonly flows: ReadonlyArray<AutomationSummary>;
   readonly folders: ReadonlyArray<AutomationFolderSummary>;
 }
+
+// ---------------------------------------------------------------------------
+// CreateFolderRequest — cuerpo de `POST /automations/folders`
+//
+// Sólo el nombre: `id`, `tenantId` y `createdAt` los decide el servidor. La
+// respuesta es un `AutomationFolderSummary`, la misma forma que ya devuelve el
+// listado, para que el cliente no tenga que conocer dos representaciones.
+// ---------------------------------------------------------------------------
+
+export interface CreateFolderRequest {
+  readonly name: string;
+}

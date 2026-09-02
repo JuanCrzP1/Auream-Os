@@ -5,6 +5,7 @@ import { SaveDraftService } from "../../../domains/automations/builder/applicati
 import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
 import { DeleteAutomationService } from "../../../domains/automations/builder/application/DeleteAutomationService";
 import { ListAutomationsService } from "../../../domains/automations/catalog/application/ListAutomationsService";
+import { CreateFolderService } from "../../../domains/automations/catalog/application/CreateFolderService";
 import { GraphValidator } from "../../../domains/automations/validation/application/GraphValidator";
 import type { AutomationRepository } from "../../../domains/automations/catalog/application/AutomationRepository";
 import { JsonAutomationRepository } from "../../../infrastructure/persistence/json/JsonAutomationRepository";
@@ -34,6 +35,7 @@ export interface ApiServices {
   readonly simulateDraftService: SimulateDraftService;
   readonly deleteAutomationService: DeleteAutomationService;
   readonly listAutomationsService: ListAutomationsService;
+  readonly createFolderService: CreateFolderService;
   readonly automationRepository: AutomationRepository;
 }
 
@@ -56,6 +58,7 @@ export function composeBuilderServices(config: ApiConfig): ApiServices {
     ),
     deleteAutomationService: new DeleteAutomationService(automationRepository, workspaceRepository),
     listAutomationsService: new ListAutomationsService(automationRepository, folderRepository),
+    createFolderService: new CreateFolderService(folderRepository),
     automationRepository
   };
 }

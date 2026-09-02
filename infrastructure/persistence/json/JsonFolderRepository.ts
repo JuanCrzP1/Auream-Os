@@ -2,6 +2,7 @@ import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import type { FolderRepository } from "../../../domains/automations/catalog/application/FolderRepository";
 import type { AutomationFolder } from "../../../domains/automations/catalog/domain/AutomationFolder";
+import { isAutomationFolder } from "./parseAutomationFolder";
 
 /**
  * JsonFolderRepository — implementación filesystem de FolderRepository.
@@ -45,7 +46,11 @@ export class JsonFolderRepository implements FolderRepository {
   private async readFolder(filePath: string): Promise<AutomationFolder | null> {
     try {
       const content = await readFile(filePath, "utf-8");
-      return JSON.parse(content) as AutomationFolder;
+      const parsed: unknown = JSON.parse(content);
+
+      // Un fichero corrupto o de un formato antiguo se ignora en lugar de
+      // entrar en el dominio con una forma que nadie ha comprobado.
+      return isAutomationFolder(parsed) ? parsed : null;
     } catch (err) {
       if (this.isNotFound(err)) return null;
       throw err;

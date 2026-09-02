@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { handleCreateFolderRequest } from "../handlers/handleCreateFolderRequest";
 import { handleDeleteAutomationRequest } from "../handlers/handleDeleteAutomationRequest";
 import { handleRenameAutomationRequest } from "../handlers/handleRenameAutomationRequest";
 import { sendJson } from "../http/sendJson";
@@ -11,13 +12,14 @@ import { FlowPermissions } from "../../../platform/authorization/permissions/Flo
 // ---------------------------------------------------------------------------
 // routeAutomationsRequest
 //
-// Responsabilidad única: enrutar `/automations` y `/automations/:id`.
+// Responsabilidad única: enrutar `/automations`, `/automations/folders` y
+// `/automations/:id`.
 //
 // Devuelve `true` si consumió la petición, `false` si la ruta no le pertenece.
 // El tenant llega siempre del contexto autenticado, nunca de la URL. Cada
 // acción exige el scope correspondiente sobre ese tenant (mismo mecanismo que
-// routeBuilderApiRequest): listar/leer exige flows.read, borrar y renombrar
-// exigen flows.write.
+// routeBuilderApiRequest): listar/leer exige flows.read, crear carpeta, borrar
+// y renombrar exigen flows.write.
 // ---------------------------------------------------------------------------
 
 const AUTOMATION_ID_PATTERN = /^\/automations\/([^/]+)$/;
@@ -35,6 +37,13 @@ export async function routeAutomationsRequest(
     requireScope(requestContext, FlowPermissions.read, tenantId);
     const result = await services.listAutomationsService.execute(tenantId);
     sendJson(response, 200, toAutomationListResponse(result));
+    return true;
+  }
+
+  // Antes del patrón de `:id`: si no, "folders" se leería como el id de un flow.
+  if (url.pathname === "/automations/folders" && request.method === "POST") {
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    await handleCreateFolderRequest(request, response, services.createFolderService, tenantId);
     return true;
   }
 

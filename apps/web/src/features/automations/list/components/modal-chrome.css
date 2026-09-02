@@ -1,3 +1,10 @@
+/* ===== MODAL CHROME — superficie compartida por los diálogos del hub =====
+ *
+ * Vivía dentro de delete-confirm-modal.css aunque lo usan también el diálogo
+ * de renombrar y el de crear carpeta. Aquí es un solo bloque con dueño claro,
+ * en lugar de tres copias del mismo cristal.
+ */
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -54,12 +61,53 @@
   opacity: 0.85;
 }
 
+.modal-box__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .modal-box__btn--ghost {
   background: var(--surface-alt);
   color: var(--text);
 }
 
+.modal-box__btn--primary {
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
 .modal-box__btn--danger {
   background: #e74c3c;
   color: var(--on-primary);
+}
+
+/* ----- Formulario dentro de un diálogo ----- */
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-form__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-alt);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.modal-form__input:focus {
+  border-color: var(--primary);
+}
+
+.modal-form__error {
+  font-size: 0.82rem;
+  color: var(--rose);
+  margin: -6px 0 0;
 }

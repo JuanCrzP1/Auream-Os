@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import "./delete-confirm-modal.css";
+import "./modal-chrome.css";
 
 interface DeleteConfirmModalProps {
   flowName: string;
