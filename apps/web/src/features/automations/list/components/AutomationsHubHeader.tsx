@@ -17,6 +17,9 @@ export function AutomationsHubHeader({ hasContent, onCreateFlow }: AutomationsHu
     <header className="hub-header">
       <div className="hub-header__left">
         <h1 className="hub-header__title">Automatizaciones</h1>
+        <p className="hub-header__subtitle">
+          Crea y gestiona automatizaciones para simplificar tus procesos.
+        </p>
       </div>
       {hasContent && (
         <div className="hub-header__right">

@@ -23,8 +23,10 @@
 
 .hub-header__left {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
 }
 
 .hub-header__title {
@@ -32,6 +34,14 @@
   font-size: 1.45rem;
   font-weight: 700;
   color: var(--text);
+  margin: 0;
+}
+
+/* Descripción del módulo: secundaria al título, misma familia de texto. */
+.hub-header__subtitle {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--muted);
   margin: 0;
 }
 

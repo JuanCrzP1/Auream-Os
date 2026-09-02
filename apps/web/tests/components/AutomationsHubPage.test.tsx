@@ -27,6 +27,16 @@ beforeEach(() => {
 describe("AutomationsHubPage", () => {
   // La carga inicial y la revalidación se prueban en AutomationsHubRefresh.
 
+  it("describe el módulo bajo el título, en la cabecera", async () => {
+    stubApi({ flows: [FLOW] });
+    renderHub();
+    await screen.findByText("Flujo de prueba");
+
+    expect(
+      within(header()).getByText("Crea y gestiona automatizaciones para simplificar tus procesos.")
+    ).toBeInTheDocument();
+  });
+
   it("muestra las tarjetas de flujo que devuelve el servidor", async () => {
     stubApi({ flows: [FLOW] });
     renderHub();
