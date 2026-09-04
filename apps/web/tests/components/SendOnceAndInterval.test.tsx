@@ -150,43 +150,107 @@ describe("bloque Intervalo", () => {
     return { ...utils, onChange, lastItems };
   }
 
-  it("dice para qué sirve, sin jerga", () => {
+  // El rótulo visible «Pausa antes del siguiente bloque» se retiró: repetía lo
+  // que ya dicen la cabecera del bloque y el propio valor, y costaba una fila
+  // entera justo en el bloque que existe para ser el más corto del editor.
+  // Lo que NO puede perderse es que cada control siga diciendo qué es, en
+  // castellano y sin jerga — para un lector de pantalla eso es todo el
+  // contexto que hay, así que ahora se comprueban los tres.
+  it("cada control dice para qué sirve, sin jerga", () => {
     renderIntervalo();
 
-    expect(screen.getByText("Pausa antes del siguiente bloque")).toBeTruthy();
+    expect(screen.getByLabelText("Duración de la pausa del bloque 1")).toBeTruthy();
+    expect(screen.getByLabelText("Unidad de la pausa del bloque 1")).toBeTruthy();
+    expect(screen.getByLabelText("Ajustar la duración de la pausa del bloque 1")).toBeTruthy();
+  });
+
+  it("ya no gasta una fila en repetir lo que dicen la cabecera y el valor", () => {
+    renderIntervalo();
+
+    expect(screen.queryByText("Pausa antes del siguiente bloque")).toBeNull();
   });
 
   it("tiene cantidad y unidad", () => {
     renderIntervalo(15);
 
     const cantidad = screen.getByLabelText("Duración de la pausa del bloque 1") as HTMLInputElement;
-    const unidad = screen.getByLabelText("Unidad de la pausa del bloque 1") as HTMLSelectElement;
 
     expect(cantidad.value).toBe("15");
-    expect(unidad.value).toBe("seconds");
+    // La unidad ya no es un `<select>`: su menú lo pintaba el sistema
+    // operativo y no había forma de que siguiera el tema. Ahora es un
+    // disparador propio que enseña la unidad vigente.
+    expect(screen.getByLabelText("Unidad de la pausa del bloque 1").textContent).toContain(
+      "segundos"
+    );
   });
 
-  it("ofrece atajos para las pausas de siempre", () => {
+  it("el menú de unidades no se despliega hasta que se pide", () => {
+    renderIntervalo();
+
+    expect(screen.queryByRole("listbox")).toBeNull();
+
+    fireEvent.click(screen.getByLabelText("Unidad de la pausa del bloque 1"));
+
+    expect(screen.getByRole("listbox")).toBeTruthy();
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([
+      "segundos",
+      "minutos",
+      "horas"
+    ]);
+  });
+
+  it("elegir una unidad la guarda y cierra el menú", () => {
+    const { lastItems } = renderIntervalo();
+
+    fireEvent.click(screen.getByLabelText("Unidad de la pausa del bloque 1"));
+    fireEvent.click(screen.getByRole("option", { name: "minutos" }));
+
+    expect(lastItems()[0]).toMatchObject({ unit: "minutes" });
+    expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("señala cuál es la unidad vigente dentro del menú", () => {
+    renderIntervalo(10, "minutes");
+
+    fireEvent.click(screen.getByLabelText("Unidad de la pausa del bloque 1"));
+
+    expect(screen.getByRole("option", { name: "minutos" }).getAttribute("aria-selected")).toBe(
+      "true"
+    );
+    expect(screen.getByRole("option", { name: "horas" }).getAttribute("aria-selected")).toBe(
+      "false"
+    );
+  });
+
+  it("Escape cierra el menú sin cambiar nada", () => {
+    const { lastItems } = renderIntervalo(10, "seconds");
+
+    fireEvent.click(screen.getByLabelText("Unidad de la pausa del bloque 1"));
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(lastItems()[0] ?? { unit: "seconds" }).toMatchObject({ unit: "seconds" });
+  });
+
+  // Se quitaron los atajos 3s/10s/30s/1min: entre el número, la unidad y el
+  // deslizador la duración ya se fija en un gesto, y este bloque tiene que ser
+  // el más compacto del editor.
+  it("no lleva atajos: el bloque se mantiene mínimo", () => {
     renderIntervalo();
 
     for (const etiqueta of ["3s", "10s", "30s", "1min"]) {
-      expect(screen.getByRole("button", { name: etiqueta })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: etiqueta })).toBeNull();
     }
   });
 
-  it("un atajo fija cantidad y unidad de una vez", () => {
-    const { lastItems } = renderIntervalo();
+  it("el deslizador escribe en el mismo dato que el campo numérico", () => {
+    const { lastItems } = renderIntervalo(5, "seconds");
 
-    fireEvent.click(screen.getByRole("button", { name: "1min" }));
+    fireEvent.change(screen.getByLabelText("Ajustar la duración de la pausa del bloque 1"), {
+      target: { value: "42" }
+    });
 
-    expect(lastItems()[0]).toMatchObject({ unit: "minutes" });
-  });
-
-  it("señala cuál es el valor actual", () => {
-    renderIntervalo(10, "seconds");
-
-    expect(screen.getByRole("button", { name: "10s" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("button", { name: "3s" }).getAttribute("aria-pressed")).toBe("false");
+    expect(lastItems()[0]).toMatchObject({ amount: 42, unit: "seconds" });
   });
 
   it("no acepta una pausa de cero", () => {

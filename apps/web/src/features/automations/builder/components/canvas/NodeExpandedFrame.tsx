@@ -1,17 +1,20 @@
 import "./node-expanded.css";
-import { useEffect } from "react";
-import { Handle, Position, useUpdateNodeInternals } from "@xyflow/react";
+import "../toolbar-button.css";
+import { useEffect, useMemo, useState } from "react";
 import type { ToolDefinition } from "@features/automations/builder/tools/ToolDefinition";
-import type { ToolUi } from "@features/automations/builder/tools/ToolUi";
+import type { ToolDraft, ToolUi } from "@features/automations/builder/tools/ToolUi";
 import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 
 interface NodeExpandedFrameProps {
-  readonly nodeId: string;
   readonly data: CanvasNode["data"];
   readonly tool: ToolDefinition;
   readonly ui: ToolUi;
-  readonly onChange: (patch: NodePatch) => void;
+  /**
+   * Confirma lo editado. Se llama SOLO al pulsar «Guardar», nunca mientras se
+   * escribe: es lo que separa editar de guardar.
+   */
+  readonly onCommit: (patch: NodePatch) => void;
   readonly onClose: () => void;
 }
 
@@ -19,33 +22,47 @@ interface NodeExpandedFrameProps {
  * Marco de configuración de un nodo abierto.
  *
  * Es TRANSVERSAL: da a todas las herramientas la misma cabecera, el mismo
- * cierre, las mismas dimensiones y la misma relación con el lienzo. Lo único
- * que cambia entre una herramienta y otra es lo que va dentro, y eso lo aporta
- * la herramienta a través del registry de UI.
+ * cierre, las mismas dimensiones. Lo único que cambia entre una herramienta y
+ * otra es lo que va dentro, y eso lo aporta la herramienta a través del
+ * registry de UI.
  *
  * Este archivo NO conoce ninguna herramienta concreta. Si alguna vez aparece
  * aquí un `if` por tipo de nodo, la frontera se ha roto.
  *
- * Los `Handle` se repiten aquí en lugar de heredarse del estado compacto porque
- * el nodo cambia de tamaño y sus conexiones deben engancharse a los bordes del
- * marco nuevo. `useUpdateNodeInternals` avisa a React Flow de ese cambio: sin
- * él, las aristas seguirían apuntando a las coordenadas del nodo pequeño hasta
- * el siguiente movimiento.
+ * NO ES UN NODO DE REACT FLOW, y por eso no lleva `Handle` propios ni
+ * `useUpdateNodeInternals`: lo monta `ExpandedNodeOverlay`, flotando sobre el
+ * lienzo y anclado a la posición del nodo compacto real, que es quien
+ * conserva sus conexiones intactas todo el tiempo. Este componente solo pinta
+ * el marco; no le importa quién lo posiciona ni cómo.
  */
 export function NodeExpandedFrame({
-  nodeId,
   data,
   tool,
   ui,
-  onChange,
+  onCommit,
   onClose
 }: NodeExpandedFrameProps) {
-  const updateNodeInternals = useUpdateNodeInternals();
   const Editor = ui.Editor;
 
+  // Lo que hay guardado en el nodo, ahora mismo.
+  const enElNodo = useMemo<ToolDraft>(
+    () => ({ name: data.title, content: data.content, config: data.config }),
+    [data.title, data.content, data.config]
+  );
+  const firmaDelNodo = useMemo(() => JSON.stringify(enElNodo), [enElNodo]);
+
+  // Lo que el usuario lleva editado y todavía no ha confirmado.
+  const [borrador, setBorrador] = useState<ToolDraft>(enElNodo);
+
+  // Se resincroniza cuando el nodo cambia DE VERDAD, comparando por valor y no
+  // por identidad: el lienzo reconstruye objetos al seleccionar o mover, y con
+  // una comparación por referencia esos gestos borrarían lo que el usuario
+  // lleva escrito sin haber tocado su configuración.
   useEffect(() => {
-    updateNodeInternals(nodeId);
-  }, [nodeId, updateNodeInternals]);
+    setBorrador(JSON.parse(firmaDelNodo) as ToolDraft);
+  }, [firmaDelNodo]);
+
+  const hayCambios = JSON.stringify(borrador) !== firmaDelNodo;
 
   // Escape cierra. Es la salida que se espera de cualquier cosa que se abre, y
   // la única que no exige apuntar con el ratón.
@@ -60,11 +77,6 @@ export function NodeExpandedFrame({
 
   return (
     <article className="node-expanded" style={{ borderColor: tool.colors.header }}>
-      <Handle type="target" position={Position.Left} className="flow-node__handle flow-node__handle--target" />
-
-      {/* Único punto por el que se arrastra el nodo abierto: `dragHandle` apunta
-          a esta clase. Sin esa acotación, seleccionar texto en un campo movería
-          el nodo por el lienzo. */}
       <header className="node-expanded__header" style={{ background: tool.colors.header }}>
         <span className="node-expanded__icon" aria-hidden="true">
           <ui.Icon />
@@ -84,12 +96,14 @@ export function NodeExpandedFrame({
       {/* `nodrag` libera el gesto de arrastre para el contenido; `nowheel` deja
           que la rueda del ratón desplace aquí dentro en vez de hacer zoom en el
           lienzo. Las dos son necesarias para que un formulario sea usable
-          dentro de un nodo. */}
+          dentro del marco — ya no está dentro de un nodo arrastrable, pero
+          sigue estando dentro del lienzo de React Flow, que interpreta
+          arrastre y rueda igual en cualquier punto que no lleve estas clases. */}
       <div className="node-expanded__body nodrag nowheel">
         {Editor ? (
           <Editor
-            draft={{ name: data.title, content: data.content, config: data.config }}
-            onChange={onChange}
+            draft={borrador}
+            onChange={(patch) => setBorrador((previo) => ({ ...previo, ...patch }))}
           />
         ) : (
           <p className="node-expanded__empty">
@@ -98,7 +112,35 @@ export function NodeExpandedFrame({
         )}
       </div>
 
-      <Handle type="source" position={Position.Right} className="flow-node__handle flow-node__handle--source" />
+      {/* Barra de acciones del EDITOR, no del lienzo.
+          «Guardar» confirma la configuración de esta herramienta llevándola al
+          nodo; a partir de ahí el autoguardado del lienzo hace lo suyo, igual
+          que con cualquier otro cambio del grafo. Son dos cosas distintas y por
+          eso este botón no habla nunca de guardar el flujo.
+          Vive aquí y no dentro de la herramienta porque el marco es lo único
+          común a todas: cualquier editor que se declare mañana hereda esta
+          barra sin escribir una línea. */}
+      {Editor ? (
+        <footer className="node-expanded__actions">
+          <button
+            type="button"
+            className="toolbar-button nodrag"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="toolbar-button toolbar-button--primary nodrag"
+            onClick={() => onCommit(borrador)}
+            // Sin cambios no hay nada que confirmar. Dejarlo pulsable sugeriría
+            // que hace algo, y escribiría el nodo con lo mismo que ya tiene.
+            disabled={!hayCambios}
+          >
+            Guardar
+          </button>
+        </footer>
+      ) : null}
     </article>
   );
 }

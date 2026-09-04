@@ -1,0 +1,170 @@
+/* ===== MENSAJE — BIBLIOTECA DE BLOQUES =====
+ *
+ * La columna izquierda: los seis tipos que se pueden añadir, su filo de
+ * acento, su caja de icono y el estado mientras se arrastra uno.
+ *
+ * Enseña exactamente la misma identidad cromática que el bloque una vez
+ * colocado, y lo hace leyendo los mismos roles: el par
+ * `.message-library__item--<tipo>` / `.message-item--<tipo>` se declara junto
+ * en `message-tokens.css` precisamente para que no puedan divergir.
+ *
+ * El rótulo de sección y el dimensionado del `svg` de la caja de icono NO
+ * están aquí: los comparte con otros bloques y viven en
+ * `message-shell.css`. */
+
+/* ----- Biblioteca ----- */
+
+.message-library {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  padding: 14px 12px 12px;
+  background: var(--mi-panel);
+  overflow: hidden;
+}
+
+/* La lista ocupa la altura disponible y reparte los seis bloques por ella. Los
+   elementos crecen un poco para llenarla sin dejar un vacío al fondo, pero
+   están topados: sin `max-height` cada uno pasaría de 80px en una pantalla alta
+   y la columna parecería una lista de botones gigantes. */
+.message-library__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message-library__slot {
+  flex: 1 1 auto;
+  /* -13%/-12% respecto al original (46/58px): proporcional a la columna, que
+     también bajó de 216 a 190px. */
+  min-height: 40px;
+  max-height: 51px;
+  display: flex;
+}
+
+.message-library__item {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px 0 9px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h / 0.55);
+  border-radius: var(--radius-sm);
+  /* Mismo sistema de roles que la tarjeta: la columna tiene que enseñar
+     exactamente la misma identidad cromática que enseña el bloque una vez
+     colocado. Con la mezcla anterior no lo hacía —el icono de Intervalo salía
+     en croma 21 contra los 107 del de Texto: cinco veces más débil. */
+  background:
+    linear-gradient(
+      180deg,
+      oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h),
+      var(--mi-card) 62%
+    ),
+    var(--mi-card);
+  box-shadow: var(--mi-lift);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.77rem;
+  text-align: left;
+  /* Affordance de arrastre: el cursor dice que el bloque se puede llevar. */
+  cursor: grab;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out),
+    transform var(--speed-fast) var(--ease-out),
+    box-shadow var(--speed-fast) var(--ease-out);
+}
+
+/* Filo del color del tipo: la señal más discreta posible de qué es cada cosa. */
+.message-library__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24%;
+  bottom: 24%;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--mi-accent);
+  opacity: 0.5;
+  transition: opacity var(--speed-fast) var(--ease-out), top var(--speed-fast) var(--ease-out),
+    bottom var(--speed-fast) var(--ease-out);
+}
+
+.message-library__item:hover {
+  /* Mismo rol de borde que el resto del sistema — sin alfa, más marcado que
+     el 0.55 de reposo: la intensificación de hover es de OPACIDAD, no un
+     porcentaje de mezcla propio inventado para este sitio. */
+  border-color: oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  transform: translateY(-1px);
+  box-shadow: var(--mi-lift), 0 6px 16px -12px rgba(0, 0, 0, 0.9);
+}
+
+.message-library__item:hover::before {
+  opacity: 1;
+  top: 14%;
+  bottom: 14%;
+}
+
+.message-library__item:active {
+  cursor: grabbing;
+  transform: translateY(0);
+}
+
+.message-library__item:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 2px;
+}
+
+/* Mientras se arrastra, el origen queda atenuado: el bloque «está en la mano»,
+   no en la columna. */
+.message-library__item--dragging {
+  opacity: 0.4;
+  transform: none;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+/* El icono vive en su propio contenedor. Es lo que separa «un SVG junto a un
+   texto» de un componente: le da masa, y es donde el acento del tipo puede
+   apoyarse sin teñir el botón entero. */
+.message-library__icon {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  padding: 4px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  border-radius: var(--radius-sm);
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  box-shadow: var(--mi-lift);
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.message-library__item:hover .message-library__icon {
+  background: oklch(from var(--mi-accent) var(--mi-L-icon-hover) min(c, var(--mi-C-icon)) h);
+  border-color: var(--mi-accent);
+}
+
+.message-library__label {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cierra la columna por abajo. `margin-top: auto` la ancla al pie, y la línea
+   fina la separa de los bloques sin convertirla en otro elemento más. */
+.message-library__note {
+  margin: auto 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--muted);
+}

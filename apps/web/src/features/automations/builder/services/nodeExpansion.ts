@@ -3,9 +3,15 @@ import type { CanvasNode } from "../types/canvas";
 // ---------------------------------------------------------------------------
 // Expansión de un nodo del lienzo.
 //
-// Un nodo expandido es EL MISMO nodo, más grande: conserva su id, su posición,
-// su selección y sus conexiones. No es una ventana aparte, y por eso el estado
-// de apertura vive en el propio nodo.
+// «Expandido» ya NO significa que el nodo de React Flow crezca: el nodo sigue
+// siendo el compacto de siempre, con sus handles en su sitio de siempre. Lo
+// que cambia es que aparece, flotando sobre el lienzo, el editor grande de la
+// herramienta —`ExpandedNodeOverlay` lo monta, anclado a este mismo nodo—.
+// Antes SÍ era el propio nodo el que se sustituía por el editor, y por eso
+// existía un `dragHandle` que acotaba el arrastre a su cabecera; ya no hace
+// falta —el nodo compacto se arrastra igual esté o no abierto su editor—, y
+// dejarlo habría sido un bug real: un selector que ya no existe dentro del
+// nodo deja el nodo entero sin poder arrastrarse.
 //
 // DÓNDE VIVE Y POR QUÉ
 //
@@ -25,15 +31,6 @@ import type { CanvasNode } from "../types/canvas";
 // INVARIANTE: como mucho un nodo expandido a la vez.
 // ---------------------------------------------------------------------------
 
-/**
- * Selector del área por la que se arrastra un nodo expandido.
- *
- * Sin esto, arrastrar para seleccionar texto dentro de un campo movería el nodo
- * por el lienzo. React Flow acota el gesto de arrastre a este selector, y el
- * resto del cuerpo queda libre para el contenido.
- */
-export const EXPANDED_DRAG_HANDLE = ".node-expanded__header";
-
 /** Capa del nodo abierto: por encima de sus vecinos, que si no lo tapan. */
 const EXPANDED_Z_INDEX = 10;
 
@@ -42,9 +39,6 @@ function withExpansion(node: CanvasNode, expanded: boolean): CanvasNode {
 
   return {
     ...node,
-    // `dragHandle` solo mientras está abierto: en compacto se arrastra el nodo
-    // entero, que es lo que el usuario espera de una tarjeta.
-    dragHandle: expanded ? EXPANDED_DRAG_HANDLE : undefined,
     zIndex: expanded ? EXPANDED_Z_INDEX : undefined,
     data: { ...node.data, isExpanded: expanded }
   };

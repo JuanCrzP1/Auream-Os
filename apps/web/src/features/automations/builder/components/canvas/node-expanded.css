@@ -19,9 +19,35 @@
  * Se declaran como tokens para que el interior pueda medirse contra ellos sin
  * repetir números. */
 :root {
-  --node-expanded-width: 980px;
+  --node-expanded-width: 560px;
   --node-expanded-height: 720px;
-  --node-expanded-header: 46px;
+  /* -13% respecto al valor original (46px): es lo primero que se ve al abrir,
+     y a 560px de ancho una cabecera pensada para 980-920px domina la ventana
+     antes de que el usuario llegue al contenido. */
+  --node-expanded-header: 40px;
+}
+
+/* Ventana independiente del lienzo — no un rótulo que sigue a un nodo.
+ *
+ * `fixed`, no `absolute`: se ancla al viewport REAL del navegador, no a
+ * ningún contenedor del árbol. Por eso `ExpandedNodeOverlay` se monta como
+ * hermano de `<ReactFlow>` y no como hijo: dentro de él habría heredado el
+ * `transform` de `.react-flow__viewport` —el que usa React Flow para pan y
+ * zoom— y un `fixed` bajo un antepasado con `transform` deja de anclarse al
+ * navegador para anclarse a ese antepasado. Aquí no hay ningún `transform`
+ * entre este elemento y la ventana del navegador, así que `inset: 0` cubre
+ * literalmente la pantalla y el centrado no se mueve pase lo que pase en el
+ * lienzo: ni al arrastrar el nodo, ni al hacer pan o zoom.
+ *
+ * `grid` + `place-items: center` centra `.node-expanded` sin medir nada: el
+ * marco sigue declarando su propio ancho y alto —`--node-expanded-width/
+ * height`, sin tocar—, esta capa solo lo sitúa. */
+.node-expanded-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
 }
 
 .node-expanded {
@@ -47,8 +73,8 @@
 .node-expanded__header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px;
+  gap: 8px;
+  padding: 0 10px;
   height: var(--node-expanded-header);
   /* El color lo pone la herramienta en línea; este degradado solo le da volumen
      sin desplazar el tono. La separación con el cuerpo es una línea y no una
@@ -56,20 +82,14 @@
      propio contenido. */
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.08));
   box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18);
-  /* Es el `dragHandle`: el único punto por el que se mueve el nodo abierto. */
-  cursor: grab;
   flex: 0 0 auto;
-}
-
-.node-expanded__header:active {
-  cursor: grabbing;
 }
 
 .node-expanded__icon {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   flex: 0 0 auto;
 }
 
@@ -82,7 +102,7 @@
   flex: 1;
   min-width: 0;
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--on-primary);
   white-space: nowrap;
@@ -91,8 +111,8 @@
 }
 
 .node-expanded__close {
-  width: 24px;
-  height: 24px;
+  width: 21px;
+  height: 21px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
@@ -100,7 +120,7 @@
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.18);
   color: var(--on-primary);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   line-height: 1;
   cursor: pointer;
   transition: background var(--speed-fast) var(--ease-out);
@@ -132,6 +152,41 @@
      usuario se quedaba sin sitio donde seguir construyendo. */
   overflow: hidden;
   background: var(--surface);
+}
+
+/* Barra de acciones del editor.
+ *
+ * Es del MARCO, no de ninguna herramienta: cualquier editor que se declare
+ * hereda «Cancelar» y «Guardar» sin escribir nada. Por eso vive aquí y no en
+ * la hoja de Mensaje.
+ *
+ * Reutiliza `toolbar-button`, que es el lenguaje de acción que el builder ya
+ * usa en el editor heredado. No se declara ni un color ni una forma nuevos.
+ *
+ * `flex: 0 0 auto` igual que la cabecera: el cuerpo del editor es lo único que
+ * cede alto, así que la ventana sigue midiendo lo que dice medir. */
+.node-expanded__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 10px;
+  flex: 0 0 auto;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* A la escala del marco: el botón compartido está pensado para paneles más
+   anchos y aquí solo se ajusta su talla, sin tocar su color ni su forma. */
+.node-expanded__actions .toolbar-button {
+  padding: 7px 14px;
+  font-family: var(--font-body);
+  font-size: 0.79rem;
+  font-weight: 600;
+}
+
+.node-expanded__actions .toolbar-button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .node-expanded__empty {

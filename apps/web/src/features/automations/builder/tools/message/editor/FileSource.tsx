@@ -110,10 +110,18 @@ export function FileSource({ kind, position, file, onPick }: FileSourceProps) {
         <Icon />
       </span>
 
-      <span className="media-file__title">
-        {recibiendo ? "Suelta aquí" : ACCION[kind]}
+      {/* UN SOLO RENGLÓN DE TEXTO, NO DOS.
+          Había un título que decía exactamente lo mismo que el botón de abajo
+          —«Seleccionar imagen» repetido a dos centímetros de distancia—, así
+          que se retira: no aportaba información, solo alto.
+
+          Lo que NO se puede perder es el aviso de que la zona está recibiendo
+          un archivo, y ese vive ahora aquí. Se cambia el mensaje de esta línea
+          en vez de añadir otra: una línea de más aparecería en mitad del gesto
+          de arrastre y desplazaría la zona justo debajo del puntero. */}
+      <span className="media-file__hint">
+        {recibiendo ? "Suelta aquí" : "Arrastra el archivo o búscalo en tu dispositivo"}
       </span>
-      <span className="media-file__hint">Arrastra el archivo o búscalo en tu dispositivo</span>
 
       <button
         type="button"

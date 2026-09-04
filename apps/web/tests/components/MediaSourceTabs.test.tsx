@@ -156,6 +156,17 @@ describe("zona de archivo", () => {
     expect(screen.getByText(/Arrastra el archivo o búscalo en tu dispositivo/)).toBeTruthy();
   });
 
+  // La zona llegó a decir su acción DOS VECES —un título y, dos centímetros
+  // más abajo, el botón con el mismo texto—. Repetirlo no informaba de nada y
+  // costaba alto en la tarjeta. Vale para los cuatro tipos: el texto sale del
+  // mismo mapa, así que si el título vuelve, vuelve en todos.
+  it.each(MEDIOS)("%s dice su acción una sola vez, en el botón", (kind) => {
+    renderBloque(kind);
+
+    expect(screen.getAllByText(ACCION[kind])).toHaveLength(1);
+    expect(screen.getByRole("button", { name: ACCION[kind] })).toBeTruthy();
+  });
+
   it("reacciona a un archivo del escritorio sobrevolando", () => {
     const { container } = renderBloque("video");
 

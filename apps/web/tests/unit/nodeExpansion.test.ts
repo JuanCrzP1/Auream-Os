@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  EXPANDED_DRAG_HANDLE,
   collapseAllNodes,
   findExpandedNodeId,
   toggleNodeExpansion
@@ -61,11 +60,14 @@ describe("toggleNodeExpansion", () => {
     expect(findExpandedNodeId(toggleNodeExpansion(abierto, "a"))).toBeNull();
   });
 
-  it("acota el arrastre a la cabecera solo mientras está abierto", () => {
+  // El editor ya no vive dentro del nodo de React Flow —flota aparte, anclado
+  // a él—, así que el nodo compacto se arrastra igual esté o no abierto su
+  // editor. Fijar aquí un `dragHandle` sería el bug exacto que existió: un
+  // selector que no está dentro del nodo deja el nodo entero sin arrastrarse.
+  it("nunca acota el arrastre del nodo compacto, esté o no abierto su editor", () => {
     const abierto = toggleNodeExpansion(nodes, "a");
-    const nodo = abierto.find((n) => n.id === "a")!;
 
-    expect(nodo.dragHandle).toBe(EXPANDED_DRAG_HANDLE);
+    expect(abierto.find((n) => n.id === "a")!.dragHandle).toBeUndefined();
     expect(toggleNodeExpansion(abierto, "a").find((n) => n.id === "a")!.dragHandle).toBeUndefined();
   });
 

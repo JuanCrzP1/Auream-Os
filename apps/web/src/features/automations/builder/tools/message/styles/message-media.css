@@ -1,0 +1,532 @@
+/* ===== MENSAJE — BLOQUE MULTIMEDIA =====
+ *
+ * Las cinco superficies con las que se configura una imagen, un video, un
+ * audio o un archivo: el selector de origen, la zona de carga, el campo de
+ * enlace, la descripción y el interruptor de envío único.
+ *
+ * VAN JUNTAS A PROPÓSITO. `MediaItemEditor` las renderiza siempre a la vez y
+ * las cinco leen el mismo `--mi-accent` heredado del bloque: son cinco
+ * superficies de UNA responsabilidad, no cinco responsabilidades. Separarlas
+ * produciría cinco archivos que solo se usan juntos.
+ *
+ * Ninguna sabe de tipos: Imagen se ve índigo, Video magenta, Audio plata y
+ * Archivo verde porque heredan el acento, no porque estas reglas lo
+ * consulten.
+ *
+ * SI ALGÚN DÍA CRECE, la costura ya está marcada: origen (pestañas + archivo
+ * + enlace) contra atributos (descripción + envío único). No antes: dividir
+ * por líneas y no por responsabilidad es lo que produce microarchivos. */
+
+/* ----- Medios ----- */
+
+/* ----- Selector de origen: Archivo / URL -----
+ *
+ * Lo comparten los cuatro tipos multimedia. El acento lo heredan del bloque
+ * (`--mi-accent`), así que Imagen se ve índigo, Video magenta, Audio cian y
+ * Archivo teal sin que estas reglas sepan de tipos.
+ *
+ * CLAVE PARA LOS DOS TEMAS: el relleno activo se mezcla contra `--surface` y el
+ * texto es `--text`. Los dos tokens se invierten juntos al cambiar de tema, así
+ * que en oscuro sale un acento profundo con texto claro y en claro un acento
+ * luminoso con texto oscuro — con presencia real en ambos, sin una segunda
+ * paleta y sin que el color se lave. */
+
+.media-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--mi-inset);
+}
+
+.media-tabs__tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 3px);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.media-tabs__icon {
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.media-tabs__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Insinuación, no identidad: un 12% es la variación mínima perceptible de
+   «esto responde», y queda fuera del sistema de roles a propósito — subirla a
+   cualquier rol existente (--mi-C-icon es 7-10× más croma) convertiría un
+   simple hover sobre la pestaña QUE NO ESTÁ elegida en una declaración de
+   color, que es justo lo que la pestaña activa de al lado tiene que decir. */
+.media-tabs__tab:hover:not(.media-tabs__tab--active) {
+  background: color-mix(in oklab, var(--mi-accent) 12%, var(--mi-card));
+  color: var(--text);
+}
+
+.media-tabs__tab:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 1px;
+}
+
+/* Selección: mismo peso visual que el icono del bloque — un chip elegido debe
+   leerse con la misma presencia que la identidad del tipo, ni más ni menos. */
+.media-tabs__tab--active {
+  border-color: oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+  font-weight: 600;
+  box-shadow: var(--mi-lift);
+}
+
+/* ----- Origen: archivo del dispositivo ----- */
+
+/* La zona de carga es la superficie más GRANDE del editor con acento propio,
+   así que es la que menos se puede permitir saturarse: usa el rol «veil», el
+   mismo —y el más calmado— que el cuerpo de la tarjeta. Una superficie grande
+   satura al ojo mucho antes que un icono pequeño con el mismo croma. */
+/* Es el elemento MÁS ALTO de una tarjeta multimedia —medido: 141px de los 377
+   que ocupaba la tarjeta entera—, así que es donde una compactación se nota de
+   verdad. Lo que sobraba era aire, no contenido: nada se ha quitado de dentro. */
+.media-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Al retirarse el título duplicado la zona perdió 17px de golpe y quedaba
+     apretada contra sus propios filos. El aire se devuelve aquí —no se
+     recupera aquel renglón— para que siga leyéndose como una superficie que
+     recibe algo y no como una franja. */
+  gap: 4px;
+  padding: 13px 12px;
+  border: 1px dashed oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h),
+      var(--mi-inset) 74%
+    );
+  text-align: center;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out);
+}
+
+.media-file:hover {
+  border-color: oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+}
+
+/* Un archivo del escritorio sobrevolando la zona: estado FUNCIONAL, no de
+   identidad — necesita énfasis real para leerse como «suéltalo aquí», así que
+   sube al rol «icon», un escalón por encima del veil de reposo. El borde ya
+   iba sólido al acento puro; se mantiene igual. */
+.media-file--receiving {
+  border-color: var(--mi-accent);
+  border-style: solid;
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+}
+
+/* Mismo contenedor que el icono del bloque —rol «icon» completo, borde
+   incluido—, porque ES el mismo tipo de elemento: una ficha que identifica el
+   tipo, solo que dentro de la zona de carga en vez de la cabecera. */
+.media-file__icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 5px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  border-radius: var(--radius-sm);
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  box-shadow: var(--mi-lift);
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+}
+
+.media-file__hint {
+  font-size: 0.71rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Chip de identidad, mismo peso que el icono: es un botón, pero lleva el
+   acento del tipo por la misma razón que la ficha del icono lo lleva. */
+.media-file__browse {
+  margin-top: 4px;
+  padding: 5px 13px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  border-radius: 999px;
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  box-shadow: var(--mi-lift);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.media-file__browse:hover {
+  background: oklch(from var(--mi-accent) var(--mi-L-icon-hover) min(c, var(--mi-C-icon)) h);
+  border-color: var(--mi-accent);
+}
+
+.media-file__browse:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 2px;
+}
+
+/* El input real no se ve: lo dispara el botón y la zona entera. Sigue en el
+   árbol de accesibilidad, así que un lector lo encuentra por su etiqueta. */
+.media-file__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Archivo ya elegido: ficha compacta, no la zona grande. */
+.media-file--picked {
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-style: solid;
+  text-align: left;
+}
+
+/* Mismo rol «icon» que .media-file__icon: es la misma ficha, solo que en la
+   versión compacta de archivo ya elegido. Antes mezclaba contra --surface en
+   vez de --mi-card —el único token que no sigue la escalera del módulo—; con
+   `oklch(from …)` esa inconsistencia desaparece sola, porque el cálculo ya no
+   mezcla contra ninguna superficie. */
+.media-file__badge {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  padding: 6px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  border-radius: var(--radius-sm);
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+}
+
+.media-file__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.media-file__name {
+  font-size: 0.81rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.media-file__size {
+  font-size: 0.69rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.media-file__controls {
+  display: flex;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.media-file__control {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.media-file__control:hover {
+  border-color: var(--mi-accent);
+}
+
+.media-file__control:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 1px;
+}
+
+.media-file__control--clear:hover {
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
+/* ----- Origen: enlace ----- */
+
+.media-url {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.media-url__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.media-url__label {
+  font-size: 0.71rem;
+  color: var(--muted);
+}
+
+.media-url__input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  background: var(--mi-field);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  transition: border-color var(--speed-fast) var(--ease-out);
+}
+
+.media-url__input:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.media-url__input--invalid {
+  border-color: var(--rose);
+}
+
+.media-url__input::placeholder {
+  color: var(--muted);
+}
+
+.media-url__error {
+  margin: 0;
+  font-size: 0.71rem;
+  color: var(--rose);
+}
+
+.media-url__preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--mi-field);
+}
+
+.media-url__thumb {
+  width: 42px;
+  height: 31px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: calc(var(--radius-sm) - 4px);
+  background: var(--bg-strong);
+}
+
+.media-url__name {
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ----- Descripción del contenido -----
+ *
+ * NO es un campo suelto debajo del bloque: es una propiedad de lo que se acaba
+ * de elegir, y el rótulo lo dice —«Descripción de la imagen», no «Descripción
+ * opcional»—. Por eso va después de la zona de carga y no antes: describe algo
+ * que ya existe.
+ *
+ * Jerarquía deliberada: rótulo diminuto en color secundario, campo hundido, sin
+ * icono ni adorno. Tiene que leerse como el tercer escalón del bloque —pestañas,
+ * carga, descripción—, nunca como un aviso. */
+
+.media-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  /* Mismo motivo que en el textarea: un hijo con ancho intrínseco —el propio
+     textarea, ver abajo— puede imponer su mínimo de contenido a este flex
+     container y de ahí al bloque entero. */
+  min-width: 0;
+}
+
+.media-caption__label {
+  font-size: 0.71rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+
+.media-caption__input {
+  /* EL ANCHO LO MANDA EL CONTENEDOR, SIEMPRE — igual que en el texto
+     principal, y por la misma causa exacta: a falta de `cols`, un
+     `<textarea>` tiene un ancho intrínseco de 20 caracteres, y ese ancho
+     actúa como suelo de `min-width` en un flex item. `min-width: 0` retira
+     ese suelo; `max-width` y `overflow-x: hidden` cierran las otras dos
+     salidas. */
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  /* Compacta a propósito: es secundaria frente al área de carga. El suelo son
+     DOS renglones —`2 * 1.5em`, dos veces la propia `line-height`— y el tope
+     es mucho más bajo que el del texto principal (300px): esta caja no debe
+     competir en protagonismo con el contenido que describe.
+     Eran tres renglones y medían 77px de los 377 de la tarjeta, casi siempre
+     vacíos: un campo OPCIONAL que además crece solo no necesita reservar de
+     antemano un alto que la mayoría de los mensajes no usa. Con dos ya se ve
+     que admite varias líneas, y sigue creciendo igual al escribir. */
+  min-height: calc(2 * 1.5em + 16px);
+  max-height: 112px;
+  resize: vertical;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  /* Donde el navegador lo soporta, dimensiona el alto él solo — ver
+     `ALTO_NATIVO` en `MediaItemEditor.tsx`, que entonces deja de escribir
+     `height` para no competir con esto. */
+  field-sizing: content;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--mi-field);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out);
+}
+
+.media-caption__input::placeholder {
+  color: var(--muted);
+}
+
+.media-caption__input:hover {
+  border-color: oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+}
+
+/* El foco usa el acento del tipo: es la única vez que el color del bloque
+   aparece en este campo, y basta para que se lea como parte de él. */
+.media-caption__input:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: -1px;
+  border-color: transparent;
+  background: var(--mi-card);
+}
+
+/* ----- Enviar una sola vez -----
+ *
+ * Interruptor, no casilla. Una casilla se lee como «una opción de una lista»;
+ * esto es un estado del bloque que se enciende o se apaga, y el control tiene
+ * que decirlo. El acento sale del bloque, así que encendido se ve del color de
+ * su tipo. */
+
+.send-once {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--mi-field);
+}
+
+.send-once__label {
+  font-size: 0.79rem;
+  color: var(--text);
+}
+
+.send-once__switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--mi-inset);
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.send-once__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out);
+}
+
+.send-once__switch:hover {
+  border-color: oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+}
+
+.send-once__switch:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 2px;
+}
+
+/* Encendido: era la mezcla más intensa de todo el archivo —78%/88%, sin
+   tope—, una familia de intensidad que no existía en ningún otro sitio. Un
+   interruptor SÍ necesita énfasis funcional para leerse como «activado», así
+   que se trata como la propia ficha del icono: relleno en el rol «icon»,
+   borde un escalón más fuerte en «icon-border» — la misma pareja que ya
+   separa fondo y borde en todo el archivo, no una intensidad inventada para
+   este control. Con el mismo rol en los dos, el borde desaparecía contra el
+   relleno. */
+.send-once__switch--on {
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  border-color: oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+}
+
+.send-once__switch--on .send-once__knob {
+  transform: translateX(16px);
+  background: var(--surface);
+}

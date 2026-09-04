@@ -173,23 +173,62 @@ describe("lectura desde un nodo", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Resumen del nodo cerrado.
+//
+// Formato fijo: «<Tipo> · <N> bloque(s)», siempre — también con un solo
+// bloque, y el tipo lo pone el PRIMERO de la secuencia. La tarjeta cerrada es
+// un resumen, no una miniatura: nunca enseña el contenido real de un bloque,
+// solo su tipo y cuántos hay.
+// ---------------------------------------------------------------------------
 describe("resumen derivado de la configuración", () => {
-  it("usa el primer texto", () => {
-    expect(summarizeMessage({}, { items: [{ id: "a", kind: "text", text: "Hola" }] })).toBe("Hola");
-  });
-
-  it("cuenta los bloques cuando hay más de uno", () => {
-    expect(summarizeMessage({}, { items })).toBe("Hola · 3 bloques");
-  });
-
-  it("nombra el tipo cuando el primer bloque no es texto", () => {
-    const soloImagen = [{ id: "x", kind: "image", url: "", caption: "" }];
-
-    expect(summarizeMessage({}, { items: soloImagen })).toBe("Imagen");
-  });
-
-  it("dice que está vacío en vez de quedarse en blanco", () => {
+  it("sin bloques: lo dice en vez de quedarse en blanco", () => {
     expect(summarizeMessage({}, {})).toBe("Mensaje vacío");
+  });
+
+  it("un bloque de imagen: singular, no 'bloques'", () => {
+    const items = [{ id: "x", kind: "image", url: "", caption: "" }];
+    expect(summarizeMessage({}, { items })).toBe("Imagen · 1 bloque");
+  });
+
+  it("cinco bloques con el primero imagen", () => {
+    const items = [
+      { id: "1", kind: "image", url: "", caption: "" },
+      { id: "2", kind: "text", text: "a" },
+      { id: "3", kind: "text", text: "b" },
+      { id: "4", kind: "video", url: "", caption: "" },
+      { id: "5", kind: "audio", url: "", caption: "" }
+    ];
+    expect(summarizeMessage({}, { items })).toBe("Imagen · 5 bloques");
+  });
+
+  it("primer bloque de texto: nombra el tipo, no enseña el contenido", () => {
+    expect(summarizeMessage({}, { items })).toBe("Texto · 3 bloques");
+  });
+
+  it("primer bloque de video", () => {
+    const items = [{ id: "v", kind: "video", url: "", caption: "" }];
+    expect(summarizeMessage({}, { items })).toBe("Video · 1 bloque");
+  });
+
+  it("primer bloque de audio", () => {
+    const items = [{ id: "a", kind: "audio", url: "", caption: "" }];
+    expect(summarizeMessage({}, { items })).toBe("Audio · 1 bloque");
+  });
+
+  it("contenido mixto: el tipo lo pone el primero, sin clasificar la mezcla", () => {
+    const mixto = [
+      { id: "1", kind: "audio", url: "", caption: "" },
+      { id: "2", kind: "image", url: "", caption: "" },
+      { id: "3", kind: "text", text: "x" }
+    ];
+    expect(summarizeMessage({}, { items: mixto })).toBe("Audio · 3 bloques");
+  });
+
+  it("configuración inválida: no rompe el renderer, la trata como vacía", () => {
+    expect(summarizeMessage({}, { items: "no es una lista" })).toBe("Mensaje vacío");
+    expect(summarizeMessage({}, { items: null })).toBe("Mensaje vacío");
+    expect(() => summarizeMessage({}, {})).not.toThrow();
   });
 
   it("no filtra vocabulario de desarrollo al lienzo", () => {
@@ -198,7 +237,7 @@ describe("resumen derivado de la configuración", () => {
     );
   });
 
-  it("resume también un nodo antiguo", () => {
-    expect(summarizeMessage({ text: "Mensaje de siempre" }, {})).toBe("Mensaje de siempre");
+  it("un nodo antiguo con content.text se resume igual que cualquier otro: por tipo y cantidad, no por su contenido literal", () => {
+    expect(summarizeMessage({ text: "Mensaje de siempre" }, {})).toBe("Texto · 1 bloque");
   });
 });

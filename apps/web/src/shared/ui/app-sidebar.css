@@ -47,12 +47,19 @@
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
-  color: var(--muted);
+  /* Un escalón hacia `--text`, no `--text` entero: la navegación en reposo
+     tiene que leerse bien sin llegar a competir con el elemento activo, que es
+     el único que va a plena luz. Sale de los dos tokens que ya existen, así que
+     en claro se oscurece en vez de blanquearse — que es lo mismo pedido
+     —«más legible»— traducido a un fondo claro. */
+  color: color-mix(in oklab, var(--text) 70%, var(--muted));
   padding: 9px 10px;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  font-size: 0.82rem;
+  /* 13.12px → 14.08px. La fila no crece: su alto lo fija la caja del icono
+     (18px), muy por encima del renglón de este cuerpo de letra. */
+  font-size: 0.88rem;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
@@ -68,6 +75,12 @@
   box-shadow: var(--glow-primary);
 }
 
+/* LA CAJA NO SE TOCA: 18px.
+ *
+ * Es ella quien fija el alto de la fila y la sangría de la etiqueta, así que
+ * agrandarla habría movido la navegación entera. Lo que crece es el DIBUJO,
+ * que sobresale un píxel por lado dentro de una caja centrada sin recorte. Así
+ * el icono se ve mayor y la geometría del sidebar queda intacta. */
 .app-sidebar__icon {
   width: 18px;
   height: 18px;
@@ -75,13 +88,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--muted);
+  color: color-mix(in oklab, var(--text) 70%, var(--muted));
   transition: color 0.15s;
 }
 
 .app-sidebar__icon svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  /* Sin esto el contenedor flex encoge el dibujo a los 18px de la caja y el
+     icono crecía solo de alto: 18x20 en vez de 20x20. */
+  flex: 0 0 auto;
 }
 
 .app-sidebar__item.is-active .app-sidebar__icon {

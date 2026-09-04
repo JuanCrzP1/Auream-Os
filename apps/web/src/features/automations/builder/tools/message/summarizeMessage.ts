@@ -2,15 +2,19 @@ import { MESSAGE_ITEM_LABELS } from "./messageItems";
 import { readMessageItems } from "./readMessageConfig";
 
 /**
- * Resumen de un Mensaje para la tarjeta del lienzo.
+ * Resumen de un Mensaje para la tarjeta del lienzo, cerrada.
  *
  * DERIVADO, nunca fuente de verdad. La verdad es `config.items`; esto es una
- * lectura suya. Antes ocurría al revés —el texto de la tarjeta ERA el
- * contenido— y por eso un nodo no podía tener más de una cosa dentro.
+ * lectura suya, siempre a través de `readMessageItems` — nunca de
+ * `content.text` directamente, ni del nodo antiguo que todavía pudiera
+ * traerlo: ese caso ya lo resuelve el lector, convirtiéndolo en un único
+ * bloque de texto, y aquí se trata igual que cualquier otro.
  *
- * Prioriza el primer texto porque es lo que el usuario reconoce de un vistazo;
- * el recuento solo aparece cuando hay más de un bloque, para no llenar la
- * tarjeta de metadatos cuando el mensaje es simple.
+ * FORMATO: «<Tipo> · <N> bloque(s)», SIEMPRE — también con un solo bloque. No
+ * se enseña el contenido del primer bloque —ni su texto, ni su enlace—: la
+ * tarjeta cerrada es un resumen, no una miniatura del editor. El tipo es el
+ * del PRIMER bloque de la secuencia; es una regla simple y determinista, no
+ * una clasificación nueva sobre contenido mixto.
  */
 export function summarizeMessage(
   content: Readonly<Record<string, unknown>>,
@@ -20,13 +24,8 @@ export function summarizeMessage(
 
   if (items.length === 0) return "Mensaje vacío";
 
-  const primerTexto = items.find((item) => item.kind === "text");
-  const cabeza =
-    primerTexto && primerTexto.kind === "text" && primerTexto.text.trim().length > 0
-      ? primerTexto.text.trim()
-      : MESSAGE_ITEM_LABELS[items[0].kind];
+  const tipo = MESSAGE_ITEM_LABELS[items[0].kind];
+  const unidad = items.length === 1 ? "bloque" : "bloques";
 
-  if (items.length === 1) return cabeza;
-
-  return `${cabeza} · ${items.length} bloques`;
+  return `${tipo} · ${items.length} ${unidad}`;
 }

@@ -1,0 +1,158 @@
+/* ===== MENSAJE — ZONA DE CONTINUACIÓN =====
+ *
+ * La superficie que cierra la secuencia y recibe un bloque nuevo. Una sola, y
+ * solo al final.
+ *
+ * Tiene archivo propio porque tiene comportamiento propio: tres presencias
+ * —reposo, cercanía del ratón y recepción— y la única animación continua del
+ * editor, con sus dos `@keyframes`. Esos fotogramas y el
+ * `@media (prefers-reduced-motion)` que los activa viven aquí, junto a lo que
+ * animan. */
+
+/* ----- Zona de continuación -----
+ *
+ * UNA, y solo al final. No es un botón: es una superficie que recibe, y por eso
+ * no lleva un signo de sumar —un «+» pide que lo pulses, y lo que esta zona
+ * dice es «esto sigue abierto»—.
+ *
+ * Tres presencias: en reposo casi se funde con el fondo; al acercarse el ratón
+ * se insinúa; recibiendo un bloque se convierte en lo más visible del
+ * constructor. Solo crece en el último estado, y puede hacerlo sin desplazar
+ * nada porque no tiene nada debajo. */
+/* Compacta: en fila y con poco aire vertical, ~54px en reposo. Apilada ocupaba
+   el alto de otro bloque y la secuencia terminaba en un hueco vacío grande. */
+.message-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  margin-top: 4px;
+  padding: 12px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  transition: border-color var(--speed-base) var(--ease-out),
+    background var(--speed-base) var(--ease-out), color var(--speed-base) var(--ease-out),
+    padding var(--speed-base) var(--ease-out), box-shadow var(--speed-base) var(--ease-out);
+}
+
+.message-drop__icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  color: var(--primary);
+  opacity: 0.55;
+  transition: opacity var(--speed-base) var(--ease-out),
+    transform var(--speed-base) var(--ease-out), filter var(--speed-base) var(--ease-out);
+}
+
+.message-drop__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.message-drop__title {
+  font-family: var(--font-display);
+  font-size: 0.79rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+}
+
+.message-drop__hint {
+  font-size: 0.69rem;
+  line-height: 1.3;
+  opacity: 0.72;
+}
+
+/* Respiración. Única animación continua del editor.
+   Se percibe porque actúa sobre TRES señales a la vez —luz del icono, halo y
+   filo del borde— y no porque ninguna de ellas sea fuerte. Nada se mueve ni
+   cambia de tamaño: si la zona se moviera, competiría con el contenido. */
+@media (prefers-reduced-motion: no-preference) {
+  .message-drop {
+    animation: message-drop-breathe-frame 3.2s var(--ease-out) infinite;
+  }
+
+  .message-drop__icon {
+    animation: message-drop-breathe-icon 3.2s var(--ease-out) infinite;
+  }
+}
+
+@keyframes message-drop-breathe-frame {
+  0%,
+  100% {
+    border-color: var(--line);
+    background: transparent;
+  }
+  50% {
+    border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+    background: color-mix(in oklab, var(--primary) 5%, transparent);
+  }
+}
+
+@keyframes message-drop-breathe-icon {
+  0%,
+  100% {
+    opacity: 0.45;
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 7px color-mix(in oklab, var(--primary) 55%, transparent));
+  }
+}
+
+.message-drop__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Al acercarse el ratón la respiración para: ya hay atención, y seguir
+   pulsando sería insistir. */
+.message-drop:hover {
+  animation: none;
+  border-color: color-mix(in oklab, var(--primary) 48%, var(--border));
+  background: color-mix(in oklab, var(--primary) 9%, transparent);
+  color: var(--text);
+}
+
+.message-drop:hover .message-drop__icon {
+  animation: none;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--primary) 45%, transparent));
+}
+
+/* Recibiendo: el momento más vivo del editor. Sube el contraste, no el tamaño
+   —crece lo justo para acusar el gesto— porque con diez bloques encima una
+   zona que se hincha empujaría la secuencia fuera de la vista. */
+.message-drop--receiving {
+  animation: none;
+  padding: 18px 16px;
+  border-color: var(--primary);
+  border-style: dashed;
+  background: color-mix(in oklab, var(--primary) 16%, transparent);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent),
+    0 0 22px -8px var(--primary);
+}
+
+.message-drop--receiving .message-drop__icon {
+  animation: none;
+  opacity: 1;
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 9px color-mix(in oklab, var(--primary) 70%, transparent));
+}
+
+.message-drop--receiving .message-drop__title {
+  color: var(--text);
+}
+
+.message-drop--receiving .message-drop__hint {
+  opacity: 0.9;
+}

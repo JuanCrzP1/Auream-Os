@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MessageEditor } from "@features/automations/builder/tools/message/MessageEditor";
 import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
+import { bloqueCss } from "../helpers/messageCss";
 
 // ---------------------------------------------------------------------------
 // Constructor de contenidos de Mensaje.
@@ -280,16 +281,6 @@ describe("cada tipo de bloque tiene su propia interfaz", () => {
   // expresado en renglones y un tope que corte el crecimiento.
   // -------------------------------------------------------------------------
   describe("altura del campo de texto", () => {
-    // Ruta desde la raíz de `apps/web`, que es donde vitest arranca.
-    // `import.meta.url` no sirve aquí: bajo Vite no es un `file://`.
-    const css = readFileSync(
-      "src/features/automations/builder/tools/message/message-editor.css",
-      "utf8"
-    );
-    const bloqueCss = (selector: string) => {
-      const desde = css.indexOf(`${selector} {`);
-      return css.slice(desde, css.indexOf("}", desde));
-    };
     const regla = bloqueCss(".message-item__text");
     const cuerpo = bloqueCss(".message-item__body");
 
@@ -405,14 +396,6 @@ describe("cada tipo de bloque tiene su propia interfaz", () => {
   // texto principal, porque esta caja es secundaria frente al área de carga.
   // ---------------------------------------------------------------------------
   describe("descripción multimedia: ancho y envoltura", () => {
-    const css = readFileSync(
-      "src/features/automations/builder/tools/message/message-editor.css",
-      "utf8"
-    );
-    const bloqueCss = (selector: string) => {
-      const desde = css.indexOf(`${selector} {`);
-      return css.slice(desde, css.indexOf("}", desde));
-    };
     const regla = bloqueCss(".media-caption__input");
     const envoltura = bloqueCss(".media-caption");
 
@@ -441,12 +424,24 @@ describe("cada tipo de bloque tiene su propia interfaz", () => {
       expect(regla).toMatch(/width:\s*100%/);
     });
 
-    it("el suelo son tres renglones, no una altura fija en píxeles", () => {
-      const minimo = /min-height:\s*calc\(\s*3\s*\*\s*([\d.]+)em/.exec(regla);
+    it("el suelo se cuenta en renglones, no en una altura fija en píxeles", () => {
+      // Lo que se protege aquí es el MECANISMO, no cuántos renglones sean: el
+      // suelo se expresa como un múltiplo de la propia `line-height` en `em`,
+      // así que sigue valiendo si cambia el cuerpo de letra. Con una altura en
+      // píxeles el campo volvía a ser una caja alta sin relación con lo que
+      // contiene, que es el defecto que existió.
+      // Cuántos renglones exactos es una decisión de DENSIDAD y se ajusta con
+      // el diseño; fijarla aquí convertía este test en un candado sobre algo
+      // que no es la garantía.
+      const minimo = /min-height:\s*calc\(\s*(\d+)\s*\*\s*([\d.]+)em/.exec(regla);
       expect(minimo).not.toBeNull();
 
+      // Dos como mínimo: con uno solo no se distinguiría de un `<input>`, y
+      // este campo existe precisamente porque la descripción es multilínea.
+      expect(Number(minimo?.[1])).toBeGreaterThanOrEqual(2);
+
       const alturaLinea = /line-height:\s*([\d.]+)/.exec(regla);
-      expect(alturaLinea?.[1]).toBe(minimo?.[1]);
+      expect(alturaLinea?.[1]).toBe(minimo?.[2]);
     });
 
     it("el crecimiento tiene tope propio, más bajo que el del texto principal", () => {
@@ -560,10 +555,11 @@ describe("cada tipo de bloque tiene su propia interfaz", () => {
     });
 
     const cantidad = screen.getByLabelText("Duración de la pausa del bloque 1") as HTMLInputElement;
-    const unidad = screen.getByLabelText("Unidad de la pausa del bloque 1") as HTMLSelectElement;
 
     expect(cantidad.value).toBe("15");
-    expect(unidad.value).toBe("seconds");
+    expect(screen.getByLabelText("Unidad de la pausa del bloque 1").textContent).toContain(
+      "segundos"
+    );
     expect(container.querySelector(".message-item__text")).toBeNull();
   });
 
@@ -577,9 +573,8 @@ describe("cada tipo de bloque tiene su propia interfaz", () => {
     });
     expect(lastItems()[0]).toMatchObject({ amount: 30 });
 
-    fireEvent.change(screen.getByLabelText("Unidad de la pausa del bloque 1"), {
-      target: { value: "minutes" }
-    });
+    fireEvent.click(screen.getByLabelText("Unidad de la pausa del bloque 1"));
+    fireEvent.click(screen.getByRole("option", { name: "minutos" }));
     expect(lastItems()[0]).toMatchObject({ unit: "minutes" });
   });
 

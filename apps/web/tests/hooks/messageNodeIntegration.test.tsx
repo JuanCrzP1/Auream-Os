@@ -186,12 +186,12 @@ describe("aislamiento entre nodos", () => {
 });
 
 describe("el resumen de la tarjeta deriva de la configuración", () => {
-  it("refleja el contenido escrito, sin que nadie lo escriba a mano", () => {
+  it("se actualiza solo, sin que nadie lo escriba a mano", () => {
     const { result } = renderCanvas();
 
     act(() => result.current.updateNode("m1", { config: secuencia("Hola") }));
 
-    expect(result.current.nodes.find((n) => n.id === "m1")!.data.preview).toBe("Hola");
+    expect(result.current.nodes.find((n) => n.id === "m1")!.data.preview).toBe("Texto · 1 bloque");
   });
 
   it("cuenta los bloques cuando hay varios", () => {
@@ -199,7 +199,7 @@ describe("el resumen de la tarjeta deriva de la configuración", () => {
 
     act(() => result.current.updateNode("m1", { config: secuencia("Hola", "Adiós") }));
 
-    expect(result.current.nodes.find((n) => n.id === "m1")!.data.preview).toContain("2 bloques");
+    expect(result.current.nodes.find((n) => n.id === "m1")!.data.preview).toBe("Texto · 2 bloques");
   });
 });
 

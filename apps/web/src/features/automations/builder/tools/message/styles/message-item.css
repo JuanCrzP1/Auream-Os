@@ -1,0 +1,341 @@
+/* ===== MENSAJE — EL BLOQUE =====
+ *
+ * La tarjeta de un contenido dentro de la secuencia: su superficie de tres
+ * capas, el filo de acento, la barra de cabecera con asa, icono, etiqueta y
+ * acciones, el cuerpo y el campo de texto.
+ *
+ * Es el bloque más grande del módulo y sigue siendo UNA responsabilidad: todo
+ * lo que hay aquí describe la misma pieza. El cuerpo de cada tipo concreto lo
+ * ponen `message-media.css` e `message-interval.css`; lo que vive aquí es lo
+ * que comparten todos.
+ *
+ * La animación de entrada y el `@media (prefers-reduced-motion)` que la
+ * activa viajan con la tarjeta que animan: separarlas dejaría un `@keyframes`
+ * sin dueño. */
+
+/* ----- Bloque ----- */
+
+/* Tres capas: superficie, tinte del tipo casi imperceptible y filo de acento.
+   Es lo que separa una tarjeta plana de un bloque que se reconoce de un
+   vistazo sin gritar el color. */
+.message-item {
+  position: relative;
+  min-width: 0;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  border-radius: var(--radius-sm);
+  /* El cuerpo conserva un velo del acento, muy por debajo del de la cabecera:
+     evita que la mitad inferior del bloque se lea como un agujero negro sin
+     que deje de ser una superficie oscura. Va por rol, así que el matiz llega
+     entero — antes el de Intervalo salía en 359°, rojo, con croma 18. */
+  background:
+    linear-gradient(
+      180deg,
+      oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h),
+      oklch(from var(--mi-accent) var(--mi-L-veil-fin) min(c, var(--mi-C-veil)) h) 45%
+    ),
+    var(--mi-card);
+  box-shadow: var(--mi-lift);
+  overflow: hidden;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    opacity var(--speed-fast) var(--ease-out),
+    transform var(--speed-fast) var(--ease-out),
+    box-shadow var(--speed-fast) var(--ease-out);
+}
+
+/* Filo lateral del tipo, a juego con el de la biblioteca: el bloque y su origen
+   se reconocen como la misma cosa. */
+.message-item::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--mi-accent);
+  opacity: 1;
+  transition: opacity var(--speed-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+.message-item:hover::after,
+.message-item:focus-within::after {
+  opacity: 1;
+}
+
+/* Aparición corta al nacer. Discreta a propósito: informa de que algo llegó y
+   se aparta, no pide atención. */
+@media (prefers-reduced-motion: no-preference) {
+  .message-item {
+    animation: message-item-in var(--speed-base) var(--ease-out) both;
+  }
+}
+
+@keyframes message-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.message-item:hover {
+  border-color: var(--border);
+  /* Elevación casi imperceptible: informa de que el bloque responde, sin que la
+     lista entera parezca temblar al pasar el ratón. */
+  transform: translateY(-1px);
+  box-shadow: var(--mi-lift), 0 8px 20px -16px rgba(0, 0, 0, 0.9);
+}
+
+.message-item:focus-within {
+  /* Mismo rol de borde que la tarjeta en reposo (línea ~708): el foco no
+     inventa su propia intensidad, sube la del mismo borde. */
+  border-color: oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+}
+
+.message-item--dragging {
+  opacity: 0.4;
+}
+
+/* Indicador de inserción: una línea donde caerá el bloque. Menos ruidoso que
+   desplazar los elementos vecinos, y no confunde sobre dónde se va a soltar. */
+/* Toma el acento del bloque sobre el que se está soltando. No el del bloque que
+   se arrastra: el navegador oculta el contenido del portapapeles durante el
+   `dragover`, así que durante el gesto no hay forma de saber qué se lleva en la
+   mano — y una línea del color equivocado sería peor que una neutra. */
+.message-item--drop-before::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  /* Dentro del bloque, no encima: `.message-item` recorta lo que se salga, así
+     que una línea en negativo quedaba cortada y no se veía nunca. Pegada al
+     borde superior se lee igual —«caerá aquí»— y siempre aparece. */
+  top: 0;
+  height: 3px;
+  background: var(--mi-accent);
+  box-shadow: 0 1px 10px -1px var(--mi-accent);
+  z-index: 2;
+}
+
+.message-item__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 5px 4px;
+  border-bottom: 1px solid oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  /* Aquí es donde el color se hace ver. Oscura pero claramente teñida: la L la
+     manda el rol, el matiz y el croma los pone el tipo. */
+  background: linear-gradient(
+    180deg,
+    oklch(from var(--mi-accent) var(--mi-L-bar) min(c, var(--mi-C-bar)) h),
+    oklch(from var(--mi-accent) var(--mi-L-bar-fin) min(c, var(--mi-C-bar)) h)
+  );
+}
+
+.message-item__grip {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 19px;
+  flex: 0 0 auto;
+  color: var(--muted);
+  cursor: grab;
+  border-radius: var(--radius-sm);
+  transition: color var(--speed-fast) var(--ease-out);
+}
+
+.message-item__grip:hover {
+  color: var(--text);
+}
+
+.message-item__grip:active {
+  cursor: grabbing;
+}
+
+.message-item__grip svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Mismo contenedor que en la biblioteca, un punto más pequeño: el bloque y su
+   origen se leen como el mismo componente en dos sitios. */
+.message-item__icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  padding: 3px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  border-radius: var(--radius-sm);
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  box-shadow: var(--mi-lift);
+  /* El glifo va al mismo sitio que la etiqueta: claro y con el croma propio
+     del tipo, sin tope. Es lo que hace que el icono se lea de color y no como
+     una mancha. */
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.message-item:hover .message-item__icon {
+  background: oklch(from var(--mi-accent) var(--mi-L-icon-hover) min(c, var(--mi-C-icon)) h);
+  border-color: var(--mi-accent);
+}
+
+/* AQUÍ ES DONDE VIVE LA IDENTIDAD.
+ *
+ * Medido sobre lo que Chrome pintaba: la etiqueta de VIDEO estaba en croma 132
+ * al 97% del gamut —un rosa pleno— y la de ARCHIVO en croma 25 al 23%, es
+ * decir, blanco con un soplo de cian. Esa diferencia de 5× en el texto más
+ * prominente de la cabecera era la causa principal de que tres tipos se
+ * vieran «apagados»: el color estaba solo en el icono.
+ *
+ * Sin tope de croma a propósito: cada tipo usa el suyo entero y el navegador
+ * lo recorta al gamut. Así Video e Imagen salen igual que antes y Archivo e
+ * Intervalo suben de croma 25 a 177 y de 16 a 150. */
+.message-item__kind {
+  font-family: var(--font-display);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+}
+
+/* Siempre presentes. Estuvieron al 55% de opacidad y el resultado era que se
+   descubrían por casualidad: una acción importante que hay que encontrar
+   pasando el ratón no está disponible, está escondida. Lo que cambia con el
+   ratón es el CONTRASTE, no la existencia. */
+.message-item__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+/* Herramientas pequeñas, no botones: fondo transparente y filo apenas visible
+   que solo se afirma al acercarse. No deben competir con el contenido. */
+.message-item__action {
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  /* Fondo y filo propios desde el principio: cada control se lee como un
+     control, no como un icono suelto sobre la cabecera. */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--mi-card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.message-item__action svg {
+  width: 11px;
+  height: 11px;
+}
+
+.message-item__action:hover:not(:disabled) {
+  background: var(--bg-strong);
+  border-color: oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  color: var(--text);
+}
+
+.message-item__action:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 1px;
+}
+
+.message-item__action:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.message-item__action--remove:hover:not(:disabled) {
+  background: var(--rose);
+  color: var(--on-primary);
+}
+
+/* ----- Cuerpos ----- */
+
+.message-item__body {
+  display: flex;
+  flex-direction: column;
+  /* Misma razón que en el campo: sin esto el cuerpo no baja del ancho mínimo
+     de su contenido y arrastra al bloque entero. */
+  min-width: 0;
+  gap: 6px;
+  padding: 7px 9px 8px;
+  background: var(--mi-card);
+}
+
+/* Compacto en vacío, multilínea con contenido.
+ *
+ * El suelo son TRES renglones: `3 * 1.6em` es exactamente tres veces la altura
+ * de línea declarada abajo, más el relleno y los filos. Se escribe en `em` y no
+ * en píxeles para que siga valiendo si cambia el cuerpo de letra; con 148px
+ * fijos el campo era una caja alta y vacía que no tenía nada que ver con las
+ * líneas que iba a contener.
+ *
+ * A partir de ahí crece con el texto —lo mide `TextItemEditor`— y el tope corta
+ * el crecimiento antes de que el bloque estire la secuencia y empuje el marco
+ * del nodo. Pasado el tope desplaza dentro de sí. */
+.message-item__text {
+  display: block;
+  width: 100%;
+  /* SIN ESTO EL CAMPO PUEDE DESBORDAR A LO ANCHO.
+     El textarea es un elemento de formulario con ancho intrínseco: a falta de
+     `cols`, el navegador usa 20 caracteres. Como además es un ítem flex —el
+     cuerpo del bloque es una columna flex—, su `min-width` automático se
+     resuelve a ese ancho intrínseco, que actúa como suelo y gana a
+     `width: 100%`. En cuanto el bloque es más estrecho que esas 20 columnas,
+     el campo se sale en lugar de encoger, y el texto deja de envolverse por el
+     ancho visible. `min-width: 0` retira ese suelo. */
+  /* EL ANCHO LO MANDA EL CONTENEDOR, SIEMPRE.
+     Tres declaraciones para tres formas distintas de crecer a lo ancho:
+     `max-width` impide superar la caja, `min-width: 0` retira el suelo
+     intrínseco del textarea —20 columnas a falta de `cols`, que en un ítem
+     flex gana a `width: 100%`—, y `overflow-x: hidden` cierra la última
+     salida, la barra horizontal.
+     NO se usa `field-sizing: content`: dimensiona el campo por su contenido en
+     LOS DOS EJES, y aquí el eje horizontal no se negocia. El alto lo calcula
+     `TextItemEditor` midiendo, que solo escribe `height`. */
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  field-sizing: content;
+  min-height: calc(3 * 1.6em + 22px);
+  max-height: 300px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--mi-field);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  resize: vertical;
+  overflow-y: auto;
+  /* El texto largo baja de renglón en vez de ensanchar el bloque; una palabra
+     sin espacios —una URL— se parte en lugar de romper el layout. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Foco con el acento del tipo, sin sombra externa: dentro de una lista de
+   bloques una sombra al enfocar haría saltar la fila. */
+.message-item__text:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: -1px;
+  border-color: transparent;
+  background: var(--mi-card);
+}
+
+.message-item__text::placeholder {
+  color: var(--muted);
+}

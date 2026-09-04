@@ -1,0 +1,231 @@
+/* ===== MENSAJE — TOKENS DEL MÓDULO =====
+ *
+ * Capa de color del editor: la escalera de superficies, el sistema de roles
+ * L/C, los dos temas, la excepción de Audio y la asignación de acento por
+ * tipo. Ningún componente declara color por su cuenta: todos leen de aquí.
+ *
+ * SE CARGA PRIMERO, SIEMPRE. Es el primer @import del entrypoint.
+ *
+ * LOS TOKENS NO ESTÁN EN `:root`, ESTÁN EN `.message-editor`. Es deliberado
+ * —no contaminan el resto de la aplicación— y tiene una consecuencia que hay
+ * que respetar: todo lo que use `--mi-*` debe ser DESCENDIENTE de
+ * `.message-editor` en el DOM, no basta con importar este archivo. Por eso el
+ * menú de unidades de Intervalo se monta con `createPortal` dentro de
+ * `.message-editor` y no en `document.body`: fuera de ese árbol se quedaría
+ * sin color. Quien invente una superficie flotante nueva tiene la misma
+ * obligación.
+ *
+ * La regla `.message-editor` declara los tokens Y la retícula del editor. No
+ * se parte en dos: es un solo elemento con un solo motivo para cambiar, y
+ * separarlas crearía dos reglas donde el navegador ve una.
+ *
+ * AÑADIR UN TIPO DE BLOQUE se hace aquí y solo aquí: su color derivado y el
+ * par que lo asigna a `--mi-accent`. Borde, velo, cabecera, icono, etiqueta,
+ * foco, menú y deslizador se tiñen solos, en los dos temas. */
+
+/* Acentos por tipo. Salen de los tokens del tema, así que funcionan en claro y
+   en oscuro sin duplicar la paleta. El índigo se deriva mezclando dos tokens en
+   vez de fijar un hex nuevo, que quedaría fuera del sistema. */
+/* ESCALERA DE SUPERFICIES DEL MÓDULO.
+ *
+ * No es una paleta paralela: son NOMBRES DE CAPA sobre los tokens que ya
+ * existen. Hacen falta porque los dos temas no ofrecen la misma escalera.
+ *
+ * En oscuro hay cuatro escalones bien separados —#08060f, #12101d, #1a1630,
+ * #241d3c— y «hundido» es más oscuro. En claro los tres blancos están al 2%
+ * unos de otros y `--elevation-inset` es nulo, así que apoyarse en los mismos
+ * tokens dejaba panel, tarjeta y campo del mismo blanco: eso es lo que se veía
+ * lavado. En claro lo hundido son los tokens `--bg-*`, no el blanco.
+ *
+ * Cada capa se nombra por su papel y cada tema elige qué token la sostiene. Lo
+ * único que se repite abajo son los papeles, no los colores. */
+.message-editor {
+  --mi-text: var(--primary);
+  --mi-image: color-mix(in oklab, var(--primary) 58%, var(--slate));
+  --mi-video: var(--rose);
+  /* Gris frío con presencia, no un azul cielo y tampoco un gris muerto.
+     --slate solo está en 230° con croma 101: demasiado azul. Con un 30% de
+     --muted el matiz se enfría a 240° y el croma baja a 79 — suficiente para
+     que se lea «plata» y no «azul», suficiente para que no desaparezca. */
+  --mi-audio: color-mix(in oklab, var(--slate) 70%, var(--muted));
+  /* Verde de verdad. --handle-valid es el verde de validez que el lienzo ya
+     usa, así que no es un color nuevo; lleva el peso porque el teal solo se
+     queda en 177° —cian— y a 155° ya nadie duda de que es verde. El 25% de
+     teal conserva el punto tecnológico. */
+  --mi-file: color-mix(in oklab, var(--teal) 25%, var(--handle-valid));
+  /* Cyan de cielo, en 216°. Una pausa no es una advertencia, y el ámbar que
+     llevaba antes la hacía leer como tal entre bloques que no lo son.
+     Sale de dos tokens que YA EXISTEN, no de un hex nuevo: --slate es el azul
+     cielo y --teal el turquesa.
+     LA PROPORCIÓN CAMBIA POR TEMA, y no por capricho: los dos tokens no están
+     en el mismo sitio en cada tema —--slate mide 254.6° en claro y 230.3° en
+     oscuro—, así que una sola mezcla daba 215.7° en claro pero 195.5° en
+     oscuro, que ya se lee verdoso. Con 45% aquí y 80% en el bloque oscuro los
+     dos temas caen en ~216°, que es el cyan pedido. Ver el valor de oscuro
+     más abajo. */
+  --mi-interval: color-mix(in oklab, var(--slate) 45%, var(--teal));
+
+  /* Claro: la tarjeta es el blanco y todo lo hundido baja hacia los `--bg-*`. */
+  --mi-panel: var(--bg-elevated);
+  --mi-card: var(--surface);
+  --mi-field: var(--bg-elevated);
+  --mi-inset: var(--bg-strong);
+  /* Relieve. En claro `--elevation-inset` del sistema es NULO —un realce
+     blanco sobre blanco no dice nada—, así que la profundidad la da una
+     sombra suave teñida del lila del tema, no un hex nuevo. */
+  --mi-lift:
+    0 1px 2px color-mix(in oklab, var(--primary) 12%, transparent),
+    0 6px 16px -10px color-mix(in oklab, var(--primary) 30%, transparent);
+  /* ===== SISTEMA DE ROLES =====
+   *
+   * LA LUMINOSIDAD LA FIJA EL ROL. EL MATIZ Y EL CROMA LOS PONE EL TIPO.
+   *
+   * Antes cada superficie era `color-mix(acento N%, --mi-card)`, y eso tenía
+   * dos defectos medidos sobre lo que Chrome pintaba de verdad:
+   *
+   * 1. DERIVA DE MATIZ. --mi-card no es neutro (en oscuro es violeta con
+   *    croma 50 en 289°). Al interpolar en oklab, los vectores de dos matices
+   *    lejanos se cancelan y el resultado ROTA: el velo de Intervalo salía en
+   *    359° —rojo— con croma 18, y el icono de Archivo en 199° —cian—. El
+   *    dorado y el verde no estaban atenuados: habían desaparecido.
+   * 2. FUERZA DESIGUAL. Esa cancelación favorece a los matices vecinos del
+   *    violeta (Texto, Imagen) y castiga a los opuestos (Archivo a 126° de
+   *    distancia, Intervalo a 150°).
+   *
+   * `oklch(from var(--mi-accent) L C h)` toma el matiz del tipo tal cual —
+   * verificado: 160.053° entra y 160.053° sale, cero deriva— y le impone la
+   * luminosidad del rol. Así los seis tipos caen en el mismo escalón de
+   * profundidad y solo se distinguen por su color, que es justo lo que hace
+   * falta para que la familia se lea como una familia.
+   *
+   * El croma va topado, no fijado: `min(c, tope)` deja que cada tipo use el
+   * suyo hasta un techo común. Los tipos de croma alto se igualan por arriba,
+   * y Audio —que es un neutro por diseño— se queda en el suyo sin que nadie
+   * lo empuje a parecer azul. */
+  --mi-L-bar: 0.87;
+  --mi-L-bar-fin: 0.92;
+  --mi-L-icon: 0.85;
+  --mi-L-icon-hover: 0.79;
+  --mi-L-icon-border: 0.70;
+  --mi-L-veil: 0.94;
+  --mi-L-veil-fin: 0.97;
+  --mi-L-label: 0.46;
+  --mi-L-border: 0.80;
+  --mi-C-bar: 0.075;
+  --mi-C-icon: 0.085;
+  --mi-C-icon-border: 0.14;
+  --mi-C-veil: 0.045;
+  --mi-C-border: 0.10;
+  /* La etiqueta y el glifo no llevan tope: cada tipo usa su croma entero y el
+     navegador lo recorta al gamut. Este valor está por encima del croma máximo
+     de sRGB, así que nunca ata — existe solo para que Audio pueda bajarlo. */
+  --mi-C-label: 0.4;
+
+  display: grid;
+  /* -12% respecto al original (216px), y -14px sobre esa cifra: a 980px esa
+     columna era el 22% del ancho; a 560px, sin reducirla, pasaba a ser el
+     38.7%. Bajarla más allá de eso ya no corrige proporción de ventana —eso
+     quedó resuelto—, sino que le devuelve aire a "CONTENIDO DEL MENSAJE",
+     que es la columna que de verdad lo necesita. */
+  grid-template-columns: 176px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+/* Oscuro: la tarjeta sube y lo hundido baja, que es al revés que en claro.
+   Es el ÚNICO sitio del módulo donde los dos temas divergen, y diverge en la
+   dirección de la profundidad, no en el color. */
+:root[data-theme="dark"] .message-editor {
+  /* Misma identidad cyan que en claro —~216°—, distinta proporción, porque en
+     oscuro los dos tokens de partida están más juntos: con la mezcla de claro
+     el matiz caía a 195.5° y el bloque se veía verde turquesa en vez de azul
+     cielo. Medido, no estimado. */
+  --mi-interval: color-mix(in oklab, var(--slate) 80%, var(--teal));
+
+  --mi-panel: var(--surface);
+  --mi-card: var(--surface-alt);
+  --mi-field: var(--surface);
+  --mi-inset: var(--bg);
+  /* En oscuro el relieve es el realce interior del sistema: una sombra
+     proyectada sobre un fondo casi negro no se ve. */
+  --mi-lift: var(--elevation-inset);
+
+  /* Los roles se invierten: en oscuro las superficies son oscuras y la
+     etiqueta es lo claro. La cabecera a 0.40 y la etiqueta a 0.78 dejan el
+     contraste entre ambas en 4.57–4.71 para los seis tipos, por encima del
+     4.5 de AA, con el color al máximo que permite el gamut. */
+  --mi-L-bar: 0.40;
+  --mi-L-bar-fin: 0.34;
+  --mi-L-icon: 0.39;
+  --mi-L-icon-hover: 0.47;
+  --mi-L-icon-border: 0.53;
+  --mi-L-veil: 0.31;
+  --mi-L-veil-fin: 0.26;
+  --mi-L-label: 0.78;
+  --mi-L-border: 0.46;
+  --mi-C-bar: 0.095;
+  --mi-C-icon: 0.09;
+  --mi-C-icon-border: 0.13;
+  --mi-C-veil: 0.07;
+  --mi-C-border: 0.11;
+}
+
+/* Cada bloque expone su acento en una variable local; todo lo demás lo lee de
+   ahí. Añadir un tipo es añadir su color aquí arriba y su regla aquí abajo, sin
+   tocar ni un componente. */
+/* ----- Una sola excepción -----
+ *
+ * El pico de croma de cada matiz vive a una luminosidad distinta, así que una
+ * L única iguala la PROFUNDIDAD de los seis pero no siempre su VIVEZA. Hubo
+ * que hacer una excepción para Intervalo mientras fue ámbar: a L 0.40 el oro
+ * se leía oliva, porque «amarillo oscuro» es literalmente la definición de
+ * oliva. Al pasar Intervalo a cyan esa excepción se retiró: el azul conserva
+ * su identidad en superficies oscuras igual que el violeta y el rosa, y
+ * mantenerla solo lo habría dejado más brillante que sus hermanos sin ninguna
+ * razón física detrás.
+ *
+ * Queda Audio, y por un motivo distinto: no es un matiz difícil, es un NEUTRO
+ * a propósito. */
+
+/* Audio es el único NEUTRO de la familia, y eso vale en los dos temas. No
+ * puede ganar presencia con croma sin dejar de ser gris: a croma 0.079 se leía
+ * «azul acero», que es justo lo que no es. La gana con luminosidad, que es
+ * como se comporta la plata — un gris brillante y frío, no un gris apagado. */
+.message-item--audio,
+.message-library__item--audio {
+  --mi-C-bar: 0.022;
+  --mi-C-icon: 0.024;
+  --mi-C-icon-border: 0.040;
+  --mi-C-veil: 0.018;
+  --mi-C-border: 0.035;
+  --mi-C-label: 0.045;
+}
+
+/* En oscuro la plata además sube de escalón: un neutro a L 0.40 es un gris
+   apagado, y a 0.52 es plata. */
+:root[data-theme="dark"] .message-item--audio,
+:root[data-theme="dark"] .message-library__item--audio {
+  --mi-L-bar: 0.52;
+  --mi-L-bar-fin: 0.45;
+  --mi-L-icon: 0.50;
+  --mi-L-icon-hover: 0.58;
+  --mi-L-icon-border: 0.64;
+  --mi-L-label: 0.90;
+  --mi-C-bar: 0.020;
+  --mi-C-icon: 0.022;
+  --mi-C-icon-border: 0.030;
+  --mi-C-label: 0.030;
+}
+
+.message-library__item--text,
+.message-item--text { --mi-accent: var(--mi-text); }
+.message-library__item--image,
+.message-item--image { --mi-accent: var(--mi-image); }
+.message-library__item--video,
+.message-item--video { --mi-accent: var(--mi-video); }
+.message-library__item--audio,
+.message-item--audio { --mi-accent: var(--mi-audio); }
+.message-library__item--file,
+.message-item--file { --mi-accent: var(--mi-file); }
+.message-library__item--interval,
+.message-item--interval { --mi-accent: var(--mi-interval); }

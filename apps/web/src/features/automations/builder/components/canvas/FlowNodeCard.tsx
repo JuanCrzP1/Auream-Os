@@ -1,11 +1,7 @@
-import { useCallback } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
-import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
 import { useBuilderEditing } from "@features/automations/builder/context/BuilderEditingContext";
 import { resolveTool } from "@features/automations/builder/tools/registry";
-import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
-import { NodeExpandedFrame } from "./NodeExpandedFrame";
 
 /**
  * Tarjeta de un nodo en el lienzo.
@@ -14,39 +10,23 @@ import { NodeExpandedFrame } from "./NodeExpandedFrame";
  * operaciones que necesita. No posee estado del grafo ni lo modifica: antes
  * llamaba a `useReactFlow().setNodes/setEdges` y era un segundo dueño del
  * estado a espaldas de `useCanvasNodes`.
+ *
+ * SIEMPRE renderiza el nodo compacto —o la píldora de entrada—, esté o no
+ * abierto su editor. `data.isExpanded` ya no cambia lo que este componente
+ * devuelve: solo le dice a `ExpandedNodeOverlay` (montado aparte, en
+ * `BuilderCanvas`) que tiene que aparecer flotando sobre el lienzo, anclado a
+ * este mismo nodo. Antes esta tarjeta se SUSTITUÍA por el editor grande, y
+ * como React Flow mide lo que sea que un nodo devuelve, el editor —980px—
+ * pasaba a ser el bounding box real del nodo: sus handles se movían a las
+ * esquinas del marco grande y las conexiones parecían saltar hasta ahí. Con
+ * la tarjeta siempre compacta, los handles no se mueven nunca.
  */
 export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
-  const { requestEdit, toggleExpand, updateNode, duplicateNode, removeNode } = useBuilderEditing();
+  const { requestEdit, duplicateNode, removeNode } = useBuilderEditing();
   // `resolveTool` degrada a una presentación neutra si el flow guardado trae un
   // tipo que esta versión ya no soporta, en lugar de romper el canvas entero.
   const tool = resolveTool(data.nodeType);
-  const ui = resolveToolUi(data.nodeType);
   const colors = tool.colors;
-
-  const handleChange = useCallback(
-    (patch: NodePatch) => updateNode(id, patch),
-    [id, updateNode]
-  );
-
-  const handleClose = useCallback(() => toggleExpand(id), [id, toggleExpand]);
-
-  // `requestEdit` significa «abre el editor de este nodo», sin que la tarjeta
-  // sepa si eso será dentro del lienzo o en el modal heredado. Esa decisión se
-  // toma en un único sitio, para que el botón de editar y el doble clic del
-  // lienzo no puedan acabar comportándose distinto.
-
-  if (data.isExpanded && ui.Editor) {
-    return (
-      <NodeExpandedFrame
-        nodeId={id}
-        data={data}
-        tool={tool}
-        ui={ui}
-        onChange={handleChange}
-        onClose={handleClose}
-      />
-    );
-  }
 
   if (data.isEntry) {
     return (

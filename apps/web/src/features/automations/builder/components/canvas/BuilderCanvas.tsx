@@ -23,6 +23,7 @@ import {
 } from "@xyflow/react";
 import { useCallback } from "react";
 import { nodeTypes } from "./nodeTypes";
+import { ExpandedNodeOverlay } from "./ExpandedNodeOverlay";
 import type { CanvasEdge, CanvasNode } from "@features/automations/builder/types/canvas";
 import type { NodeType } from "@contracts/FlowSnapshot";
 import {
@@ -148,6 +149,12 @@ function CanvasInner(props: BuilderCanvasProps) {
             variant={BackgroundVariant.Dots}
           />
         </ReactFlow>
+        {/* El editor de un nodo abierto. HERMANO de `<ReactFlow>`, nunca
+            hijo: dentro heredaría el `transform` de `.react-flow__viewport`
+            —el del pan/zoom— y dejaría de poder anclarse al viewport real
+            del navegador. No es una capa del lienzo — ver
+            `ExpandedNodeOverlay`. */}
+        <ExpandedNodeOverlay />
       </div>
     </div>
   );

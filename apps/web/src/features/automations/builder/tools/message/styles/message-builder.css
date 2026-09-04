@@ -1,0 +1,160 @@
+/* ===== MENSAJE — EL CONSTRUCTOR =====
+ *
+ * La columna derecha: el panel que aloja la secuencia, su rótulo con el
+ * contador, el área que desplaza, la lista y el estado vacío.
+ *
+ * El estado vacío entra aquí y no en un archivo propio: es lo que ESTE panel
+ * enseña cuando no tiene bloques, no un componente independiente. Seis reglas
+ * en un archivo aparte serían fragmentar por fragmentar.
+ *
+ * La cabecera del nodo y la biblioteca quedan fuera del área que desplaza,
+ * así que permanecen fijas por muchos bloques que haya. */
+
+/* ----- Constructor ----- */
+
+.message-builder {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 14px 14px 12px;
+  /* Suelo, no lienzo: las tarjetas se apoyan encima y por eso se ven. */
+  background: var(--mi-panel);
+  transition: background var(--speed-fast) var(--ease-out);
+}
+
+/* Mientras llega un bloque, el área entera se reconoce como destino. */
+.message-builder--receiving {
+  background: color-mix(in oklab, var(--primary) 5%, transparent);
+}
+
+.message-builder__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* Información secundaria: una pastilla translúcida que se lee cuando se busca y
+   no compite con el rótulo de la sección. */
+.message-builder__count {
+  padding: 2px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 6%, transparent);
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El área que desplaza. La cabecera del nodo y la biblioteca quedan fuera, así
+   que permanecen fijas por muchos bloques que haya.
+   La barra usa los tokens del tema, que ya define `shared/styles/elements/
+   scrollbar.css`; aquí solo se afina el grosor para este contexto. */
+.message-builder__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  /* Invisible hasta que hace falta. El hueco se reserva igualmente para que su
+     aparición no desplace los bloques. */
+  scrollbar-gutter: stable;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color var(--speed-base) var(--ease-out);
+}
+
+.message-builder__scroll:hover,
+.message-builder__scroll:focus-within {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.message-builder__scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-builder__scroll::-webkit-scrollbar-thumb {
+  border-width: 1px;
+  background: transparent;
+  transition: background var(--speed-base) var(--ease-out);
+}
+
+.message-builder__scroll:hover::-webkit-scrollbar-thumb,
+.message-builder__scroll:focus-within::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+/* ----- Estado vacío ----- */
+
+.message-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 100%;
+  padding: 32px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out);
+}
+
+.message-empty--receiving {
+  border-color: var(--primary);
+  border-style: solid;
+  background: color-mix(in oklab, var(--primary) 14%, var(--mi-inset));
+}
+
+/* Panel de vidrio con el lavanda de Mensaje: da un punto de vida al hueco sin
+   convertirlo en un cartel. */
+.message-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 10px;
+  padding: 14px;
+  border: 1px solid color-mix(in oklab, var(--primary) 22%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  box-shadow: var(--mi-lift);
+  color: var(--primary);
+}
+
+/* El icono de la herramienta viene con el trazo fijado en blanco porque en la
+   tarjeta va sobre color; aquí se devuelve al color del contexto. */
+.message-empty__icon svg {
+  stroke: currentColor;
+}
+
+.message-empty__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.message-empty__hint {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.message-builder__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

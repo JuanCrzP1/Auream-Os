@@ -1,0 +1,257 @@
+/* ===== MENSAJE — BLOQUE INTERVALO =====
+ *
+ * La pausa entre dos contenidos: el número, el selector de unidad, su menú y
+ * el deslizador. Va aparte del resto de bloques y no por tamaño: es la única
+ * superficie del módulo con un menú posicionado por portal y un
+ * `input[type=range]` con cuatro pseudo-elementos de navegador distintos.
+ *
+ * DEPENDENCIA DECLARADA, en un solo sentido: `.message-item--interval
+ * .message-item__body` estiliza un elemento de `message-item.css`. Es la
+ * única regla del módulo en la que un bloque alcanza a otro, y vive aquí
+ * porque es Intervalo quien decide su propia densidad. Gana por especificidad
+ * (20 contra 10), no por posición: no depende del orden de carga.
+ *
+ * EL MENÚ NO ESTÁ DENTRO DEL BLOQUE. `UnitPicker` lo monta con `createPortal`
+ * en `.message-editor`, así que no hereda `--mi-accent` del bloque y lo
+ * redeclara. Ver la nota del portal en `message-tokens.css`. */
+
+/* ----- Intervalo -----
+ *
+ * Misma estructura que el resto de bloques. Lo que cambia es el acento —cyan,
+ * ver `--mi-interval`— y que el control es una duración. */
+
+/* CUERPO ACOTADO A INTERVALO.
+ *
+ * Solo lleva dos cosas —el valor y el deslizador—, así que no necesita el aire
+ * vertical de un bloque multimedia, que apila pestañas, zona de carga,
+ * descripción e interruptor. El selector va con `--interval` a propósito: la
+ * densidad del resto de bloques está aprobada y no se toca desde aquí. */
+.message-item--interval .message-item__body {
+  gap: 3px;
+  padding: 4px 9px 6px;
+}
+
+/* LA DURACIÓN SE LEE COMO UNA FRASE, NO COMO UN FORMULARIO.
+ *
+ * Antes eran dos casillas del mismo tamaño una al lado de otra —un número y un
+ * desplegable con filo y relleno—, y el valor que el usuario venía a consultar
+ * pesaba lo mismo que la caja que lo contenía. Ahora manda el número y la
+ * unidad va pegada a él en cuerpo de texto, así que «10 segundos» se lee de un
+ * vistazo.
+ *
+ * SIGUEN SIENDO LOS MISMOS DOS CONTROLES, con sus mismas etiquetas: no se ha
+ * quitado ninguno ni se ha tocado lo que guardan. Lo único que cambia es su
+ * peso visual. */
+.message-interval {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 7px;
+}
+
+.message-interval__amount {
+  width: 3.2ch;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  /* Mismo rol «label» que la etiqueta del tipo en la cabecera: el dato
+     protagonista lleva la identidad del bloque, no un color propio. */
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  /* Es un dato, no una casilla que rellenar: fuera las flechas de incremento,
+     que además ya las sustituye el deslizador de debajo. Se sigue pudiendo
+     escribir dentro. */
+  appearance: textfield;
+}
+
+.message-interval__amount::-webkit-outer-spin-button,
+.message-interval__amount::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* ----- Selector de unidad -----
+ *
+ * Ya no es un `<select>`. El menú desplegado de un select lo pinta el sistema
+ * operativo —blanco, con resalte azul— y ninguna hoja de estilo lo alcanza:
+ * dentro de este editor se abría como un agujero. El de aquí es DOM propio y
+ * por eso lleva el mismo cyan que el resto del bloque. */
+.message-interval__unit-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.message-interval__unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h / 0.5);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+/* Abierto se ve igual que en hover: mientras el menú está desplegado el
+   disparador sigue siendo el elemento activo, no un botón que se apagó. */
+.message-interval__unit:hover,
+.message-interval__unit[aria-expanded="true"] {
+  border-color: oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  background: oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h);
+  color: var(--text);
+}
+
+.message-interval__caret {
+  width: 0;
+  height: 0;
+  flex: 0 0 auto;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: 0.7;
+}
+
+.message-interval__amount:focus-visible,
+.message-interval__unit:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* El menú. Vive colgado de `.message-editor`, no del bloque —ver `UnitPicker`
+   para el porqué—, así que el acento NO le llega por herencia y se declara
+   aquí. `--mi-interval` sí lo hereda del editor, y ese token ya tiene su valor
+   propio en cada tema, con lo que el cyan sale correcto en claro y en oscuro
+   con una sola línea. */
+.message-interval__menu {
+  --mi-accent: var(--mi-interval);
+  position: fixed;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  border-radius: var(--radius-sm);
+  background: var(--mi-card);
+  box-shadow: var(--shadow), var(--glow-soft);
+}
+
+.message-interval__option {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.message-interval__option:hover {
+  background: oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h);
+}
+
+/* La elegida, con la misma pareja icon/label que ya marca lo elegido en el
+   resto del módulo: no se inventa una intensidad para este menú. */
+.message-interval__option--active {
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+  font-weight: 600;
+}
+
+.message-interval__option:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: -2px;
+}
+
+/* ----- Deslizador de duración -----
+ *
+ * Segunda vía al MISMO dato, junto al número: no sustituye a
+ * nadie ni guarda nada distinto. Existe porque una duración es una magnitud
+ * continua y arrastrarla es más rápido que teclearla.
+ *
+ * Fino y sin adornos: la línea son 3px y el pulsador 11px. El relleno del
+ * recorrido lo marca `--interval-fill`, que el componente calcula a partir del
+ * valor — el CSS no sabe de rangos ni de unidades. */
+.message-interval__slider {
+  width: 100%;
+  height: 12px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.message-interval__slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h) var(--interval-fill, 0%),
+    var(--mi-inset) var(--interval-fill, 0%)
+  );
+}
+
+.message-interval__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  /* El halo es un anillo del propio velo del tipo, no una luz: apenas separa
+     el pulsador de la línea. Subirlo convertiría el bloque en un juguete. */
+  box-shadow: 0 0 0 3px oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h / 0.5);
+  transition: box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.message-interval__slider:hover::-webkit-slider-thumb,
+.message-interval__slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 5px oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h / 0.6);
+}
+
+.message-interval__slider:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+
+/* Firefox dibuja el recorrido ya relleno, así que aquí el degradado sobra. */
+.message-interval__slider::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--mi-inset);
+}
+
+.message-interval__slider::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+}
+
+.message-interval__slider::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  box-shadow: 0 0 0 3px oklch(from var(--mi-accent) var(--mi-L-veil) min(c, var(--mi-C-veil)) h / 0.5);
+}

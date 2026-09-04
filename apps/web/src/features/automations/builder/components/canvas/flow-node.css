@@ -64,10 +64,16 @@
   padding: 9px 10px;
 }
 
+/* Circular y suave, mismo lenguaje que `.flow-node__entry-chip`: un tono de
+   blanco sobre el color de cabecera de la herramienta, no un tinte nuevo. */
 .flow-node__type-icon {
-  font-size: 0.9rem;
+  display: grid;
+  place-items: center;
   width: 22px;
-  text-align: center;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.78rem;
   flex: 0 0 auto;
   line-height: 1;
 }
@@ -133,20 +139,23 @@
   color: #fff;
 }
 
+/* Compacto a propósito: el cuerpo cerrado aloja UN resumen de una línea, no un
+   fragmento del contenido — ya no hace falta reservar alto para tres. */
 .flow-node__body {
-  padding: 10px 12px 14px;
-  min-height: 54px;
+  padding: 8px 12px 10px;
 }
 
+/* Una sola línea, truncada por el ancho. El nodo cerrado es un resumen: un
+   contenido largo no debe ensanchar la tarjeta ni desbordarla —se recorta con
+   puntos suspensivos—, y React Flow no vuelve a medir el layout por eso. */
 .flow-node__preview {
   margin: 0;
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.82rem;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .flow-node__handle {
