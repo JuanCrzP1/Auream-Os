@@ -10,10 +10,15 @@ export function mapCanvasToSnapshot(baseSnapshot: BuilderFlowSnapshot, nodes: Ca
         id: node.id,
         type: node.data.nodeType,
         name: node.data.title,
-        content: {
-          ...node.data.content,
-          text: node.data.preview
-        },
+        // El contenido se serializa TAL CUAL. Antes se escribía aquí
+        // `text: node.data.preview`, cuando el texto de la tarjeta ERA el
+        // contenido y las dos cosas coincidían por construcción.
+        //
+        // Ya no: `preview` es un resumen DERIVADO de la configuración —«Hola ·
+        // 3 contenidos»— y volcarlo aquí escribiría ese resumen dentro del
+        // contenido real del nodo, machacándolo en cada guardado. La verdad la
+        // escribe el mutador (`applyNodePatch`); este adaptador solo la copia.
+        content: node.data.content,
         config: node.data.config,
         metadata: {
           ...node.data.metadata,

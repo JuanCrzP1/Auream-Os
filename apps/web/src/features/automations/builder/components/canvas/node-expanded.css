@@ -1,0 +1,143 @@
+/* ===== NODO EXPANDIDO =====
+ *
+ * Marco de configuración común a todas las herramientas: mismas dimensiones,
+ * misma cabecera, mismo cierre. Lo que cambia entre una y otra es lo que va
+ * dentro, y eso lo aporta cada herramienta.
+ *
+ * Todo el color sale de los tokens del tema. El estado compacto (`flow-node`)
+ * todavía usa literales; su saneamiento pertenece al rediseño del compacto y no
+ * se adelanta aquí.
+ */
+
+/* Dimensiones del marco expandido.
+ *
+ * Son del SISTEMA, no de una herramienta: Mensaje, Condicional, Pixel y las que
+ * vengan se abren exactamente con este tamaño. Ninguna herramienta debe fijar
+ * el suyo dentro de su editor — si lo hiciera, cada nodo se abriría distinto y
+ * el lienzo dejaría de leerse como un sistema.
+ *
+ * Se declaran como tokens para que el interior pueda medirse contra ellos sin
+ * repetir números. */
+:root {
+  --node-expanded-width: 980px;
+  --node-expanded-height: 720px;
+  --node-expanded-header: 46px;
+}
+
+.node-expanded {
+  /* Fijo, nunca elástico: un tamaño que dependiera del contenido haría saltar
+     el nodo mientras se escribe. Y acotado por el viewport, para que en una
+     pantalla pequeña el nodo no se salga del área de trabajo. */
+  width: var(--node-expanded-width);
+  height: min(var(--node-expanded-height), 82vh);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-top-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  /* Profundidad en tres capas, todas con tokens del tema: sombra ambiental que
+     despega la ventana del lienzo, halo de un píxel que dibuja el filo sin
+     iluminarlo, y realce interior que da grosor al borde superior. En claro,
+     `--elevation-inset` es nulo a propósito y la ventana queda igual de limpia. */
+  box-shadow: var(--shadow), var(--glow-soft), var(--elevation-inset);
+  overflow: hidden;
+}
+
+.node-expanded__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: var(--node-expanded-header);
+  /* El color lo pone la herramienta en línea; este degradado solo le da volumen
+     sin desplazar el tono. La separación con el cuerpo es una línea y no una
+     sombra: una sombra aquí se leería como si la cabecera flotara sobre su
+     propio contenido. */
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.08));
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+  /* Es el `dragHandle`: el único punto por el que se mueve el nodo abierto. */
+  cursor: grab;
+  flex: 0 0 auto;
+}
+
+.node-expanded__header:active {
+  cursor: grabbing;
+}
+
+.node-expanded__icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.node-expanded__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.node-expanded__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--on-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-expanded__close {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--on-primary);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out);
+}
+
+.node-expanded__close:hover {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.node-expanded__close:focus-visible {
+  outline: 2px solid var(--on-primary);
+  outline-offset: 1px;
+}
+
+.node-expanded__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* El cuerpo NO puede ensancharse por lo que lleva dentro: sin esto, un
+     contenido ancho impondría su mínimo y el marco dejaría de medir lo que
+     dice medir. No cambia la geometría; impide que la geometría dependa del
+     contenido. */
+  min-width: 0;
+  /* NO desplaza: el marco es una caja de tamaño fijo y el desplazamiento
+     pertenece a cada herramienta, que es la única que sabe qué parte de su
+     interior debe quedar quieta.
+     Tenía `overflow-y: auto` y eso creaba DOS contenedores de scroll anidados
+     con el del editor. `scrollIntoView` sube por la cadena y desplazaba el de
+     fuera: la biblioteca y la zona de continuación se salían del marco y el
+     usuario se quedaba sin sitio donde seguir construyendo. */
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.node-expanded__empty {
+  margin: 0;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

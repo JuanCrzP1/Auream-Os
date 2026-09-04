@@ -16,10 +16,14 @@ import type { NodeType } from "@contracts/FlowSnapshot";
  * validación estructural del grafo (eso es `domains/automations/validation`) ni
  * el estado del canvas.
  *
- * **Este módulo es puro: sin React, sin JSX.** El icono de cada herramienta vive
- * aparte, en `tools/icons.tsx`, porque `validateCanvasGraph` consulta el
- * registry y lo ejecuta también el test de paridad del backend, donde no hay
- * runtime de React. Una regla de validación no puede depender de un SVG.
+ * **Este módulo es puro: sin React, sin JSX.** Todo lo visual de una herramienta
+ * —icono, forma, cuerpos— vive aparte, en `tools/<herramienta>/ui.tsx`, y se
+ * descubre por `tools/ui-registry`. La razón es que `validateCanvasGraph`
+ * consulta este registry y lo ejecuta también el test de paridad del backend,
+ * donde no hay runtime de React. Una regla de validación no puede depender de
+ * un SVG.
+ *
+ * Las dos mitades se mantienen alineadas por test, no por memoria.
  */
 export interface ToolDefinition {
   /** Tipo canónico del contrato compartido. Es la clave del registry. */
@@ -33,6 +37,18 @@ export interface ToolDefinition {
 
   /** Texto inicial del contenido de un nodo recién creado. */
   readonly defaultContentText: string;
+
+  /**
+   * Contenido con el que nace un nodo de esta herramienta.
+   *
+   * Ausente: nace con `{ text: defaultContentText }`, que es la forma heredada
+   * y sirve para las herramientas cuyo contenido sigue siendo un texto suelto.
+   *
+   * Lo declara la herramienta cuyo contenido tiene otra forma —o ninguna—, para
+   * que no nazca con un campo que su modelo no usa y que quedaría ahí,
+   * duplicando información con su configuración real.
+   */
+  readonly defaultContent?: Readonly<Record<string, unknown>>;
 
   /** Título del modal de edición. */
   readonly editorTitle: string;
@@ -64,6 +80,36 @@ export interface ToolDefinition {
    * de inventar campos que nadie ha acordado.
    */
   readonly defaultConfig: Readonly<Record<string, unknown>>;
+
+  /**
+   * Resumen de un nodo para su tarjeta del lienzo.
+   *
+   * Puro: recibe datos y devuelve texto. Existe para que el resumen de una
+   * herramienta se calcule DONDE se conoce su forma, en lugar de que un
+   * servicio genérico tenga que saber que Mensaje guarda una secuencia o que
+   * Esperar respuesta guarda una clave de contexto.
+   *
+   * Ausente: el resumen genérico se apaña con `content.text`.
+   */
+  readonly summarize?: (
+    content: Readonly<Record<string, unknown>>,
+    config: Readonly<Record<string, unknown>>
+  ) => string;
+
+  /**
+   * Copia la configuración de un nodo para un duplicado.
+   *
+   * Puro: recibe la configuración y devuelve otra. Existe porque la copia
+   * profunda genérica reproduce los datos EXACTOS, y algunas herramientas
+   * guardan identidades internas —los bloques de un Mensaje, por ejemplo— que
+   * conviene renovar en la copia. Solo la herramienta sabe cuáles de sus campos
+   * son identidad y cuáles son contenido.
+   *
+   * Ausente: la copia profunda genérica basta, que es el caso de casi todas.
+   */
+  readonly duplicateConfig?: (
+    config: Readonly<Record<string, unknown>>
+  ) => Record<string, unknown>;
 
   /** Paleta cromática de la herramienta en la tarjeta del canvas y la paleta. */
   readonly colors: {

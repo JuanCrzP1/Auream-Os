@@ -28,8 +28,8 @@ import { endTool } from "./end/definition";
 //   2. `flow-engine/nodes/<tipo>/` → handler de ejecución.
 //   3. `apps/api/composition/composeNodeRuntime.ts` → registrar el handler.
 //   4. `builder/tools/<herramienta>/definition.ts` → su `ToolDefinition`, y
-//      `<Herramienta>Icon.tsx` con su SVG.
-//   5. Añadir la definición a `TOOLS` aquí abajo, y el icono a `tools/icons.tsx`.
+//      `ui.tsx` → su `ToolUi` (icono, forma y, más adelante, sus cuerpos).
+//   5. Añadir la definición a `TOOLS` aquí abajo, y su UI a `tools/ui-registry`.
 //
 // Este módulo es PURO: no importa React. El icono se registra aparte porque
 // `validateCanvasGraph` consulta este registry y también lo ejecuta el test de

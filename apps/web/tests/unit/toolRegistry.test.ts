@@ -8,7 +8,6 @@ import {
   isTerminalType,
   isExecutableType
 } from "@features/automations/builder/tools/registry";
-import { getToolIcon, listIconTypes } from "@features/automations/builder/tools/icons";
 import { createNodeDraft } from "@features/automations/builder/services/createNodeDraft";
 
 // ---------------------------------------------------------------------------
@@ -133,31 +132,17 @@ describe("creación de nodo desde el registry", () => {
 });
 
 // ---------------------------------------------------------------------------
-// El catálogo está declarado en dos sitios que tienen que ir juntos: la
-// definición de cada herramienta (`registry`, puro) y su icono (`icons`, React).
-// Están separados a propósito —una regla de validación no puede arrastrar JSX—
-// pero esa separación abre un hueco: una herramienta sin icono registrado se
-// pintaba en la paleta sin él, sin error y sin que ningún test lo notara.
+// La mitad PURA de la identidad de una herramienta.
+//
+// La mitad React —icono, forma, cuerpos— vive en `tools/<herramienta>/ui.tsx`
+// y la cubre `toolUiRegistry.test.tsx`, que además comprueba en ambos sentidos
+// que las dos mitades hablan del mismo conjunto de herramientas.
 //
 // La paridad con la validación del backend la cubre
-// `tests/contract/toolRegistryParity.test.ts`; esta es la del frontend.
+// `tests/contract/toolRegistryParity.test.ts`.
 // ---------------------------------------------------------------------------
 
-describe("paridad catálogo ↔ iconografía", () => {
-  it("toda herramienta registrada tiene icono", () => {
-    for (const tool of listAllTools()) {
-      expect(getToolIcon(tool.type), `la herramienta '${tool.type}' no tiene icono`).not.toBeNull();
-    }
-  });
-
-  it("no hay iconos registrados para tipos que ninguna herramienta declara", () => {
-    const declarados = new Set(listAllTools().map((tool) => tool.type));
-
-    for (const type of listIconTypes()) {
-      expect(declarados.has(type), `hay icono para '${type}', que no está en el registry`).toBe(true);
-    }
-  });
-
+describe("identidad declarada por cada herramienta", () => {
   it("cada herramienta trae lo mínimo para poder pintarse", () => {
     for (const tool of listAllTools()) {
       expect(tool.label.trim(), `'${tool.type}' sin etiqueta`).not.toBe("");

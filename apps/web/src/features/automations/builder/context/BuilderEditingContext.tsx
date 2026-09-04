@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
+import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
 
 // ---------------------------------------------------------------------------
 // Frontera de edición del builder.
@@ -21,8 +22,30 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 /** Operaciones que una tarjeta del canvas puede solicitar sobre el grafo. */
 export interface BuilderEditingOperations {
-  /** Abre el editor del nodo. Quién lo abre y cómo lo decide el consumidor. */
+  /**
+   * Abre el editor del nodo FUERA del lienzo.
+   *
+   * Es el camino heredado: el modal genérico de nombre y texto. Sigue siendo el
+   * único disponible para las herramientas que todavía no declaran editor
+   * propio, y se retirará cuando todas lo tengan.
+   */
   readonly requestEdit: (nodeId: string) => void;
+  /**
+   * Abre o cierra el nodo DENTRO del lienzo.
+   *
+   * El camino nuevo: el nodo crece y se convierte en su propio espacio de
+   * configuración, sin abrir nada aparte.
+   */
+  readonly toggleExpand: (nodeId: string) => void;
+  /**
+   * Escribe la configuración del nodo.
+   *
+   * Es el mismo mutador genérico que usa el resto del builder: la tarjeta no
+   * tiene un camino de escritura propio ni conoce la forma de lo que escribe.
+   */
+  readonly updateNode: (nodeId: string, patch: NodePatch) => void;
+  /** Crea una copia del nodo con toda su configuración. */
+  readonly duplicateNode: (nodeId: string) => void;
   /** Elimina el nodo y las conexiones que lo tocan. */
   readonly removeNode: (nodeId: string) => void;
 }
@@ -43,12 +66,15 @@ interface BuilderEditingProviderProps extends BuilderEditingOperations {
  */
 export function BuilderEditingProvider({
   requestEdit,
+  toggleExpand,
+  updateNode,
+  duplicateNode,
   removeNode,
   children
 }: BuilderEditingProviderProps) {
   const operations = useMemo<BuilderEditingOperations>(
-    () => ({ requestEdit, removeNode }),
-    [requestEdit, removeNode]
+    () => ({ requestEdit, toggleExpand, updateNode, duplicateNode, removeNode }),
+    [requestEdit, toggleExpand, updateNode, duplicateNode, removeNode]
   );
 
   return (

@@ -3,7 +3,7 @@ import "./palette-block.css";
 import { useState } from "react";
 import type { NodeType } from "@contracts/FlowSnapshot";
 import { listPaletteTools } from "@features/automations/builder/tools/registry";
-import { getToolIcon } from "@features/automations/builder/tools/icons";
+import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
 
 // Las herramientas ofrecidas las decide el registry: este panel solo las pinta.
 const paletteItems = listPaletteTools();
@@ -77,7 +77,10 @@ export function PalettePanel({ onAddNode }: PalettePanelProps) {
 
         <div className="palette-list">
         {filtered.map((item) => {
-          const Icon = getToolIcon(item.type);
+          // `resolveToolUi` siempre devuelve algo pintable: una herramienta de
+          // la paleta sin icono declarado cae en el neutro en lugar de dejar un
+          // hueco mudo. La paridad con el registry la vigila un test.
+          const { Icon } = resolveToolUi(item.type);
           return (
           <button
             key={item.type}
@@ -92,7 +95,7 @@ export function PalettePanel({ onAddNode }: PalettePanelProps) {
               style={{ background: item.colors.gradient }}
               aria-hidden="true"
             >
-              {Icon ? <Icon /> : null}
+              <Icon />
             </span>
             <span className="palette-block__text">
               <span className="palette-block__label">{item.label}</span>

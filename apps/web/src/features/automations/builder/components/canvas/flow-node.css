@@ -83,17 +83,14 @@
   min-width: 0;
 }
 
+/* Editar, duplicar y eliminar están SIEMPRE presentes.
+   Estaban en `opacity: 0` y solo aparecían al pasar el ratón: una acción que
+   hay que descubrir moviendo el cursor no está disponible, está escondida.
+   El hover ya no las hace aparecer — solo las realza. */
 .flow-node__actions {
   display: flex;
   gap: 3px;
-  opacity: 0;
-  transition: opacity 130ms;
   flex: 0 0 auto;
-}
-
-.flow-node:hover .flow-node__actions,
-.flow-node--selected .flow-node__actions {
-  opacity: 1;
 }
 
 .flow-node__action-btn {
@@ -101,22 +98,39 @@
   height: 22px;
   border: 0;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  /* Contraste secundario en reposo: visibles sin competir con el nombre del
+     nodo, que es lo que el usuario lee primero. */
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   display: grid;
   place-items: center;
   font-size: 0.68rem;
-  transition: background 100ms;
+  transition: background 100ms, color 100ms;
   line-height: 1;
 }
 
-.flow-node__action-btn:hover {
-  background: rgba(255, 255, 255, 0.35);
+.flow-node__action-btn svg {
+  width: 12px;
+  height: 12px;
 }
 
-.flow-node__action-btn--delete:hover {
+/* El hover y el foco solo suben el contraste. */
+.flow-node__action-btn:hover,
+.flow-node__action-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.34);
+  color: #fff;
+}
+
+.flow-node__action-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 1px;
+}
+
+.flow-node__action-btn--delete:hover,
+.flow-node__action-btn--delete:focus-visible {
   background: rgba(239, 68, 68, 0.65);
+  color: #fff;
 }
 
 .flow-node__body {

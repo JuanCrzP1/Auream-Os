@@ -42,6 +42,9 @@ interface BuilderCanvasProps {
   onSelectEdge: (edgeId: string | null) => void;
   onEditNode: (nodeId: string | null) => void;
   onDropNode: (type: NodeType, position: { x: number; y: number }) => void;
+  /** Clic en el lienzo vacío: el gesto que ya deselecciona, cierra también el
+   *  nodo que estuviera abierto. */
+  onPaneClick: () => void;
 }
 
 function CanvasInner(props: BuilderCanvasProps) {
@@ -105,6 +108,7 @@ function CanvasInner(props: BuilderCanvasProps) {
           onPaneClick={() => {
             props.onSelectNode(null);
             props.onSelectEdge(null);
+            props.onPaneClick();
           }}
           /* `default` es el edge bézier de React Flow: curva orgánica cuyos
              puntos de control se recalculan a partir de la posición real de

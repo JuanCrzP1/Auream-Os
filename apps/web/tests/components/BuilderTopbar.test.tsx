@@ -49,7 +49,7 @@ vi.mock("../../src/features/automations/builder/hooks/useBuilderWorkspace", () =
     handleSelectEdge: vi.fn(),
     handleAddNode: vi.fn(),
     handleDropNode: vi.fn(),
-    handleUpdateSelectedNode: vi.fn(),
+    handleUpdateNode: vi.fn(),
     simulationLog: [],
     simulationStatus: "idle",
     handleSimulate: vi.fn(),

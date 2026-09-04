@@ -57,13 +57,19 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
    * selección se corrige sola: `selectedNode` se deriva buscando el id en la
    * lista, así que al desaparecer el nodo pasa a `null` sin necesidad de
    * sincronizar un segundo estado.
+   *
+   * El nodo de entrada aborta las DOS mitades. `removeNode` ya se protege solo,
+   * pero sin esta comprobación las conexiones se irían igualmente y el nodo
+   * sobreviviría desconectado: una corrupción silenciosa peor que el borrado.
    */
   const handleRemoveNode = useCallback(
     (nodeId: string) => {
+      if (!nodesCtx.canRemoveNode(nodeId)) return;
+
       nodesCtx.removeNode(nodeId);
       edgesCtx.removeEdgesOfNode(nodeId);
     },
-    [nodesCtx.removeNode, edgesCtx.removeEdgesOfNode]
+    [nodesCtx.canRemoveNode, nodesCtx.removeNode, edgesCtx.removeEdgesOfNode]
   );
 
   return {
@@ -86,7 +92,10 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
     },
     handleDropNode: nodesCtx.dropNode,
     handleRemoveNode,
-    handleUpdateSelectedNode: nodesCtx.updateSelectedNode,
+    handleUpdateNode: nodesCtx.updateNode,
+    handleDuplicateNode: nodesCtx.duplicateNode,
+    handleToggleNodeExpanded: nodesCtx.toggleNodeExpanded,
+    handleCollapseNodes: nodesCtx.collapseNodes,
     handleUpdateSelectedEdge: edgesCtx.updateSelectedEdge
   };
 }

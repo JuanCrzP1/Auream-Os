@@ -1,6 +1,6 @@
 import "../components/builder-shell/builder-topbar.css";
 import "./builder-page.css";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { BuilderCanvas } from "../components/canvas/BuilderCanvas";
 import { NodeEditorModal } from "../components/editor/NodeEditorModal";
@@ -10,6 +10,7 @@ import { SaveStatusPill } from "../components/builder-shell/SaveStatusPill";
 import { PalettePanel } from "../components/panels/PalettePanel";
 import { BuilderEditingProvider } from "../context/BuilderEditingContext";
 import { useBuilderWorkspace } from "../hooks/useBuilderWorkspace";
+import { resolveToolUi } from "../tools/ui-registry";
 import type { CanvasNode } from "../types/canvas";
 
 function BuilderView({ flowKey }: { flowKey: string }) {
@@ -17,6 +18,36 @@ function BuilderView({ flowKey }: { flowKey: string }) {
   const builder = useBuilderWorkspace(flowKey);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const editingNode = builder.nodes.find((n: CanvasNode) => n.id === editingNodeId) ?? null;
+
+  /**
+   * Abre el editor de un nodo, dentro o fuera del lienzo.
+   *
+   * ÚNICO sitio donde se decide cuál de los dos caminos se toma, para que el
+   * botón de la tarjeta y el doble clic del lienzo no puedan divergir.
+   *
+   * La decisión es genérica: se pregunta al registry si la herramienta declara
+   * editor propio, no de qué tipo de nodo se trata. Las que ya lo declaran se
+   * configuran DENTRO del lienzo; las que no, siguen abriendo el modal
+   * heredado, que se retirará cuando todas lo declaren. Así ninguna herramienta
+   * se queda entretanto sin forma de configurarse.
+   */
+  const openNodeEditor = useCallback(
+    (nodeId: string | null) => {
+      if (!nodeId) {
+        setEditingNodeId(null);
+        return;
+      }
+
+      const node = builder.nodes.find((n: CanvasNode) => n.id === nodeId);
+      if (node && resolveToolUi(node.data.nodeType).Editor) {
+        builder.handleToggleNodeExpanded(nodeId);
+        return;
+      }
+
+      setEditingNodeId(nodeId);
+    },
+    [builder.nodes, builder.handleToggleNodeExpanded]
+  );
 
   if (builder.loading) {
     return <div className="app-state">Cargando workspace...</div>;
@@ -33,7 +64,13 @@ function BuilderView({ flowKey }: { flowKey: string }) {
           sobre el grafo. Las dos referencias son estables —`setEditingNodeId`
           es un setter de estado y `handleRemoveNode` está memoizado— para que
           el contexto no re-renderice todo el lienzo en cada cambio. */}
-      <BuilderEditingProvider requestEdit={setEditingNodeId} removeNode={builder.handleRemoveNode}>
+      <BuilderEditingProvider
+        requestEdit={openNodeEditor}
+        toggleExpand={builder.handleToggleNodeExpanded}
+        updateNode={builder.handleUpdateNode}
+        duplicateNode={builder.handleDuplicateNode}
+        removeNode={builder.handleRemoveNode}
+      >
       <div className="builder-stage">
         <header className="builder-topbar">
           <div className="builder-topbar__left">
@@ -68,8 +105,9 @@ function BuilderView({ flowKey }: { flowKey: string }) {
             onConnect={builder.handleConnect}
             onSelectNode={builder.handleSelectNode}
             onSelectEdge={builder.handleSelectEdge}
-            onEditNode={setEditingNodeId}
+            onEditNode={openNodeEditor}
             onDropNode={builder.handleDropNode}
+            onPaneClick={builder.handleCollapseNodes}
           />
           <PalettePanel onAddNode={builder.handleAddNode} />
         </div>
@@ -80,8 +118,15 @@ function BuilderView({ flowKey }: { flowKey: string }) {
           node={editingNode}
           onClose={() => setEditingNodeId(null)}
           onSave={(draft: { title: string; preview: string }) => {
-            builder.handleUpdateSelectedNode("title", draft.title);
-            builder.handleUpdateSelectedNode("preview", draft.preview);
+            // El modal sigue siendo el editor genérico de texto: entrega un
+            // nombre y un contenido principal. La traducción a `content.text`
+            // vive aquí de forma provisional y desaparece en P1.5, cuando el
+            // modal pase a ser un shell y cada herramienta entregue su propio
+            // `content` ya formado.
+            builder.handleUpdateNode(editingNode.id, {
+              name: draft.title,
+              content: { ...editingNode.data.content, text: draft.preview }
+            });
             setEditingNodeId(null);
           }}
         />

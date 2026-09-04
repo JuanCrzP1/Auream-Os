@@ -77,7 +77,10 @@ export function useBuilderWorkspace(flowKey: string) {
     handleAddNode: controller.handleAddNode,
     handleDropNode: controller.handleDropNode,
     handleRemoveNode: controller.handleRemoveNode,
-    handleUpdateSelectedNode: controller.handleUpdateSelectedNode,
+    handleUpdateNode: controller.handleUpdateNode,
+    handleDuplicateNode: controller.handleDuplicateNode,
+    handleToggleNodeExpanded: controller.handleToggleNodeExpanded,
+    handleCollapseNodes: controller.handleCollapseNodes,
     // Acciones del workspace
     handleRenameFlow: renameFlow,
     handlePublish,

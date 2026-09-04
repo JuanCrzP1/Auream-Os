@@ -11,6 +11,7 @@ export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
   const nodes = Object.values(snapshot.nodes).map<CanvasNode>((node) => {
     const ui = (node.metadata.ui as { x?: number; y?: number } | undefined) ?? {};
     const { preview, configSummary } = summarizeNode(node);
+    const isEntry = snapshot.version.entryNodeId === node.id;
 
     return {
       id: node.id,
@@ -19,12 +20,17 @@ export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
         x: ui.x ?? 120,
         y: ui.y ?? 120
       },
+      // El nodo de entrada no ofrece las afordancias de borrado de React Flow.
+      // Es la capa declarativa de la protección: la que de verdad la sostiene
+      // es `entryNodeProtection`, en el dueño del estado. Arrastrar sigue
+      // permitido — mover no es borrar.
+      deletable: !isEntry,
       data: {
         nodeType: node.type,
         title: node.name,
         preview,
         configSummary,
-        isEntry: snapshot.version.entryNodeId === node.id,
+        isEntry,
         isTerminal: isTerminalType(node.type),
         content: node.content,
         config: node.config,

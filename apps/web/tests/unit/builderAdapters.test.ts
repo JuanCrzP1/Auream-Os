@@ -279,20 +279,45 @@ describe("adapters — reglas de defensa", () => {
 });
 
 describe("adapters — edición en el lienzo", () => {
-  it("serializa el texto editado como contenido del nodo", () => {
+  // Antes, el adaptador escribía `content.text = data.preview`. Funcionaba
+  // mientras el texto de la tarjeta ERA el contenido, pero dejó de ser cierto:
+  // `preview` es ahora un resumen derivado de la configuración —«Hola · 3
+  // contenidos»— y volcarlo aquí lo escribiría DENTRO del contenido real,
+  // machacando el trabajo del usuario en cada guardado.
+  //
+  // La verdad la escribe el mutador (`applyNodePatch`); el adaptador la copia.
+  it("serializa el contenido del nodo tal cual, sin tocarlo", () => {
     const original = makeSnapshot();
     const canvas = mapSnapshotToCanvas(original);
 
     const editados: CanvasNode[] = canvas.nodes.map((node) =>
       node.id === "n-inicio"
-        ? { ...node, data: { ...node.data, preview: "Hola de nuevo", title: "Saludo" } }
+        ? {
+            ...node,
+            data: { ...node.data, content: { text: "Hola de nuevo" }, title: "Saludo" }
+          }
         : node
     );
 
     const result = mapCanvasToSnapshot(original, editados, canvas.edges);
 
-    expect(result.nodes["n-inicio"].content.text).toBe("Hola de nuevo");
+    expect(result.nodes["n-inicio"].content).toEqual({ text: "Hola de nuevo" });
     expect(result.nodes["n-inicio"].name).toBe("Saludo");
+  });
+
+  it("no deja que el resumen de la tarjeta contamine el contenido", () => {
+    const original = makeSnapshot();
+    const canvas = mapSnapshotToCanvas(original);
+
+    const conResumen: CanvasNode[] = canvas.nodes.map((node) =>
+      node.id === "n-inicio"
+        ? { ...node, data: { ...node.data, preview: "Hola · 3 contenidos" } }
+        : node
+    );
+
+    const result = mapCanvasToSnapshot(original, conResumen, canvas.edges);
+
+    expect(result.nodes["n-inicio"].content.text).toBe("Hola");
   });
 
   it("serializa un nodo movido con su nueva posición", () => {
@@ -324,5 +349,46 @@ describe("adapters — edición en el lienzo", () => {
       isFallback: false,
       condition: { operator: "always" }
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// El nodo de entrada, en la frontera de serialización.
+//
+// La protección de verdad vive en `entryNodeProtection`. Aquí se fija la mitad
+// que le corresponde al adaptador: marcar el nodo como no borrable al
+// dibujarlo, y conservar `entryNodeId` al guardar aunque el lienzo se haya
+// editado — es el puntero que se rompería si el nodo llegara a desaparecer.
+// ---------------------------------------------------------------------------
+
+describe("adapters — nodo de entrada", () => {
+  it("marca como no borrable solo al nodo de entrada", () => {
+    const canvas = mapSnapshotToCanvas(makeSnapshot());
+
+    const noBorrables = canvas.nodes.filter((node) => node.deletable === false);
+    expect(noBorrables.map((node) => node.id)).toEqual(["n-inicio"]);
+  });
+
+  it("deja borrables a los demás nodos", () => {
+    const canvas = mapSnapshotToCanvas(makeSnapshot());
+
+    const resto = canvas.nodes.filter((node) => node.id !== "n-inicio");
+    expect(resto.every((node) => node.deletable === true)).toBe(true);
+  });
+
+  it("conserva entryNodeId al guardar un lienzo editado", () => {
+    const original = makeSnapshot();
+    const canvas = mapSnapshotToCanvas(original);
+
+    const editados: CanvasNode[] = canvas.nodes.map((node) =>
+      node.id === "n-inicio"
+        ? { ...node, position: { x: 900, y: 900 }, data: { ...node.data, title: "Arranque" } }
+        : node
+    );
+
+    const result = mapCanvasToSnapshot(original, editados, canvas.edges);
+
+    expect(result.version.entryNodeId).toBe("n-inicio");
+    expect(result.nodes["n-inicio"].metadata.ui).toEqual({ x: 900, y: 900 });
   });
 });
