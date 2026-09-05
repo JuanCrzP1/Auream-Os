@@ -1,4 +1,5 @@
 import { createMessageItem } from "./messageItems";
+import { sinArchivoLocal } from "./mediaSource";
 import { readMessageItems } from "./readMessageConfig";
 
 /**
@@ -16,7 +17,7 @@ import { readMessageItems } from "./readMessageConfig";
 export function duplicateMessageConfig(
   config: Readonly<Record<string, unknown>>
 ): Record<string, unknown> {
-  const items = readMessageItems(config, {}).map((item) => ({
+  const items = readMessageItems(config, {}).map((item) => sinArchivoLocal({
     ...item,
     // `createMessageItem` es la única fuente de identidades del módulo: se usa
     // por su id y se descarta el resto, en lugar de tener un segundo generador

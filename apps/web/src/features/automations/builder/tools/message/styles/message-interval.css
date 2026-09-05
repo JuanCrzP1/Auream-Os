@@ -27,8 +27,8 @@
  * descripción e interruptor. El selector va con `--interval` a propósito: la
  * densidad del resto de bloques está aprobada y no se toca desde aquí. */
 .message-item--interval .message-item__body {
-  gap: 3px;
-  padding: 4px 9px 6px;
+  gap: 2px;
+  padding: 2px 9px 3px;
 }
 
 /* LA DURACIÓN SE LEE COMO UNA FRASE, NO COMO UN FORMULARIO.

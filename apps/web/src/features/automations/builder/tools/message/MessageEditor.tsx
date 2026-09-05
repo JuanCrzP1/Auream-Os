@@ -11,6 +11,7 @@ import {
   removeItem,
   updateItem
 } from "./messageItems";
+import { soltarArchivo } from "./mediaSourceSession";
 import { readMessageItems } from "./readMessageConfig";
 import { readKindPayload, readReorderPayload } from "./editor/dragPayload";
 import { revealInViewport } from "./editor/revealInViewport";
@@ -183,7 +184,20 @@ export function MessageEditor({ draft, onChange }: ToolEditorProps) {
                   dropBefore={dropIndex === index}
                   onDragOverAt={setDropIndex}
                   onEdit={(change) => commit(updateItem(items, item.id, change))}
-                  onRemove={() => commit(removeItem(items, item.id))}
+                  // Borrar el bloque suelta también su archivo. Sin esto, el
+                  // `File` y su Object URL se quedaban retenidos hasta recargar
+                  // la página: `FileSource` solo suelta al reemplazar o al
+                  // pulsar «Quitar», y aquí el bloque entero desaparece sin
+                  // pasar por ninguno de los dos.
+                  //
+                  // Va aquí y no en un efecto de desmontaje porque desmontarse
+                  // NO significa que el archivo sobre: cerrar el editor también
+                  // desmonta, y ahí el archivo tiene que sobrevivir. La señal
+                  // correcta es esta: el bloque deja de existir.
+                  onRemove={() => {
+                    soltarArchivo(item.id);
+                    commit(removeItem(items, item.id));
+                  }}
                   onDuplicate={() => commit(duplicateItem(items, item.id))}
                   onMove={(toIndex) => commit(moveItem(items, item.id, toIndex))}
                 />

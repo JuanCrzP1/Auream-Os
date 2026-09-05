@@ -1,3 +1,4 @@
+import { sinArchivoLocal } from "./mediaSource";
 import type {
   MessageIntervalUnit,
   MessageItem,
@@ -141,7 +142,11 @@ export function duplicateItem(
   const index = items.findIndex((item) => item.id === itemId);
   if (index === -1) return [...items];
 
-  const copia = { ...items[index], id: nextItemId() } as MessageItem;
+  // La copia estrena identidad, y los bytes de un archivo se guardan indexados
+  // por esa identidad: heredar `fileName` dejaría un bloque que dice tener un
+  // archivo que nadie puede encontrar. La regla vive en `mediaSource`, que es
+  // quien define qué cuenta como fuente.
+  const copia = sinArchivoLocal({ ...items[index], id: nextItemId() } as MessageItem);
   return [...items.slice(0, index + 1), copia, ...items.slice(index + 1)];
 }
 

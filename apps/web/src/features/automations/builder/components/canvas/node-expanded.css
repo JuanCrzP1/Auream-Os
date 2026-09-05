@@ -51,6 +51,9 @@
 }
 
 .node-expanded {
+  /* Referencia para la confirmación de salida, que se sitúa sobre el marco
+     entero sin salirse de él. Es lo único que este `relative` habilita. */
+  position: relative;
   /* Fijo, nunca elástico: un tamaño que dependiera del contenido haría saltar
      el nodo mientras se escribe. Y acotado por el viewport, para que en una
      pantalla pequeña el nodo no se salga del área de trabajo. */
@@ -167,6 +170,7 @@
  * cede alto, así que la ventana sigue midiendo lo que dice medir. */
 .node-expanded__actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
   padding: 8px 10px;
@@ -189,10 +193,107 @@
   cursor: default;
 }
 
+/* El motivo por el que no se puede guardar todavía.
+ *
+ * Vive en la barra de acciones, pegado al botón que acaba de negarse: es donde
+ * el usuario está mirando cuando ocurre. Ocupa el espacio sobrante a la
+ * izquierda, así que no desplaza «Cancelar» ni «Guardar» ni cambia el alto del
+ * marco. */
+.node-expanded__aviso {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  align-self: center;
+  color: var(--rose);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 .node-expanded__empty {
   margin: 0;
   padding: 28px 20px;
   text-align: center;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+/* ===== CONFIRMACIÓN DE SALIDA CON CAMBIOS SIN GUARDAR =====
+ *
+ * Del MARCO, como la barra de acciones: cualquier herramienta que declare
+ * editor la hereda sin escribir nada. Ninguna hoja de herramienta la conoce.
+ *
+ * Cubre el marco, no la pantalla. El editor se sigue viendo debajo —velado y
+ * desenfocado, no oculto— porque lo que está en juego es precisamente lo que
+ * hay ahí: taparlo con un modal de pantalla completa habría escondido aquello
+ * sobre lo que se pregunta. */
+.node-expanded__guard {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  /* El velo hereda el fondo del marco en lugar de ser un negro plano: en claro
+     apaga sin ensuciar, y en oscuro no abre un agujero más negro que el tema. */
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.node-expanded__guard-box {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  /* Mismo cristal y misma profundidad que el marco que la contiene: la
+     confirmación es otra capa del editor, no una ventana de otro sistema. */
+  background: var(--surface-floating);
+  box-shadow: var(--shadow), var(--glow-soft);
+}
+
+.node-expanded__guard-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.node-expanded__guard-body {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.node-expanded__guard-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.node-expanded__guard-actions .toolbar-button {
+  padding: 7px 14px;
+  font-family: var(--font-body);
+  font-size: 0.79rem;
+  font-weight: 600;
+}
+
+/* Identificable como destructiva sin gritar: el rojo va en el texto y en el
+   filo, no en un relleno que competiría con la acción primaria. Salir sin
+   guardar debe poder encontrarse, no invitar. */
+.node-expanded__guard-discard {
+  color: var(--rose);
+  border-color: color-mix(in srgb, var(--rose) 38%, transparent);
+  background: color-mix(in srgb, var(--rose) 8%, transparent);
+  transition: background var(--speed-fast) var(--ease-out);
+}
+
+.node-expanded__guard-discard:hover {
+  background: color-mix(in srgb, var(--rose) 16%, transparent);
 }

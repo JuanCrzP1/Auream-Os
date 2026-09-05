@@ -1,6 +1,7 @@
 import type { ToolUi } from "../ToolUi";
 import { MessageIcon } from "./MessageIcon";
 import { MessageEditor } from "./MessageEditor";
+import { MessageCompactBody } from "./MessageCompactBody";
 
 /**
  * Mitad React de la herramienta. Único punto donde declara cómo se ve.
@@ -13,5 +14,10 @@ export const messageUi: ToolUi = {
   type: "message",
   Icon: MessageIcon,
   frame: "card",
+  // Primera herramienta con cuerpo compacto propio. El hueco existía en el
+  // contrato desde el principio; hasta ahora todas se conformaban con el
+  // resumen de una línea del cascarón. Mensaje no: su contenido ES una
+  // secuencia, y una secuencia se reconoce viendo sus piezas en orden.
+  CompactBody: MessageCompactBody,
   Editor: MessageEditor
 };

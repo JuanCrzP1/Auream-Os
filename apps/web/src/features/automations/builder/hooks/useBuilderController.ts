@@ -1,6 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo } from "react";
 import { mapSnapshotToCanvas } from "../adapters/mapSnapshotToCanvas";
 import { buildStats } from "../services/buildStats";
+import { releaseNodeResources } from "../services/releaseNodeResources";
 import { validateCanvasGraph } from "../services/validateCanvasGraph";
 import type { NodeType, BuilderFlowSnapshot } from "@contracts/FlowSnapshot";
 import { useCanvasEdges } from "./canvas/useCanvasEdges";
@@ -66,10 +67,18 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
     (nodeId: string) => {
       if (!nodesCtx.canRemoveNode(nodeId)) return;
 
+      // Antes de que el nodo desaparezca, se le da a su herramienta la ocasión
+      // de soltar lo que tuviera reservado fuera de la configuración. Va aquí
+      // —y no dentro de `removeNode`— porque este es el punto que compone el
+      // borrado completo, y va ANTES porque después ya no habría nodo al que
+      // preguntar. El lienzo sigue sin saber de qué herramienta se trata.
+      const nodo = nodesCtx.nodes.find((n) => n.id === nodeId);
+      if (nodo) releaseNodeResources(nodo);
+
       nodesCtx.removeNode(nodeId);
       edgesCtx.removeEdgesOfNode(nodeId);
     },
-    [nodesCtx.canRemoveNode, nodesCtx.removeNode, edgesCtx.removeEdgesOfNode]
+    [nodesCtx.nodes, nodesCtx.canRemoveNode, nodesCtx.removeNode, edgesCtx.removeEdgesOfNode]
   );
 
   return {

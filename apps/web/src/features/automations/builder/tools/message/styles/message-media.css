@@ -46,7 +46,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 5px 9px;
+  padding: 2px 9px;
   border: 0;
   border-radius: calc(var(--radius-sm) - 3px);
   background: transparent;
@@ -99,6 +99,25 @@
 
 /* ----- Origen: archivo del dispositivo ----- */
 
+/* Alto de la zona de carga. FUENTE ÚNICA para sus dos estados.
+ *
+ * 112px, elegido midiendo en navegador los cuatro valores del entorno —120,
+ * 116, 112 y 108— y no por cálculo. Es el punto donde la tarjeta multimedia
+ * baja un 19.8% respecto a su tamaño original sin que el preview deje de
+ * leerse: una foto 3:2 se ve a 165×110 y un video 16:9 a 195×110, con la onda
+ * de audio intacta y sin recorte ni desbordamiento en ninguno.
+ *
+ * 108px daba solo 4px más de tarjeta —0.04 tarjetas más en pantalla— a cambio
+ * de 6px de imagen: no compensa. Por arriba, 120px dejaba la tarjeta en un
+ * 17.5%, que es lo que se sentía todavía grande en el nodo.
+ *
+ * Ni Imagen ni Video ni ningún tipo futuro declaran alto propio: si esta zona
+ * tiene que cambiar de tamaño alguna vez, se cambia aquí y cambian los dos
+ * estados a la vez. */
+:root {
+  --media-area-height: 112px;
+}
+
 /* La zona de carga es la superficie más GRANDE del editor con acento propio,
    así que es la que menos se puede permitir saturarse: usa el rol «veil», el
    mismo —y el más calmado— que el cuerpo de la tarjeta. Una superficie grande
@@ -106,10 +125,28 @@
 /* Es el elemento MÁS ALTO de una tarjeta multimedia —medido: 141px de los 377
    que ocupaba la tarjeta entera—, así que es donde una compactación se nota de
    verdad. Lo que sobraba era aire, no contenido: nada se ha quitado de dentro. */
+/* La altura sale del token de arriba, y de ningún otro sitio.
+ *
+ * Existe declarada porque el contenido de la zona cambia por completo al elegir
+ * un archivo, y sin un alto fijo la caja lo seguía: elegir una imagen la
+ * encogía ~58px y empujaba hacia arriba la descripción y el interruptor. Con
+ * una única fuente de verdad, vacío y elegido no PUEDEN medir distinto —no hay
+ * un segundo sitio donde discrepar—. */
 .media-file {
+  height: var(--media-area-height);
+  /* Explícito aunque el contenedor ya lo estire: el ancho de esta caja es parte
+     de la garantía —misma caja vacía y con archivo—, y una garantía que depende
+     de quién la contenga no es una garantía. */
+  width: 100%;
   display: flex;
   flex-direction: column;
+  /* En columna centra en horizontal (estado vacío) y en fila centra en vertical
+     (estado con archivo). El mismo valor sirve para los dos: no hay que
+     redeclararlo al cambiar de eje. */
   align-items: center;
+  /* Centrado en vertical: el contenido de cada estado se reparte el mismo
+     hueco en vez de colgar del borde superior. */
+  justify-content: center;
   /* Al retirarse el título duplicado la zona perdió 17px de golpe y quedaba
      apretada contra sus propios filos. El aire se devuelve aquí —no se
      recupera aquel renglón— para que siga leyéndose como una superficie que
@@ -206,13 +243,214 @@
   white-space: nowrap;
 }
 
-/* Archivo ya elegido: ficha compacta, no la zona grande. */
-.media-file--picked {
+/* Archivo ya elegido: EL MISMO CONTENEDOR, en fila.
+ *
+ * La fila se activa por CONTENIDO, no por una clase de estado: si dentro hay un
+ * preview, hay archivo. Por eso no vuelve a existir `--picked` — no hay dos
+ * cajas ni dos verdades sobre cuál es el estado, solo una caja cuyo eje depende
+ * de lo que se le haya puesto dentro.
+ *
+ * En fila, el medio deja de compartir la ALTURA con los botones y se queda con
+ * los 80px interiores enteros. Eso es lo que le faltaba: apilados, la fila de
+ * botones se llevaba 30 de esos 80 px y `contain` —topado por la altura— no
+ * podía pintar la foto a más de ~79px de ancho. */
+.media-file:has(.media-file__preview) {
   flex-direction: row;
+  gap: 10px;
+  /* SE RECUPERAN LOS 26px DE PADDING VERTICAL.
+   *
+   * Ese aire existe para el estado VACÍO —separa icono, texto y botón de los
+   * filos—. Para un medio no es aire: es altura perdida, y la altura es
+   * justamente la restricción que ata (una foto apaisada se topa por ella
+   * mucho antes que por el ancho). Devolverla sube el hueco del medio de 80px
+   * a 106px, un 32% más de lado y un 76% más de superficie, sin recortar ni
+   * deformar nada.
+   *
+   * NO puede alterar el tamaño de la caja: `height` está declarado y
+   * `box-sizing` es `border-box`, así que el padding se reparte DENTRO de los
+   * alto declarado. La caja mide lo mismo con y sin archivo, por construcción.
+   *
+   * El horizontal se queda: no es la restricción que ata —sobran ~400px de
+   * ancho— así que quitarlo no agrandaría el medio ni un píxel, y sí lo
+   * pegaría al borde. */
+  padding: 0 12px;
+}
+
+/* Hueco del medio. Es el que absorbe todo lo que sobra.
+ *
+ * `flex: 1 1 0` y NO `1 1 auto`: con base `auto` el tamaño de partida sería el
+ * del contenido —el ancho intrínseco de la foto, que puede ser de miles de
+ * píxeles—, y el reparto saldría de ahí. Con base `0` el hueco parte de cero y
+ * crece solo con el espacio realmente disponible.
+ *
+ * `min-width: 0` es la regla CRÍTICA: el mínimo automático de un elemento flex
+ * es el tamaño de su contenido, así que sin esto una imagen de 3000px impondría
+ * 3000px de ancho a la caja y la desbordaría. `min-height: 0` hace lo propio en
+ * el otro eje. Juntos son los que impiden que el tamaño intrínseco del medio
+ * suba al padre y rompa el alto declarado. */
+.media-file__preview {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  /* `stretch` y NO `height: 100%`: la caja centra sus hijos (`align-items:
+     center`), así que sin esto el hueco mediría lo que midiera su contenido y
+     el `max-height: 100%` del medio se resolvería contra una altura que
+     depende del propio medio — circular—. Estirado, el hueco tiene una altura
+     DEFINIDA (los 80px interiores) y el tope del medio ya tiene contra qué
+     resolverse. Es el mecanismo del propio flex, sin declarar ninguna medida. */
+  align-self: stretch;
+  display: flex;
   align-items: center;
+  /* El medio se apoya en el borde por el que entra la lectura; los botones
+     quedan al otro extremo. Centrarlo dejaba un hueco a cada lado y el
+     conjunto se leía flotando en mitad de la caja. */
+  justify-content: flex-start;
+}
+
+/* EL MEDIO SE DIMENSIONA SOLO, POR TOPES.
+ *
+ * Sin `width`/`height` y con los dos `max-*` al 100%, el navegador parte del
+ * tamaño intrínseco del archivo y lo reduce en proporción hasta que cumple LAS
+ * DOS restricciones. El resultado es, por definición, el mayor tamaño que cabe
+ * conservando la relación de aspecto: apaisada la limita el ancho, vertical y
+ * cuadrada las limita la altura.
+ *
+ * Ese es el arreglo. Antes había `width: 100%` y el elemento medía los 636px
+ * completos aunque la foto pintada dentro fuera de 79: `object-fit` solo
+ * reparte el hueco que se le da, y el hueco estaba mal pedido. Ahora el
+ * elemento MIDE lo que mide la foto, así que no queda banda vacía a los lados.
+ *
+ * `object-fit: contain` se queda como garantía para el caso en que el medio sí
+ * reciba una caja —un `<video>` antes de conocer sus dimensiones—: nunca
+ * recorta y nunca deforma. */
+.media-file__media {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: calc(var(--radius-sm) - 4px);
+  background: var(--mi-inset);
+}
+
+/* SOLO EL VIDEO, y por una razón que la imagen no tiene.
+ *
+ * Un medio sin medidas declaradas se pinta a su tamaño natural. Para una foto
+ * eso es correcto —su tamaño natural es la foto, y los topes de arriba la
+ * encajan—. Un `<video>` sin fotograma cargado, en cambio, toma como tamaño
+ * natural el de su `poster`, que son 96px de ancho: se quedaba diminuto en una
+ * esquina del hueco, con el resto vacío, y el fotograma no se distinguía.
+ *
+ * Se le da el ALTO del hueco y se deja que el ancho lo ponga la proporción.
+ * `object-fit: contain` sigue mandando, así que el fotograma no se recorta ni
+ * se deforma, y `max-width` de arriba impide que un video muy apaisado se
+ * salga. La caja, el editor y el nodo conservan sus medidas: lo único que
+ * cambia es cuánto de ese hueco ocupa el video. */
+video.media-file__media {
+  height: 100%;
+  width: auto;
+}
+
+/* ----- Reproductor de audio -----
+ *
+ * Ocupa el hueco del medio, no una caja propia: ni alto declarado ni ancho
+ * fijo, así que no toca `--media-area-height` ni el sizing de Imagen y Video.
+ * Se estira a lo que el hueco le dé y se centra en él.
+ *
+ * El acento sale del bloque (`--mi-accent`, plata en Audio) por la misma
+ * escalera de roles que usa el resto del módulo: ni un color nuevo. */
+.media-audio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Mismo peso visual que la ficha del icono —rol «icon» completo, borde
+   incluido—: es la acción principal del bloque y tiene que leerse como tal. */
+.media-audio__play {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid oklch(from var(--mi-accent) var(--mi-L-icon-border) min(c, var(--mi-C-icon-border)) h);
+  border-radius: 50%;
+  background: oklch(from var(--mi-accent) var(--mi-L-icon) min(c, var(--mi-C-icon)) h);
+  color: oklch(from var(--mi-accent) var(--mi-L-label) min(c, var(--mi-C-label)) h);
+  box-shadow: var(--mi-lift);
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out);
+}
+
+.media-audio__play:hover {
+  background: oklch(from var(--mi-accent) var(--mi-L-icon-hover) min(c, var(--mi-C-icon)) h);
+}
+
+.media-audio__play:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 2px;
+}
+
+.media-audio__play svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* La onda ES el control de posición. Por eso es un botón y no un adorno: se
+   pulsa para buscar y responde al teclado.
+   `min-width: 0` para que las barras puedan encogerse en un hueco estrecho en
+   vez de imponer su ancho al contenedor. */
+.media-audio__wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.media-audio__wave:focus-visible {
+  outline: 2px solid var(--mi-accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Las barras se reparten el ancho a partes iguales y el alto lo trae cada una
+   en línea, calculado desde el archivo. */
+.media-audio__bar {
+  flex: 1 1 0;
+  min-width: 1px;
+  border-radius: 1px;
+  background: oklch(from var(--mi-accent) var(--mi-L-border) min(c, var(--mi-C-border)) h);
+  transition: background var(--speed-fast) var(--ease-out);
+}
+
+/* Lo ya reproducido, al acento pleno: es la única diferencia entre la parte
+   recorrida y la pendiente, y tiene que verse de un vistazo. */
+.media-audio__bar--sonada {
+  background: var(--mi-accent);
+}
+
+.media-audio__time {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Archivo, que todavía no tiene preview propio: se identifica por nombre
+   dentro del mismo hueco, sin cambiar el alto de la zona. */
+.media-file__named {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 9px;
-  padding: 9px 10px;
-  border-style: solid;
+  min-width: 0;
   text-align: left;
 }
 
@@ -256,8 +494,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-.media-file__controls {
+/* Acciones del archivo elegido. Ancho compacto y ESTABLE: `flex: 0 0 auto` las
+   deja medir lo que miden sus botones y no las deja ni crecer ni encogerse, así
+   que el hueco que le queda al medio no depende de la foto que haya dentro.
+   Apiladas y no en línea: en vertical caben en los 80px de la caja y dejan al
+   medio todo el ancho que no ocupan. */
+.media-file__actions {
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   gap: 5px;
   flex: 0 0 auto;
 }
@@ -382,7 +627,7 @@
 .media-caption {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   /* Mismo motivo que en el textarea: un hijo con ancho intrínseco —el propio
      textarea, ver abajo— puede imponer su mínimo de contenido a este flex
      container y de ahí al bloque entero. */
@@ -415,7 +660,7 @@
      vacíos: un campo OPCIONAL que además crece solo no necesita reservar de
      antemano un alto que la mayoría de los mensajes no usa. Con dos ya se ve
      que admite varias líneas, y sigue creciendo igual al escribir. */
-  min-height: calc(2 * 1.5em + 16px);
+  min-height: calc(2 * 1.5em + 12px);
   max-height: 112px;
   resize: vertical;
   overflow-y: auto;
@@ -426,7 +671,7 @@
      `ALTO_NATIVO` en `MediaItemEditor.tsx`, que entonces deja de escribir
      `height` para no competir con esto. */
   field-sizing: content;
-  padding: 7px 10px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--mi-field);
@@ -467,7 +712,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 6px 10px;
+  padding: 3px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--mi-field);

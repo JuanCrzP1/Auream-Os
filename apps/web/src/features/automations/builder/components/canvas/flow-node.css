@@ -62,6 +62,10 @@
   align-items: center;
   gap: 8px;
   padding: 9px 10px;
+  /* Construida a partir del color que publica la tarjeta. Este es el
+     comportamiento por omisión —opaco, exactamente como antes— y lo reciben
+     las catorce herramientas. */
+  background: var(--flow-node-accent);
 }
 
 /* Circular y suave, mismo lenguaje que `.flow-node__entry-chip`: un tono de
@@ -147,6 +151,7 @@
    fragmento del contenido — ya no hace falta reservar alto para tres. */
 .flow-node__body {
   padding: 8px 12px 10px;
+  background: var(--flow-node-surface);
 }
 
 /* Una sola línea, truncada por el ancho. El nodo cerrado es un resumen: un
@@ -162,21 +167,275 @@
   text-overflow: ellipsis;
 }
 
-.flow-node__handle {
+/* ----- Secuencia del nodo Mensaje, en reposo -----
+ *
+ * UNA PIEZA DE CRISTAL, NO UNA PILA DE TARJETAS.
+ *
+ * El principio que ordena todo lo de abajo: las filas se dibujan con LUZ, no
+ * con sombra. Antes eran superficies oscuras teñidas sobre el azul y el ojo
+ * las leía como agujeros recortados en el nodo —de ahí la sensación de
+ * «tarjetas pegadas»—. Un velo blanco muy tenue con el filo superior
+ * iluminado hace lo contrario: la fila se lee como un plano de vidrio
+ * apoyado sobre el azul, que es lo que el cristal hace en el mundo real.
+ *
+ * TODAS LAS FILAS COMPARTEN SUPERFICIE. Ninguna lleva color por tipo: lo que
+ * distingue una de otra es su icono, su texto y su miniatura. El lila de
+ * AUREAM entra solo por los filos y por la ficha del icono, nunca por el
+ * relleno ni por el texto.
+ *
+ * Nada aquí puede ensanchar la tarjeta: los 230px del nodo son fijos y React
+ * Flow mide lo que la tarjeta devuelva. Cada fila recorta su texto en vez de
+ * empujar, y el `min-width: 0` es lo que se lo permite. Se crece a lo alto. */
+.flow-node__blocks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.flow-node__block {
+  /* Único punto donde el lila del sistema toca la fila. Sirve a la ficha del
+     icono y al filo; el relleno y el texto se mantienen neutros a propósito. */
+  /* El acento se calcula AQUÍ, con los tokens globales de la paleta.
+     Antes se tomaba de `--mi-image`, que define `message-tokens.css` y solo
+     carga el editor expandido: el nodo cerrado dependía de una hoja que no
+     importa, y funcionaba por casualidad —el empaquetado junta todo el CSS—.
+     Con carga diferida por herramienta, el nodo se habría quedado sin acento.
+     Mismo color exacto, calculado en la capa que lo usa. */
+  --mi-accent: color-mix(in oklab, var(--primary) 58%, var(--slate));
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 9px 5px 6px;
+  border-radius: 9px;
+  /* Velo de luz, no de tinta. Un 7% de blanco es lo mínimo que separa la fila
+     del azul sin convertirla en una caja. */
+  background: rgba(255, 255, 255, 0.07);
+  /* Filo lila hilado: la mezcla parte del blanco tenue y solo le añade el
+     matiz de `--primary`, así que sigue siendo una línea de luz —no un borde
+     de color— y el ADN de AUREAM aparece sin gritar. */
+  border: 1px solid color-mix(in oklab, var(--primary) 26%, rgba(255, 255, 255, 0.1));
+  /* La arista superior encendida y una sombra interior mínima abajo: es lo
+     que da grosor al vidrio. Sin esto la fila es un rectángulo plano. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+/* La ficha del icono: un escalón más de luz que la fila, con el lila apenas
+   insinuado. Es el ancla que permite reconocer el tipo de un vistazo cuando el
+   nodo está pequeño en el lienzo. */
+.flow-node__block-badge {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  border: 1px solid color-mix(in oklab, var(--primary) 22%, rgba(255, 255, 255, 0.12));
+  background: color-mix(in oklab, var(--primary) 16%, rgba(255, 255, 255, 0.12));
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.flow-node__block-badge svg {
   width: 13px;
   height: 13px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  background: rgba(20, 30, 50, 0.85);
 }
 
-.flow-node__handle--target {
-  left: -8px;
+/* La miniatura SUSTITUYE a la ficha y ocupa su lugar en la columna izquierda.
+   Más grande que el icono al que reemplaza —y algo más ancha que alta, porque
+   casi toda foto lo es— para que la foto se RECONOZCA, que es su único
+   trabajo, también cuando el nodo está al 60%. `cover` la encaja sin
+   deformarla: a esta escala un `contain` dejaría dos franjas vacías y se
+   leería como un hueco, no como una imagen. */
+.flow-node__block-thumb {
+  width: 38px;
+  height: 28px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.22);
 }
 
-.flow-node__handle--source {
-  right: -8px;
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 0.4);
+/* EL TEXTO ES BLANCO. Es el contenido real del mensaje y lo primero que hay
+   que poder leer; teñirlo del color del tipo lo bajaba a 3.1:1 de contraste,
+   por debajo del mínimo legible. La jerarquía la da la luminosidad, no el
+   matiz. */
+.flow-node__block-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.002em;
 }
 
+/* La fila de un MEDIO rotula un tipo, no un contenido.
+ *
+ * El bloque de Texto sigue enseñando lo que el usuario escribió, así que se
+ * queda fuera: convertir su frase en mayúsculas la volvería un grito y además
+ * la haría más ancha justo donde el sitio escasea.
+ *
+ * Las mayúsculas se hacen aquí y no en el texto, igual que en la cabecera de
+ * un bloque del editor (`.message-item__kind`): así el rótulo del DOM sigue
+ * siendo el del registro de la herramienta y no hay una segunda versión
+ * escrita a mano de cada nombre. El poco espaciado extra es lo que necesita
+ * una mayúscula a 0.72rem para no leerse apretada. */
+.flow-node__block:not(.flow-node__block--text) .flow-node__block-text {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ===== ADN AUREAM DEL NODO MENSAJE =====
+ *
+ * El azul de la herramienta llega como un hex plano en línea —lo pone
+ * `FlowNodeCard` desde `tool.colors`, y ese contrato es un color sólido, no un
+ * degradado—. Así que la profundidad se añade ENCIMA, en capas, sin tocar ni
+ * el componente ni la definición de la herramienta.
+ *
+ * ACOTADO A MENSAJE por `:has(.flow-node__blocks)`: solo el nodo que trae la
+ * secuencia recibe este tratamiento. Los otros trece siguen exactamente igual.
+ *
+ * El lila sale de `--primary`, el mismo token que sostiene el tema entero. No
+ * es un color nuevo pegado encima: es la iluminación del sistema cayendo sobre
+ * el azul de la herramienta. */
+
+.flow-node:has(.flow-node__blocks) {
+  /* Filo lila de un píxel: el mismo halo que ya usa el marco del editor
+     (`--glow-soft` es exactamente esto en el resto del producto). */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px color-mix(in oklab, var(--primary) 34%, transparent);
+}
+
+/* CRISTAL DE VERDAD, no una imitación.
+ *
+ * Ahora que el color llega por variable, la superficie puede construirse: se
+ * mezcla el color de la herramienta con transparencia y se difumina lo que
+ * queda detrás. El lienzo se percibe a través del nodo —tenue, como a través
+ * de vidrio tintado— en vez de quedar tapado por un rectángulo opaco.
+ *
+ * Las proporciones salen de medir, no de tantear: se probaron 82/88% de
+ * cabecera contra 70/80% de cuerpo sobre el lienzo real. La cabecera se queda
+ * en 86% porque sostiene el título —a 82% el azul perdía presencia y a 88% el
+ * contraste del blanco empezaba a bajar—; el cuerpo cede hasta 80%, donde el
+ * lienzo se percibe (60 puntos de azul menos que opaco) sin que el nodo deje
+ * de leerse azul. El `saturate` compensa el lavado que el desenfoque produce
+ * siempre — sin él, el azul se apaga al volverse translúcido.
+ *
+ * El desenfoque es corto a propósito. Uno grande convierte el lienzo en una
+ * mancha de color y el nodo empieza a parecer una UI de videojuego; a 10-12px
+ * se intuye lo que hay detrás sin que compita con el contenido. */
+.flow-node:has(.flow-node__blocks) .flow-node__header,
+.flow-node:has(.flow-node__blocks) .flow-node__body {
+  position: relative;
+  isolation: isolate;
+}
+
+.flow-node:has(.flow-node__blocks) .flow-node__header {
+  background: color-mix(in srgb, var(--flow-node-accent) 86%, transparent);
+  backdrop-filter: blur(10px) saturate(1.35);
+  -webkit-backdrop-filter: blur(10px) saturate(1.35);
+}
+
+.flow-node:has(.flow-node__blocks) .flow-node__body {
+  background: color-mix(in srgb, var(--flow-node-surface) 80%, transparent);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+}
+
+/* El contenido queda POR ENCIMA del reflejo: un velo sobre el texto lo
+   apagaría, y lo que se quiere iluminar es la superficie, no las letras. */
+.flow-node:has(.flow-node__blocks) .flow-node__header > *,
+.flow-node:has(.flow-node__blocks) .flow-node__body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* CABECERA: azul dominante con la luz entrando por una esquina.
+ *
+ * Dos capas en un solo degradado diagonal: un realce blanco muy leve arriba a
+ * la izquierda —el reflejo del cristal— y el lila entrando por la derecha. El
+ * azul de la herramienta sigue siendo el fondo y sigue mandando; esto solo lo
+ * modula. */
+.flow-node:has(.flow-node__blocks) .flow-node__header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.04) 34%,
+      transparent 58%,
+      color-mix(in oklab, var(--primary) 46%, transparent) 100%
+    );
+  /* La línea de luz del filo superior y la separación con el cuerpo, ambas de
+     un píxel: es lo que hace que la cabecera se lea como una lámina y no como
+     un rectángulo relleno. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+/* CUERPO: la misma familia, un escalón más profundo.
+ *
+ * Más oscuro que la cabecera —el contenido se apoya en él— y con el lila
+ * subiendo desde abajo, que es de donde vendría la luz rebotada del lienzo.
+ * NO es un panel aparte: no tiene borde ni radio propios, así que sigue siendo
+ * la continuación del mismo nodo. */
+.flow-node:has(.flow-node__blocks) .flow-node__body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      168deg,
+      rgba(0, 0, 0, 0.14) 0%,
+      rgba(0, 0, 0, 0.2) 46%,
+      color-mix(in oklab, var(--primary) 30%, transparent) 100%
+    );
+}
+
+/* ----- Cabecera del nodo Mensaje: presencia y jerarquía -----
+ *
+ * El nombre es lo primero que se lee en el lienzo, así que va en BLANCO puro.
+ * Estaba al 95% junto a un contenido teñido de lavanda, y el conjunto se leía
+ * lavado. Aquí manda el título; el resto de la cabecera se le subordina. */
+.flow-node:has(.flow-node__blocks) .flow-node__name {
+  color: rgba(255, 255, 255, 1);
+  font-weight: 650;
+  letter-spacing: 0.008em;
+}
+
+/* El sello del tipo, con un punto más de luz y un filo propio: deja de ser un
+   círculo apagado y pasa a leerse como una pieza de vidrio sobre el azul. */
+.flow-node:has(.flow-node__blocks) .flow-node__type-icon {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+/* Los controles ceden protagonismo al título: siguen visibles y accesibles,
+   pero un escalón por debajo. El hover los devuelve al frente. */
+.flow-node:has(.flow-node__blocks) .flow-node__action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.68);
+}
+
+/* LA COSTURA. Cabecera y cuerpo son dos planos del MISMO cristal, no dos
+   bloques pegados: los separa una línea de luz de un píxel, no un cambio
+   brusco de color. */
+.flow-node:has(.flow-node__blocks) .flow-node__body {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}

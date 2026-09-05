@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 import { useBuilderEditing } from "@features/automations/builder/context/BuilderEditingContext";
@@ -31,7 +32,7 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
   // Mismo catálogo visual que ya consumen la paleta y el nodo expandido: el
   // icono del nodo cerrado no puede ser un tercer mapa `tool === "message" ? …`
   // sino el mismo SVG oficial, resuelto por tipo igual que en todas partes.
-  const { Icon } = resolveToolUi(data.nodeType);
+  const { Icon, CompactBody } = resolveToolUi(data.nodeType);
 
   if (data.isEntry) {
     return (
@@ -58,14 +59,37 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
   return (
     <article
       className={`flow-node${selected ? " flow-node--selected" : ""}`}
-      style={{ outline: selected ? `2px solid ${colors.header}` : "2px solid transparent", outlineOffset: "2px" }}
+      /* El color de la herramienta se PUBLICA, no se aplica.
+       *
+       * Antes esta tarjeta escribía `background: <color>` directamente en la
+       * cabecera y en el cuerpo, y un estilo en línea gana a cualquier hoja:
+       * ninguna regla podía convertir esa superficie en cristal, ni darle
+       * profundidad, ni dejar ver el lienzo a través. El color quedaba
+       * decidido y cerrado aquí.
+       *
+       * Ahora se expone como variable y la hoja construye la superficie con
+       * ella. El registry sigue siendo la fuente del color —esto no elige
+       * ninguno—; lo único que cambia es quién decide CÓMO se pinta, y esa
+       * decisión es de presentación, así que pertenece al CSS.
+       *
+       * Sigue sin haber ni un `if` por tipo de nodo: las catorce herramientas
+       * publican sus dos colores igual, y la hoja da a cada una el trato que
+       * le corresponda. */
+      style={
+        {
+          outline: selected ? `2px solid ${colors.header}` : "2px solid transparent",
+          outlineOffset: "2px",
+          "--flow-node-accent": colors.header,
+          "--flow-node-surface": colors.body
+        } as CSSProperties
+      }
     >
       <Handle
         type="target"
         position={Position.Left}
         className="flow-node__handle flow-node__handle--target"
       />
-      <header className="flow-node__header" style={{ background: colors.header }}>
+      <header className="flow-node__header">
         <span className="flow-node__type-icon" aria-hidden="true">
           <Icon />
         </span>
@@ -108,8 +132,18 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
           </button>
         </div>
       </header>
-      <div className="flow-node__body" style={{ background: colors.body }}>
-        <p className="flow-node__preview">{data.preview}</p>
+      {/* La herramienta puede traer su propio cuerpo en reposo. Esta tarjeta no
+          sabe cuál ni qué pinta dentro: pregunta si lo hay, igual que ya
+          pregunta por el icono, y si no lo hay se queda con el resumen de una
+          línea que sirve a las demás. Ningún `if` por tipo de nodo. */}
+      <div className="flow-node__body">
+        {CompactBody ? (
+          <CompactBody
+            draft={{ name: data.title, content: data.content, config: data.config }}
+          />
+        ) : (
+          <p className="flow-node__preview">{data.preview}</p>
+        )}
       </div>
       <Handle
         type="source"

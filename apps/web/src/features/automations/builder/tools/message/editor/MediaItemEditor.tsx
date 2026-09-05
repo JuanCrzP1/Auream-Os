@@ -25,7 +25,7 @@ interface MediaItemEditorProps {
   readonly item: MessageMediaItem;
   readonly position: number;
   readonly onEdit: (
-    change: { url: string } | { caption: string } | { sendOnce: boolean }
+    change: { url: string } | { fileName: string } | { caption: string } | { sendOnce: boolean }
   ) => void;
 }
 
@@ -57,13 +57,13 @@ const ALTO_NATIVO =
  * es parte de lo que su mensaje dice, y guardarlo ensuciaría el flujo con
  * información de la sesión de edición.
  *
- * El archivo elegido tampoco se guarda —ver `FileSource`—. Lo que sí se escribe
- * en el bloque es el enlace, porque es lo único que hoy puede viajar de verdad
- * hasta el motor.
+ * Del archivo elegido se guarda su NOMBRE, no su contenido: los bytes viven en
+ * la memoria del navegador y no hay dónde subirlos todavía, pero la elección sí
+ * es información del mensaje y tiene que constar. Es lo que permite que la
+ * validación sepa que ese medio ya tiene fuente.
  */
 export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps) {
   const [source, setSource] = useState<MediaSource>("file");
-  const [file, setFile] = useState<File | null>(null);
 
   const descripcion = useRef<HTMLTextAreaElement>(null);
   const anchoPrevio = useRef(0);
@@ -123,7 +123,16 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
       <MediaSourceTabs active={source} onChange={setSource} position={position} />
 
       {source === "file" ? (
-        <FileSource kind={item.kind} position={position} file={file} onPick={setFile} />
+        <FileSource
+          kind={item.kind}
+          position={position}
+          itemId={item.id}
+          nombreGuardado={item.fileName ?? ""}
+          // El NOMBRE baja al bloque; los bytes se quedan en la sesión. Sin
+          // esta parte serializable, ni la validación ni el preview podrían
+          // saber que el usuario ya adjuntó algo.
+          onPick={(fileName) => onEdit({ fileName })}
+        />
       ) : (
         <UrlSource
           kind={item.kind}

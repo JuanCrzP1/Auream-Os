@@ -53,6 +53,24 @@ export interface MessageMediaItem extends MessageItemBase {
   readonly kind: MessageMediaKind;
   /** Enlace al archivo. Vacío mientras no se ha elegido ninguno. */
   readonly url: string;
+  /**
+   * Nombre del archivo que el usuario eligió de su dispositivo.
+   *
+   * DOS FUENTES, UNA BASTA. Un medio queda configurado con un enlace o con un
+   * archivo; este campo es la representación del segundo caso, y existe porque
+   * antes no había ninguna: el archivo vivía en el estado de un componente, así
+   * que nada fuera de él —ni la validación, ni el resumen, ni el preview— podía
+   * saber que el usuario ya había elegido algo.
+   *
+   * Guarda el NOMBRE, no el contenido. Los bytes viven en la memoria del
+   * navegador y no sobreviven a recargar; el nombre sí viaja con la
+   * configuración y deja constancia de la elección durante la sesión.
+   *
+   * En Fase C, subir el archivo rellenará `url` y este campo se quedará como lo
+   * que siempre fue: el nombre con el que enseñarlo. La regla de validación no
+   * cambia.
+   */
+  readonly fileName?: string;
   readonly caption: string;
   /**
    * Enviar este archivo una sola vez por conversación.

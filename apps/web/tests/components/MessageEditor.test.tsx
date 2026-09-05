@@ -328,15 +328,22 @@ describe("cada tipo de bloque tiene su propia interfaz", () => {
       expect(screen.getByLabelText("Texto del bloque 1").getAttribute("wrap")).toBe("soft");
     });
 
-    it("el suelo del campo son tres renglones, no una altura fija en píxeles", () => {
-      // `3 * 1.6em` son tres veces la altura de línea de la propia regla. Si
+    it("el suelo del campo son DOS renglones, no una altura fija en píxeles", () => {
+      // `2 * 1.6em` son dos veces la altura de línea de la propia regla. Si
       // alguien lo vuelve a poner en píxeles, el vínculo con el número de
       // renglones se pierde y esta prueba lo dice.
-      const minimo = /min-height:\s*calc\(\s*3\s*\*\s*([\d.]+)em/.exec(regla);
+      //
+      // Eran tres. Bajó a dos al compactar las tarjetas del constructor para
+      // que quepan más bloques en el nodo: el campo sigue creciendo solo al
+      // escribir, así que lo que se recorta es lo RESERVADO de antemano, no lo
+      // que se puede escribir. Lo que esta prueba protege no es el número sino
+      // que el suelo siga contándose en renglones.
+      const minimo = /min-height:\s*calc\(\s*(\d+)\s*\*\s*([\d.]+)em/.exec(regla);
       expect(minimo).not.toBeNull();
+      expect(minimo?.[1]).toBe("2");
 
       const alturaLinea = /line-height:\s*([\d.]+)/.exec(regla);
-      expect(alturaLinea?.[1]).toBe(minimo?.[1]);
+      expect(alturaLinea?.[1]).toBe(minimo?.[2]);
     });
 
     it("el crecimiento tiene tope y desplaza dentro de sí, no estira el bloque", () => {

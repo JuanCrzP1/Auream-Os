@@ -132,4 +132,24 @@ describe("confirmar los cambios de una herramienta", () => {
     expect(updateNode).not.toHaveBeenCalled();
     expect(toggleExpand).toHaveBeenCalledWith("n1");
   });
+
+  it("«Cerrar sin guardar» cierra por el mismo camino que Cancelar, sin tocar el nodo", () => {
+    // La confirmación de salida no abre una tercera vía hacia el grafo: acaba
+    // en el `toggleExpand` que ya existía. Descartar es no escribir.
+    const { updateNode, toggleExpand } = montar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Añadir Texto" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Cerrar Saludo/ }));
+
+    // La X con cambios no cierra por su cuenta: primero pregunta.
+    expect(toggleExpand).not.toHaveBeenCalled();
+    expect(updateNode).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar sin guardar" }));
+
+    expect(toggleExpand).toHaveBeenCalledTimes(1);
+    expect(toggleExpand).toHaveBeenCalledWith("n1");
+    // Ni antes de cerrar ni al cerrar: el nodo conserva lo último que guardó.
+    expect(updateNode).not.toHaveBeenCalled();
+  });
 });

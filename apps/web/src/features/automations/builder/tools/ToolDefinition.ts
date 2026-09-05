@@ -97,6 +97,22 @@ export interface ToolDefinition {
   ) => string;
 
   /**
+   * Comprueba si lo configurado puede guardarse.
+   *
+   * Puro: recibe datos y devuelve una decisión con su motivo. Existe por la
+   * misma razón que `summarize` — solo la herramienta sabe qué significa que su
+   * configuración esté completa—, y el cascarón del editor la CONSULTA sin
+   * saber de qué tipo de nodo se trata.
+   *
+   * Ausente: la herramienta no tiene nada que exigir y se guarda siempre, que
+   * es el caso de todas menos Mensaje hoy.
+   */
+  readonly validateContent?: (
+    content: Readonly<Record<string, unknown>>,
+    config: Readonly<Record<string, unknown>>
+  ) => { readonly valido: boolean; readonly motivo: string | null };
+
+  /**
    * Copia la configuración de un nodo para un duplicado.
    *
    * Puro: recibe la configuración y devuelve otra. Existe porque la copia
@@ -110,6 +126,24 @@ export interface ToolDefinition {
   readonly duplicateConfig?: (
     config: Readonly<Record<string, unknown>>
   ) => Record<string, unknown>;
+
+  /**
+   * Suelta lo que la herramienta tenga reservado fuera de la configuración.
+   *
+   * Se llama JUSTO ANTES de que el nodo desaparezca del lienzo. Existe porque
+   * una configuración puede apuntar a recursos que no viven en ella —los bytes
+   * de un archivo que el navegador guarda en memoria, por ejemplo—: al borrar
+   * el nodo, esos recursos se quedarían retenidos hasta recargar la página, sin
+   * que nadie pueda ya llegar a ellos.
+   *
+   * Simétrica a `duplicateConfig`: la una sabe qué copiar y la otra qué soltar,
+   * y las dos por la misma razón —solo la herramienta conoce lo que hay dentro
+   * de su `config`—. El lienzo pregunta sin saber de qué nodo se trata.
+   *
+   * Ausente: la herramienta no reserva nada fuera de su configuración, que es
+   * el caso de todas menos Mensaje hoy. Borrar el nodo ya lo suelta todo.
+   */
+  readonly releaseResources?: (config: Readonly<Record<string, unknown>>) => void;
 
   /** Paleta cromática de la herramienta en la tarjeta del canvas y la paleta. */
   readonly colors: {

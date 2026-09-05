@@ -55,6 +55,9 @@ function toItem(raw: unknown, index: number): MessageItem | null {
       id,
       kind: record.kind,
       url: toText(record.url),
+      // La segunda fuente posible de un medio. Se estrecha como el resto: lo
+      // que no sea texto no entra.
+      fileName: toText(record.fileName),
       caption: toText(record.caption),
       sendOnce: record.sendOnce === true
     };

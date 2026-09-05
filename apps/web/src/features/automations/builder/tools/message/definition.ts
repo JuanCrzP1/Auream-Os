@@ -1,5 +1,7 @@
 import type { ToolDefinition } from "../ToolDefinition";
 import { summarizeMessage } from "./summarizeMessage";
+import { releaseMessageResources } from "./releaseMessageResources";
+import { validateMessageContent } from "./validateMessageContent";
 import { duplicateMessageConfig } from "./duplicateMessageConfig";
 
 /**
@@ -12,7 +14,9 @@ import { duplicateMessageConfig } from "./duplicateMessageConfig";
  */
 export const messageTool: ToolDefinition = {
   summarize: summarizeMessage,
+  validateContent: validateMessageContent,
   duplicateConfig: duplicateMessageConfig,
+  releaseResources: releaseMessageResources,
   type: "message",
   label: "Mensaje",
   description: "Envía texto o media",

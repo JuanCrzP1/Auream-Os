@@ -39,7 +39,7 @@
  *
  * Cada capa se nombra por su papel y cada tema elige qué token la sostiene. Lo
  * único que se repite abajo son los papeles, no los colores. */
-.message-editor {
+:root {
   --mi-text: var(--primary);
   --mi-image: color-mix(in oklab, var(--primary) 58%, var(--slate));
   --mi-video: var(--rose);
@@ -120,7 +120,12 @@
      navegador lo recorta al gamut. Este valor está por encima del croma máximo
      de sRGB, así que nunca ata — existe solo para que Audio pueda bajarlo. */
   --mi-C-label: 0.4;
+}
 
+/* La COMPOSICIÓN del editor, que no es un token y por eso no sube a `:root`:
+   biblioteca a la izquierda, secuencia a la derecha. Los tokens de arriba los
+   comparten el editor y el nodo cerrado; esta rejilla es solo del editor. */
+.message-editor {
   display: grid;
   /* -12% respecto al original (216px), y -14px sobre esa cifra: a 980px esa
      columna era el 22% del ancho; a 560px, sin reducirla, pasaba a ser el
@@ -135,7 +140,7 @@
 /* Oscuro: la tarjeta sube y lo hundido baja, que es al revés que en claro.
    Es el ÚNICO sitio del módulo donde los dos temas divergen, y diverge en la
    dirección de la profundidad, no en el color. */
-:root[data-theme="dark"] .message-editor {
+:root[data-theme="dark"] {
   /* Misma identidad cyan que en claro —~216°—, distinta proporción, porque en
      oscuro los dos tokens de partida están más juntos: con la mezcla de claro
      el matiz caía a 195.5° y el bloque se veía verde turquesa en vez de azul

@@ -93,12 +93,15 @@ describe("contrato ToolUi", () => {
     expect(findToolUi("message")?.Editor).toBeTypeOf("function");
   });
 
-  it("ninguna herramienta declara todavía cuerpo compacto propio", () => {
-    // El compacto sigue siendo el genérico para las catorce, a propósito: este
-    // bloque cambia cómo se CONFIGURA un Mensaje, no cómo se ve en reposo.
-    for (const type of listUiTypes()) {
-      expect(findToolUi(type)?.CompactBody).toBeUndefined();
-    }
+  it("el cuerpo compacto es opcional: solo Mensaje declara uno propio", () => {
+    // Mensaje es la primera que lo necesita: su contenido es una SECUENCIA, y
+    // un resumen de una línea no dice qué bloques la forman. Las demás siguen
+    // con el compacto genérico del cascarón, que es lo que hace que el hueco
+    // sea opcional y no un componente vacío que todas tengan que escribir.
+    expect(findToolUi("message")?.CompactBody).toBeTypeOf("function");
+
+    const conCompacto = listUiTypes().filter((type) => findToolUi(type)?.CompactBody);
+    expect(conCompacto).toEqual(["message"]);
   });
 });
 

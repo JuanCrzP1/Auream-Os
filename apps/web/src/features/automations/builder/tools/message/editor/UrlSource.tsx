@@ -1,4 +1,5 @@
 import type { MessageMediaKind } from "../types";
+import { esEnlaceUsable } from "../mediaSource";
 
 interface UrlSourceProps {
   readonly kind: MessageMediaKind;
@@ -7,17 +8,16 @@ interface UrlSourceProps {
   readonly onChange: (url: string) => void;
 }
 
-/** Vacío es un estado válido —todavía no se ha pegado nada—, no un error. */
+/**
+ * Vacío es un estado válido —todavía no se ha pegado nada—, no un error.
+ *
+ * Esa tolerancia es de ESTE campo mientras se escribe, y por eso vive aquí. Lo
+ * que significa «un enlace que sirve» no es de este campo: lo decide
+ * `mediaSource`, igual que para la validación y para el preview.
+ */
 function esValida(url: string): boolean {
   const limpia = url.trim();
-  if (limpia.length === 0) return true;
-
-  try {
-    const { protocol } = new URL(limpia);
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
+  return limpia.length === 0 || esEnlaceUsable(limpia);
 }
 
 /** Última parte del enlace: lo que el usuario reconoce como «el archivo». */
