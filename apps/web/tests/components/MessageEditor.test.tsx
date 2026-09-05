@@ -362,13 +362,13 @@ describe("cada tipo de bloque tiene su propia interfaz", () => {
       expect(regla).not.toMatch(/overflow-x:\s*(auto|scroll)/);
     });
 
-    it("conserva el resize vertical y la ayuda de variables", () => {
+    it("conserva el resize vertical", () => {
       renderEditor({ items: [{ id: "a", kind: "text", text: "" }] });
 
       expect(regla).toMatch(/resize:\s*vertical/);
       expect(
         (screen.getByLabelText("Texto del bloque 1") as HTMLTextAreaElement).placeholder
-      ).toContain("{{context.nombre}}");
+      ).toBe("Escribe tu mensaje");
     });
 
     it("el mínimo de tres renglones del texto principal no alcanza a la descripción multimedia", () => {

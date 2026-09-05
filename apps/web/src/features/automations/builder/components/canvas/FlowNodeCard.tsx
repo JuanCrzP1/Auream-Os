@@ -2,6 +2,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 import { useBuilderEditing } from "@features/automations/builder/context/BuilderEditingContext";
 import { resolveTool } from "@features/automations/builder/tools/registry";
+import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
 
 /**
  * Tarjeta de un nodo en el lienzo.
@@ -27,6 +28,10 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
   // tipo que esta versión ya no soporta, en lugar de romper el canvas entero.
   const tool = resolveTool(data.nodeType);
   const colors = tool.colors;
+  // Mismo catálogo visual que ya consumen la paleta y el nodo expandido: el
+  // icono del nodo cerrado no puede ser un tercer mapa `tool === "message" ? …`
+  // sino el mismo SVG oficial, resuelto por tipo igual que en todas partes.
+  const { Icon } = resolveToolUi(data.nodeType);
 
   if (data.isEntry) {
     return (
@@ -61,7 +66,9 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
         className="flow-node__handle flow-node__handle--target"
       />
       <header className="flow-node__header" style={{ background: colors.header }}>
-        <span className="flow-node__type-icon" aria-hidden="true">{tool.glyph}</span>
+        <span className="flow-node__type-icon" aria-hidden="true">
+          <Icon />
+        </span>
         <span className="flow-node__name">{data.title}</span>
         <div className="flow-node__actions">
           <button

@@ -73,9 +73,13 @@
   height: 22px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.22);
-  font-size: 0.78rem;
   flex: 0 0 auto;
-  line-height: 1;
+}
+
+.flow-node__type-icon svg {
+  width: 12px;
+  height: 12px;
+  color: #fff;
 }
 
 .flow-node__name {

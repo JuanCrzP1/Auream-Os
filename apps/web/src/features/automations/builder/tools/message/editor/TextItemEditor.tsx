@@ -103,7 +103,7 @@ export function TextItemEditor({ item, position, onEdit }: TextItemEditorProps) 
         className="message-item__text nodrag nowheel"
         value={item.text}
         onChange={(event) => onEdit({ text: event.target.value })}
-        placeholder="Escribe tu mensaje. Puedes usar {{context.nombre}}"
+        placeholder="Escribe tu mensaje"
         aria-label={`Texto del bloque ${position}`}
         /* Explícito aunque sea el valor por omisión: `wrap="off"` es la única
            forma de que un textarea deje de envolver, y dejarlo escrito impide
