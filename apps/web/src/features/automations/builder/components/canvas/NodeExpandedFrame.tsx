@@ -132,7 +132,7 @@ export function NodeExpandedFrame({
           <button
             type="button"
             className="toolbar-button toolbar-button--primary nodrag"
-            onClick={() => onCommit(borrador)}
+            onClick={() => { onCommit(borrador); onClose(); }}
             // Sin cambios no hay nada que confirmar. Dejarlo pulsable sugeriría
             // que hace algo, y escribiría el nodo con lo mismo que ya tiene.
             disabled={!hayCambios}

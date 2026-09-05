@@ -164,6 +164,35 @@ describe("editar y confirmar", () => {
     expect(Object.keys(confirmado).sort()).toEqual(["config", "content", "name"]);
   });
 
+  it("Guardar también cierra el editor: confirmar y salir son el mismo gesto", () => {
+    // Antes «Guardar» solo llamaba a `onCommit` y el editor se quedaba abierto
+    // con los cambios ya persistidos en el nodo — un estado confuso donde
+    // guardar parecía no haber hecho nada. Simétrico a «Cancelar», que ya
+    // cerraba: la diferencia entre los dos botones es si persisten, no si
+    // cierran.
+    const { onCommit, onClose } = renderFrame();
+
+    fireEvent.click(screen.getByRole("button", { name: "Añadir Texto" }));
+    fireEvent.click(guardar());
+
+    expect(onCommit).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("Guardar confirma ANTES de cerrar: el borrador llega completo a onCommit", () => {
+    // El orden importa: si cerrara primero, una implementación que derive el
+    // borrador del nodo montado perdería los cambios al desmontarse antes de
+    // confirmarlos. Se fija con el propio contenido del borrador, no solo con
+    // el orden de las llamadas.
+    const { onCommit } = renderFrame();
+
+    fireEvent.click(screen.getByRole("button", { name: "Añadir Texto" }));
+    fireEvent.click(guardar());
+
+    const confirmado = onCommit.mock.calls[0][0];
+    expect((confirmado.config.items as unknown[]).length).toBe(1);
+  });
+
   it("Cancelar cierra sin confirmar nada", () => {
     const { onCommit, onClose } = renderFrame();
 

@@ -10,13 +10,14 @@ import type { CanvasNode } from "@features/automations/builder/types/canvas";
 //
 // Aquí se fija la frontera que separa los dos conceptos:
 //
-//   Guardar (editor) → `updateNode`, y ahí termina su recorrido
+//   Guardar (editor) → `updateNode`, y DESPUÉS cierra con `toggleExpand`
 //   autosave (lienzo) → persiste el snapshot, y no se entera de quién lo cambió
 //
-// Que este archivo no importe NADA de persistencia no es un descuido: es la
-// prueba. Si algún día «Guardar» necesitara conocer el transporte, estos tests
-// tendrían que empezar a montarlo, y eso sería la señal de que la separación
-// se rompió.
+// «Guardar» compone las dos operaciones —persistir y cerrar— en ese orden; no
+// hay un tercer camino que las una por su cuenta. Que este archivo no importe
+// NADA de persistencia no es un descuido: es la prueba. Si algún día «Guardar»
+// necesitara conocer el transporte, estos tests tendrían que empezar a
+// montarlo, y eso sería la señal de que la separación se rompió.
 // ---------------------------------------------------------------------------
 
 function nodoAbierto(): CanvasNode {
@@ -92,6 +93,20 @@ describe("confirmar los cambios de una herramienta", () => {
     // se menciona en este archivo.
     expect(Object.keys(patch).sort()).toEqual(["config", "content", "name"]);
     expect((patch.config.items as unknown[]).length).toBe(1);
+  });
+
+  it("Guardar también cierra el nodo, por el mismo mutador que Cancelar", () => {
+    // «Guardar» no termina en `updateNode`: compone persistir y cerrar. Antes
+    // solo hacía lo primero y el overlay se quedaba montado sobre un nodo ya
+    // actualizado — confirmar parecía no tener efecto visible.
+    const { updateNode, toggleExpand } = montar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Añadir Texto" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(updateNode).toHaveBeenCalledTimes(1);
+    expect(toggleExpand).toHaveBeenCalledTimes(1);
+    expect(toggleExpand).toHaveBeenCalledWith("n1");
   });
 
   it("no toca la posición ni las conexiones del nodo", () => {
