@@ -84,13 +84,13 @@ describe("AppSidebar", () => {
     expect(idxConn).toBeGreaterThan(idxAuto);
   });
 
-  it("AI Agents aparece después de Integraciones en el orden", () => {
+  it("AI Agents aparece inmediatamente después de Automatizaciones en el orden", () => {
     renderSidebar();
     const items = screen.getAllByRole("link");
     const labels = items.map((el) => el.textContent ?? "");
-    const idxInteg = labels.findIndex((l) => l.includes("Integraciones"));
+    const idxAuto = labels.findIndex((l) => l.includes("Automatizaciones"));
     const idxAI = labels.findIndex((l) => l.includes("AI Agents"));
-    expect(idxAI).toBeGreaterThan(idxInteg);
+    expect(idxAI).toBe(idxAuto + 1);
   });
 
   it("Conexiones aparece antes de Contactos en el orden", () => {

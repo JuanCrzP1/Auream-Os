@@ -18,18 +18,18 @@ export interface NavItem {
  * El AppSidebar renderiza este array sin conocer su contenido.
  *
  * Orden actual:
- *   Dashboard → Conversaciones → Automatizaciones → Conexiones →
- *   Contactos → Integraciones → AI Agents → Equipo →
+ *   Dashboard → Conversaciones → Automatizaciones → AI Agents →
+ *   Conexiones → Contactos → Integraciones → Equipo →
  *   Facturación → Mi perfil → Configuración → Ayuda
  */
 export const sidebarItems: NavItem[] = [
   { label: "Dashboard",       path: SIDEBAR_ROUTES.dashboard,     icon: SidebarIcons.dashboard     },
   { label: "Conversaciones",  path: SIDEBAR_ROUTES.conversations,  icon: SidebarIcons.conversations  },
   { label: "Automatizaciones",path: SIDEBAR_ROUTES.automations,    icon: SidebarIcons.automations    },
+  { label: "AI Agents",       path: SIDEBAR_ROUTES.aiAgents,       icon: SidebarIcons.aiAgents       },
   { label: "Conexiones",      path: SIDEBAR_ROUTES.connections,    icon: SidebarIcons.connections    },
   { label: "Contactos",       path: SIDEBAR_ROUTES.contacts,       icon: SidebarIcons.contacts       },
   { label: "Integraciones",   path: SIDEBAR_ROUTES.integrations,   icon: SidebarIcons.integrations   },
-  { label: "AI Agents",       path: SIDEBAR_ROUTES.aiAgents,       icon: SidebarIcons.aiAgents       },
   { label: "Equipo",          path: SIDEBAR_ROUTES.team,           icon: SidebarIcons.team           },
   { label: "Facturación",     path: SIDEBAR_ROUTES.billing,        icon: SidebarIcons.billing        },
   { label: "Mi perfil",       path: SIDEBAR_ROUTES.profile,        icon: SidebarIcons.profile        },
