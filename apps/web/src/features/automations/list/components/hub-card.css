@@ -41,6 +41,16 @@
   transform: translateY(-2px);
 }
 
+/* Mientras se la llevan.
+ *
+ * Se atenúa y se achica un punto: basta para que se note cuál es la que viaja
+ * sin tapar las carpetas por las que pasa por encima. `cursor: grabbing` lo
+ * pone el navegador. */
+.hub-card--dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
 .hub-card:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;

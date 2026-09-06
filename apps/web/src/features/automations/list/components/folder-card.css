@@ -33,6 +33,17 @@
   background: var(--bg-strong);
 }
 
+/* Destino del arrastre.
+ *
+ * Solo se enciende con un flujo encima —lo decide el componente, que sabe qué
+ * transporta el gesto—. Es el mismo lila del sistema subido de intensidad, no
+ * un color nuevo: comunica «aquí cae» sin convertirse en otra tarjeta. */
+.hub-folder-card--receiving {
+  border-color: var(--primary);
+  background: var(--bg-strong);
+  box-shadow: var(--elevation-inset), var(--glow-primary);
+}
+
 .hub-folder-card:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -47,6 +58,20 @@
 .hub-folder-card__icon svg {
   width: 26px;
   height: 26px;
+}
+
+/* Nombre y recuento, uno debajo del otro en el hueco que ya había. */
+.hub-folder-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hub-folder-card__count {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .hub-folder-card__name {

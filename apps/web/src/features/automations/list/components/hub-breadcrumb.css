@@ -1,0 +1,73 @@
+/* Camino de vuelta desde una carpeta.
+ *
+ * Vive en la misma fila de aire que el resto del hub y no añade superficie: es
+ * texto navegable, no una barra. Los tokens son los del sistema, así que el
+ * modo claro y el oscuro salen solos. */
+.hub-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 32px;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.hub-breadcrumb__root {
+  padding: 4px 8px;
+  margin-left: -8px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--speed-fast) ease, border-color var(--speed-fast) ease,
+    background var(--speed-fast) ease;
+}
+
+.hub-breadcrumb__root:hover {
+  color: var(--text);
+}
+
+.hub-breadcrumb__root:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* También es el destino para devolver una automatización a la raíz. Se marca
+   igual que una carpeta que recibe, para que el gesto se lea igual. */
+.hub-breadcrumb__root--receiving {
+  color: var(--text);
+  border-color: var(--primary);
+  background: var(--bg-strong);
+}
+
+.hub-breadcrumb__sep {
+  color: var(--muted);
+}
+
+.hub-breadcrumb__current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Carpeta sin nada dentro.
+ *
+ * No es el estado vacío del hub —ese ofrece crear y explorar plantillas—: aquí
+ * lo único que falta es traer algo, así que se dice eso y nada más. */
+.hub-folder-empty {
+  padding: 40px 32px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.hub-folder-empty strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}

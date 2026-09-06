@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { escribirFlujoArrastrado } from "../services/flowDragPayload";
 import "./hub-card.css";
 import { useNavigate } from "react-router-dom";
 import type { AutomationSummary } from "@contracts/AutomationContracts";
@@ -29,17 +31,29 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
     navigate(`/builder/${flow.key}`);
   };
 
+  // Lo único que este componente guarda: si ahora mismo se la están llevando.
+  // Muere con la tarjeta y no viaja a ningún sitio.
+  const [arrastrando, setArrastrando] = useState(false);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") navigate(`/builder/${flow.key}`);
   };
 
   return (
     <article
-      className="hub-card"
+      className={`hub-card${arrastrando ? " hub-card--dragging" : ""}`}
       role="button"
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
+      // La tarjeta solo ANUNCIA que se la llevan y quién es. Qué
+      // significa soltarla es asunto del destino; a dónde va, del hub.
+      draggable
+      onDragStart={(event) => {
+        escribirFlujoArrastrado(event.dataTransfer, flow.id);
+        setArrastrando(true);
+      }}
+      onDragEnd={() => setArrastrando(false)}
     >
       <div className="hub-card__header">
         <span className="hub-card__name">{flow.name}</span>

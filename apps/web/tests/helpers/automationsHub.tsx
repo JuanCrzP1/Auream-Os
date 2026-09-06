@@ -48,6 +48,20 @@ export function stubApi(seed: { flows?: AutomationSummary[]; folders?: Automatio
       return { ok: true, status: 201, json: async () => created } as unknown as Response;
     }
 
+    // Mover una automatización de carpeta. La API falsa PERSISTE de verdad,
+    // así que el estado que ve el hub tras recargar sale de aquí y no de un
+    // atajo en el cliente.
+    const movimiento = /\/automations\/([^/]+)\/folder$/.exec(String(url));
+    if (method === "PATCH" && movimiento) {
+      const { folderId } = JSON.parse(String(init?.body)) as { folderId: string | null };
+      const i = flows.findIndex((f) => f.id === movimiento[1]);
+      if (i >= 0) {
+        const { folderId: _previo, ...resto } = flows[i]!;
+        flows[i] = folderId === null ? resto : { ...resto, folderId };
+      }
+      return { ok: true, status: 204, json: async () => ({}) } as unknown as Response;
+    }
+
     return { ok: true, status: 200, json: async () => ({ flows, folders }) } as unknown as Response;
   });
 
@@ -63,13 +77,16 @@ export function folderPostCalls(fetchMock: ReturnType<typeof vi.fn>) {
   });
 }
 
-export function renderHub() {
+export function renderHub(entrada = "/automations") {
   return render(
-    <MemoryRouter initialEntries={["/automations"]}>
+    <MemoryRouter initialEntries={[entrada]}>
       <AuthProvider>
         <ActiveTenantProvider>
           <Routes>
             <Route path="/automations" element={<AutomationsHubPage />} />
+            {/* Una carpeta abierta es la MISMA pantalla, igual que en la
+                aplicación: sin esta ruta las pruebas medirían otra cosa. */}
+            <Route path="/automations/folders/:folderId" element={<AutomationsHubPage />} />
             <Route path="/automations/templates" element={<div>Plantillas page</div>} />
             <Route path="/builder/:flowKey" element={<div>Builder page</div>} />
           </Routes>

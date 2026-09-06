@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { handleCreateFolderRequest } from "../handlers/handleCreateFolderRequest";
 import { handleDeleteAutomationRequest } from "../handlers/handleDeleteAutomationRequest";
+import { handleMoveAutomationRequest } from "../handlers/handleMoveAutomationRequest";
 import { handleRenameAutomationRequest } from "../handlers/handleRenameAutomationRequest";
 import { sendJson } from "../http/sendJson";
 import { toAutomationListResponse } from "../http/toAutomationListResponse";
@@ -23,6 +24,8 @@ import { FlowPermissions } from "../../../platform/authorization/permissions/Flo
 // ---------------------------------------------------------------------------
 
 const AUTOMATION_ID_PATTERN = /^\/automations\/([^/]+)$/;
+/** Mover una automatización de carpeta es un recurso propio, no un campo suelto. */
+const AUTOMATION_FOLDER_PATTERN = /^\/automations\/([^/]+)\/folder$/;
 
 export async function routeAutomationsRequest(
   request: IncomingMessage,
@@ -44,6 +47,21 @@ export async function routeAutomationsRequest(
   if (url.pathname === "/automations/folders" && request.method === "POST") {
     requireScope(requestContext, FlowPermissions.write, tenantId);
     await handleCreateFolderRequest(request, response, services.createFolderService, tenantId);
+    return true;
+  }
+
+  // Antes del patrón de `:id`: `/automations/x/folder` no es el id "x".
+  const movimiento = AUTOMATION_FOLDER_PATTERN.exec(url.pathname);
+
+  if (movimiento && request.method === "PATCH") {
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    await handleMoveAutomationRequest(
+      request,
+      response,
+      services.moveAutomationToFolderService,
+      tenantId,
+      movimiento[1]!
+    );
     return true;
   }
 

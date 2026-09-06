@@ -42,6 +42,20 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+      {/* Una carpeta abierta es la MISMA pantalla, no otra: comparte
+          cabecera, buscador, acciones y tarjetas, y solo cambia qué
+          contiene. Vive en la ruta para que recargar siga dentro de la
+          carpeta y el botón atrás del navegador funcione. */}
+      <Route
+        path="/automations/folders/:folderId"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <AutomationsHubPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/automations/templates"
         element={
