@@ -4,6 +4,7 @@ import { RollbackDraftService } from "../../../domains/automations/builder/appli
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
 import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
 import { DeleteAutomationService } from "../../../domains/automations/builder/application/DeleteAutomationService";
+import { RenameFolderService } from "../../../domains/automations/catalog/application/RenameFolderService";
 import { MoveAutomationToFolderService } from "../../../domains/automations/catalog/application/MoveAutomationToFolderService";
 import { ListAutomationsService } from "../../../domains/automations/catalog/application/ListAutomationsService";
 import { CreateFolderService } from "../../../domains/automations/catalog/application/CreateFolderService";
@@ -37,6 +38,7 @@ export interface ApiServices {
   readonly deleteAutomationService: DeleteAutomationService;
   readonly listAutomationsService: ListAutomationsService;
   readonly moveAutomationToFolderService: MoveAutomationToFolderService;
+  readonly renameFolderService: RenameFolderService;
   readonly createFolderService: CreateFolderService;
   readonly automationRepository: AutomationRepository;
 }
@@ -60,6 +62,7 @@ export function composeBuilderServices(config: ApiConfig): ApiServices {
     ),
     deleteAutomationService: new DeleteAutomationService(automationRepository, workspaceRepository),
     listAutomationsService: new ListAutomationsService(automationRepository, folderRepository),
+    renameFolderService: new RenameFolderService(folderRepository),
     moveAutomationToFolderService: new MoveAutomationToFolderService(
       automationRepository,
       folderRepository

@@ -31,9 +31,14 @@ describe("AutomationFlowCard", () => {
     expect(screen.getByText("Mi flujo de prueba")).toBeInTheDocument();
   });
 
-  it("renders status label", () => {
+  it("no muestra ningún distintivo de estado", () => {
+    // Las automatizaciones se guardan solas, así que «Borrador» aparecía en
+    // todas y no informaba de nada: se retiró y el nombre ocupa ese ancho.
     renderCard();
-    expect(screen.getByText("Activo")).toBeInTheDocument();
+
+    expect(screen.queryByText("Activo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Borrador")).not.toBeInTheDocument();
+    expect(document.querySelector(".hub-card__status")).toBeNull();
   });
 
   it("renders tags", () => {
@@ -54,9 +59,12 @@ describe("AutomationFlowCard", () => {
     expect(screen.getByText("Builder page")).toBeInTheDocument();
   });
 
-  it("shows paused status", () => {
+  it("el estado tampoco aparece cuando es otro", () => {
+    // El dato sigue en el modelo; lo que se retiró es su representación.
     renderCard({ ...flow, status: "paused" });
-    expect(screen.getByText("Pausado")).toBeInTheDocument();
+
+    expect(screen.queryByText("Pausado")).not.toBeInTheDocument();
+    expect(screen.getByText(flow.name)).toBeInTheDocument();
   });
 
   // ---- Context menu ----

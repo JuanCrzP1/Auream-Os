@@ -5,13 +5,6 @@ import { useNavigate } from "react-router-dom";
 import type { AutomationSummary } from "@contracts/AutomationContracts";
 import { AutomationContextMenu } from "./AutomationContextMenu";
 
-const STATUS_LABELS: Record<string, string> = {
-  active: "Activo",
-  paused: "Pausado",
-  draft: "Borrador",
-  archived: "Archivado"
-};
-
 interface AutomationFlowCardProps {
   flow: AutomationSummary;
   onDelete?: (flow: AutomationSummary) => void;
@@ -55,11 +48,11 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
       }}
       onDragEnd={() => setArrastrando(false)}
     >
+      {/* El nombre ocupa la fila entera. Antes compartía sitio con un
+          distintivo que decía «Borrador» en todas: se guardan solas, así
+          que no informaba de nada y le quitaba ancho al nombre. */}
       <div className="hub-card__header">
         <span className="hub-card__name">{flow.name}</span>
-        <span className={`hub-card__status hub-card__status--${flow.status}`}>
-          {STATUS_LABELS[flow.status] ?? flow.status}
-        </span>
       </div>
       {flow.tags && flow.tags.length > 0 && (
         <div className="hub-card__tags">

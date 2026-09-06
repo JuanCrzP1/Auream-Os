@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./folder-card.css";
 import type { AutomationFolderSummary } from "@contracts/AutomationContracts";
 import { arrastraUnFlujo, leerFlujoArrastrado } from "../services/flowDragPayload";
+import { FolderContextMenu } from "./FolderContextMenu";
 
 interface FolderCardProps {
   folder: AutomationFolderSummary;
@@ -15,9 +16,11 @@ interface FolderCardProps {
   onDropFlow?: (flowId: string, folderId: string) => void;
   /** Cuántas automatizaciones contiene. Lo cuenta el hub, no esta tarjeta. */
   flowCount?: number;
+  /** Se ha pedido renombrarla desde su menú. Quién lo hace es del hub. */
+  onRename?: (folder: AutomationFolderSummary) => void;
 }
 
-export function FolderCard({ folder, onClick, onDropFlow, flowCount = 0 }: FolderCardProps) {
+export function FolderCard({ folder, onClick, onDropFlow, onRename, flowCount = 0 }: FolderCardProps) {
   // Si ahora mismo hay un flujo encima. Estado de un gesto, nada más: muere
   // con él y no viaja a ninguna parte.
   const [recibiendo, setRecibiendo] = useState(false);
@@ -66,6 +69,10 @@ export function FolderCard({ folder, onClick, onDropFlow, flowCount = 0 }: Folde
           {flowCount === 1 ? "1 automatización" : `${flowCount} automatizaciones`}
         </span>
       </span>
+      {/* Las acciones van al final de la fila, como en la tarjeta de una
+          automatización. El menú se encarga de que pulsarlo no abra la
+          carpeta. */}
+      {onRename && <FolderContextMenu folder={folder} onRename={onRename} />}
     </div>
   );
 }

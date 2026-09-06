@@ -22,7 +22,31 @@
 }
 
 /* Flow card */
+/* ALTURA FIJA, IGUAL EN LAS DOS TARJETAS.
+ *
+ * El hub es una retícula de piezas del mismo sistema, y una tarjeta que crece
+ * con su contenido rompe esa lectura: la misma fila mezclaba alturas de 79, 96
+ * y 99px según lo largo que fuera cada nombre.
+ *
+ * Se declara el trío —`height`, `min-height` y `max-height`— con el mismo
+ * valor: `height` sola cede ante un contenido mayor dentro de una rejilla, y
+ * `min-height` sola solo pone un suelo. Con `box-sizing: border-box` los 99px
+ * son lo que se mide por fuera, borde incluido.
+ *
+ * 99px no es un número elegido a ojo: es lo que ya medía la tarjeta con un
+ * nombre de dos líneas, que es el máximo que se admite. Sobra sitio con un
+ * nombre corto, y eso es correcto: queda libre.
+ *
+ * El menú de tres puntos se pinta en un portal sobre `document.body`, así que
+ * `overflow: hidden` recorta el contenido de la tarjeta sin tocarlo. */
 .hub-card {
+  box-sizing: border-box;
+  height: 99px;
+  min-height: 99px;
+  max-height: 99px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg-elevated);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -56,34 +80,33 @@
   outline-offset: 2px;
 }
 
+/* Un solo hueco: el nombre. `min-width: 0` es lo que le permite envolver en
+   lugar de empujar la tarjeta. */
 .hub-card__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+  min-width: 0;
   margin-bottom: 8px;
 }
 
+/* NOMBRE: dos renglones como máximo, sin puntos suspensivos.
+ *
+ * Es la misma regla en las dos tarjetas —carpeta y automatización— porque son
+ * el mismo sistema: misma escala, mismo interlineado y el mismo tope. Un
+ * nombre largo se acomoda en dos líneas y lo que no cabe se corta en seco; un
+ * tercer renglón haría crecer la tarjeta sin fin y rompería la retícula.
+ *
+ * El tope es `max-height` y no `line-clamp`, que añadiría el «…» que no se
+ * quiere. `overflow-wrap` cubre el caso extremo de una palabra más larga que
+ * la tarjeta: sin él desbordaría en vez de partirse. */
 .hub-card__name {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text);
   line-height: 1.35;
+  max-height: 2.7em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
-
-.hub-card__status {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-  flex: 0 0 auto;
-}
-
-.hub-card__status--active  { background: rgba(45, 212, 191, 0.15); color: var(--status-active-text); }
-.hub-card__status--paused  { background: rgba(245, 158, 11, 0.15); color: var(--status-paused-text); }
-.hub-card__status--draft   { background: var(--chip-bg-hover); color: var(--primary); }
-.hub-card__status--archived { background: var(--chip-neutral-bg); color: var(--muted); }
 
 .hub-card__tags {
   display: flex;
@@ -105,10 +128,13 @@
  * Estaban las dos pegadas a la derecha y el pie dejaba media tarjeta vacía a
  * la izquierda. Repartirlas ocupa ese hueco sin añadir nada ni quitar nada:
  * se sigue viendo la fecha y se sigue llegando al menú. */
+/* `margin-top: auto` deja la fecha y las acciones pegadas al fondo, así que
+   el hueco que sobra con un nombre corto queda entre medias y no debajo. */
 .hub-card__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto;
 }
 
 .hub-card__date {
@@ -117,6 +143,12 @@
 }
 
 /* Folder grid */
+/* SIEMPRE PRESENTE, como el de una carpeta.
+ *
+ * Estaba a opacidad 0 y solo aparecía al pasar el ratón: una acción que hay
+ * que descubrir por casualidad no está disponible, está escondida —y con
+ * pantalla táctil no hay hover que valga—. Lo que cambia con el ratón o el
+ * foco es el CONTRASTE, no la existencia. */
 .hub-card__menu-btn {
   display: inline-flex;
   align-items: center;
@@ -130,13 +162,7 @@
   color: var(--muted);
   cursor: pointer;
   flex: 0 0 auto;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
-}
-
-.hub-card:hover .hub-card__menu-btn,
-.hub-card__menu-btn:focus-visible {
-  opacity: 1;
+  transition: background 0.15s, color 0.15s;
 }
 
 .hub-card__menu-btn:hover {

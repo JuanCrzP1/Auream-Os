@@ -5,6 +5,7 @@ import { useAutomationList } from "../hooks/useAutomationList";
 import { useAutomationActions } from "../hooks/useAutomationActions";
 import { useCreateFolder } from "../hooks/useCreateFolder";
 import { useHubLocation } from "../hooks/useHubLocation";
+import { useRenameFolder } from "../hooks/useRenameFolder";
 import { useMoveFlowToFolder } from "../hooks/useMoveFlowToFolder";
 import { useActiveTenant } from "@shared/auth/tenant/ActiveTenantContext";
 import { AutomationEmptyState } from "../components/AutomationEmptyState";
@@ -43,6 +44,9 @@ export function AutomationsHubPage() {
   // Mover un flujo de carpeta: el hub coordina, el hook llama al servicio y la
   // lista del servidor sigue siendo la única verdad sobre dónde está cada uno.
   const flowMove = useMoveFlowToFolder({ onFlowMoved: state.refresh });
+  // Renombrar una carpeta: mismo patrón que el resto de acciones del hub —el
+  // hook llama al servicio y la lista del servidor vuelve a ser la verdad—.
+  const folderRename = useRenameFolder({ onFolderRenamed: state.refresh });
 
   const handleCreateFlow = () => {
     navigate(`/builder/${createAutomationDraft()}`);
@@ -135,13 +139,15 @@ export function AutomationsHubPage() {
                     folder={folder}
                     flowCount={contents.countByFolder.get(folder.id) ?? 0}
                     onClick={location.openFolder}
+                    onRename={folderRename.request}
                     onDropFlow={(flowId, folderId) => void flowMove.moveToFolder(flowId, folderId)}
                   />
                 ))}
               </AutomationSection>
             )}
             {dentroDeCarpeta && contents.isEmpty && <FolderEmptyState />}
-            <AutomationSection title="Flujos">
+            {/* Rótulo visible; el concepto interno sigue llamándose flow. */}
+              <AutomationSection title="Automatizaciones">
               {contents.flows.map((flow) => (
                 <AutomationFlowCard
                   key={flow.id}
@@ -154,6 +160,17 @@ export function AutomationsHubPage() {
           </>
         )}
       </div>
+
+      {/* Se reutiliza el mismo diálogo de renombrar que usan las
+          automatizaciones: la pregunta es idéntica —un nombre nuevo para algo
+          que ya existe— y no hay motivo para tener dos. */}
+      {folderRename.target && (
+        <RenameFlowModal
+          currentName={folderRename.target.name}
+          onConfirm={(name) => void folderRename.confirm(name)}
+          onCancel={folderRename.cancel}
+        />
+      )}
 
       {folderCreation.isOpen && (
         <CreateFolderModal

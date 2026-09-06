@@ -13,10 +13,17 @@
  * los de `.hub-card`, que es la tarjeta de flujo, para que las dos secciones
  * se lean como el mismo material. */
 .hub-folder-card {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 76px;
+  /* Los mismos 99px que la tarjeta de automatización: ver la nota en
+     `hub-card.css`. Sustituye al `min-height: 76px`, que dejaba que la
+     carpeta creciera al pasar el nombre a dos líneas. */
+  height: 99px;
+  min-height: 99px;
+  max-height: 99px;
+  overflow: hidden;
   padding: 18px 20px;
   background: var(--bg-elevated);
   border: 1px solid var(--line);
@@ -60,12 +67,50 @@
   height: 26px;
 }
 
-/* Nombre y recuento, uno debajo del otro en el hueco que ya había. */
+/* Nombre y recuento, uno debajo del otro en el hueco que ya había.
+ * `flex: 1` es lo que empuja el menú al extremo, sin declarar márgenes. */
 .hub-folder-card__meta {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+
+/* Acciones de la carpeta.
+ *
+ * Mismas métricas y mismo comportamiento que el menú de una automatización:
+ * siempre presente —no aparece al pasar el ratón, que lo volvería un secreto—
+ * y lo que cambia con el foco o el ratón es el contraste. */
+.hub-folder-card__menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--speed-fast) ease, background var(--speed-fast) ease;
+}
+
+.hub-folder-card__menu-btn:hover {
+  color: var(--text);
+  background: var(--chip-bg);
+}
+
+.hub-folder-card__menu-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.hub-folder-card__menu-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .hub-folder-card__count {
@@ -74,13 +119,24 @@
   white-space: nowrap;
 }
 
+/* NOMBRE: dos renglones como máximo, sin puntos suspensivos.
+ *
+ * Es la misma regla en las dos tarjetas —carpeta y automatización— porque son
+ * el mismo sistema: misma escala, mismo interlineado y el mismo tope. Un
+ * nombre largo se acomoda en dos líneas y lo que no cabe se corta en seco; un
+ * tercer renglón haría crecer la tarjeta sin fin y rompería la retícula.
+ *
+ * El tope es `max-height` y no `line-clamp`, que añadiría el «…» que no se
+ * quiere. `overflow-wrap` cubre el caso extremo de una palabra más larga que
+ * la tarjeta: sin él desbordaría en vez de partirse. */
 .hub-folder-card__name {
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text);
-  white-space: nowrap;
+  line-height: 1.35;
+  max-height: 2.7em;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 /* Empty state */

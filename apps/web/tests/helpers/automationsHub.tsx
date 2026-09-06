@@ -48,6 +48,16 @@ export function stubApi(seed: { flows?: AutomationSummary[]; folders?: Automatio
       return { ok: true, status: 201, json: async () => created } as unknown as Response;
     }
 
+    // Renombrar una carpeta. La API falsa persiste de verdad, así que el
+    // nombre que el hub muestra después sale de aquí.
+    const renombrada = /\/automations\/folders\/([^/]+)$/.exec(String(url));
+    if (method === "PATCH" && renombrada) {
+      const { name } = JSON.parse(String(init?.body)) as { name: string };
+      const i = folders.findIndex((f) => f.id === renombrada[1]);
+      if (i >= 0) folders[i] = { ...folders[i]!, name };
+      return { ok: true, status: 200, json: async () => ({ renamed: true }) } as unknown as Response;
+    }
+
     // Mover una automatización de carpeta. La API falsa PERSISTE de verdad,
     // así que el estado que ve el hub tras recargar sale de aquí y no de un
     // atajo en el cliente.
