@@ -48,7 +48,7 @@ export function AutomationsHubPage() {
   if (state.status === "loading") {
     return (
       <div className="hub-shell">
-        <AutomationsHubHeader hasContent={false} onCreateFlow={handleCreateFlow} />
+        <AutomationsHubHeader />
         <div className="hub-state-msg">Cargando automatizaciones...</div>
       </div>
     );
@@ -57,7 +57,7 @@ export function AutomationsHubPage() {
   if (state.status === "error") {
     return (
       <div className="hub-shell">
-        <AutomationsHubHeader hasContent={false} onCreateFlow={handleCreateFlow} />
+        <AutomationsHubHeader />
         <div className="hub-state-msg hub-state-msg--error">Error: {state.message}</div>
       </div>
     );
@@ -75,7 +75,7 @@ export function AutomationsHubPage() {
   return (
     <>
       <div className="hub-shell">
-        <AutomationsHubHeader hasContent={hasContent} onCreateFlow={handleCreateFlow} />
+        <AutomationsHubHeader />
         {/* Revalidación fallida: los datos en pantalla siguen siendo los
             últimos buenos, así que se avisa sin desmontar nada. */}
         {state.refreshError && (
@@ -95,14 +95,15 @@ export function AutomationsHubPage() {
               search={search}
               onSearchChange={setSearch}
               onCreateFolder={folderCreation.open}
+              onCreateFlow={handleCreateFlow}
             />
             {folders.length > 0 && (
-              <AutomationSection title="Carpetas" gridClass="hub-folder-grid">
+                <AutomationSection title="Carpetas" gridClass="hub-folder-grid">
                 {folders.map((folder) => (
                   <FolderCard key={folder.id} folder={folder} />
                 ))}
-              </AutomationSection>
-            )}
+                </AutomationSection>
+              )}
             <AutomationSection title="Flujos">
               {filtered.map((flow) => (
                 <AutomationFlowCard

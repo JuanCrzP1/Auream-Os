@@ -47,4 +47,41 @@ describe("applyCorsHeaders", () => {
 
     expect(headers.get("Vary")).toBe("Origin");
   });
+
+  // -------------------------------------------------------------------------
+  // LAS CABECERAS QUE EL CLIENTE ENVÍA DE VERDAD.
+  //
+  // Una cabecera que el cliente manda y el servidor no autoriza no produce un
+  // error legible: el navegador bloquea la petición ENTERA antes de enviarla y
+  // `fetch` rechaza con un `TypeError` idéntico al de estar sin red. Eso dejó
+  // al builder sin guardar nada durante semanas, con la interfaz respondiendo
+  // como si todo fuera bien.
+  //
+  // Por eso esto se comprueba contra la lista que usa el cliente y no contra
+  // una copia escrita a mano aquí.
+  // -------------------------------------------------------------------------
+
+  it("autoriza todas las cabeceras que el cliente del builder envía", () => {
+    const { request, response, headers } = fakeExchange("https://app.example.com");
+
+    applyCorsHeaders(request, response, ALLOWED);
+
+    const permitidas = String(headers.get("Access-Control-Allow-Headers"))
+      .split(",")
+      .map((h) => h.trim().toLowerCase());
+
+    // `X-Tenant-Id` viaja en toda petición del builder desde que existe la
+    // tenencia; `Authorization` con sesión y `X-Api-Key` en desarrollo local.
+    for (const cabecera of ["content-type", "authorization", "x-api-key", "x-tenant-id"]) {
+      expect(permitidas, `falta '${cabecera}' en la lista blanca`).toContain(cabecera);
+    }
+  });
+
+  it("un origen no permitido no recibe ninguna cabecera autorizada", () => {
+    const { request, response, headers } = fakeExchange("https://intruso.example.com");
+
+    applyCorsHeaders(request, response, ALLOWED);
+
+    expect(headers.get("Access-Control-Allow-Headers")).toBeUndefined();
+  });
 });

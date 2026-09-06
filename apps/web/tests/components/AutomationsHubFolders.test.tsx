@@ -98,7 +98,7 @@ describe("AutomationsHubPage — creación de carpeta", () => {
     expect(screen.queryByText(/sin automatizaciones/i)).not.toBeInTheDocument();
   });
 
-  it("tras crear la carpeta aparece el botón Nueva en la cabecera", async () => {
+  it("tras crear la carpeta aparece el botón Nueva en la toolbar", async () => {
     stubApi();
     renderHub();
     await screen.findByText(/sin automatizaciones/i);
@@ -106,7 +106,10 @@ describe("AutomationsHubPage — creación de carpeta", () => {
     await userEvent.type(screen.getByLabelText("Nombre de la carpeta"), "Ventas{Enter}");
     await screen.findByText("Ventas");
 
-    expect(within(header()).getByRole("button", { name: /^nueva$/i })).toBeInTheDocument();
+    const nueva = screen.getByRole("button", { name: /^nueva$/i });
+    expect(nueva).toBeInTheDocument();
+    expect(header()).not.toContainElement(nueva);
+    expect(nueva.closest(".hub-folder-grid")).toBeNull();
   });
 
   it("con contenido, Nueva carpeta vive en la toolbar y sólo ahí", async () => {

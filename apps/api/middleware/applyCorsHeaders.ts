@@ -9,7 +9,13 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 // de la petición cuando está explícitamente permitido.
 // ---------------------------------------------------------------------------
 
-const ALLOWED_HEADERS = "Content-Type, Authorization, X-Api-Key";
+// `X-Tenant-Id` viaja en toda petición del builder desde que existe la
+// tenencia: es la SELECCIÓN de tenant que el servidor valida contra la sesión.
+// Sin declararla aquí, el navegador bloquea la petición entera antes de
+// enviarla —el preflight no la autoriza— y el cliente recibe un `TypeError`
+// indistinguible de estar sin red. Es lo que dejó al builder sin guardar nada
+// desde que se añadió la cabecera.
+const ALLOWED_HEADERS = "Content-Type, Authorization, X-Api-Key, X-Tenant-Id";
 const ALLOWED_METHODS = "GET,PUT,POST,PATCH,DELETE,OPTIONS";
 
 export function applyCorsHeaders(

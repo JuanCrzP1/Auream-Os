@@ -13,7 +13,7 @@ export class GetBuilderWorkspaceService {
     const existing = await this.repository.getWorkspace(tenantId, flowKey);
 
     if (existing) {
-      return existing;
+      return this.withCatalogName(existing);
     }
 
     const seeded = this.workspaceFactory(tenantId, flowKey);
@@ -37,5 +37,28 @@ export class GetBuilderWorkspaceService {
     }
 
     return seeded;
+  }
+
+  /**
+   * Devuelve el workspace con el nombre que manda: el del flujo en el catálogo.
+   *
+   * El borrador guarda una copia de ese nombre, y esa copia envejece en cuanto
+   * el flujo se renombra desde el hub. Proyectarlo al leer hace que solo haya
+   * una verdad —`AutomationFlow.name`— sin obligar a migrar los workspaces ya
+   * escritos ni a mantener dos escrituras sincronizadas.
+   *
+   * Si el flujo no está en el catálogo no se inventa nada: se sirve tal cual.
+   */
+  private async withCatalogName(
+    workspace: PersistedBuilderWorkspace
+  ): Promise<PersistedBuilderWorkspace> {
+    const flow = await this.automationRepository.findById(workspace.tenantId, workspace.flowKey);
+
+    if (!flow || flow.name === workspace.draft.flow.name) return workspace;
+
+    return {
+      ...workspace,
+      draft: { ...workspace.draft, flow: { ...workspace.draft.flow, name: flow.name } }
+    };
   }
 }

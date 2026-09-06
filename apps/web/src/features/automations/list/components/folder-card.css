@@ -1,17 +1,27 @@
 .hub-folder-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  /* Las celdas comparten alto para que la acción de al lado no quede más baja
+     que las carpetas. Es lo que las alinea sin declarar una altura fija. */
+  align-items: stretch;
 }
 
+/* Tarjeta de recurso, no botón.
+ *
+ * Es la misma tarjeta de antes a mayor escala: el radio y la sombra pasan a
+ * los de `.hub-card`, que es la tarjeta de flujo, para que las dos secciones
+ * se lean como el mismo material. */
 .hub-folder-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 14px;
+  min-height: 76px;
+  padding: 18px 20px;
   background: var(--bg-elevated);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-inset);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   user-select: none;
@@ -35,12 +45,12 @@
 }
 
 .hub-folder-card__icon svg {
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
 }
 
 .hub-folder-card__name {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--text);
   white-space: nowrap;

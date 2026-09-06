@@ -50,7 +50,7 @@ export function composeBuilderServices(config: ApiConfig): ApiServices {
       buildInitialBuilderWorkspace,
       automationRepository
     ),
-    saveDraftService: new SaveDraftService(workspaceRepository),
+    saveDraftService: new SaveDraftService(workspaceRepository, automationRepository),
     publishDraftService: new PublishDraftService(workspaceRepository, new GraphValidator()),
     rollbackDraftService: new RollbackDraftService(workspaceRepository),
     simulateDraftService: new SimulateDraftService(

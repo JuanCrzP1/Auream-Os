@@ -45,17 +45,14 @@
   margin: 0;
 }
 
-.hub-header__right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hub-header__new-btn {
+/* Mismo botón de siempre —degradado, icono y peso— con las métricas de la
+   fila: comparte alto con «Nueva carpeta» y con el buscador, que es lo que
+   hace que los dos se lean como un par y no como dos piezas sueltas. */
+.hub-toolbar__new-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 18px;
+  padding: 9px 16px;
   background: var(--gradient-primary);
   color: var(--on-primary);
   border: none;
@@ -67,12 +64,12 @@
   transition: box-shadow var(--speed-fast) ease, filter var(--speed-fast) ease;
 }
 
-.hub-header__new-btn svg {
+.hub-toolbar__new-btn svg {
   width: 16px;
   height: 16px;
 }
 
-.hub-header__new-btn:hover {
+.hub-toolbar__new-btn:hover {
   box-shadow: var(--glow-primary);
   filter: brightness(1.08);
 }

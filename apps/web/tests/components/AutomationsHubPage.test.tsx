@@ -114,22 +114,34 @@ describe("AutomationsHubPage — estado con contenido", () => {
     expect(screen.queryByText(/sin automatizaciones/i)).not.toBeInTheDocument();
   });
 
-  it("muestra el botón Nueva en la cabecera", async () => {
+  it("Nueva vive en la toolbar, junto a Nueva carpeta", async () => {
+    // Las dos acciones de creación comparten la fila del buscador. Ni en la
+    // cabecera, ni dentro de la rejilla de carpetas —esa es solo de carpetas—.
     stubApi({ flows: [FLOW] });
     renderHub();
     await screen.findByText("Flujo de prueba");
-    expect(within(header()).getByRole("button", { name: /^nueva$/i })).toBeInTheDocument();
+
+    const nueva = screen.getByRole("button", { name: /^nueva$/i });
+    const carpeta = screen.getByRole("button", { name: /nueva carpeta/i });
+
+    expect(header()).not.toContainElement(nueva);
+    expect(nueva.closest(".hub-folder-grid")).toBeNull();
+    // Hermanos en el mismo contenedor de acciones, y en este orden: primero la
+    // acción principal del hub —crear una automatización— y después la de
+    // ordenarlas en carpetas.
+    expect(nueva.parentElement).toBe(carpeta.parentElement);
+    expect(nueva.nextElementSibling).toBe(carpeta);
   });
 
-  it("el botón Nueva de la cabecera sigue llevando al builder", async () => {
+  it("Nueva sigue llevando al builder", async () => {
     stubApi({ flows: [FLOW] });
     renderHub();
     await screen.findByText("Flujo de prueba");
-    await userEvent.click(within(header()).getByRole("button", { name: /^nueva$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^nueva$/i }));
     expect(await screen.findByText("Builder page")).toBeInTheDocument();
   });
 
-  it("no duplica acciones entre cabecera y centro", async () => {
+  it("no duplica acciones entre secciones", async () => {
     stubApi({ flows: [FLOW], folders: [FOLDER] });
     renderHub();
     await screen.findByText("Flujo de prueba");

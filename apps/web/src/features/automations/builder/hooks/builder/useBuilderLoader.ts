@@ -7,6 +7,17 @@ export interface BuilderLoaderState {
   workspace: PersistedBuilderWorkspace | null;
   loading: boolean;
   error: string | null;
+  /**
+   * Firma de lo último que el SERVIDOR confirmó.
+   *
+   * No es la del workspace: ese incluye además lo que el usuario lleva editado
+   * y todavía no ha salido de aquí. Las dos cosas se separan porque el
+   * autoguardado necesita saber qué hay al otro lado para decidir si hay algo
+   * nuevo que mandar, y confundirlas hacía que un cambio local se diera por
+   * guardado sin haberse enviado nunca.
+   */
+  serverSignature: string | null;
+  /** Publica un workspace CONFIRMADO POR EL SERVIDOR: carga, guardado, publicación. */
   setWorkspace: (ws: PersistedBuilderWorkspace) => void;
   renameFlow: (name: string) => void;
 }
@@ -20,10 +31,24 @@ export interface BuilderLoaderState {
  */
 export function useBuilderLoader(flowKey: string): BuilderLoaderState {
   const { activeTenantId } = useActiveTenant();
-  const [workspace, setWorkspace] = useState<PersistedBuilderWorkspace | null>(null);
+  const [workspace, setWorkspaceState] = useState<PersistedBuilderWorkspace | null>(null);
+  const [serverSignature, setServerSignature] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+
+  /**
+   * Adopta un workspace que viene del servidor.
+   *
+   * Es el ÚNICO camino por el que avanza la firma confirmada: la carga inicial,
+   * la respuesta de un guardado y la de publicar o revertir. Una edición local
+   * —renombrar, mover un nodo— no pasa por aquí, y por eso no puede hacerse
+   * pasar por guardada.
+   */
+  const setWorkspace = useCallback((ws: PersistedBuilderWorkspace) => {
+    setWorkspaceState(ws);
+    setServerSignature(JSON.stringify(ws.draft));
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -57,12 +82,12 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
    * que cualquier otra edición del builder.
    */
   const renameFlow = useCallback((name: string) => {
-    setWorkspace((current) =>
+    setWorkspaceState((current) =>
       current
         ? { ...current, draft: { ...current.draft, flow: { ...current.draft.flow, name } } }
         : current
     );
   }, []);
 
-  return { workspace, loading, error, setWorkspace, renameFlow };
+  return { workspace, loading, error, serverSignature, setWorkspace, renameFlow };
 }

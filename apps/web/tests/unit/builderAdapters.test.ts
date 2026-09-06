@@ -391,4 +391,39 @@ describe("adapters — nodo de entrada", () => {
     expect(result.version.entryNodeId).toBe("n-inicio");
     expect(result.nodes["n-inicio"].metadata.ui).toEqual({ x: 900, y: 900 });
   });
+
+  // -------------------------------------------------------------------------
+  // LO QUE VIAJA AL SERVIDOR TIENE QUE CABER EN UN JSON.
+  //
+  // El snapshot se serializa dos veces: para firmarlo —así se decide si hay
+  // algo nuevo que guardar— y para enviarlo. Un `File`, un `Blob` o un
+  // `blob:` de sesión ahí dentro no se persistiría: al recargar quedaría un
+  // enlace muerto apuntando a memoria que ya no existe.
+  //
+  // Por eso el bloque de un medio guarda el NOMBRE del archivo y nunca sus
+  // bytes: esos viven aparte, en la sesión, y mueren con la pestaña.
+  // -------------------------------------------------------------------------
+
+  it("el snapshot serializado no arrastra bytes ni enlaces de sesión", () => {
+    const original = makeSnapshot();
+    const canvas = mapSnapshotToCanvas(original);
+
+    // Un nodo Mensaje configurado como lo deja el editor con un archivo local.
+    canvas.nodes[0].data.config = {
+      items: [
+        { id: "v1", kind: "video", url: "", fileName: "grabacion.mov", caption: "", sendOnce: false },
+        { id: "i1", kind: "image", url: "https://cdn.test/foto.png", caption: "", sendOnce: false }
+      ]
+    };
+
+    const result = mapCanvasToSnapshot(original, canvas.nodes, canvas.edges);
+    const texto = JSON.stringify(result);
+
+    // Sobrevive al viaje sin perder nada...
+    expect(JSON.parse(texto)).toEqual(result);
+    // ...y lo que lleva dentro es la ELECCIÓN, no los bytes.
+    expect(texto).toContain("grabacion.mov");
+    expect(texto).not.toMatch(/blob:/);
+    expect(texto).not.toMatch(/\[object (File|Blob)\]/);
+  });
 });
