@@ -134,13 +134,55 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
   margin-top: auto;
+}
+
+.hub-card__footer-meta {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .hub-card__date {
   font-size: 0.72rem;
   color: var(--muted);
 }
+
+.hub-card__separator {
+  color: var(--muted);
+}
+
+.hub-card__node-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.hub-card__tools-icon {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+}
+
+.hub-card__tools-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hub-card__connection-status {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+}
+
+.hub-card__connection-status--connected { background: var(--status-success); }
+.hub-card__connection-status--disconnected { background: var(--status-danger); }
 
 /* Folder grid */
 /* SIEMPRE PRESENTE, como el de una carpeta.

@@ -10,6 +10,10 @@ import type { AutomationFlow } from "../../domains/automations/catalog/domain/Au
 class InMemoryWorkspaceRepo implements BuilderWorkspaceRepository {
   private items = new Map<string, PersistedBuilderWorkspace>();
   async getWorkspace(tenantId: string, flowKey: string) { return this.items.get(`${tenantId}:${flowKey}`) ?? null; }
+  async getWorkspaces(tenantId: string, flowKeys: readonly string[]) {
+    const workspaces = await Promise.all(flowKeys.map((flowKey) => this.getWorkspace(tenantId, flowKey)));
+    return workspaces.filter((workspace): workspace is PersistedBuilderWorkspace => workspace !== null);
+  }
   async saveWorkspace(ws: PersistedBuilderWorkspace) { this.items.set(`${ws.tenantId}:${ws.flowKey}`, ws); }
   async deleteWorkspace(tenantId: string, flowKey: string) { this.items.delete(`${tenantId}:${flowKey}`); }
   saved() { return [...this.items.values()]; }

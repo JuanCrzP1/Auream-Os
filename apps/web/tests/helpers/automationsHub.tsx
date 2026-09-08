@@ -22,7 +22,9 @@ export const FLOW: AutomationSummary = {
   key: "k1",
   name: "Flujo de prueba",
   status: "active",
-  updatedAt: "2024-01-01"
+  updatedAt: "2024-01-01",
+  nodeCount: 0,
+  connectionStatus: "disconnected"
 };
 
 export const FOLDER: AutomationFolderSummary = { id: "f1", name: "Carpeta de prueba" };

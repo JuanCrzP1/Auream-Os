@@ -23,6 +23,7 @@ import {
 } from "@xyflow/react";
 import { useCallback } from "react";
 import { nodeTypes } from "./nodeTypes";
+import { edgeTypes } from "./edgeTypes";
 import { ExpandedNodeOverlay } from "./ExpandedNodeOverlay";
 import type { CanvasEdge, CanvasNode } from "@features/automations/builder/types/canvas";
 import type { NodeType } from "@contracts/FlowSnapshot";
@@ -116,8 +117,13 @@ function CanvasInner(props: BuilderCanvasProps) {
              los handles, así que sigue a los nodos al moverlos y se comporta
              igual hacia cualquier dirección. `smoothstep` dibujaba tramos
              ortogonales, que leen como esquema técnico y no como cuerda. */
+          edgeTypes={edgeTypes}
           defaultEdgeOptions={{
-            type: "default",
+            /* `deletable` ES el bézier de arriba: `DeletableEdge` monta el
+               mismo `BezierEdge` que React Flow usaba para `default` y le
+               añade, solo al seleccionarla, el botón de eliminar. El trazo no
+               cambia. */
+            type: "deletable",
             style: { strokeWidth: 2 }
           }}
           proOptions={{ hideAttribution: true }}

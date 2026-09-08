@@ -1,0 +1,74 @@
+/* Culebra de luz del borde de una tarjeta de automatización.
+ *
+ * Exclusiva de `.hub-card`. Las carpetas quedan estáticas por decisión de
+ * producto, y por eso su selector no aparece en ninguna regla de este archivo.
+ *
+ * UN SOLO TRAZO. La luz no es un objeto que viaje POR ENCIMA del contorno: es
+ * un tramo DEL PROPIO contorno, encendido con `stroke-dasharray` y desplazado
+ * con `stroke-dashoffset`. De ahí salen las tres propiedades que se buscaban:
+ * doblar las esquinas por construcción —el trazo ES la curva—, avanzar a
+ * velocidad constante y no poder despegarse del borde por larga que sea.
+ *
+ * El `stroke` lo pone el componente porque su degradado lleva un identificador
+ * propio por tarjeta. Todo lo demás vive aquí. */
+
+.hub-card {
+  /* Ancla de la capa. No mueve nada. */
+  position: relative;
+  /* Vuelta completa. Los desfases de abajo se derivan de aquí, así que cambiar
+     el ritmo es cambiar este único valor. */
+  --hub-card-flow-duration: 4s;
+}
+
+.hub-card-flow {
+  position: absolute;
+  /* Medida explícita, no `inset`: un `<svg>` sin dimensiones es un elemento
+     reemplazado y se queda en su tamaño intrínseco de 300×150, con lo que el
+     trazado se dibujaría sobre una caja que no es la tarjeta. El 100% es la
+     caja de relleno, ya metida 1px por el borde; el píxel extra deja el trazo
+     de 2px entero por dentro del recorte. */
+  top: 1px;
+  left: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  pointer-events: none;
+  /* El halo se sale del cuadro del SVG; sin esto se recortaría en seco. */
+  overflow: visible;
+}
+
+.hub-card-flow__trail {
+  fill: none;
+  stroke-width: 0.75;
+  /* Los extremos redondeados son lo que convierte el tramo en una culebra y no
+     en una barra cortada a escuadra. */
+  stroke-linecap: round;
+  /* Con `pathLength="100"`, en porcentaje del perímetro: 30 de luz y 70 de
+     oscuridad. Una tarjeta media ronda los 730px de contorno, así que la
+     culebra mide unos 220px. */
+  stroke-dasharray: 30 70;
+  filter: drop-shadow(0 0 3px var(--hub-card-flow-halo));
+  animation: hub-card-flow var(--hub-card-flow-duration) linear infinite;
+}
+
+@keyframes hub-card-flow {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+/* Que no salgan todas a la vez: con la rejilla llena, seis luces en fase leen
+   como un patrón que late. Seis tiempos de la misma vuelta bastan, derivados de
+   la duración para que no se descuadren al cambiarla. */
+.hub-card:nth-child(6n + 2) .hub-card-flow__trail { animation-delay: calc(var(--hub-card-flow-duration) / -6); }
+.hub-card:nth-child(6n + 3) .hub-card-flow__trail { animation-delay: calc(var(--hub-card-flow-duration) / -3); }
+.hub-card:nth-child(6n + 4) .hub-card-flow__trail { animation-delay: calc(var(--hub-card-flow-duration) / -2); }
+.hub-card:nth-child(6n + 5) .hub-card-flow__trail { animation-delay: calc(var(--hub-card-flow-duration) / -1.5); }
+.hub-card:nth-child(6n) .hub-card-flow__trail { animation-delay: calc(var(--hub-card-flow-duration) / -1.2); }
+
+/* Decorativa y solo decorativa: si sobra el movimiento, se retira entera. No se
+   deja quieta sobre el borde —una luz parada dice algo que no es—. */
+@media (prefers-reduced-motion: reduce) {
+  .hub-card-flow {
+    display: none;
+  }
+}

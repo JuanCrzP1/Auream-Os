@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { NodeType } from "@contracts/FlowSnapshot";
 import { listPaletteTools } from "@features/automations/builder/tools/registry";
 import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
+import { ToolsLayersIcon } from "@features/automations/shared/ToolsLayersIcon";
 
 // Las herramientas ofrecidas las decide el registry: este panel solo las pinta.
 const paletteItems = listPaletteTools();
@@ -48,11 +49,7 @@ export function PalettePanel({ onAddNode }: PalettePanelProps) {
           aria-label={collapsed ? "Abrir herramientas" : "Contraer herramientas"}
           aria-expanded={!collapsed}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
+          <ToolsLayersIcon />
         </button>
         <p className="palette-header__title">Herramientas</p>
       </div>

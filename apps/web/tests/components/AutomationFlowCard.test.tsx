@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
@@ -11,7 +12,9 @@ const flow: AutomationSummary = {
   name: "Mi flujo de prueba",
   status: "active",
   updatedAt: "2024-06-15T00:00:00.000Z",
-  tags: ["soporte", "ventas"]
+  tags: ["soporte", "ventas"],
+  nodeCount: 6,
+  connectionStatus: "connected"
 };
 
 function renderCard(f: AutomationSummary = flow, props: Partial<{ onDelete: (f: AutomationSummary) => void; onRename: (f: AutomationSummary) => void }> = {}) {
@@ -50,6 +53,44 @@ describe("AutomationFlowCard", () => {
   it("renders date", () => {
     renderCard();
     expect(screen.getByText(/2024/)).toBeInTheDocument();
+  });
+
+  it("renderiza el contador derivado, el SVG de herramientas y estado conectado", () => {
+    renderCard();
+
+    expect(screen.getByLabelText("6 nodos")).toBeInTheDocument();
+    expect(document.querySelector(".hub-card__tools-icon svg")).not.toBeNull();
+    expect(screen.getByLabelText("Estructura conectada")).toHaveClass("hub-card__connection-status--connected");
+  });
+
+  it("renderiza estado desconectado", () => {
+    renderCard({ ...flow, connectionStatus: "disconnected" });
+    expect(screen.getByLabelText("Estructura desconectada")).toHaveClass("hub-card__connection-status--disconnected");
+  });
+
+  it("omite el resumen entero cuando la respuesta no trae los campos", () => {
+    // El caso real que ocurrió: una API sin `nodeCount` ni `connectionStatus`.
+    // El tipo los declara obligatorios, pero el JSON de la red no lo garantiza
+    // y `builderApiClient` no valida. Sin el guardia, la tarjeta pintaba un
+    // icono sin número y un punto con la clase `--undefined` —sin regla CSS, o
+    // sea invisible— y encima lo anunciaba como «Estructura desconectada»,
+    // afirmando algo que nadie ha comprobado.
+    const { nodeCount: _n, connectionStatus: _c, ...sinResumen } = flow;
+    renderCard(sinResumen as AutomationSummary);
+
+    expect(screen.getByText(/2024/)).toBeInTheDocument();
+    expect(document.querySelector(".hub-card__node-count")).toBeNull();
+    expect(document.querySelector(".hub-card__connection-status")).toBeNull();
+    expect(document.querySelector(".hub-card__separator")).toBeNull();
+    expect(screen.queryByLabelText("Estructura desconectada")).not.toBeInTheDocument();
+  });
+
+  it("conserva la altura fija de 99 px", () => {
+    const hubCardCss = readFileSync(
+      "src/features/automations/list/components/hub-card.css",
+      "utf8"
+    );
+    expect(hubCardCss).toMatch(/\.hub-card\s*\{[\s\S]*?height:\s*99px;[\s\S]*?min-height:\s*99px;[\s\S]*?max-height:\s*99px;/);
   });
 
   it("navigates to builder on card click", async () => {

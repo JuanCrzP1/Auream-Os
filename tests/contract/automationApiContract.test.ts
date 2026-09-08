@@ -6,6 +6,8 @@ import {
 import type { AutomationFlow } from "../../domains/automations/catalog/domain/AutomationFlow.js";
 import type { AutomationFolder } from "../../domains/automations/catalog/domain/AutomationFolder.js";
 
+const graphSummary = { nodeCount: 2, connectionStatus: "connected" as const };
+
 // ---------------------------------------------------------------------------
 // Contrato de `GET /automations`.
 //
@@ -31,7 +33,7 @@ const persistedFlow: AutomationFlow = {
 
 describe("contrato GET /automations", () => {
   it("expone updatedAt en la raiz, no anidado en metadata", () => {
-    const summary = toAutomationSummary(persistedFlow);
+    const summary = toAutomationSummary(persistedFlow, graphSummary);
 
     expect(summary.updatedAt).toBe("2026-05-26T20:02:06.889Z");
     expect(new Date(summary.updatedAt).toString()).not.toBe("Invalid Date");
@@ -39,15 +41,15 @@ describe("contrato GET /automations", () => {
   });
 
   it("NUNCA expone tenantId al cliente", () => {
-    const summary = toAutomationSummary(persistedFlow);
+    const summary = toAutomationSummary(persistedFlow, graphSummary);
 
     expect(summary).not.toHaveProperty("tenantId");
   });
 
   it("expone exactamente las claves del contrato y ninguna mas", () => {
-    const summary = toAutomationSummary(persistedFlow);
+    const summary = toAutomationSummary(persistedFlow, graphSummary);
 
-    expect(Object.keys(summary).sort()).toEqual(["id", "key", "name", "status", "updatedAt"]);
+    expect(Object.keys(summary).sort()).toEqual(["connectionStatus", "id", "key", "name", "nodeCount", "status", "updatedAt"]);
   });
 
   it("propaga tags a la raiz cuando existen", () => {
@@ -57,14 +59,14 @@ describe("contrato GET /automations", () => {
       metadata: { ...persistedFlow.metadata, tags: ["soporte", "ventas"] }
     };
 
-    const summary = toAutomationSummary(withTags);
+    const summary = toAutomationSummary(withTags, graphSummary);
 
     expect(summary.tags).toEqual(["soporte", "ventas"]);
     expect(summary.folderId).toBe("folder-1");
   });
 
   it("omite las claves opcionales en lugar de emitirlas como undefined", () => {
-    const summary = toAutomationSummary(persistedFlow);
+    const summary = toAutomationSummary(persistedFlow, graphSummary);
 
     expect("tags" in summary).toBe(false);
     expect("folderId" in summary).toBe(false);
@@ -78,7 +80,7 @@ describe("contrato GET /automations", () => {
       createdAt: "2026-05-01T00:00:00.000Z"
     };
 
-    const response = toAutomationListResponse({ flows: [persistedFlow], folders: [folder] });
+    const response = toAutomationListResponse({ flows: [{ flow: persistedFlow, graphSummary }], folders: [folder] });
 
     expect(response.flows).toHaveLength(1);
     expect(response.folders).toEqual([{ id: "folder-1", name: "Ventas" }]);
@@ -88,7 +90,7 @@ describe("contrato GET /automations", () => {
 
   it("sobrevive al viaje por JSON sin perder la forma", () => {
     const roundTripped = JSON.parse(
-      JSON.stringify(toAutomationListResponse({ flows: [persistedFlow], folders: [] }))
+      JSON.stringify(toAutomationListResponse({ flows: [{ flow: persistedFlow, graphSummary }], folders: [] }))
     );
 
     expect(roundTripped.flows[0].updatedAt).toBe("2026-05-26T20:02:06.889Z");

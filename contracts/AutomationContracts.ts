@@ -38,6 +38,10 @@ export interface AutomationSummary {
   readonly folderId?: string;
   readonly updatedAt: string;
   readonly tags?: ReadonlyArray<string>;
+  /** Derivado del draft actual; nunca se persiste en el catálogo. */
+  readonly nodeCount: number;
+  /** Estado estructural derivado del draft actual; nunca se persiste. */
+  readonly connectionStatus: "connected" | "disconnected";
 }
 
 // ---------------------------------------------------------------------------

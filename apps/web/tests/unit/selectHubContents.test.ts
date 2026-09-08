@@ -17,7 +17,9 @@ const flujo = (id: string, name: string, folderId?: string): AutomationSummary =
   name,
   status: "draft",
   ...(folderId !== undefined ? { folderId } : {}),
-  updatedAt: "2026-01-01T00:00:00.000Z"
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  nodeCount: 0,
+  connectionStatus: "disconnected"
 });
 
 const carpeta = (id: string, name: string): AutomationFolderSummary => ({ id, name });

@@ -55,7 +55,8 @@ export function makeServices(repo: AutomationRepository): ApiServices {
         createdAt: "2026-01-01T00:00:00.000Z"
       }))
     },
-    automationRepository: repo
+    automationRepository: repo,
+    workspaceRepository: { getWorkspace: vi.fn(async () => null) }
   } as unknown as ApiServices;
 }
 

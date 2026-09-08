@@ -169,6 +169,11 @@
   border: 0;
   border-radius: 10px;
   background: var(--gradient-primary);
+  /* El color del icono se declara AQUÍ, que es donde se sabe sobre qué fondo
+     va: el degradado de marca pide blanco. Antes lo fijaba el propio SVG, y un
+     botón no hereda `color` por defecto, así que sin esto el icono se iría al
+     negro del agente de usuario. Mismo blanco de siempre. */
+  color: var(--on-primary);
   display: grid;
   place-items: center;
   flex: 0 0 auto;

@@ -43,6 +43,19 @@
   /* Luz y relieve */
   --gradient-primary: linear-gradient(135deg, #a855f7 0%, #7c5cf7 48%, #5b6cf9 100%);
   --glow-primary: 0 12px 30px -12px rgba(139, 92, 246, 0.85);
+
+  /* Serpiente de luz que recorre el perímetro de las tarjetas del Hub.
+     Azul eléctrico → cyan → violeta. Los dos extremos son los que ya usan las
+     conexiones del Builder, para que la energía se lea igual en todo el
+     producto; el cyan del centro es lo que le da recorrido de color al trazo. */
+  --hub-card-flow-from: #38bdf8;
+  --hub-card-flow-mid: #22d3ee;
+  --hub-card-flow-to: #8b5cf6;
+  --hub-card-flow-halo: rgba(139, 92, 246, 0.5);
+
+  /* Punto de estado estructural de la tarjeta del Hub: conectado/desconectado. */
+  --status-success: #22c55e;
+  --status-danger: #ef4444;
   --glow-soft: 0 0 0 1px rgba(139, 92, 246, 0.28);
   --shadow: 0 18px 48px -18px rgba(0, 0, 0, 0.85);
   /* Filo superior iluminado: da grosor a las superficies sin subir el fondo. */

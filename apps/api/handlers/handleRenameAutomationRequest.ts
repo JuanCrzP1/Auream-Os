@@ -3,11 +3,14 @@ import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
 import { toAutomationSummary } from "../http/toAutomationListResponse";
 import type { AutomationRepository } from "../../../domains/automations/catalog/application/AutomationRepository";
+import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
+import { deriveBuilderGraphSummary } from "../../../domains/automations/builder/application/deriveBuilderGraphSummary";
 
 export async function handleRenameAutomationRequest(
   request: IncomingMessage,
   response: ServerResponse,
   automationRepository: AutomationRepository,
+  workspaceRepository: BuilderWorkspaceRepository,
   tenantId: string,
   flowId: string
 ): Promise<void> {
@@ -34,5 +37,9 @@ export async function handleRenameAutomationRequest(
   };
 
   await automationRepository.save(updated);
-  sendJson(response, 200, toAutomationSummary(updated));
+  const workspace = await workspaceRepository.getWorkspace(tenantId, updated.key);
+  sendJson(response, 200, toAutomationSummary(
+    updated,
+    workspace ? deriveBuilderGraphSummary(workspace.draft, tenantId) : { nodeCount: 0, connectionStatus: "disconnected" }
+  ));
 }

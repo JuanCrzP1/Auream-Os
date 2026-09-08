@@ -27,6 +27,10 @@ class RepoWorkspaces implements BuilderWorkspaceRepository {
   async getWorkspace(tenantId: string, flowKey: string) {
     return this.items.get(`${tenantId}:${flowKey}`) ?? null;
   }
+  async getWorkspaces(tenantId: string, flowKeys: readonly string[]) {
+    const workspaces = await Promise.all(flowKeys.map((flowKey) => this.getWorkspace(tenantId, flowKey)));
+    return workspaces.filter((workspace): workspace is PersistedBuilderWorkspace => workspace !== null);
+  }
   async saveWorkspace(ws: PersistedBuilderWorkspace) {
     this.items.set(`${ws.tenantId}:${ws.flowKey}`, ws);
   }

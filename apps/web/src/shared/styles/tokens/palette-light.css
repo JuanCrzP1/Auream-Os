@@ -41,6 +41,18 @@
   /* Luz y relieve */
   --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #6c5ce7 55%, #5b4bd4 100%);
   --glow-primary: 0 10px 24px -10px rgba(108, 92, 231, 0.5);
+
+  /* Ver la nota en `palette-dark.css`. Sobre fondo claro el mismo azul se
+     lava, así que se baja un punto y el violeta pasa al primario del tema. */
+  --hub-card-flow-from: #0ea5e9;
+  --hub-card-flow-mid: #06b6d4;
+  --hub-card-flow-to: #6c5ce7;
+  --hub-card-flow-halo: rgba(108, 92, 231, 0.42);
+
+  /* Punto de estado estructural de la tarjeta del Hub: conectado/desconectado.
+     Mismo valor que en oscuro: la auditoría visual no exigió otro contraste. */
+  --status-success: #22c55e;
+  --status-danger: #ef4444;
   --glow-soft: 0 0 0 1px rgba(108, 92, 231, 0.14);
   --shadow: 0 8px 32px -8px rgba(108, 92, 231, 0.18);
   --elevation-inset: 0 0 0 0 rgba(0, 0, 0, 0);

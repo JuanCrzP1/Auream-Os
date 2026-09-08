@@ -53,3 +53,57 @@
 .react-flow__edge-textbg {
   fill: rgba(9, 16, 30, 0.94);
 }
+
+/* Acción contextual de una conexión seleccionada.
+ *
+ * Es el único control que puede aparecer sobre una arista, y aparece SOLO
+ * mientras está seleccionada: `DeletableEdge` no lo monta en ningún otro caso.
+ * La línea de debajo no se altera —ni color, ni grosor, ni halo, ni marcador—;
+ * esto se posa encima.
+ *
+ * `pointer-events: all` no es opcional: el contenedor de `EdgeLabelRenderer`
+ * los tiene desactivados para no robarle clics al lienzo, así que el botón
+ * tiene que reclamarlos para sí. Sin esta línea el botón se ve y no se pulsa.
+ *
+ * `position: absolute` tampoco: el portal apila todas las etiquetas en el
+ * mismo origen y es el `transform` en línea —el centro real de la curva— quien
+ * las coloca.
+ *
+ * Cristal contenido, del tamaño de un control de lienzo y no de un botón de
+ * formulario: en reposo se lee como un apunte gris sobre la conexión, y solo
+ * al apuntarlo declara que borra. */
+.canvas-edge-delete {
+  position: absolute;
+  pointer-events: all;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-floating);
+  backdrop-filter: blur(10px);
+  color: var(--muted);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+
+.canvas-edge-delete svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Mismo rojo que el borrado de un nodo: una sola forma de decir «esto elimina». */
+.canvas-edge-delete:hover,
+.canvas-edge-delete:focus-visible {
+  background: rgba(239, 68, 68, 0.65);
+  border-color: rgba(239, 68, 68, 0.8);
+  color: #fff;
+}
+
+.canvas-edge-delete:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 1px;
+}

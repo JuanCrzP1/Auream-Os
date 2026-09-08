@@ -102,6 +102,7 @@ export async function routeAutomationsRequest(
       request,
       response,
       services.automationRepository,
+      services.workspaceRepository,
       tenantId,
       flowId
     );

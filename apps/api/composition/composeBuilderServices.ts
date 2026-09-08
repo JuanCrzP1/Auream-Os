@@ -10,6 +10,7 @@ import { ListAutomationsService } from "../../../domains/automations/catalog/app
 import { CreateFolderService } from "../../../domains/automations/catalog/application/CreateFolderService";
 import { GraphValidator } from "../../../domains/automations/validation/application/GraphValidator";
 import type { AutomationRepository } from "../../../domains/automations/catalog/application/AutomationRepository";
+import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
 import { JsonAutomationRepository } from "../../../infrastructure/persistence/json/JsonAutomationRepository";
 import { JsonBuilderWorkspaceRepository } from "../../../infrastructure/persistence/json/JsonBuilderWorkspaceRepository";
 import { JsonFolderRepository } from "../../../infrastructure/persistence/json/JsonFolderRepository";
@@ -41,6 +42,7 @@ export interface ApiServices {
   readonly renameFolderService: RenameFolderService;
   readonly createFolderService: CreateFolderService;
   readonly automationRepository: AutomationRepository;
+  readonly workspaceRepository: BuilderWorkspaceRepository;
 }
 
 export function composeBuilderServices(config: ApiConfig): ApiServices {
@@ -61,13 +63,18 @@ export function composeBuilderServices(config: ApiConfig): ApiServices {
       new BuilderSimulationRuntimeFactory(composeNodeRuntime())
     ),
     deleteAutomationService: new DeleteAutomationService(automationRepository, workspaceRepository),
-    listAutomationsService: new ListAutomationsService(automationRepository, folderRepository),
+    listAutomationsService: new ListAutomationsService(
+      automationRepository,
+      folderRepository,
+      workspaceRepository
+    ),
     renameFolderService: new RenameFolderService(folderRepository),
     moveAutomationToFolderService: new MoveAutomationToFolderService(
       automationRepository,
       folderRepository
     ),
     createFolderService: new CreateFolderService(folderRepository),
-    automationRepository
+    automationRepository,
+    workspaceRepository
   };
 }

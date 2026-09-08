@@ -21,6 +21,16 @@ export class JsonBuilderWorkspaceRepository implements BuilderWorkspaceRepositor
     }
   }
 
+  public async getWorkspaces(
+    tenantId: string,
+    flowKeys: readonly string[]
+  ): Promise<PersistedBuilderWorkspace[]> {
+    const workspaces = await Promise.all(
+      flowKeys.map((flowKey) => this.getWorkspace(tenantId, flowKey))
+    );
+    return workspaces.filter((workspace): workspace is PersistedBuilderWorkspace => workspace !== null);
+  }
+
   public async saveWorkspace(workspace: PersistedBuilderWorkspace): Promise<void> {
     const filePath = this.getFilePath(workspace.tenantId, workspace.flowKey);
     await mkdir(dirname(filePath), { recursive: true });

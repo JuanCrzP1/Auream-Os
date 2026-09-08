@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { escribirFlujoArrastrado } from "../services/flowDragPayload";
 import "./hub-card.css";
+import "./hub-card-flow.css";
 import { useNavigate } from "react-router-dom";
 import type { AutomationSummary } from "@contracts/AutomationContracts";
 import { AutomationContextMenu } from "./AutomationContextMenu";
+import { HubCardFlowTrail } from "./HubCardFlowTrail";
+import { ToolsLayersIcon } from "@features/automations/shared/ToolsLayersIcon";
 
 interface AutomationFlowCardProps {
   flow: AutomationSummary;
@@ -32,6 +35,15 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
     if (e.key === "Enter" || e.key === " ") navigate(`/builder/${flow.key}`);
   };
 
+  // El resumen del grafo lo calcula el servidor y llega en la respuesta. Si no
+  // llega —una API anterior a estos campos— se omite entero en vez de pintar un
+  // contador sin número y un punto sin color que, además, se anunciaría como
+  // «desconectada»: ausente y desconectada no son lo mismo, y afirmar lo
+  // segundo cuando ocurre lo primero es mentir sobre el flujo.
+  const hayResumen =
+    typeof flow.nodeCount === "number" &&
+    (flow.connectionStatus === "connected" || flow.connectionStatus === "disconnected");
+
   return (
     <article
       className={`hub-card${arrastrando ? " hub-card--dragging" : ""}`}
@@ -48,6 +60,7 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
       }}
       onDragEnd={() => setArrastrando(false)}
     >
+      <HubCardFlowTrail />
       {/* El nombre ocupa la fila entera. Antes compartía sitio con un
           distintivo que decía «Borrador» en todas: se guardan solas, así
           que no informaba de nada y le quitaba ancho al nombre. */}
@@ -62,9 +75,24 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
         </div>
       )}
       <footer className="hub-card__footer">
-        <time dateTime={flow.updatedAt} className="hub-card__date">
-          {new Date(flow.updatedAt).toLocaleDateString("es-ES")}
-        </time>
+        <div className="hub-card__footer-meta">
+          <time dateTime={flow.updatedAt} className="hub-card__date">
+            {new Date(flow.updatedAt).toLocaleDateString("es-ES")}
+          </time>
+          {hayResumen && (
+            <>
+              <span className="hub-card__separator" aria-hidden="true">·</span>
+              <span className="hub-card__node-count" aria-label={`${flow.nodeCount} nodos`}>
+                <span className="hub-card__tools-icon" aria-hidden="true"><ToolsLayersIcon /></span>
+                {flow.nodeCount}
+              </span>
+              <span
+                className={`hub-card__connection-status hub-card__connection-status--${flow.connectionStatus}`}
+                aria-label={flow.connectionStatus === "connected" ? "Estructura conectada" : "Estructura desconectada"}
+              />
+            </>
+          )}
+        </div>
         <AutomationContextMenu
           flow={flow}
           onOpen={(f) => navigate(`/builder/${f.key}`)}
