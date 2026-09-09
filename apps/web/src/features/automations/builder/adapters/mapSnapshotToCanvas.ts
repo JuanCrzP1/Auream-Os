@@ -45,6 +45,9 @@ export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
       id: edge.id,
       source: edge.fromNodeId,
       target: edge.toNodeId,
+      // Devuelve la arista al punto exacto del que salió. Sin esto, un nodo con
+      // dos salidas recuperaba las dos como si arrancaran de la misma.
+      ...(edge.fromOutput ? { sourceHandle: edge.fromOutput } : {}),
       data: {
         priority: edge.priority,
         isFallback: edge.isFallback,

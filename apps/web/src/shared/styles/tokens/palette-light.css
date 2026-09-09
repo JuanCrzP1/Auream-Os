@@ -76,6 +76,13 @@
   /* Mismo valor que en oscuro: el verde de validez funciona sobre los dos
      lienzos y separarlo ahora sería una decisión de diseño sin acordar. */
   --handle-valid: #22c55e;
+  /* Ver la nota en `palette-dark.css`. Misma plata, un peldaño más oscura —gris
+     acero— para seguir contrastando sobre el lienzo claro: la plata fría de
+     oscuro se lavaría casi entera sobre blanco. El aro se aclara en vez de
+     oscurecerse por la misma razón que en oscuro se oscurecía: el bisel tiene
+     que notarse contra lo que haya detrás, y aquí detrás ya no hay negro. */
+  --handle-fill: #7c8491;
+  --handle-border: #d1d5db;
   /* Velo de lo que queda fuera del viewport en el minimapa (único consumidor).
      Muy bajo a propósito: cubre casi toda la tarjeta, así que en cuanto sube
      dibuja un aro alrededor del recorte y la pieza se lee como un marco. El

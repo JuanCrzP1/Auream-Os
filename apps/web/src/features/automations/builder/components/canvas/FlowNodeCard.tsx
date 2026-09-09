@@ -32,7 +32,7 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
   // Mismo catálogo visual que ya consumen la paleta y el nodo expandido: el
   // icono del nodo cerrado no puede ser un tercer mapa `tool === "message" ? …`
   // sino el mismo SVG oficial, resuelto por tipo igual que en todas partes.
-  const { Icon, CompactBody } = resolveToolUi(data.nodeType);
+  const { Icon, CompactBody, ownsOutputs } = resolveToolUi(data.nodeType);
 
   if (data.isEntry) {
     return (
@@ -145,11 +145,19 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
           <p className="flow-node__preview">{data.preview}</p>
         )}
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="flow-node__handle flow-node__handle--source"
-      />
+      {/* La salida ÚNICA del cascarón, para las herramientas de un solo camino.
+          Una herramienta con varios resultados declara `ownsOutputs` y monta
+          sus propios handles dentro de su cuerpo, donde sí se sabe cuántos hay
+          y junto a qué rótulo va cada uno; entonces esta no se pinta, para no
+          dejar una tercera salida anónima suelta en el borde. Sigue sin haber
+          un solo `if` por tipo de nodo: se pregunta por la capacidad. */}
+      {ownsOutputs ? null : (
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="flow-node__handle flow-node__handle--source"
+        />
+      )}
     </article>
   );
 }

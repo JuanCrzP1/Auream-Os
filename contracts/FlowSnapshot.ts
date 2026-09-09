@@ -152,6 +152,23 @@ export interface BuilderFlowEdge {
   readonly id: string;
   readonly fromNodeId: string;
   readonly toNodeId: string;
+  /**
+   * De qué SALIDA del nodo de origen arranca la conexión.
+   *
+   * Solo lo traen las aristas que salen de una herramienta con varios
+   * resultados posibles —hoy únicamente Esperar respuesta, con «respondió» y
+   * «se agotó el tiempo»—. Ausente significa «la salida única del nodo», que es
+   * el caso de las otras doce herramientas y de todos los flujos guardados
+   * antes de que este campo existiera: por eso es opcional y no hay migración.
+   *
+   * ES REPRESENTACIÓN, NO EJECUCIÓN. Qué camino toma el motor lo sigue
+   * decidiendo `EdgeEvaluator` con la prioridad, la condición y el fallback de
+   * cada arista, exactamente como antes; este campo no entra en esa decisión.
+   * Existe para que el lienzo pueda volver a dibujar cada conexión en el punto
+   * del que el usuario la sacó: sin él, guardar y recargar mezclaba las dos
+   * salidas en una.
+   */
+  readonly fromOutput?: string;
   readonly priority: number;
   readonly isFallback: boolean;
   readonly condition: EdgeCondition;

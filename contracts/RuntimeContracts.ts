@@ -50,10 +50,37 @@ export interface InboundEnvelope {
   readonly receivedAt: string;
 }
 
+/**
+ * Qué clase de salida es.
+ *
+ * Ausente equivale a `"text"`: todos los emisores anteriores a esta distinción
+ * mandan texto y ninguno tuvo que cambiar. Una reacción NO es un mensaje con
+ * otro contenido —no se entrega, no ocupa sitio en la conversación y se adjunta
+ * a un mensaje ajeno—, así que se distingue en el contrato en lugar de dejar
+ * que cada canal lo adivine por el tamaño del texto.
+ */
+export type OutboundKind = "text" | "reaction";
+
 export interface OutboundMessage {
   readonly channel: string;
   readonly conversationKey: string;
+  /** Texto del mensaje, o el emoji cuando `kind` es `"reaction"`. */
   readonly content: string;
+  /**
+   * Mensaje del cliente al que esta salida se refiere.
+   *
+   * Con `kind: "text"` significa citarlo al responder; con `kind: "reaction"`
+   * es el mensaje sobre el que se pone el emoji. Sale de
+   * `InboundEnvelope.messageId`, que ya viajaba en el envelope: no hay ninguna
+   * API de canal nueva detrás de este campo.
+   *
+   * Opcional: entregarlo como cita o como reacción es responsabilidad del
+   * adaptador de canal (Fase D). Hoy el dato se produce correctamente y ningún
+   * emisor anterior se ve afectado.
+   */
+  readonly replyToMessageId?: string;
+  /** Ausente = `"text"`. Ver `OutboundKind`. */
+  readonly kind?: OutboundKind;
 }
 
 export interface NodeExecutionResult {

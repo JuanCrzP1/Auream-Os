@@ -1,18 +1,44 @@
 /* ===== FLOW NODES ===== */
 
+/* ANCHO ESTÁNDAR DE UN NODO COMPACTO — FUENTE ÚNICA.
+ *
+ * Lo usan las catorce herramientas: ninguna declara el suyo, y esa es la razón
+ * de que la retícula se lea como un sistema. Cambiar este número los cambia
+ * todos a la vez, que es exactamente lo que se quiere de una fuente de verdad.
+ *
+ * 264px y no 230: con 230 no cabía la composición que las herramientas
+ * necesitan hoy —«Esperar respuesta» se truncaba en su propia cabecera y sus
+ * dos rótulos de salida competían por el sitio con el handle—. Se subió aquí, y
+ * no con una excepción por herramienta, para que Mensaje y Esperar respuesta
+ * queden alineados al píxel. */
+/* SIN `overflow: hidden`, A PROPÓSITO.
+ *
+ * Lo tenía, para recortar las esquinas cuadradas de la cabecera y el cuerpo —
+ * dos rectángulos opacos— contra la silueta redondeada del nodo. El precio era
+ * que TODO lo que sobresaliera de esta caja se recortaba con ellas, y un
+ * `Handle` de React Flow sobresale por diseño: se centra en el borde
+ * (`transform: translate(±50%, -50%)`), la mitad dentro y la mitad fuera, que
+ * es justo el punto donde el nodo lo cortaba a la mitad.
+ *
+ * El redondeo de esquinas ya no depende de este recorte: lo llevan
+ * `.flow-node__header` (arriba) y `.flow-node__body` (abajo) cada uno en sus
+ * propias esquinas, más abajo en esta hoja. El resultado se ve exactamente
+ * igual —el mismo radio, en el mismo sitio— pero ya no hay una caja que
+ * atrapar nada que se asome al borde. */
 .flow-node {
-  width: 230px;
+  width: 264px;
   border-radius: 14px;
-  overflow: hidden;
   cursor: grab;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* Misma razón que arriba. Aquí no hace falta compensar con radio en ningún
+   hijo: el degradado de la píldora vive en ESTE MISMO elemento, junto con su
+   `border-radius`, así que sigue dibujándose redondo sin que nadie lo recorte. */
 .flow-node--entry {
   width: auto;
   min-width: 140px;
   border-radius: 999px;
-  overflow: hidden;
   cursor: grab;
   background: linear-gradient(135deg, #6c5ce7, #9333ea);
   box-shadow: 0 4px 20px rgba(108, 92, 231, 0.55), 0 0 0 3px rgba(108, 92, 231, 0.2);
@@ -66,6 +92,11 @@
      comportamiento por omisión —opaco, exactamente como antes— y lo reciben
      las catorce herramientas. */
   background: var(--flow-node-accent);
+  /* Redondea SUS propias esquinas superiores, ahora que `.flow-node` ya no
+     recorta las de sus hijos. Mismo radio que el nodo, para que la costura sea
+     invisible. */
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
 }
 
 /* Circular y suave, mismo lenguaje que `.flow-node__entry-chip`: un tono de
@@ -152,6 +183,11 @@
 .flow-node__body {
   padding: 8px 12px 10px;
   background: var(--flow-node-surface);
+  /* Es siempre la última superficie visible del nodo —los `Handle` que vengan
+     después son absolutos y no pintan fondo—, así que a ella le toca la esquina
+     de abajo. Misma razón y mismo radio que en la cabecera. */
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
 /* Una sola línea, truncada por el ancho. El nodo cerrado es un resumen: un
@@ -183,9 +219,10 @@
  * AUREAM entra solo por los filos y por la ficha del icono, nunca por el
  * relleno ni por el texto.
  *
- * Nada aquí puede ensanchar la tarjeta: los 230px del nodo son fijos y React
- * Flow mide lo que la tarjeta devuelva. Cada fila recorta su texto en vez de
- * empujar, y el `min-width: 0` es lo que se lo permite. Se crece a lo alto. */
+ * Nada aquí puede ensanchar la tarjeta: el ancho del nodo lo fija `.flow-node`
+ * arriba y React Flow mide lo que la tarjeta devuelva. Cada fila recorta su
+ * texto en vez de empujar, y el `min-width: 0` es lo que se lo permite. Se
+ * crece a lo alto. */
 .flow-node__blocks {
   margin: 0;
   padding: 0;
@@ -370,6 +407,19 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* MISMO RADIO QUE LA CABECERA, EN SUS MISMAS ESQUINAS.
+   *
+   * Este `::after` es una caja propia —un pseudo-elemento, no el fondo del
+   * propio `.flow-node__header`— y una caja no hereda el radio de su
+   * elemento por estar dentro de él: solo se recorta a la silueta redondeada
+   * si algún antepasado tiene `overflow` distinto de `visible`, y desde que
+   * `.flow-node` dejó de tenerlo —para no recortar los handles, que se montan
+   * a caballo del borde— ya no hay nada que lo recorte. El resultado era un
+   * rectángulo perfecto asomando por encima de la esquina redondeada de la
+   * cabecera: visible sobre todo en oscuro, donde el degradado casi
+   * transparente de esta capa contrasta con el azul de detrás. */
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
   background:
     linear-gradient(
       118deg,
@@ -397,6 +447,11 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Ver la nota en `.flow-node__header::after`: misma caja propia, mismo
+     problema, mismas esquinas —las de ABAJO, que son las que redondea el
+     cuerpo—. */
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
   background:
     linear-gradient(
       168deg,
@@ -438,4 +493,58 @@
    brusco de color. */
 .flow-node:has(.flow-node__blocks) .flow-node__body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+/* ===== PUNTOS DE CONEXIÓN — TAMAÑO Y COLOR ESTÁNDAR, FUENTE ÚNICA =====
+ *
+ * React Flow trae sus handles a 6px y en su gris de librería. A ese tamaño
+ * cuestan de ver y de agarrar en un lienzo con zoom, y ese gris no es de nadie
+ * en particular. Aquí se fijan los dos para TODO el Builder de una vez: la
+ * entrada de cualquier nodo, la salida única de las trece herramientas de un
+ * camino y las dos salidas propias de «Esperar respuesta». Una sola regla,
+ * todos iguales.
+ *
+ * Se apoya en `.flow-node__handle`, la clase del PROYECTO que ya llevan todos
+ * los handles del builder —la pone `FlowNodeCard` y la heredan las salidas de
+ * Esperar respuesta—, en lugar de redefinir `.react-flow__handle` a secas: así
+ * el cambio no se escapa a ningún otro lienzo que la librería pudiera montar.
+ * El selector va acompañado de `.react-flow__handle` para ganar en
+ * especificidad (0,2,0) y no depender del orden en que el empaquetador
+ * concatene las hojas, que es una garantía más frágil. */
+.react-flow__handle.flow-node__handle {
+  width: 12px;
+  height: 12px;
+  /* EL COLOR SE ENTREGA POR LAS VARIABLES DE LA LIBRERÍA, no por `background`
+   * ni `border` directos. `.react-flow__handle` ya lee
+   * `var(--xy-handle-background-color, --xy-handle-background-color-default)`
+   * y su borde el mismo patrón: rellenar estas dos es el mecanismo que React
+   * Flow ofrece para esto, y usarlo dispensa de pisar `background`/`border` a
+   * mano y de que este selector tenga que ganarle a los suyos en
+   * especificidad.
+   *
+   * `--handle-fill` / `--handle-border` son tokens de tema —dark y light,
+   * en `palette-*.css`— y no un valor de esta hoja: plata, sin ser
+   * el violeta del sistema ni el ámbar de ninguna herramienta, porque un punto
+   * de conexión no pertenece a ninguna de las dos. Es la identidad EN REPOSO;
+   * el verde de `--handle-valid` sigue siendo del sistema de React Flow y
+   * sigue mandando en cuanto se arrastra una conexión, sin que esta regla lo
+   * toque. */
+  --xy-handle-background-color: var(--handle-fill);
+  --xy-handle-border-color: var(--handle-border);
+  /* POR ENCIMA DE LAS SUPERFICIES DEL NODO.
+   *
+   * El punto se monta a caballo del borde, así que la mitad de él cae sobre la
+   * cabecera o el cuerpo. Esas dos superficies están posicionadas en las
+   * herramientas que llevan tratamiento de cristal —Mensaje— y van después en
+   * el DOM, así que pintaban ENCIMA del handle y lo dejaban en media luna. A
+   * 6px era una esquirla que no se veía; al doblarlo, se veía. Esto lo levanta
+   * un plano, que es lo que le corresponde a un control que hay que poder ver y
+   * agarrar.
+   *
+   * NO BASTA POR SÍ SOLO: un `z-index` no puede sacar nada del recorte de un
+   * antepasado con `overflow: hidden`, y `.flow-node` lo tenía. Esa es la otra
+   * mitad del arreglo, arriba en esta misma hoja: sin ella, la mitad del punto
+   * que se asoma fuera del nodo seguía sin verse por mucho `z-index` que
+   * llevara. */
+  z-index: 1;
 }

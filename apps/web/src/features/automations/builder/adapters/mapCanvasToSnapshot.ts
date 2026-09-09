@@ -52,6 +52,10 @@ export function mapCanvasToSnapshot(baseSnapshot: BuilderFlowSnapshot, nodes: Ca
       id: edge.id,
       fromNodeId: edge.source,
       toNodeId: edge.target,
+      // La salida del nodo de la que arranca, cuando el nodo tiene más de una.
+      // Se omite si no la hay para no escribir `fromOutput: null` en cada
+      // arista de las otras doce herramientas.
+      ...(edge.sourceHandle ? { fromOutput: edge.sourceHandle } : {}),
       priority: edgeData.priority,
       isFallback: edgeData.isFallback,
       condition: edgeData.condition

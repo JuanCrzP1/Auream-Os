@@ -1,0 +1,611 @@
+/* ===== ESPERAR RESPUESTA — EDITOR Y NODO EN REPOSO =====
+ *
+ * Vive con su herramienta. No importa ninguna hoja de otra herramienta ni
+ * ninguna otra la importa: Mensaje y Esperar respuesta comparten el MARCO
+ * (`node-expanded.css`, del sistema) y nada más.
+ *
+ * El tamaño lo fija el marco expandido. Aquí no se declara ni un ancho ni un
+ * alto absolutos: todo se mide contra el contenedor, para que el día que cambie
+ * la dimensión del sistema este editor la siga sin tocar nada.
+ *
+ * Todo el color sale de tokens del tema salvo el ámbar, que es la identidad de
+ * ESTA herramienta y se declara aquí abajo —igual que `tool.colors` en su
+ * `definition.ts`, que es donde el proyecto guarda el color de cada una—. */
+
+.wait-response {
+  /* ÁMBAR, la identidad de la herramienta.
+   *
+   * El tono vivo para lo encendido —interruptores, unidad activa, filos de
+   * foco— y su versión translúcida para rellenos y sangrados.
+   *
+   * Es el mismo valor que `definition.ts` publica al lienzo: el nodo, su
+   * cabecera y este editor se leen como una sola pieza. */
+  --wr-amber: #f59e0b;
+  --wr-amber-soft: color-mix(in srgb, var(--wr-amber) 18%, transparent);
+
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+/* El editor es quien desplaza, no el marco: `node-expanded__body` no lo hace a
+   propósito, para que cada herramienta decida qué parte suya queda quieta. */
+
+.wait-response__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wait-response__rule {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--border);
+}
+
+.wait-response__label {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wait-response__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.wait-response__textarea,
+.wait-response__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.wait-response__textarea {
+  resize: vertical;
+  min-height: 62px;
+}
+
+.wait-response__textarea::placeholder,
+.wait-response__input::placeholder {
+  color: var(--muted);
+}
+
+.wait-response__textarea:focus-visible,
+.wait-response__input:focus-visible {
+  outline: none;
+  border-color: var(--wr-amber);
+  box-shadow: 0 0 0 3px var(--wr-amber-soft);
+}
+
+/* ----- Interruptor ----- */
+
+.wr-switch {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wr-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wr-switch__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wr-switch__hint {
+  font-size: 0.71rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Raíl y pulsador. Apagado es neutro; encendido es ámbar: el color solo aparece
+   cuando la opción hace algo. */
+.wr-switch__control {
+  position: relative;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 20px;
+  margin-top: 1px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--chip-neutral-bg);
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.wr-switch__control--on {
+  background: var(--wr-amber);
+  border-color: var(--wr-amber);
+}
+
+.wr-switch__control:focus-visible {
+  outline: 2px solid var(--wr-amber);
+  outline-offset: 2px;
+}
+
+.wr-switch__knob {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translateY(-50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: left var(--speed-fast) var(--ease-out);
+}
+
+.wr-switch__control--on .wr-switch__knob {
+  left: 18px;
+}
+
+/* ----- Tiempo máximo ----- */
+
+.wr-timeout {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  /* Sangrado tenue del ámbar: la caja se lee como consecuencia del interruptor
+     de arriba y no como una sección independiente. */
+  background: color-mix(in srgb, var(--wr-amber) 6%, transparent);
+}
+
+.wr-timeout__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wr-timeout__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wr-timeout__amount {
+  width: 72px;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.wr-timeout__amount:focus-visible {
+  outline: none;
+  border-color: var(--wr-amber);
+  box-shadow: 0 0 0 3px var(--wr-amber-soft);
+}
+
+.wr-timeout__units {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--chip-neutral-bg);
+}
+
+.wr-timeout__unit {
+  padding: 5px 11px;
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out), color var(--speed-fast) var(--ease-out);
+}
+
+.wr-timeout__unit:hover {
+  color: var(--text);
+}
+
+.wr-timeout__unit--active {
+  background: var(--wr-amber);
+  color: #fff;
+}
+
+.wr-timeout__unit:focus-visible {
+  outline: 2px solid var(--wr-amber);
+  outline-offset: 1px;
+}
+
+/* ----- Reacción ----- */
+
+.wr-reaction {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wr-reaction__picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wr-reaction__emoji {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out);
+}
+
+.wr-reaction__emoji:hover {
+  border-color: var(--wr-amber);
+}
+
+.wr-reaction__emoji--active {
+  border-color: var(--wr-amber);
+  background: var(--wr-amber-soft);
+}
+
+.wr-reaction__emoji:focus-visible {
+  outline: 2px solid var(--wr-amber);
+  outline-offset: 1px;
+}
+
+/* ===== NODO EN REPOSO =====
+ *
+ * Se monta dentro de `.flow-node__body`, cuyo fondo es el color de la
+ * herramienta: aquí el texto va en blancos translúcidos como el resto de las
+ * tarjetas del lienzo, no con los tokens de superficie del editor. Ese fondo es
+ * ámbar saturado en los dos temas —lo publica `definition.ts`—, así que la
+ * escala de blancos funciona igual en claro y en oscuro y no hace falta
+ * duplicar la hoja por tema.
+ *
+ * TRES ZONAS Y UNA FRONTERA. La pregunta y la espera son contenido; las salidas
+ * no —son por dónde sigue el flujo—, y por eso van detrás de un filo y con su
+ * propio ritmo. El nodo crece lo que necesite para que eso se lea; la tarjeta
+ * del lienzo no tiene alto fijo. */
+
+/* EL ANCHO NO SE DECLARA AQUÍ, y es deliberado.
+ *
+ * Lo fija `.flow-node` en `flow-node.css` —264px— para las catorce
+ * herramientas, y ninguna lo sobreescribe. Este archivo tuvo un
+ * `:has(.wr-node) { width: 264px }` propio, una excepción por herramienta con
+ * el mismo número que ahora es la fuente única: puesto al lado de Mensaje se
+ * veían dos nodos de tamaños distintos, que es justo lo que rompe la lectura
+ * de sistema. Se retiró la excepción y se subió el ancho global en
+ * `flow-node.css` en su lugar, para que Mensaje y Esperar respuesta queden
+ * alineados al píxel sin que ninguna herramienta declare el suyo. */
+
+.wr-node {
+  display: flex;
+  flex-direction: column;
+  /* El aire entre zonas lo pone cada bloque: aquí no, para poder dar más
+     separación a la frontera de las salidas que entre pregunta y espera. */
+  gap: 7px;
+}
+
+/* Dos renglones como máximo. Una pregunta larga no puede estirar la tarjeta ni
+   desbordarla: se corta en seco, igual que el nombre de una tarjeta del Hub. */
+.wr-node__prompt {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  max-height: 2.7em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* Sin mensaje propio la frase es del sistema, no del usuario: se atenúa para
+   que se lea como lo que es —un rótulo— y no como algo que alguien escribió. */
+.wr-node__prompt--empty {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* ----- Estado de la espera -----
+ *
+ * La FILA: la cápsula del dato y, detrás, el campo destino. Sin fondo propio —
+ * el fondo es de la cápsula, que se ajusta a su contenido. Estirar la cápsula a
+ * todo el ancho la hacía parecer un campo de formulario vacío por la derecha. */
+.wr-node__wait {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  min-width: 0;
+  font-size: 0.72rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* La cápsula del dato: un velo oscuro sobre el ámbar para que se lea como un
+   valor y no como más texto corrido. Mismo recurso que el chip de la etiqueta
+   de una conexión —fondo propio contenido—, no un color nuevo. */
+.wr-node__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* Se ajusta a su contenido y cede sitio antes de desbordar. */
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+
+.wr-node__wait-icon {
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+.wr-node__wait-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.wr-node__wait-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* El campo destino: un apunte, no un dato principal. Sin cápsula y más tenue
+   que la espera, para que la jerarquía entre los dos se lea sola. Es el que
+   cede sitio y se recorta si el nombre es largo. */
+.wr-node__target {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* ----- Zona de resultados -----
+ *
+ * LA FRONTERA DEL NODO. El filo superior y el aire extra son lo que separa «lo
+ * que este nodo hace» de «por dónde puede seguir el flujo»: sin eso las salidas
+ * se leían como dos líneas más de contenido.
+ *
+ * El relleno negativo a la derecha es deliberado: la fila llega hasta el borde
+ * real de la tarjeta —`.flow-node__body` mete 12px— para que el handle pueda
+ * anclarse en el canto, que es donde React Flow arranca la curva. Sin esto el
+ * punto quedaba flotando dentro del nodo y la conexión nacía torcida. */
+.wr-node__outputs {
+  margin-top: 1px;
+  padding-top: 7px;
+  /* Se estira 12px a cada lado para que el filo cruce el nodo de lado a lado,
+     como una separación de verdad y no como una línea corta centrada. */
+  margin-left: -12px;
+  margin-right: -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* Ordena sin competir: versalitas muy tenues, del tamaño mínimo legible. */
+.wr-node__outputs-title {
+  display: block;
+  margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.wr-node__outputs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  /* Un poco más que antes: con la tarjeta de abajo, 3px hacía que las dos
+     superficies casi se tocaran. 5px sigue siendo una separación pequeña —el
+     pedido explícito— pero ya se lee como dos piezas y no como una sola
+     partida por una línea. */
+  gap: 5px;
+}
+
+/* Una salida: el ANCLA, no la tarjeta.
+ *
+ * `position: relative` sigue siendo, exactamente como antes, la referencia
+ * del `Handle` —se posiciona contra ESTA caja, con `right: -12px`—, así que
+ * cada salida sigue teniendo su propia altura y las dos no pueden solaparse.
+ * Ya no lleva fondo, borde, padding ni tipografía propios: todo el aspecto
+ * pasó a `.wr-out__card`, su hijo. Separar las dos cosas es lo que permite
+ * que la tarjeta cambie de aspecto sin que el handle tenga que recalcular
+ * nada, y viceversa. */
+.wr-out {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  /* El mismo dedo de aire de siempre a la derecha, ahora vacío de contenido:
+     el handle sigue viviendo FUERA de esta caja —montado en el canto del
+     nodo—, así que sigue sin poder ocupar el sitio del rótulo. */
+  padding: 0 4px 0 0;
+}
+
+/* LA MINI TARJETA. Fondo oscuro translúcido sobre el ámbar —el mismo recurso
+ * que ya usa `.wr-node__chip` para «Máximo: 30 minutos», no el cristal claro
+ * de Mensaje: esta herramienta tiene su propio lenguaje de superficie y esto
+ * lo repite en vez de importar el de otra—. Un borde de un píxel casi
+ * invisible y un filo superior de luz son lo que la separan de ser solo un
+ * fondo: sin ellos sería una mancha, no una pieza.
+ *
+ * `flex: 1 1 auto` la estira a lo ancho de la fila —las dos miden lo mismo,
+ * aunque «Tiempo agotado» tenga más letras— y dentro de la tarjeta, no de la
+ * fila, es donde ahora viven el tamaño de letra y el interlineado: es la
+ * superficie de contenido real. */
+.wr-out__card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-size: 0.71rem;
+  line-height: 1.2;
+}
+
+/* El punto: el indicador semántico DENTRO de la tarjeta. No es el handle —ese
+   sigue en el borde del nodo, fuera de aquí—; es lo que hace reconocible cada
+   camino de un vistazo sin llegar hasta el canto. Mismo color que su handle,
+   por la misma razón: los dos dicen lo mismo, uno dentro de la tarjeta y otro
+   en el punto de conexión. */
+.wr-out__dot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+}
+
+.wr-out--respuesta .wr-out__dot {
+  background: var(--status-success);
+  /* Halo del mismo color: da presencia al punto sin engordarlo. */
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--status-success) 24%, transparent);
+}
+
+.wr-out--tiempo .wr-out__dot {
+  background: var(--status-danger);
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--status-danger) 24%, transparent);
+}
+
+.wr-out__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* EL RÓTULO SIGUE DISTINGUIÉNDOSE POR PESO, no por color.
+ *
+ * Respuesta es el camino esperado y va en blanco pleno; tiempo agotado es la
+ * salida por defecto de una espera que no se cumplió y va en el ámbar claro de
+ * la propia herramienta, atenuado. El verde/rojo semántico ya vive en el punto
+ * de al lado y en el handle del borde —dos señales bastan—; ponerlo además en
+ * el TEXTO de una tarjeta de 12px de alto lo convertiría en la única cosa que
+ * se lee, por encima del propio nombre de la salida. */
+.wr-out--respuesta {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.wr-out--tiempo {
+  color: rgba(255, 236, 200, 0.8);
+}
+
+/* EL HANDLE DE SALIDA NO TIENE ESTILO PROPIO, y es el punto del ajuste.
+ *
+ * Antes se le declaraba aquí un círculo de 11px con anillo blanco, sombra y
+ * hover propios. El resultado era una familia visual distinta a la del handle
+ * de ENTRADA que el cascarón pone en todos los nodos: dos círculos blancos
+ * gordos frente a un punto pequeño, en el mismo nodo.
+ *
+ * La identidad de un handle en este Builder es la que fija
+ * `.react-flow__handle.flow-node__handle` en `flow-node.css` —12px, plata
+ * de `--handle-fill`/`--handle-border`—, UNA SOLA VEZ para las catorce
+ * herramientas. Esta hoja no la repite: estas salidas ya llevan esa clase
+ * (`WaitResponseCompactBody`) y la heredan igual que el handle de entrada,
+ * incluido el estado `connecting`/`valid` en verde de `canvas-edges.css`. Si
+ * el Builder vuelve a tocar esa identidad, estos lo siguen solos.
+ *
+ * LO ÚNICO QUE ESTA REGLA AJUSTA ES LA COLOCACIÓN, que no es identidad: React
+ * Flow ya pone `right: 0` con `.react-flow__handle-right`, y como el ancla es
+ * la FILA —`.wr-out` es `position: relative`— eso deja el punto a 12px del
+ * canto, el relleno del cuerpo. Se compensa esa distancia para que quede
+ * montado sobre el borde del nodo, que es donde está el de entrada y donde
+ * React Flow arranca la curva. Ni tamaño, ni color, ni borde, ni hover: solo
+ * el desplazamiento. */
+.wr-out__handle.react-flow__handle-right {
+  right: -12px;
+}
+
+/* LAS DOS SALIDAS SIGNIFICAN COSAS DISTINTAS, Y EL HANDLE LO DICE.
+ *
+ * «Respuesta» es que el cliente contestó; «Tiempo agotado» es que no lo hizo
+ * a tiempo. Son un resultado bueno y uno malo, exactamente el lenguaje que ya
+ * habla `--status-success`/`--status-danger` en el resto de AUREAM —el mismo
+ * par que usa la tarjeta del Hub para «conectado»/«desconectado»—, así que
+ * aquí sí corresponde el color de validez, a diferencia del punto y el
+ * rótulo de la nota de arriba.
+ *
+ * LA SELECCIÓN ES POR LA CLASE SEMÁNTICA DE LA FILA —`.wr-out--respuesta` /
+ * `.wr-out--tiempo`, la misma que ya distingue el punto y el rótulo—, nunca
+ * por posición (`nth-child`) ni por el texto que el usuario haya escrito: un
+ * nombre de nodo distinto o un reordenamiento del DOM no puede desalinear el
+ * color de lo que ese handle significa.
+ *
+ * SOLO ESTOS DOS HANDLES, no los del resto del Builder: el selector exige la
+ * clase de la fila de ESTA herramienta como ancestro, así que ninguna otra
+ * pieza del lienzo —ni siquiera el handle de entrada de este mismo nodo—
+ * puede verse alcanzada por accidente.
+ *
+ * SOLO EL RELLENO, no el borde: se sobreescribe `--xy-handle-background-color`
+ * exactamente como ya hace `--handle-valid` para el estado
+ * `connecting`/`valid` en `canvas-edges.css`, sin tocar
+ * `--xy-handle-border-color`. El aro plateado del resto del Builder se
+ * conserva como bisel; lo único que cambia es de qué color está hecho el
+ * centro del punto. Se combina con `.react-flow__handle` para igualar la
+ * especificidad de la regla global de `flow-node.css` y no depender del
+ * orden en que el empaquetador cargue las dos hojas. */
+.wr-out--respuesta .wr-out__handle.react-flow__handle {
+  --xy-handle-background-color: var(--status-success);
+}
+
+.wr-out--tiempo .wr-out__handle.react-flow__handle {
+  --xy-handle-background-color: var(--status-danger);
+}

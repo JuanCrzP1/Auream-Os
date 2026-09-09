@@ -93,15 +93,32 @@ describe("contrato ToolUi", () => {
     expect(findToolUi("message")?.Editor).toBeTypeOf("function");
   });
 
-  it("el cuerpo compacto es opcional: solo Mensaje declara uno propio", () => {
-    // Mensaje es la primera que lo necesita: su contenido es una SECUENCIA, y
-    // un resumen de una línea no dice qué bloques la forman. Las demás siguen
-    // con el compacto genérico del cascarón, que es lo que hace que el hueco
-    // sea opcional y no un componente vacío que todas tengan que escribir.
+  it("las salidas propias son la excepción: solo las declara la herramienta con varios resultados", () => {
+    // `ownsOutputs` hace que `FlowNodeCard` no ponga su salida única. Solo debe
+    // valer para la herramienta que dibuja las suyas: si alguna otra lo
+    // declarara sin montar ningún `Handle`, ese nodo se quedaría SIN salida y
+    // no habría forma de conectarlo. Por eso se fija el conjunto exacto.
+    const conSalidasPropias = listUiTypes().filter((type) => findToolUi(type)?.ownsOutputs);
+
+    expect(conSalidasPropias).toEqual(["question"]);
+    expect(findToolUi("question")?.CompactBody).toBeTypeOf("function");
+  });
+
+  it("el cuerpo compacto es opcional: solo lo declara quien lo necesita", () => {
+    // Mensaje fue la primera: su contenido es una SECUENCIA y un resumen de una
+    // línea no dice qué bloques la forman. Esperar respuesta es la segunda, por
+    // otro motivo —enseña la pregunta y, debajo, cuánto espera y dónde guarda—.
+    //
+    // Lo que se fija es que el hueco siga siendo OPCIONAL: las demás se
+    // conforman con el compacto genérico del cascarón en lugar de escribir un
+    // componente vacío. Si algún día lo declararan todas, este test avisaría de
+    // que el campo dejó de ser opcional de hecho.
     expect(findToolUi("message")?.CompactBody).toBeTypeOf("function");
+    expect(findToolUi("question")?.CompactBody).toBeTypeOf("function");
 
     const conCompacto = listUiTypes().filter((type) => findToolUi(type)?.CompactBody);
-    expect(conCompacto).toEqual(["message"]);
+    expect(conCompacto).toEqual(["message", "question"]);
+    expect(conCompacto.length).toBeLessThan(listUiTypes().length);
   });
 });
 

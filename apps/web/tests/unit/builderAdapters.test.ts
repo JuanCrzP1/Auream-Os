@@ -219,6 +219,58 @@ describe("adapters — canvas → snapshot → canvas", () => {
   });
 });
 
+describe("adapters — de qué salida arranca cada conexión", () => {
+  // Un nodo con VARIAS salidas —Esperar respuesta: respondió / se agotó el
+  // tiempo— guarda en cada arista de cuál de ellas sale. Sin esto, guardar y
+  // recargar mezclaba las dos en una y el usuario perdía el trabajo en
+  // silencio: React Flow no puede redibujar una conexión si no sabe de qué
+  // punto del nodo salía.
+
+  it("conserva la salida de origen en la ida y vuelta completa", () => {
+    const original = makeSnapshot();
+    const canvas = mapSnapshotToCanvas(original);
+
+    // Se marca cada arista de la pregunta con una salida distinta, como haría
+    // el usuario arrastrando desde cada punto del nodo.
+    const conSalidas = canvas.edges.map((edge) =>
+      edge.id === "e-2"
+        ? { ...edge, sourceHandle: "respuesta" }
+        : edge.id === "e-3"
+          ? { ...edge, sourceHandle: "tiempo-agotado" }
+          : edge
+    );
+
+    const snapshot = mapCanvasToSnapshot(original, canvas.nodes, conSalidas);
+    const guardadas = snapshot.edgesBySource["n-pregunta"];
+
+    expect(guardadas?.find((edge) => edge.id === "e-2")?.fromOutput).toBe("respuesta");
+    expect(guardadas?.find((edge) => edge.id === "e-3")?.fromOutput).toBe("tiempo-agotado");
+
+    // Y al volver al lienzo, cada una regresa a SU punto.
+    const devuelto = mapSnapshotToCanvas(snapshot);
+    expect(devuelto.edges.find((edge) => edge.id === "e-2")?.sourceHandle).toBe("respuesta");
+    expect(devuelto.edges.find((edge) => edge.id === "e-3")?.sourceHandle).toBe("tiempo-agotado");
+  });
+
+  it("una conexión sin salida declarada no gana el campo: los flujos viejos no cambian", () => {
+    // Las otras doce herramientas tienen una sola salida y sus aristas no
+    // llevan `fromOutput`. Escribirlo como `null` en cada una ensuciaría todos
+    // los flujos ya guardados sin aportar nada.
+    const original = makeSnapshot();
+    const canvas = mapSnapshotToCanvas(original);
+    const snapshot = mapCanvasToSnapshot(original, canvas.nodes, canvas.edges);
+
+    for (const edge of Object.values(snapshot.edgesBySource).flat()) {
+      expect(edge).not.toHaveProperty("fromOutput");
+    }
+
+    // Y al recuperarlas tampoco se inventa un handle.
+    for (const edge of mapSnapshotToCanvas(snapshot).edges) {
+      expect(edge.sourceHandle).toBeUndefined();
+    }
+  });
+});
+
 describe("adapters — reglas de defensa", () => {
   it("descarta las conexiones cuyo origen o destino ya no existe", () => {
     const original = makeSnapshot();

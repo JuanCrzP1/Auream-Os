@@ -26,6 +26,15 @@ export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: strin
           id: `edge-${connection.source}-${connection.target}-${current.length + 1}`,
           source: connection.source,
           target: connection.target,
+          // DE QUÉ SALIDA DEL NODO ARRANCA. React Flow ya lo entrega en la
+          // conexión y aquí se descartaba: con un nodo de una sola salida no se
+          // notaba, pero en cuanto una herramienta tiene varias —Esperar
+          // respuesta: respondió / se agotó el tiempo— sin este dato las dos
+          // aristas nacen indistinguibles y React Flow no sabe de qué punto
+          // dibujarlas. Se conserva tal cual llega, sin interpretarlo: qué
+          // significa cada salida es asunto de la herramienta.
+          ...(connection.sourceHandle ? { sourceHandle: connection.sourceHandle } : {}),
+          ...(connection.targetHandle ? { targetHandle: connection.targetHandle } : {}),
           data: {
             priority: current.length + 10,
             isFallback: false,

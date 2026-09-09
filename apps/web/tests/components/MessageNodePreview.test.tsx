@@ -289,8 +289,20 @@ describe("los enseña TODOS: sin tope ni recuento", () => {
     const hoja = flowNodeCss;
     const nodo = hoja.slice(hoja.indexOf(".flow-node {"), hoja.indexOf("}", hoja.indexOf(".flow-node {")));
 
-    expect(nodo).toMatch(/width:\s*230px/);
-    expect(nodo).toMatch(/overflow:\s*hidden/);
+    // Ancho FIJO en píxeles: eso es lo que impide que la secuencia ensanche el
+    // nodo. El valor concreto no se fija aquí a propósito —lo declara
+    // `.flow-node` una sola vez para las catorce herramientas, y repetirlo en
+    // este test lo convertiría en una segunda fuente de verdad que hay que
+    // actualizar a mano cada vez que la retícula cambie—.
+    //
+    // `.flow-node` YA NO lleva `overflow: hidden`: lo tenía para recortar las
+    // esquinas cuadradas de la cabecera y el cuerpo contra la silueta
+    // redondeada, y de paso recortaba también cualquier `Handle` que se
+    // asomara al borde —la mitad de todos ellos, por diseño—. El redondeo lo
+    // llevan ahora `.flow-node__header`/`.flow-node__body` en sus propias
+    // esquinas; lo que sigue impidiendo que el ancho crezca es el `width` fijo
+    // de aquí abajo, que no necesita recorte para cumplirse.
+    expect(nodo).toMatch(/width:\s*\d+px/);
     // Ninguna fila declara ancho propio, así que no puede empujar la tarjeta
     // por muchos bloques que haya.
     const fila = hoja.slice(hoja.indexOf(".flow-node__block {"));

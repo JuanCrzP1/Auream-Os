@@ -180,8 +180,29 @@ describe("applyNodePatch — presentación derivada", () => {
   });
 
   it("mantiene el preview coherente con el contenido", () => {
-    const result = applyNodePatch(makeNode(), { content: { text: "¿Tu nombre?" } });
+    // Con una herramienta que NO declara `summarize` —la mayoría— el resumen
+    // genérico se apaña con `content.text`, y lo que se fija aquí es que se
+    // recalcule en vez de quedarse obsoleto.
+    //
+    // El nodo de este archivo es `question`, que desde la herramienta «Esperar
+    // respuesta» sí declara el suyo: su preview lo decide ahora la herramienta
+    // —ver el caso siguiente—, así que este comprueba el camino genérico con un
+    // tipo que lo sigue usando.
+    const result = applyNodePatch(makeNode({ nodeType: "tags" }), {
+      content: { text: "¿Tu nombre?" }
+    });
 
     expect(result.data.preview).toBe("¿Tu nombre?");
+  });
+
+  it("cuando la herramienta declara su propio resumen, manda la herramienta", () => {
+    // `question` es «Esperar respuesta» y resume su espera, no su texto: el
+    // preview de la tarjeta cerrada tiene que decir cuánto se espera y dónde
+    // queda la respuesta, que es lo que responde a «qué hace este nodo».
+    const result = applyNodePatch(makeNode(), {
+      config: { waitIndefinitely: false, timeout: { amount: 30, unit: "minutes" }, targetKey: "ciudad" }
+    });
+
+    expect(result.data.preview).toBe("30 minutos · Guarda en ciudad");
   });
 });

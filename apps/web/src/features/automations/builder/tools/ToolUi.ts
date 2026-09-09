@@ -115,4 +115,28 @@ export interface ToolUi {
    * tampoco lo hay, al aviso de «sin configuración».
    */
   readonly Editor?: ComponentType<ToolEditorProps>;
+
+  /**
+   * La herramienta dibuja SUS PROPIAS salidas y el cascarón no pone ninguna.
+   *
+   * Por defecto —ausente o `false`— `FlowNodeCard` pinta un único `Handle` de
+   * origen a la derecha del nodo, que es lo que necesitan las herramientas de
+   * un solo camino: las trece que hay hoy salvo una.
+   *
+   * `true` es para una herramienta con VARIOS resultados posibles, donde cada
+   * salida necesita su propio handle, su rótulo y su sitio dentro de una
+   * composición que solo la herramienta conoce. El cascarón no puede colocar
+   * eso: no sabe cuántas salidas hay —en Esperar respuesta dependen de la
+   * configuración del nodo— ni junto a qué texto va cada una. Así que se
+   * aparta, y la herramienta monta los `Handle` que quiera dentro de su
+   * `CompactBody`.
+   *
+   * Lo que el cascarón sigue poniendo siempre es el handle de ENTRADA: recibir
+   * conexiones es igual para todas y ninguna herramienta lo decide.
+   *
+   * Es una bandera, no un componente ni una lista: el cascarón solo necesita
+   * saber si debe callarse. Cómo se ven y dónde van esas salidas no le
+   * concierne, y por eso no hay aquí ningún mapa de handles que mantener.
+   */
+  readonly ownsOutputs?: boolean;
 }
