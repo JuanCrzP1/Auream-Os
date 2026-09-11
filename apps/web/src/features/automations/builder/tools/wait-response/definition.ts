@@ -37,13 +37,18 @@ export const waitResponseTool: ToolDefinition = {
   // que lee el motor: así el nodo nace con exactamente lo que el handler sabe
   // ejecutar, sin una segunda declaración que pueda divergir.
   defaultConfig: { ...WAIT_RESPONSE_DEFAULT_CONFIG },
-  // ÁMBAR. Identidad propia de la herramienta, en el mismo formato en que las
-  // otras trece declaran la suya: color de cabecera, cuerpo y degradado de la
-  // paleta. El editor repite estos tonos en `--wr-amber`.
+  // DORADO PREMIUM. Identidad propia de la herramienta, en el mismo formato en
+  // que las otras trece declaran la suya: color de cabecera, cuerpo y
+  // degradado de la paleta. El editor repite estos tonos en `--wr-amber`.
+  //
+  // Antes era el mismo ámbar/naranja que ya usa Distribuidor —dos herramientas
+  // leyéndose como una—; este dorado profundo es un tono propio: ni el
+  // naranja de aviso de Distribuidor ni el amarillo puro, sino un oro
+  // sofisticado con buen contraste sobre el lienzo oscuro.
   colors: {
-    header: "#f59e0b",
-    body: "#b45309",
-    gradient: "linear-gradient(135deg,#fbbf24,#b45309)"
+    header: "#d4a72c",
+    body: "#8a6418",
+    gradient: "linear-gradient(135deg,#e0b83f,#8a6418)"
   },
   glyph: "⏳"
 };

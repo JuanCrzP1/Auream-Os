@@ -144,14 +144,14 @@ describe("el marco genérico, no uno propio", () => {
     expect(screen.getByRole("button", { name: /Cerrar/ })).toBeInTheDocument();
   });
 
-  it("la cabecera lleva el ámbar de la herramienta", () => {
+  it("la cabecera lleva el dorado de la herramienta", () => {
     render(<MarcoGobernado inicial={nodoEspera()} />);
 
     const cabecera = document.querySelector<HTMLElement>(".node-expanded__header");
 
     // Mismo valor que declara `definition.ts`, en RGB tal y como lo normaliza el
-    // navegador. Es la identidad dorada, no el naranja de la referencia externa.
-    expect(cabecera?.style.background).toBe("rgb(245, 158, 11)");
+    // navegador. Es la identidad dorada, no el naranja que tenía antes.
+    expect(cabecera?.style.background).toBe("rgb(212, 167, 44)");
   });
 
   it("Guardar nace deshabilitado: sin cambios no hay nada que confirmar", () => {
@@ -518,12 +518,12 @@ describe("el nodo cerrado en el lienzo", () => {
     expect(container.textContent).not.toMatch(/agrupar|citar|reacc|👍/i);
   });
 
-  it("publica el ámbar de la herramienta al lienzo", () => {
+  it("publica el dorado de la herramienta al lienzo", () => {
     const { container } = pintarTarjeta(nodoEspera());
     const tarjeta = container.querySelector<HTMLElement>(".flow-node");
 
-    expect(tarjeta?.style.getPropertyValue("--flow-node-accent")).toBe("#f59e0b");
-    expect(tarjeta?.style.getPropertyValue("--flow-node-surface")).toBe("#b45309");
+    expect(tarjeta?.style.getPropertyValue("--flow-node-accent")).toBe("#d4a72c");
+    expect(tarjeta?.style.getPropertyValue("--flow-node-surface")).toBe("#8a6418");
   });
 
   it("no recibe el tratamiento de cristal de Mensaje", () => {
@@ -652,18 +652,33 @@ describe("el tamaño de los puntos de conexión es del sistema", () => {
     }
   });
 
-  it("es plata neutra: ni el violeta del sistema, ni el ámbar de una herramienta, ni el cyan que tuvo antes", () => {
+  it("es plata neutra: ni el violeta del sistema, ni el dorado de una herramienta, ni el cyan que tuvo antes", () => {
     const dark = readFileSync("src/shared/styles/tokens/palette-dark.css", "utf8");
     const light = readFileSync("src/shared/styles/tokens/palette-light.css", "utf8");
 
     const relleno = (hoja: string) => hoja.match(/--handle-fill:\s*(#[0-9a-fA-F]{3,6})/)?.[1] ?? "";
 
-    // Ni el primario de marca (violeta), ni el ámbar de Esperar respuesta, ni
+    // LA IDENTIDAD SE PREGUNTA AL REGISTRO, no se copia aquí. Esta comprobación
+    // ya se quedó desactualizada una vez: llevaba escrito a mano el ámbar
+    // `#f59e0b` de cuando la herramienta era ámbar, así que seguía pasando
+    // mientras afirmaba algo que había dejado de ser cierto. Leyendo el color
+    // vigente de `definition.ts` —la única fuente— el test sigue a la
+    // herramienta cuando la herramienta cambie de color.
+    const doradoEspera = resolveTool("question").colors.header.toLowerCase();
+
+    // Ni el primario de marca (violeta), ni el dorado de Esperar respuesta, ni
     // el cyan de la iteración anterior de este mismo token —los tres son
     // identidades que la plata tiene que dejar atrás, no solo evitar de
     // entrada—.
     expect(dark.match(/--primary:\s*(#[0-9a-fA-F]{3,6})/)?.[1]).not.toBe(relleno(dark));
     expect(light.match(/--primary:\s*(#[0-9a-fA-F]{3,6})/)?.[1]).not.toBe(relleno(light));
+    expect(relleno(dark).toLowerCase()).not.toBe(doradoEspera);
+    expect(relleno(light).toLowerCase()).not.toBe(doradoEspera);
+    // El ámbar histórico se sigue vigilando, pero por lo que ES HOY y no por lo
+    // que fue: el token `--amber` del tema claro y el trazo de una arista de
+    // fallback. Que un punto de conexión no se confunda con ninguno de los dos
+    // sigue siendo una garantía útil, aunque ya no sea el color de ninguna
+    // herramienta.
     expect(relleno(dark).toLowerCase()).not.toBe("#f59e0b");
     expect(relleno(light).toLowerCase()).not.toBe("#f59e0b");
     expect(relleno(dark).toLowerCase()).not.toBe("#67e8f9");

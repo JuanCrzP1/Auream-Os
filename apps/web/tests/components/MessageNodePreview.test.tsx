@@ -1180,3 +1180,30 @@ describe("el rótulo de un medio es su tipo", () => {
     expect(base.slice(0, base.indexOf("}"))).not.toMatch(/text-transform/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Independencia entre herramientas — la mitad que faltaba.
+//
+// `WaitResponseNode.test.tsx` ya comprueba que Esperar respuesta no monta
+// ninguna pieza de Mensaje. Esta es la comprobación en la dirección contraria,
+// y la razón de que existan las dos es que un import accidental solo se detecta
+// en el sentido en que se mira: sin esto, alguien podría traer una pieza de
+// Esperar respuesta a Mensaje y ningún test lo vería.
+//
+// NO se repite aquí la prueba de que cada herramienta tiene editor y cuerpo
+// PROPIOS —esa ya vive en el archivo de Esperar respuesta y mira a las dos a la
+// vez—: duplicarla sería tener dos sitios donde arreglar la misma regla.
+// ---------------------------------------------------------------------------
+
+describe("independencia entre herramientas", () => {
+  it("Mensaje no monta ninguna pieza de Esperar respuesta", () => {
+    const { container } = montar([texto("a", "Hola, ¿en qué te ayudo?")]);
+
+    // Clases REALES y exclusivas de Esperar respuesta: el cuerpo del nodo
+    // cerrado (`wr-node`), una de sus salidas (`wr-out`), la raíz de su editor
+    // (`wait-response`) y uno de los controles de ese editor (`wr-switch`).
+    for (const clase of ["wr-node", "wr-out", "wait-response", "wr-switch"]) {
+      expect(container.querySelector(`.${clase}`), `Mensaje montó .${clase}`).toBeNull();
+    }
+  });
+});

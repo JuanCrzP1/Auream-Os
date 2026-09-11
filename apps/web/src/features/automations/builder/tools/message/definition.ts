@@ -31,10 +31,15 @@ export const messageTool: ToolDefinition = {
   terminal: false,
   executable: true,
   defaultConfig: { items: [] },
+  // AZUL AUREAM, un escalón más cielo que antes. Header y gradient suben lo
+  // que antes eran los tonos de body y de header respectivamente —el mismo
+  // matiz, no uno nuevo—, así que sigue siendo identificable como el azul de
+  // Mensaje y no se acerca al cyan de Intervalo (`#0891b2`). Fuente única:
+  // ningún otro archivo del tool declara un hex propio.
   colors: {
-    header: "#2563eb",
-    body: "#1d4ed8",
-    gradient: "linear-gradient(135deg,#3b82f6,#1d4ed8)"
+    header: "#3b82f6",
+    body: "#2563eb",
+    gradient: "linear-gradient(135deg,#60a5fa,#2563eb)"
   },
   glyph: "💬"
 };

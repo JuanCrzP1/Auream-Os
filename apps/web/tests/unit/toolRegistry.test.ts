@@ -89,6 +89,25 @@ describe("registry de herramientas", () => {
     expect(new Set(types).size).toBe(types.length);
   });
 
+  it("no tiene colores de cabecera duplicados: dos herramientas no se leen como una", () => {
+    // ESTO YA PASÓ. Distribuidor y Esperar respuesta declararon el mismo
+    // `#f59e0b` durante un tiempo y en el lienzo eran indistinguibles: el color
+    // de cabecera es lo que identifica una herramienta de un vistazo, así que
+    // dos iguales son dos herramientas que el usuario no puede separar. No lo
+    // detectó ningún test —los de arriba solo miran que cada color esté BIEN
+    // FORMADO— sino el ojo, meses después.
+    //
+    // No pincha ningún color concreto, que es lo que este archivo evita a
+    // propósito: cambiar una paleta sigue sin romper nada. Lo único que fija es
+    // que sean distintos entre sí.
+    const headers = listAllTools().map((tool) => tool.colors.header.toLowerCase());
+    const repetidos = headers.filter((color, i) => headers.indexOf(color) !== i);
+
+    expect(repetidos, `colores de cabecera compartidos: ${[...new Set(repetidos)].join(", ")}`)
+      .toEqual([]);
+    expect(new Set(headers).size).toBe(headers.length);
+  });
+
   it("declara si el motor sabe ejecutar cada herramienta, sin fingir capacidad", () => {
     // Las herramientas sin comportamiento de ejecución deben declararlo: su
     // handler falla explícitamente con `*_not_implemented`.

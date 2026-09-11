@@ -345,31 +345,42 @@
  * el azul de la herramienta. */
 
 .flow-node:has(.flow-node__blocks) {
-  /* Filo lila de un píxel: el mismo halo que ya usa el marco del editor
-     (`--glow-soft` es exactamente esto en el resto del producto). */
+  /* TRES CAPAS, no una. La primera corrección solo subió el porcentaje del
+     filo (34%→46%) y del cristal, y a ese nivel de detalle seguía sin
+     notarse al lado de Esperar respuesta: esa herramienta no tiene una sola
+     capa extra —solo la sombra de base, que comparten las catorce— y aun así
+     se lee con relieve, porque su color es sólido y opaco de borde a borde.
+     Mensaje necesitaba la misma nitidez de borde, no solo más porcentaje.
+     Así que además de subir el filo (46%→62%) se añade una sombra CORTA y
+     oscura, pegada al canto —la que de verdad dibuja el «escalón» entre el
+     nodo y el lienzo, del mismo modo que un icono elevado o un botón
+     neumórfico separan su silueta—; la sombra larga de abajo sigue siendo la
+     misma que ya comparten las catorce herramientas, sin tocarla. */
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 0 1px color-mix(in oklab, var(--primary) 34%, transparent);
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    0 0 0 1px color-mix(in oklab, var(--primary) 62%, transparent);
 }
 
 /* CRISTAL DE VERDAD, no una imitación.
  *
  * Ahora que el color llega por variable, la superficie puede construirse: se
  * mezcla el color de la herramienta con transparencia y se difumina lo que
- * queda detrás. El lienzo se percibe a través del nodo —tenue, como a través
- * de vidrio tintado— en vez de quedar tapado por un rectángulo opaco.
+ * queda detrás.
  *
- * Las proporciones salen de medir, no de tantear: se probaron 82/88% de
- * cabecera contra 70/80% de cuerpo sobre el lienzo real. La cabecera se queda
- * en 86% porque sostiene el título —a 82% el azul perdía presencia y a 88% el
- * contraste del blanco empezaba a bajar—; el cuerpo cede hasta 80%, donde el
- * lienzo se percibe (60 puntos de azul menos que opaco) sin que el nodo deje
- * de leerse azul. El `saturate` compensa el lavado que el desenfoque produce
- * siempre — sin él, el azul se apaga al volverse translúcido.
- *
- * El desenfoque es corto a propósito. Uno grande convierte el lienzo en una
- * mancha de color y el nodo empieza a parecer una UI de videojuego; a 10-12px
- * se intuye lo que hay detrás sin que compita con el contenido. */
+ * CASI OPACO, A PROPÓSITO. La primera versión dejaba el lienzo asomar de
+ * verdad —86% de cabecera, 80% de cuerpo—, y ese vidrio tintado hacía que
+ * Mensaje se fundiera con el fondo del lienzo más que cualquiera de las
+ * otras trece herramientas, que pintan su color sólido y opaco. Una segunda
+ * pasada subió a 94%/90% sin bajar el desenfoque, y seguía leyéndose blando:
+ * un borde algo transparente Y desenfocado a la vez no llega a leerse nítido
+ * por mucho que el color de debajo sea casi el mismo. Aquí se resuelven las
+ * dos cosas juntas — 97%/94% de opacidad y la mitad del desenfoque de antes
+ * (10px→4px, 12px→5px)—: el canto queda tan definido como el de Esperar
+ * respuesta, y lo que le queda de cristal es el reflejo diagonal de abajo, no
+ * la transparencia del fondo. El `saturate` compensa el lavado que el
+ * desenfoque produce siempre — sin él, el azul se apaga al volverse
+ * translúcido incluso a este nivel de opacidad. */
 .flow-node:has(.flow-node__blocks) .flow-node__header,
 .flow-node:has(.flow-node__blocks) .flow-node__body {
   position: relative;
@@ -377,15 +388,15 @@
 }
 
 .flow-node:has(.flow-node__blocks) .flow-node__header {
-  background: color-mix(in srgb, var(--flow-node-accent) 86%, transparent);
-  backdrop-filter: blur(10px) saturate(1.35);
-  -webkit-backdrop-filter: blur(10px) saturate(1.35);
+  background: color-mix(in srgb, var(--flow-node-accent) 97%, transparent);
+  backdrop-filter: blur(4px) saturate(1.35);
+  -webkit-backdrop-filter: blur(4px) saturate(1.35);
 }
 
 .flow-node:has(.flow-node__blocks) .flow-node__body {
-  background: color-mix(in srgb, var(--flow-node-surface) 80%, transparent);
-  backdrop-filter: blur(12px) saturate(1.3);
-  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  background: color-mix(in srgb, var(--flow-node-surface) 94%, transparent);
+  backdrop-filter: blur(5px) saturate(1.3);
+  -webkit-backdrop-filter: blur(5px) saturate(1.3);
 }
 
 /* El contenido queda POR ENCIMA del reflejo: un velo sobre el texto lo

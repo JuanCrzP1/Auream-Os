@@ -94,6 +94,14 @@ function CanvasInner(props: BuilderCanvasProps) {
              inicial: el zoom que elija el usuario después no se toca, y el
              tamaño real de los nodos no cambia. */
           fitViewOptions={{ padding: 0.25, maxZoom: 0.8 }}
+          /* El límite real de alejamiento interactivo, no el del encuadre
+             inicial de arriba. React Flow trae 0.5 por defecto —a mitad de
+             tamaño real—, que se queda corto en cuanto la automatización
+             crece: un flujo de veinte nodos ya no cabe entero en pantalla y
+             hay que desplazarse para verlo. 0.05 deja ver diez veces más
+             lienzo. El acercamiento (`maxZoom`) no se toca: se queda en el
+             2 por omisión de React Flow, igual que antes. */
+          minZoom={0.05}
           snapToGrid
           nodes={props.nodes}
           edges={props.edges}

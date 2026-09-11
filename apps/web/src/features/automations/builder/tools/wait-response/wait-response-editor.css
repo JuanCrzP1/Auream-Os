@@ -13,14 +13,14 @@
  * `definition.ts`, que es donde el proyecto guarda el color de cada una—. */
 
 .wait-response {
-  /* ÁMBAR, la identidad de la herramienta.
+  /* DORADO PREMIUM, la identidad de la herramienta.
    *
    * El tono vivo para lo encendido —interruptores, unidad activa, filos de
    * foco— y su versión translúcida para rellenos y sangrados.
    *
    * Es el mismo valor que `definition.ts` publica al lienzo: el nodo, su
    * cabecera y este editor se leen como una sola pieza. */
-  --wr-amber: #f59e0b;
+  --wr-amber: #d4a72c;
   --wr-amber-soft: color-mix(in srgb, var(--wr-amber) 18%, transparent);
 
   height: 100%;
@@ -448,11 +448,11 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  /* Un poco más que antes: con la tarjeta de abajo, 3px hacía que las dos
-     superficies casi se tocaran. 5px sigue siendo una separación pequeña —el
-     pedido explícito— pero ya se lee como dos piezas y no como una sola
-     partida por una línea. */
-  gap: 5px;
+  /* Con la tarjeta más alta, la separación sube en la misma proporción: por
+     debajo de esto las dos superficies vuelven a leerse casi pegadas. A este
+     tamaño ya se distinguen de un vistazo como dos caminos independientes,
+     no como una lista partida por una línea. */
+  gap: 9px;
 }
 
 /* Una salida: el ANCLA, no la tarjeta.
@@ -478,8 +478,8 @@
 /* LA MINI TARJETA. Fondo oscuro translúcido sobre el ámbar —el mismo recurso
  * que ya usa `.wr-node__chip` para «Máximo: 30 minutos», no el cristal claro
  * de Mensaje: esta herramienta tiene su propio lenguaje de superficie y esto
- * lo repite en vez de importar el de otra—. Un borde de un píxel casi
- * invisible y un filo superior de luz son lo que la separan de ser solo un
+ * lo repite en vez de importar el de otra—. Un borde de un píxel sutil pero
+ * perceptible y un filo superior de luz son lo que la separan de ser solo un
  * fondo: sin ellos sería una mancha, no una pieza.
  *
  * `flex: 1 1 auto` la estira a lo ancho de la fila —las dos miden lo mismo,
@@ -489,16 +489,22 @@
 .wr-out__card {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
   flex: 1 1 auto;
-  padding: 5px 8px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  font-size: 0.71rem;
-  line-height: 1.2;
+  /* El padding vertical es lo que le da a la tarjeta su presencia: sube a una
+     fila de ~48px, del tamaño de un camino del flujo y no de una línea de
+     texto suelta. El horizontal apenas cambia, porque el ancho ya lo daba
+     `flex: 1 1 auto`. */
+  padding: 15px 12px;
+  border-radius: 9px;
+  /* Un poco más opacas que el resto de superficies internas del nodo, para
+     que la tarjeta se despegue del fondo ámbar en vez de fundirse con él. */
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  font-size: 0.76rem;
+  line-height: 1.3;
 }
 
 /* El punto: el indicador semántico DENTRO de la tarjeta. No es el handle —ese
@@ -507,21 +513,21 @@
    por la misma razón: los dos dicen lo mismo, uno dentro de la tarjeta y otro
    en el punto de conexión. */
 .wr-out__dot {
-  width: 5px;
-  height: 5px;
-  flex: 0 0 5px;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
   border-radius: 50%;
 }
 
 .wr-out--respuesta .wr-out__dot {
   background: var(--status-success);
   /* Halo del mismo color: da presencia al punto sin engordarlo. */
-  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--status-success) 24%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-success) 28%, transparent);
 }
 
 .wr-out--tiempo .wr-out__dot {
   background: var(--status-danger);
-  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--status-danger) 24%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-danger) 28%, transparent);
 }
 
 .wr-out__label {
@@ -538,8 +544,8 @@
  * salida por defecto de una espera que no se cumplió y va en el ámbar claro de
  * la propia herramienta, atenuado. El verde/rojo semántico ya vive en el punto
  * de al lado y en el handle del borde —dos señales bastan—; ponerlo además en
- * el TEXTO de una tarjeta de 12px de alto lo convertiría en la única cosa que
- * se lee, por encima del propio nombre de la salida. */
+ * el TEXTO de la tarjeta lo convertiría en la única cosa que se lee, por
+ * encima del propio nombre de la salida. */
 .wr-out--respuesta {
   color: rgba(255, 255, 255, 0.95);
 }
