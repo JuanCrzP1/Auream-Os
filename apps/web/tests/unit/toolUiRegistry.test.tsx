@@ -93,21 +93,44 @@ describe("contrato ToolUi", () => {
     expect(findToolUi("message")?.Editor).toBeTypeOf("function");
   });
 
-  it("las salidas propias son la excepción: solo las declara la herramienta con varios resultados", () => {
-    // `ownsOutputs` hace que `FlowNodeCard` no ponga su salida única. Solo debe
-    // valer para la herramienta que dibuja las suyas: si alguna otra lo
-    // declarara sin montar ningún `Handle`, ese nodo se quedaría SIN salida y
-    // no habría forma de conectarlo. Por eso se fija el conjunto exacto.
+  it("quien declara salidas propias tiene que poder dibujarlas", () => {
+    // `ownsOutputs` hace que `FlowNodeCard` no ponga su salida única. Si una
+    // herramienta lo declarara sin montar ningún `Handle`, ese nodo se quedaría
+    // SIN salida y no habría forma de conectarlo.
+    //
+    // LA REGLA, NO LA LISTA: los `Handle` propios se montan dentro del cuerpo
+    // compacto —es el único sitio de la herramienta que el lienzo pinta—, así
+    // que declarar salidas propias sin cuerpo propio es la contradicción que
+    // deja el nodo mudo. Se comprueba sobre TODAS, y así la regla sigue
+    // valiendo para la siguiente herramienta que gane salidas sin que nadie
+    // tenga que acordarse de volver aquí.
     const conSalidasPropias = listUiTypes().filter((type) => findToolUi(type)?.ownsOutputs);
 
-    expect(conSalidasPropias).toEqual(["question"]);
-    expect(findToolUi("question")?.CompactBody).toBeTypeOf("function");
+    expect(conSalidasPropias.length).toBeGreaterThan(0);
+    for (const type of conSalidasPropias) {
+      expect(findToolUi(type)?.CompactBody, `${type} declara salidas sin cuerpo`).toBeTypeOf(
+        "function"
+      );
+    }
+
+    // Y SIGUE SIENDO LA EXCEPCIÓN. Lo normal es la salida única del cascarón:
+    // si algún día lo declararan todas, la bandera habría dejado de significar
+    // algo y esto avisaría.
+    expect(conSalidasPropias.length).toBeLessThan(listUiTypes().length);
+
+    // Las dos que hoy la declaran, y por qué: Esperar respuesta tiene DOS
+    // resultados —respondió o se agotó el tiempo— y Distribuidor tantos como
+    // salidas haya configurado el usuario, incluido ninguno.
+    expect(conSalidasPropias).toEqual(["question", "distributor"]);
   });
 
   it("el cuerpo compacto es opcional: solo lo declara quien lo necesita", () => {
     // Mensaje fue la primera: su contenido es una SECUENCIA y un resumen de una
     // línea no dice qué bloques la forman. Esperar respuesta es la segunda, por
     // otro motivo —enseña la pregunta y, debajo, cuánto espera y dónde guarda—.
+    // Distribuidor es la tercera, y por un motivo distinto a los dos anteriores:
+    // sus salidas llevan un `Handle` cada una y el cuerpo propio es el único
+    // sitio donde puede montarlos.
     //
     // Lo que se fija es que el hueco siga siendo OPCIONAL: las demás se
     // conforman con el compacto genérico del cascarón en lugar de escribir un
@@ -115,9 +138,10 @@ describe("contrato ToolUi", () => {
     // que el campo dejó de ser opcional de hecho.
     expect(findToolUi("message")?.CompactBody).toBeTypeOf("function");
     expect(findToolUi("question")?.CompactBody).toBeTypeOf("function");
+    expect(findToolUi("distributor")?.CompactBody).toBeTypeOf("function");
 
     const conCompacto = listUiTypes().filter((type) => findToolUi(type)?.CompactBody);
-    expect(conCompacto).toEqual(["message", "question"]);
+    expect(conCompacto).toEqual(["message", "question", "distributor"]);
     expect(conCompacto.length).toBeLessThan(listUiTypes().length);
   });
 });

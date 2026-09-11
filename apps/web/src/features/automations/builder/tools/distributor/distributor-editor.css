@@ -1,0 +1,343 @@
+/* ===== DISTRIBUIDOR — EDITOR Y NODO EN REPOSO =====
+ *
+ * Vive con su herramienta. No importa ninguna hoja de otra ni ninguna otra la
+ * importa: Mensaje, Esperar respuesta y Distribuidor comparten el MARCO
+ * (`node-expanded.css`, del sistema) y nada más.
+ *
+ * El tamaño lo fija el marco expandido y el ancho del nodo lo fija `.flow-node`
+ * —264px para las catorce—. Aquí no se declara ni uno ni otro.
+ *
+ * Todo el color sale de tokens del tema salvo el plateado, que es la identidad
+ * de ESTA herramienta y se declara aquí abajo —igual que `tool.colors` en su
+ * `definition.ts`, que es donde el proyecto guarda el color de cada una—. */
+
+.distributor {
+  /* PLATEADO DE ACERO, la identidad de la herramienta.
+   *
+   * Dos escalones, y son los DOS que publica `definition.ts`: `--ds-silver` es
+   * su cabecera y `--ds-steel` su cuerpo. No son valores nuevos —eso sería una
+   * segunda fuente de verdad para el mismo color—, y un test lo comprueba.
+   *
+   * CADA UNO TIENE SU PAPEL. `--ds-silver` es identidad: el filo metálico que
+   * marca una salida. `--ds-steel` es lo INTERACTIVO: foco, bordes vivos,
+   * hover. Están cerca en luminosidad desde que la cabecera se oscureció por
+   * legibilidad, pero siguen respondiendo a preguntas distintas, así que
+   * fundirlos ataría el acento de interacción al color de la cabecera.
+   *
+   * Por qué el acento es el cuerpo y no la cabecera: este editor se pinta sobre
+   * la superficie del tema, que en claro es casi blanca, y `--ds-steel`
+   * mantiene contraste contra los dos fondos —4.8:1 sobre el claro, 3.9:1 sobre
+   * el oscuro—, así que la herramienta se comporta igual en ambos temas sin
+   * duplicar la hoja. */
+  --ds-silver: #748199;
+  --ds-steel: #64748b;
+  --ds-steel-soft: color-mix(in srgb, var(--ds-steel) 18%, transparent);
+
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+/* El editor es quien desplaza, no el marco: `node-expanded__body` no lo hace a
+   propósito, para que cada herramienta decida qué parte suya queda quieta. */
+
+.distributor__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.distributor__rule {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--border);
+}
+
+/* Mismo escalón tipográfico que el rótulo de sección de las otras herramientas:
+   es un encabezado de verdad —`h3`— y no un párrafo en negrita, para que un
+   lector de pantalla pueda saltar por las secciones del editor. */
+.distributor__label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.distributor__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ----- Estado vacío -----
+ *
+ * Una caja de trazo discontinuo, no un aviso: lo que dice es «aquí todavía no
+ * hay nada», y el trazo abierto es la forma que tiene una superficie de
+ * anunciar que espera contenido sin parecer un error. */
+.distributor__empty {
+  margin: 2px 0 0;
+  padding: 14px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* ----- Lista de salidas ----- */
+
+.distributor__list {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* UNA FILA, NO UNA TARJETA. Seis salidas tienen que caber leyéndose como una
+   lista, y una tarjeta por salida convertiría el editor en una pila de marcos
+   casi vacíos. El filo plateado de la izquierda es lo único que las marca: da
+   la identidad metálica sin añadir una caja. */
+.ds-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 8px 9px 11px;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--ds-silver);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  transition: border-color var(--speed-fast) var(--ease-out);
+}
+
+.ds-row:hover {
+  border-color: color-mix(in srgb, var(--ds-steel) 45%, var(--border));
+  border-left-color: var(--ds-steel);
+}
+
+.ds-row__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Discreto en reposo y rojo solo al alcanzarlo: eliminar es destructivo, pero
+   un botón rojo por salida teñiría la lista entera de alarma. Mismo criterio
+   que `.flow-node__action-btn--delete` en el lienzo. */
+.ds-row__remove {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.ds-row__remove svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ds-row__remove:hover {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
+}
+
+.ds-row__remove:focus-visible {
+  outline: 2px solid var(--ds-steel);
+  outline-offset: 1px;
+}
+
+/* ----- Añadir -----
+ *
+ * Trazo discontinuo: es la acción que CREA algo que todavía no está, y comparte
+ * esa gramática con la caja del estado vacío de arriba. Al alcanzarlo se cierra
+ * en acero, que es la señal de que ya es un botón y no un hueco. */
+.distributor__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 2px;
+  padding: 9px 12px;
+  border: 1px dashed color-mix(in srgb, var(--ds-steel) 50%, var(--border));
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.distributor__add svg {
+  width: 14px;
+  height: 14px;
+}
+
+.distributor__add:hover {
+  border-style: solid;
+  border-color: var(--ds-steel);
+  background: var(--ds-steel-soft);
+}
+
+.distributor__add:focus-visible {
+  outline: 2px solid var(--ds-steel);
+  outline-offset: 2px;
+}
+
+/* ===== NODO EN REPOSO =====
+ *
+ * Se monta dentro de `.flow-node__body`, cuyo fondo es el color de la
+ * herramienta: aquí el texto va en blancos translúcidos como el resto de las
+ * tarjetas del lienzo, no con los tokens de superficie del editor. Ese fondo es
+ * el acero de `definition.ts` en los dos temas, así que la escala de blancos
+ * funciona igual en claro y en oscuro y no hace falta duplicar la hoja por
+ * tema. El blanco sobre ese acero da 4.8:1, de sobra para el tamaño que se usa
+ * aquí. */
+
+.ds-node {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Sin salidas el nodo dice lo que le falta, atenuado y en cursiva: se lee como
+   un rótulo del sistema y no como algo que alguien escribió. Mismo recurso que
+   usa el nodo de Esperar respuesta cuando no hay mensaje propio — es lenguaje
+   del lienzo, no una importación de aquella herramienta. */
+.ds-node__empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+/* El recuento, en versalitas muy tenues: ordena sin competir con los rótulos de
+   las salidas, que es lo que de verdad hay que leer. */
+.ds-node__count {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* La lista se estira hasta el borde real de la tarjeta por la derecha
+   —`.flow-node__body` mete 12px— para que el handle pueda anclarse en el canto,
+   que es donde React Flow arranca la curva. Sin esto el punto quedaba flotando
+   dentro del nodo y la conexión nacía torcida. */
+.ds-node__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  /* La separación entre salidas, ajustada contra el alto real de la tarjeta.
+     Con 8px sobraba aire y la lista se deshacía en piezas sueltas; con 4px las
+     tarjetas se rozaban y las tres se leían como un bloque partido por líneas.
+     5px es el escalón justo antes de ese roce: las salidas se agrupan y se
+     leen como los caminos de un mismo nodo, y entre dos tarjetas sigue
+     entrando una franja de fondo perceptible. Por debajo de esto ya no hay
+     margen de ajuste, solo tarjetas pegadas. */
+  gap: 5px;
+  margin-right: -12px;
+  padding-right: 12px;
+}
+
+/* UNA SALIDA: tarjeta de verdad, y además el ancla del punto.
+ *
+ * `position: relative` es la referencia del `Handle` —se posiciona contra ESTA
+ * caja—, así que cada salida tiene su propia altura, su punto centrado y dos
+ * puntos no pueden solaparse.
+ *
+ * POR QUÉ ES TINTA Y NO LUZ. La primera versión era un velo blanco al 8% con
+ * un filo a la izquierda, y sobre el acero del cuerpo eso movía la superficie
+ * solo 4 puntos de luminosidad: la salida se perdía dentro del nodo. Subir el
+ * blanco no servía —cuanto más claro el velo, menos contraste le queda al
+ * rótulo encima—. Oscurecer resuelve las dos cosas a la vez: la tarjeta se
+ * separa 11 puntos del cuerpo (la referencia de Esperar respuesta se separa 7)
+ * y el rótulo blanco sube de 4.1:1 a 7.0:1.
+ *
+ * SIGUE SIENDO EL MISMO ACERO. El velo negro baja los tres canales en la misma
+ * proporción, así que el matiz y la familia del color no se mueven: es el
+ * cuerpo del nodo un escalón más hondo, no un color nuevo ni el de otra
+ * herramienta.
+ *
+ * Y NO ES UN AGUJERO. Una superficie oscura a secas se leería como un recorte
+ * en el nodo; lo que la convierte en pieza es el filo de un píxel y la arista
+ * superior encendida, que es lo que le da grosor. Mismo recurso que usan las
+ * tarjetas de Esperar respuesta, del que aquí se toma la PROPORCIÓN —alto,
+ * radio, relleno— y no el color.
+ *
+ * `min-height` y no `height`: el rótulo hoy se recorta en una línea, y si algún
+ * día se le deja crecer, la tarjeta crece con él en vez de recortarlo. El
+ * relleno vertical es el que manda si eso ocurre. El ancho no se toca: la
+ * tarjeta ocupa la fila entera y el relleno derecho sigue guardando el sitio
+ * del punto. */
+.ds-out {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 16px 12px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.ds-out__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* EL HANDLE NO TIENE ESTILO PROPIO, y es deliberado.
+ *
+ * Su identidad —12px, plata de `--handle-fill`/`--handle-border`— la fija
+ * `.react-flow__handle.flow-node__handle` en `flow-node.css`, UNA SOLA VEZ para
+ * las catorce herramientas. Esta hoja no la repite: estos puntos ya llevan esa
+ * clase y la heredan igual que el handle de entrada, incluido el estado
+ * `connecting`/`valid` en verde de `canvas-edges.css`. Si el Builder vuelve a
+ * tocar esa identidad, estos lo siguen solos.
+ *
+ * LO ÚNICO QUE SE AJUSTA ES LA COLOCACIÓN, que no es identidad: React Flow pone
+ * `right: 0` con `.react-flow__handle-right`, y como el ancla es la FILA eso
+ * deja el punto a 12px del canto —el relleno del cuerpo—. Se compensa esa
+ * distancia para que quede montado sobre el borde del nodo, que es donde está
+ * el de entrada. Ni tamaño, ni color, ni borde: solo el desplazamiento. */
+.ds-out__handle.react-flow__handle-right {
+  right: -12px;
+}
