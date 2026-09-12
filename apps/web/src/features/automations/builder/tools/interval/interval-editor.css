@@ -1,0 +1,1072 @@
+/* ===== INTERVALO — EDITOR Y NODO EN REPOSO =====
+ *
+ * Vive con su herramienta. No importa ninguna hoja de otra ni ninguna otra la
+ * importa: cada herramienta comparte el MARCO (`node-expanded.css`, del
+ * sistema) y nada más.
+ *
+ * El tamaño lo fija el marco expandido y el ancho del nodo lo fija `.flow-node`
+ * —264px para las catorce—. Aquí no se declara ni uno ni otro.
+ *
+ * Todo el color sale de tokens del tema salvo el cyan, que es la identidad de
+ * ESTA herramienta y ya estaba aprobada: se repite aquí el mismo valor que
+ * `definition.ts` publica al lienzo, igual que hacen Esperar respuesta con su
+ * dorado y Distribuidor con su acero. */
+
+.interval {
+  /* CYAN, la identidad de la herramienta.
+   *
+   * Los dos escalones que publica `definition.ts`: `--iv-cyan` es su cabecera y
+   * `--iv-deep` su cuerpo. No son valores nuevos —eso sería una segunda fuente
+   * de verdad para el mismo color— y un test lo comprueba.
+   *
+   * El acento interactivo es `--iv-cyan`: sobre la superficie del tema mantiene
+   * contraste en claro (3.7:1) y en oscuro, así que la herramienta se comporta
+   * igual en ambos sin duplicar la hoja. */
+  --iv-cyan: #0891b2;
+  --iv-deep: #0e7490;
+  --iv-soft: color-mix(in srgb, var(--iv-cyan) 14%, transparent);
+  /* Superficie de un control: un escalón por encima del panel, no un hueco. */
+  --iv-field: color-mix(in srgb, var(--text) 6%, var(--surface-alt));
+
+  /* DE DÓNDE SALÍA EL MORADO DE LA FECHA.
+   *
+   * Un `<input type="date">` o `type="time"` no es una caja de texto: son
+   * segmentos —día, mes, año— y el navegador RESALTA el que tiene el foco con
+   * el color de selección del documento. Ese color es `--selection-bg`, el
+   * violeta de la marca, así que «11/09/2026» aparecía teñido de morado sin que
+   * esta hoja hubiera escrito un solo color.
+   *
+   * Se corrige donde corresponde —dentro del editor y nada más—: el violeta
+   * sigue siendo el de la marca en todo el resto del producto. `accent-color`
+   * hace lo propio con el cromo que el navegador pinta por su cuenta (el
+   * selector de fecha, las flechas del número). */
+  accent-color: var(--iv-cyan);
+
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+/* NINGUNA SECCIÓN SE ENCOGE. AQUÍ ESTABA EL BUG, Y NO ERA SCROLL.
+ *
+ * `.interval` es una COLUMNA FLEX DE ALTURA FIJA —«100%» del cuerpo del marco,
+ * que no crece—. En esa situación flexbox no desborda: ENCOGE. Cada hijo trae
+ * `flex-shrink: 1` de fábrica, así que al encender el horario y crecer
+ * `.iv-extra` hasta 482px, el reparto le robaba la altura al panel del momento
+ * principal: de 150px pasaba a 67px, justo lo que miden las pestañas.
+ *
+ * Y como `.iv-panel` lleva `overflow: hidden` —lo lleva para que las pestañas
+ * compartan silueta con el cuerpo—, su contenido no se salía: SE RECORTABA. El
+ * resultado en pantalla era exactamente el que se reportó: las dos pestañas
+ * seguían ahí, la fecha y la hora —o la espera— desaparecían, y la tarjeta del
+ * horario quedaba pegada justo debajo ocupando su sitio.
+ *
+ * No era un desmontaje, ni `display:none`, ni opacidad, ni desplazamiento: los
+ * campos seguían en el DOM y medían lo suyo —114px de cuerpo dentro de un panel
+ * de 67px—. Por eso mirar el árbol no lo encontraba y medir el panel tampoco:
+ * el panel SÍ se veía; lo que no se veía era lo que llevaba dentro.
+ *
+ * Con `flex-shrink: 0` cada sección conserva su altura natural, la columna
+ * desborda cuando toca y `overflow-y: auto` —que ya estaba— hace lo que se
+ * espera: desplazar. El momento principal deja de ser negociable. */
+.interval > * {
+  flex-shrink: 0;
+}
+
+/* La selección dentro del editor lleva SU acento, no el de la marca: es lo que
+   quita el morado de los segmentos de fecha y hora. */
+.interval ::selection {
+  background: color-mix(in srgb, var(--iv-cyan) 34%, transparent);
+  color: var(--text);
+}
+
+/* El editor es quien desplaza, no el marco: `node-expanded__body` no lo hace a
+   propósito, para que cada herramienta decida qué parte suya queda quieta. */
+
+.interval__label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.iv-field__label {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.iv-field__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ----- La confirmación y el aviso -----
+ *
+ * Mismo sitio, dos estados. La frase verde dice qué va a pasar; la de aviso,
+ * por qué todavía no se puede guardar. Nunca se ven las dos: una configuración
+ * o significa algo o no. */
+
+.interval__summary {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.interval__summary {
+  border: 1px solid color-mix(in srgb, var(--iv-cyan) 26%, transparent);
+  background: color-mix(in srgb, var(--iv-cyan) 9%, var(--surface-alt));
+  color: var(--text);
+}
+
+/* ----- EL PANEL DEL PROGRAMADOR -----
+ *
+ * UNA PIEZA, NO CUATRO. Las tres secciones y la configuración viven dentro del
+ * mismo contorno: las pestañas SON el borde superior del panel, no una fila que
+ * flota encima. Esa es toda la metáfora —un archivo con secciones—, y se
+ * consigue con contorno, radio y fondo compartidos; no hace falta dibujar
+ * ninguna carpeta ni ponerle un icono.
+ *
+ * El radio es generoso y el del panel manda: las pestañas de los extremos
+ * redondean solo su esquina exterior para que la silueta sea continua. */
+
+.iv-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-alt);
+  /* Profundidad contenida: una sombra corta pegada al canto, no una tarjeta
+     flotando. El panel se apoya en el editor, no se despega de él. */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* DOS COLUMNAS, no tres. La tercera pestaña era el horario, y sacarlo de aquí
+   no fue un cambio de maquetación: era afirmar una exclusividad falsa. Ahora
+   esta fila contiene solo lo que de verdad se excluye entre sí. */
+.iv-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Una sección. En reposo está HUNDIDA —fondo más apagado y su propio filo
+   inferior—: se ve, se entiende que es otra forma de programar, y no compite
+   con la que está abierta. */
+.iv-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 11px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--border) 22%, transparent);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.iv-tab + .iv-tab {
+  border-left: 1px solid var(--border);
+}
+
+.iv-tab__icon {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.iv-tab__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.iv-tab__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iv-tab:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--border) 12%, transparent);
+}
+
+/* LA SECCIÓN ABIERTA. Comparte fondo con el cuerpo y PIERDE su filo inferior,
+   así que deja de leerse como un botón encendido y pasa a leerse como la
+   sección que está abierta: el hueco por el que se continúa hacia el
+   contenido. El acento cyan es una línea de dos píxeles arriba —el borde de la
+   ficha—, no un relleno de color. */
+.iv-tab--on {
+  background: var(--surface);
+  border-bottom-color: transparent;
+  box-shadow: inset 0 2px 0 var(--iv-cyan);
+  color: var(--text);
+}
+
+.iv-tab:focus-visible {
+  outline: 2px solid var(--iv-cyan);
+  outline-offset: -3px;
+}
+
+/* El contenido de la sección abierta. Comparte fondo con su pestaña: es lo que
+   cierra la conexión entre las dos. */
+.iv-panel__body {
+  padding: 14px;
+  background: var(--surface);
+  animation: iv-panel-entra var(--speed-fast) var(--ease-out);
+}
+
+/* Entrada muy corta al cambiar de sección: un velo y dos píxeles de
+   desplazamiento. Lo justo para que el cambio se perciba como abrir otra
+   sección y no como un salto; nada que haya que esperar. */
+@keyframes iv-panel-entra {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+/* ===== LA RESTRICCIÓN HORARIA =====
+ *
+ * FUERA DEL PANEL, Y ESO ES EL MODELO. Lo de arriba es una elección entre dos
+ * excluyentes y por eso vive dentro de una pieza con pestañas; esto es un sí o
+ * un no que se aplica ENCIMA de lo elegido, y por eso vive aparte. Si volviera
+ * dentro del panel, la interfaz diría otra vez que el horario compite con la
+ * espera — y no compite: se suma.
+ *
+ * En reposo es discreto, casi una línea de ajustes. Encendido se ilumina con
+ * el acento de la herramienta y despliega sus días debajo. */
+
+.iv-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-alt);
+  padding: 12px 14px;
+}
+
+/* La fila del interruptor: signo, texto y control. El texto ocupa el hueco que
+   quede — que la palanca no se despegue del canto derecho. */
+.iv-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iv-toggle__glyph {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: var(--muted);
+  transition: color var(--speed-fast) var(--ease-out);
+}
+
+.iv-toggle__glyph svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* El texto ocupa el hueco que quede, para que la palanca no se despegue del
+   canto derecho. */
+.iv-toggle__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.iv-toggle__title {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Qué pasa si se deja como está. El texto lo decide el componente. */
+.iv-toggle__hint {
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+/* Encendido, el signo deja de estar apagado: es la confirmación de que ese
+   horario ya cuenta. */
+.iv-toggle--on .iv-toggle__glyph {
+  color: var(--iv-cyan);
+}
+
+/* ----- Modo intervalo ----- */
+
+.iv-wait {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iv-wait__controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.iv-wait__amount {
+  width: 76px;
+  box-sizing: border-box;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--iv-field);
+  /* EL VALOR ES CONTENIDO, y va en el color del texto: es el dato que el
+     usuario está fijando, no un enlace ni un estado. El cyan aparece solo
+     cuando el campo tiene el foco. */
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+  transition: border-color var(--speed-fast) var(--ease-out);
+}
+
+/* Foco: un filo cyan y un halo fino. Ni resplandor ni borde grueso. */
+.iv-wait__amount:focus-visible {
+  outline: none;
+  border-color: var(--iv-cyan);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07), 0 0 0 2px var(--iv-soft);
+}
+
+.iv-wait__units {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--iv-field);
+  border: 1px solid var(--border);
+}
+
+.iv-wait__unit {
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.iv-wait__unit:hover {
+  color: var(--text);
+}
+
+/* La unidad elegida se marca con una superficie cyan tenue y el texto en
+   claro: el cyan es la señal de selección, no un bloque de color. */
+.iv-wait__unit--on {
+  background: color-mix(in srgb, var(--iv-cyan) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--iv-cyan) 55%, transparent);
+  color: var(--text);
+}
+
+.iv-wait__unit:focus-visible {
+  outline: 2px solid var(--iv-cyan);
+  outline-offset: 1px;
+}
+
+
+/* ----- EL CONTROL DE HORA -----
+ *
+ *     ┌────┐   ┌────┐   ┌───────┐┌───────┐
+ *     │ 02 │ : │ 45 │   │ a. m. ││ p. m. │
+ *     └────┘   └────┘   └───────┘└───────┘
+ *
+ * UNA SOLA PIEZA, NO UNA TARJETA DENTRO DE OTRA. No tiene fondo propio ni
+ * borde exterior: los que llevan relieve son los campos y los botones, y el
+ * grupo solo los alinea. Meterlo en una caja habría creado un tercer nivel de
+ * encuadre dentro del panel, que ya está dentro del marco del nodo.
+ *
+ * LOS DOS PUNTOS SON TEXTO, no un borde ni un separador dibujado: ocupan su
+ * sitio en la fila y no se mueven cuando los campos cambian de ancho.
+ */
+
+.iv-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ANCHO FIJO DE DOS CIFRAS. La caja no crece ni encoge al teclear, así que los
+   dos puntos se quedan clavados donde están. `tabular-nums` remata lo mismo
+   dentro del campo: el «1» no es más estrecho que el «8». */
+.iv-time__field {
+  width: 3.1rem;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: 10px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--iv-field);
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+  transition: border-color var(--speed-fast) var(--ease-out);
+}
+
+.iv-time__field::placeholder {
+  color: var(--muted);
+  -webkit-text-fill-color: var(--muted);
+  font-weight: 500;
+}
+
+.iv-time__field:focus {
+  outline: none;
+  border-color: var(--iv-cyan);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07), 0 0 0 2px var(--iv-soft);
+}
+
+.iv-time__colon {
+  flex: 0 0 auto;
+  padding: 0 1px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1;
+  /* El cursor de texto sobre los dos puntos insinuaría que se pueden escribir.
+     No se pueden: no son parte de ningún campo. */
+  user-select: none;
+}
+
+/* LAS DOS MITADES DEL DÍA, pegadas en un solo bloque: son una elección entre
+   dos, no dos acciones sueltas. Separarlas con un hueco las habría hecho
+   parecer botones independientes. */
+.iv-time__meridiem {
+  display: flex;
+  flex: 0 0 auto;
+  margin-left: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--iv-field);
+  overflow: hidden;
+}
+
+.iv-time__half {
+  padding: 10px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.iv-time__half + .iv-time__half {
+  border-left: 1px solid var(--border);
+}
+
+.iv-time__half:hover:not(.iv-time__half--on) {
+  background: var(--iv-soft);
+  color: var(--text);
+}
+
+/* LA PULSADA SE LEE SOLA. Es el único acento de color del control, y por eso
+   se ve de un vistazo cuál de las dos mitades está elegida sin leerlas. */
+.iv-time__half--on {
+  background: var(--iv-cyan);
+  color: #fff;
+}
+
+.iv-time__half:focus-visible {
+  outline: 2px solid var(--iv-cyan);
+  outline-offset: -2px;
+}
+
+/* En la franja de un horario el control convive con el guion y el aspa, así
+   que se aprieta. Mismo control, misma lógica; solo pierde holgura. */
+.iv-range__time {
+  gap: 3px;
+}
+
+.iv-range__time .iv-time__field {
+  width: 2.6rem;
+  padding: 8px 0;
+  border-radius: 9px;
+  font-size: 0.82rem;
+}
+
+.iv-range__time .iv-time__meridiem {
+  margin-left: 4px;
+  border-radius: 9px;
+}
+
+.iv-range__time .iv-time__half {
+  padding: 8px 6px;
+  font-size: 0.7rem;
+}
+
+/* ----- Modo fecha ----- */
+
+.iv-date {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iv-date__controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.iv-date__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+/* El día es UN campo y la hora son TRES, así que no se reparten el ancho a
+   partes iguales: la hora pide el sitio que ocupan sus piezas y el día se
+   queda con el resto. */
+.iv-date__field:has(.iv-time) {
+  flex: 0 1 auto;
+}
+
+.iv-date__caption {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.iv-date__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--iv-field);
+  /* Blanco/neutral: la fecha y la hora son el dato principal de este modo.
+     El relleno se declara junto al color porque en WebKit es el que manda al
+     pintar el glifo. */
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+  transition: border-color var(--speed-fast) var(--ease-out);
+}
+
+/* EL FOCO VIVE EN EL CAMPO ENTERO, no en el segmento.
+ *
+ * Es `:focus` y no `:focus-visible` a propósito: al neutralizar el resalte de
+ * los segmentos (abajo), esta señal pasa a ser la ÚNICA que dice «estás
+ * editando aquí», y tiene que verse también cuando se llega con el ratón, no
+ * solo con el teclado. */
+.iv-date__input:focus {
+  outline: none;
+  border-color: var(--iv-cyan);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07), 0 0 0 2px var(--iv-soft);
+}
+
+/* ===== EL RESALTE DEL SISTEMA SOBRE LOS SEGMENTOS =====
+ *
+ * SOLO QUEDA UN CONTROL SEGMENTADO EN LA HERRAMIENTA: el de la FECHA. El de la
+ * hora se retiró —era imposible de manejar en WebKit— y lo sustituye una caja
+ * de texto propia, que no tiene segmentos ni resalte del sistema. Estas reglas
+ * siguen nombrando los campos de hora porque el mismo selector cubre el
+ * `type="date"` y no cuesta nada dejarlas completas; si un día vuelve un
+ * control nativo de hora, ya está resuelto.
+ *
+ * QUÉ PASABA. Un `<input type="date">` no es una caja de texto: son SEGMENTOS
+ * —día, mes, año— y el navegador pinta el que tiene el cursor con los colores
+ * `Highlight`/`HighlightText` del SISTEMA
+ * OPERATIVO. Ese color lo elige el usuario en su Mac o su Windows, así que el
+ * bloque que aparecía dentro del campo no lo decidía AUREAM: podía salir
+ * morado, azul o rosa según la máquina. Medido: el texto del input siempre fue
+ * `var(--text)`; lo que se veía de color era ese fondo.
+ *
+ * POR QUÉ NO LO ARREGLAN `accent-color` NI `::selection`. El primero gobierna
+ * casillas, radios y deslizadores, no esto. El segundo es la selección de texto
+ * del documento y no desciende al árbol interno del control. Los dos están
+ * comprobados y los dos fallaron.
+ *
+ * LO QUE SÍ FUNCIONA, Y POR QUÉ SON DOS BLOQUES Y NO UNO. Blink y WebKit no
+ * aceptan la misma forma del selector: Blink solo aplica con `:focus` en el
+ * INPUT (`input:focus::-webkit-…`), y la documentación de WebKit describe la
+ * forma con `:focus` en el PSEUDO-ELEMENTO (`::-webkit-…:focus`). Van en
+ * reglas SEPARADAS porque un selector que un motor no entiende invalida toda
+ * su lista: juntándolos, el que no lo reconoce tiraría también el que sí.
+ *
+ * GECKO NO ENTRA AQUÍ. Firefox no implementa estos pseudo-elementos ni un
+ * equivalente, así que descarta los dos bloques enteros y se queda con el foco
+ * del campo de arriba —que es justamente la señal que lo sustituye—. No hay
+ * hack para Firefox porque no hace falta ninguno.
+ *
+ * NO SE PIERDE NADA DEL CONTROL NATIVO: sigue siendo el mismo `<input>`, con su
+ * teclado, su calendario, su localización y su lectura por voz. Lo único que
+ * cambia es quién elige el color de un fondo. */
+
+/* EL COLOR DE TODO EL CONTENIDO DEL CONTROL, con o sin foco.
+ *
+ * Este es el bloque que faltaba. El anterior solo tocaba los seis campos y solo
+ * mientras el input tenía el foco, y el defecto se veía en un campo EN REPOSO,
+ * con los dígitos, las barras «/» y el «p.m.» teñidos: no era el resalte del
+ * segmento activo, era el color del texto entero.
+ *
+ * POR QUÉ NO BASTABA `color` EN EL INPUT. En Blink los segmentos heredan el
+ * color del input —medido: blanco—, pero WebKit los pinta desde su propia hoja
+ * de agente de usuario y esa herencia no llega. Por eso hay que nombrarlos.
+ *
+ * Y POR QUÉ TAMBIÉN `-webkit-text-fill-color`. Cuando está presente, GANA sobre
+ * `color` al pintar el glifo: declarar solo `color` deja la puerta abierta a
+ * que el agente de usuario siga imponiendo el suyo. Se declaran los dos, con el
+ * mismo valor, para que el resultado no dependa de cuál prevalezca.
+ *
+ * `::-webkit-datetime-edit-text` es el separador —la barra y los dos puntos—,
+ * que en la captura salía teñido igual que los números. */
+.interval .iv-date__input::-webkit-datetime-edit,
+.interval .iv-date__input::-webkit-datetime-edit-fields-wrapper,
+.interval .iv-date__input::-webkit-datetime-edit-text,
+.interval .iv-date__input::-webkit-datetime-edit-day-field,
+.interval .iv-date__input::-webkit-datetime-edit-month-field,
+.interval .iv-date__input::-webkit-datetime-edit-year-field,
+.interval .iv-date__input::-webkit-datetime-edit-hour-field,
+.interval .iv-date__input::-webkit-datetime-edit-minute-field,
+.interval .iv-date__input::-webkit-datetime-edit-second-field,
+.interval .iv-date__input::-webkit-datetime-edit-ampm-field {
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+}
+
+/* Blink (Chrome, Edge, Brave) */
+.interval .iv-date__input:focus::-webkit-datetime-edit-day-field,
+.interval .iv-date__input:focus::-webkit-datetime-edit-month-field,
+.interval .iv-date__input:focus::-webkit-datetime-edit-year-field,
+.interval .iv-date__input:focus::-webkit-datetime-edit-hour-field,
+.interval .iv-date__input:focus::-webkit-datetime-edit-minute-field,
+.interval .iv-date__input:focus::-webkit-datetime-edit-ampm-field {
+  /* Sin fondo de sistema y con el color del texto declarado: si solo se
+     quitara el fondo, el segmento activo seguiría heredando `HighlightText` y
+     en oscuro quedaría casi ilegible. */
+  background-color: transparent;
+  color: var(--text);
+}
+
+/* WebKit (Safari) */
+.interval .iv-date__input::-webkit-datetime-edit-day-field:focus,
+.interval .iv-date__input::-webkit-datetime-edit-month-field:focus,
+.interval .iv-date__input::-webkit-datetime-edit-year-field:focus,
+.interval .iv-date__input::-webkit-datetime-edit-hour-field:focus,
+.interval .iv-date__input::-webkit-datetime-edit-minute-field:focus,
+.interval .iv-date__input::-webkit-datetime-edit-ampm-field:focus {
+  background-color: transparent;
+  color: var(--text);
+}
+
+/* ----- Modo horarios ----- */
+
+.iv-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iv-schedule__days {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.iv-schedule__empty {
+  margin: 2px 0 0;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.73rem;
+  text-align: center;
+}
+
+/* Un día: apagado ocupa una línea; encendido despliega sus horas. Lo que se ve
+   crece con lo configurado, no con lo que podría configurarse. */
+.iv-day {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  transition: border-color var(--speed-fast) var(--ease-out);
+}
+
+.iv-day--on {
+  border-color: color-mix(in srgb, var(--iv-cyan) 38%, var(--border));
+}
+
+.iv-day__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+}
+
+.iv-day__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Raíl y pulsador. Apagado es neutro; encendido, cyan: el color solo aparece
+   cuando el día hace algo. */
+/* EL INTERRUPTOR DE LA HERRAMIENTA, uno solo.
+ *
+ * Lo usan el día de un horario y la propia restricción horaria. Se llamaba
+ * `.iv-day__switch` cuando solo existía dentro de un día; al aparecer el
+ * segundo sitio, lo correcto no era copiarlo con otro nombre —dos palancas
+ * idénticas divergiendo al primer retoque— sino subirlo de nombre. El marcado
+ * que lo usa es idéntico en los dos: un `<button role="switch">` con su botón
+ * dentro. */
+.iv-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 19px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--chip-neutral-bg);
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.iv-switch--on {
+  background: var(--iv-cyan);
+  border-color: var(--iv-cyan);
+}
+
+.iv-switch:focus-visible {
+  outline: 2px solid var(--iv-cyan);
+  outline-offset: 2px;
+}
+
+.iv-switch__knob {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translateY(-50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: left var(--speed-fast) var(--ease-out);
+}
+
+.iv-switch--on .iv-switch__knob {
+  left: 17px;
+}
+
+.iv-day__ranges {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 11px 11px;
+}
+
+.iv-range {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Empujada al filo derecho, para que el aspa caiga siempre en el mismo sitio
+   aunque las dos horas se repartan en dos líneas en un panel estrecho. */
+.iv-range__remove {
+  margin-left: auto;
+}
+
+/* El guion que une las dos horas. Decorativo: lo dicen las etiquetas
+   accesibles de los dos campos, no esta línea. */
+.iv-range__dash {
+  flex: 0 0 10px;
+  height: 1px;
+  background: var(--border);
+}
+
+.iv-range__remove {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.iv-range__remove svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* El rojo va LITERAL, igual que en Distribuidor, y no por los tokens de estado
+   del tema. Esos dicen «resultado de un flujo» —respondió, o se agotó el
+   tiempo— y son la identidad de las salidas de Esperar respuesta; un botón de
+   eliminar es afordancia de interfaz, no el desenlace de una conversación. Un
+   test del Builder vigila que no se mezclen, y lo hace leyendo el archivo
+   entero: por eso aquí tampoco se nombran. */
+.iv-range__remove:hover {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
+}
+
+.iv-range__remove:focus-visible {
+  outline: 2px solid var(--iv-cyan);
+  outline-offset: 1px;
+}
+
+.iv-day__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px dashed color-mix(in srgb, var(--iv-cyan) 45%, var(--border));
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.iv-day__add svg {
+  width: 13px;
+  height: 13px;
+}
+
+.iv-day__add:hover {
+  border-style: solid;
+  border-color: var(--iv-cyan);
+  background: var(--iv-soft);
+}
+
+.iv-day__add:focus-visible {
+  outline: 2px solid var(--iv-cyan);
+  outline-offset: 2px;
+}
+
+/* ===== NODO EN REPOSO =====
+ *
+ * Se monta dentro de `.flow-node__body`, cuyo fondo es el cyan profundo de la
+ * herramienta: aquí el texto va en blancos translúcidos como el resto de las
+ * tarjetas del lienzo, no con los tokens de superficie del editor. Ese fondo es
+ * el mismo en los dos temas —lo publica `definition.ts`—, así que la escala de
+ * blancos funciona igual en claro y en oscuro y no hace falta duplicar la hoja
+ * por tema. */
+
+/* LA LÍNEA TEMPORAL.
+ *
+ * La firma de la herramienta. Programador no resume dentro de una superficie
+ * propia como hacen las otras: su contenido se apoya directamente sobre el
+ * cuerpo del nodo y lo que lo organiza es esta línea al margen, que se lee de
+ * arriba abajo igual que pasa el tiempo — punto, trazo, codo.
+ *
+ * Todo el trazado son PSEUDO-ELEMENTOS. No es contenido: no se lee en voz
+ * alta, no ocupa marcado y no hay un solo div vacío sosteniéndolo. El sangrado
+ * de la izquierda es el canal por el que baja.
+ *
+ * El cyan claro es el tope luminoso del degradado que `definition.ts` ya
+ * publica: sobre el cyan profundo del cuerpo es el único de la familia que se
+ * lee, así que no es un color nuevo — es el suyo, un escalón más arriba.
+ *
+ * Los textos van en blancos translúcidos y no en los tokens del tema porque el
+ * fondo de este nodo es un color FIJO de la herramienta, idéntico en claro y en
+ * oscuro: con `var(--text)` el valor se volvería casi negro sobre el cyan en
+ * tema claro. Mismo criterio que el resto de las herramientas del lienzo. */
+.iv-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 16px;
+}
+
+/* EL PUNTO: «ahora». Pequeño y con un halo mínimo — lo justo para que sea el
+   origen de la línea y no una insignia. */
+.iv-node::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #67e8f9;
+  box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.2);
+}
+
+/* EL TRAZO: lo que se espera. Un píxel, y se apaga hacia abajo: el tiempo que
+   falta pesa menos que el momento en que se empieza a contar. */
+.iv-node::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 13px;
+  bottom: 10px;
+  width: 1px;
+  /* CYAN CLARO, no el de la cabecera. Sobre el cyan profundo del cuerpo un
+     trazo de la misma familia oscura no se separa: la primera versión usaba el
+     tope del degradado y la línea sencillamente no se veía, y sin línea esto
+     deja de ser una línea temporal. Este es el escalón claro de la misma
+     familia, el único que contrasta contra el fondo. */
+  background: linear-gradient(
+    rgba(103, 232, 249, 0.95),
+    rgba(103, 232, 249, 0.22)
+  );
+}
+
+/* De qué clase es la espera. Versalitas mínimas: clasifican sin competir con
+   el valor, que es lo que se viene a leer. */
+.iv-node__mode {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+/* EL VALOR. El protagonista del nodo, sin caja que lo encierre: se sostiene
+   por tamaño y peso, no por un contorno.
+ *
+ * Una sola línea, recortada por el ancho —un horario largo no puede ensanchar
+ * la tarjeta— y con cifras tabulares para que los dígitos no bailen entre un
+ * «09:00» y un «12:30». */
+.iv-node__detail {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.97);
+  font-size: 0.95rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.004em;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* El signo del modo. NO es decoración: cuando el lienzo se aleja y el texto
+   deja de resolverse, esto sigue diciendo si es un intervalo, una fecha o un
+   horario. Es el mismo que marca su sección en el editor. */
+.iv-node__glyph {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: rgba(103, 232, 249, 0.92);
+}
+
+.iv-node__glyph svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* EL CODO: el cierre de la línea. Entrega la conversación al bloque siguiente,
+   que es lo que pasa cuando la espera termina. El trazo horizontal lo pone
+   este pseudo-elemento; la curva, el radio de su esquina. */
+.iv-node__next {
+  position: relative;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.62rem;
+  line-height: 1.3;
+}
+
+.iv-node__next::before {
+  content: "";
+  position: absolute;
+  left: -13px;
+  top: 50%;
+  width: 9px;
+  height: 6px;
+  border-left: 1px solid rgba(103, 232, 249, 0.5);
+  border-bottom: 1px solid rgba(103, 232, 249, 0.5);
+  border-bottom-left-radius: 5px;
+  transform: translateY(-100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iv-toggle__glyph,
+  .iv-tab,
+  .iv-wait__unit,
+  .iv-day,
+  .iv-switch,
+  .iv-switch__knob,
+  .iv-range__remove,
+  .iv-day__add {
+    transition: none;
+  }
+
+  .iv-panel__body {
+    animation: none;
+  }
+}

@@ -130,7 +130,9 @@ describe("contrato ToolUi", () => {
     // otro motivo —enseña la pregunta y, debajo, cuánto espera y dónde guarda—.
     // Distribuidor es la tercera, y por un motivo distinto a los dos anteriores:
     // sus salidas llevan un `Handle` cada una y el cuerpo propio es el único
-    // sitio donde puede montarlos.
+    // sitio donde puede montarlos. Intervalo es la cuarta, y por el motivo más
+    // simple: su resumen depende del modo —una espera, una fecha o un horario—
+    // y la línea genérica del cascarón no puede decir cuál es.
     //
     // Lo que se fija es que el hueco siga siendo OPCIONAL: las demás se
     // conforman con el compacto genérico del cascarón en lugar de escribir un
@@ -139,9 +141,10 @@ describe("contrato ToolUi", () => {
     expect(findToolUi("message")?.CompactBody).toBeTypeOf("function");
     expect(findToolUi("question")?.CompactBody).toBeTypeOf("function");
     expect(findToolUi("distributor")?.CompactBody).toBeTypeOf("function");
+    expect(findToolUi("delay")?.CompactBody).toBeTypeOf("function");
 
     const conCompacto = listUiTypes().filter((type) => findToolUi(type)?.CompactBody);
-    expect(conCompacto).toEqual(["message", "question", "distributor"]);
+    expect(conCompacto).toEqual(["message", "question", "distributor", "delay"]);
     expect(conCompacto.length).toBeLessThan(listUiTypes().length);
   });
 });

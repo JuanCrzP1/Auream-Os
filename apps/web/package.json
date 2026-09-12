@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "tsc -p tsconfig.json --noEmit"
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test:browser": "node tests/browser/programador.browser.mjs",
+    "test:safari": "node tests/browser/programador.safari.mjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.8.5",
