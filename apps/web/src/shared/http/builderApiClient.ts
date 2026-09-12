@@ -16,7 +16,13 @@ import { HttpHeader } from "./HttpHeaders";
  * contra una membership real: enviarla no concede ningún acceso por sí sola.
  */
 export const builderApiClient = new HttpClient({
-  baseUrl: getBuilderApiBaseUrl(),
+  // SIN LLAMAR: se pasa la función, no su resultado. `builderApiClient` es un
+  // singleton de módulo, así que evaluarla aquí correría en cuanto CUALQUIER
+  // pantalla importara este archivo —incluida la de login, que no necesita
+  // esta API— y lanzaría antes de que React montara nada si falta
+  // `VITE_API_BASE_URL`. `HttpClient` la resuelve por su cuenta en cada
+  // request, donde la pantalla que la usa ya sabe mostrar un error.
+  baseUrl: getBuilderApiBaseUrl,
   defaultHeaders: async (): Promise<Record<string, string>> => {
     const headers: Record<string, string> = {};
 

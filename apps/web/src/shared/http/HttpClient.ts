@@ -2,8 +2,19 @@ import { RequestError } from "./RequestError";
 import { HttpHeader, MimeType, type HttpHeadersInit } from "./HttpHeaders";
 
 export interface HttpClientConfig {
-  /** URL base aplicada a todas las rutas (sin slash final). */
-  baseUrl: string;
+  /**
+   * URL base aplicada a todas las rutas (sin slash final).
+   *
+   * PEREZOSA, igual que `defaultHeaders` abajo: resolverla puede lanzar si
+   * falta configuración de entorno (ver `getBuilderApiBaseUrl`), y esa
+   * excepción tiene que ocurrir cuando se hace un REQUEST —dentro de un
+   * componente, donde ya existe manejo de errores—, nunca al construir el
+   * cliente. Un `HttpClient` se construye a nivel de módulo, en el momento en
+   * que el bundle se evalúa; si `baseUrl` fuera un valor ya resuelto, esa
+   * evaluación lanzaría antes de que React llegara a montar nada, y ningún
+   * estado de error de la aplicación tendría oportunidad de mostrarse.
+   */
+  baseUrl: () => string;
   /**
    * Headers por defecto de cada request.
    * Es asíncrona porque obtener el token puede requerir renovarlo.
@@ -67,7 +78,7 @@ export class HttpClient {
       headers[HttpHeader.ContentType] = MimeType.Json;
     }
 
-    const response = await fetch(`${this.config.baseUrl}${path}`, {
+    const response = await fetch(`${this.config.baseUrl()}${path}`, {
       ...init,
       headers
     });
