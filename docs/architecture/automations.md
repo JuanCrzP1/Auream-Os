@@ -51,6 +51,78 @@ Añadir una regla es añadir un archivo y registrarlo. No hay un validador monol
 
 Se retiraron `PublishDraftService`, `RollbackDraftService`, sus rutas y el historial `publishedSnapshots` (se descarta al leer). `createVersionedBuilderSnapshot` sigue normalizando el borrador al guardar.
 
+### Qué NO está en Automations
+
+`execution/`, `nodes/` y `edges/` estuvieron aquí y **se extrajeron a `flow-engine/`**. También `flow-definition/` y `builder/domain/BuilderFlow.ts`, cuyo único contenido real eran re-exports de `contracts/`; la definición del grafo es un contrato compartido, no un módulo de este dominio.
+
+## Frontend
+
+```
+apps/web/src/features/automations/
+├── list/       el hub de automatizaciones
+└── builder/    el editor visual
+```
+
+Dos responsabilidades, dos módulos. La feature no tiene código suelto en su raíz.
+
+### Contrato con el frontend
+
+`GET /automations` devuelve `AutomationListResponse` (`contracts/AutomationContracts.ts`), **no** la entidad de dominio:
+
+| | Dominio `AutomationFlow` | API `AutomationSummary` |
+|---|---|---|
+| `tenantId` | sí | **no** — lo determina el servidor |
+| fechas | `metadata.updatedAt` | `updatedAt` en raíz |
+| etiquetas | `metadata.tags` | `tags` en raíz |
+
+La traducción vive en un único punto, `apps/api/http/toAutomationListResponse.ts`, y `tests/contract/automationApiContract.test.ts` la protege.
+
+Existió una copia del tipo en `apps/web/.../list/types/automation.ts` que declaraba `updatedAt` en raíz mientras la API enviaba `metadata.updatedAt`: la tarjeta del hub renderizaba «Invalid Date» y ningún test lo detectaba, porque los fixtures del frontend codificaban la forma equivocada. Por eso el contrato es único.
+
+### list
+
+El hub: listado, búsqueda, carpetas, tarjetas, menú contextual y los modales de renombrar y borrar.
+
+`pages/AutomationsHubPage.tsx` compone; `hooks/` gestionan carga y acciones; `services/` hablan con la API; `components/` son las piezas visuales.
+
+### builder
+
+```
+builder/
+├── pages/                  BuilderPage
+├── components/
+│   ├── canvas/             lienzo, tarjetas de nodo y su estado, tipos de nodo
+│   ├── review/             revisión del flujo
+│   ├── panels/             paleta (Toolbox) y simulador (C15)
+│   └── builder-shell/      layout, topbar, guardado, aviso sin conexión
+├── context/                operaciones de edición y estado de revisión por bloque
+├── hooks/
+│   ├── builder/            carga, autoguardado, simulación
+│   └── canvas/             nodos, edges, selección
+├── services/               API del builder y utilidades puras (reviewFlow, reglas de conexión…)
+├── tools/                  las herramientas (ver builder-tools.md)
+├── adapters/               canvas ↔ snapshot
+└── types/                  tipos del canvas
+```
+El canvas está aislado: `BuilderCanvas` renderiza, y el estado del editor vive en hooks separados por responsabilidad — `useCanvasNodes`, `useCanvasEdges`, `useCanvasSelection`. No hay un componente que controle todo el builder.
+
+`components/panels/` se llamaba `sidebar/`; el nombre chocaba con el sidebar de navegación de la aplicación, que es otra cosa.
+
+#### Superficies del builder
+
+| Superficie | Dónde | Qué hace |
+|---|---|---|
+| Topbar | Arriba a la izquierda | Volver, nombre editable y estado del autoguardado (`SaveStatusPill`). Sin publicar, versión ni rollback |
+| Toolbox (`PalettePanel`) | Flotando sobre el lienzo | Las 12 herramientas |
+| Revisión del flujo (`review/FlowReviewPanel`) | Arriba a la derecha del lienzo | Lista lo que está mal o incompleto (`services/reviewFlow.ts`) y lleva a cada bloque. Solo informa |
+| Estado del bloque (`canvas/NodeStatusBadge`) | En cada nodo | Anillo y marca roja o ámbar con los motivos (`FlowReviewContext`), y «Próximamente» si el motor aún no lo ejecuta |
+| Editor del bloque (`ExpandedNodeOverlay`) | Sobre el nodo | El `Editor` de cada herramienta. Los nodos de sistema (Inicio, Finalizar) no se editan |
+| Aviso sin servidor (`OfflineNotice`) | Abajo al centro | Si la API no responde, el builder abre un respaldo en memoria: lo dice, no intenta guardar y ofrece «Reintentar» (recarga desde cero) |
+
+`panels/SimulationPanel` existe pero no se monta: un simulador necesita que el motor enrute por salida y ejecute las herramientas (ROADMAP, C14 y C15).
+
+## Frontera con el Flow Engine
+
 ```
 Automations                        Flow Engine
 ─────────────                      ───────────

@@ -328,9 +328,13 @@ Defectos verificados, todos de experiencia:
 - ~~Publicar un grafo inválido no informa de nada.~~ **Ya no aplica**: los flujos no se publican (ver B6). La validación informa en el panel de revisión, no bloquea.
 - ~~Resultado de validación visible y herramienta no soportada.~~ **Corregido en B6**: la revisión del flujo lo muestra, con `unknown-tool` para tipos retirados.
 
-#### B8 — Estados visuales del nodo · ⬜ POR HACER
+#### B8 — Estados visuales del nodo · 🟢 COMPLETADO (2026-11-08)
 
-El CSS del nodo solo declara `--entry`, `--selected` y hover. No existen estados de **error**, **inválido**, **deshabilitado** ni **no ejecutable**. Este último importa: 8 de las 12 herramientas tienen `executable: false` y el dato ya está en el modelo (`isExecutableType()`), pero la interfaz no lo dice. Mostrarlo es aplicar la regla de no fingir funcionalidad.
+Cada bloque dice su estado en el propio lienzo, sin abrir nada:
+
+- **Error / aviso:** anillo rojo o ámbar y una marca en la esquina con el número de problemas; los motivos al pasar el ratón y para lectores de pantalla. Sale de la misma revisión del flujo (`groupIssuesByNode` + `FlowReviewContext`), sin reglas nuevas. El anillo es un `::after` propio para no chocar con los `box-shadow` de selección, Inicio y Mensaje.
+- **No ejecutable:** pestaña «Próximamente» en las 8 herramientas con `executable: false`. Se configuran, pero aún no corren con clientes (FASE C).
+- «Deshabilitado» no aplica: no existe ese concepto en el producto.
 
 #### B9 — Bloque de inicio · 🟢 COMPLETADO (2026-11-08)
 
@@ -373,7 +377,7 @@ Revisado parcialmente: el control de la Toolbox tiene `aria-label`, `title`, `ar
 
 **Pendiente:**
 
-- **Colores fuera del sistema de temas** en `flow-node.css` (`#6c5ce7`, `#9333ea` del nodo de entrada) y `node-editor-modal.css` (`#202c3f`, `#dbeafe`, `#dbe4f0`). No se tocan aquí porque el único reemplazo fiel —`--gradient-primary`, `--surface`, `--text`— tiene otros valores y **cambiaría el aspecto** de esas dos superficies. Es una decisión de diseño, y le corresponde a B8 (estados visuales del nodo) y a B5 (editor), no a un saneamiento estructural.
+- **Colores fuera del sistema de temas** en `flow-node.css` (`#6c5ce7`, `#9333ea` de la píldora de Inicio). Los de `node-editor-modal.css` desaparecieron con el modal (B9). Es una decisión de diseño: pasar la píldora a tokens cambia su aspecto.
 - **Realimentación visual de la conexión seleccionada**: al retirar el CSS muerto queda explícito que no existe. Corresponde a B7/B8, en la presentación del edge, no en una hoja de estilos.
 
 #### B15 — Auditoría visual final y cierre · ⬜ POR HACER
@@ -386,7 +390,7 @@ La fase pasa a 🟢 COMPLETADA **solo** cuando se cumplan todos estos puntos:
 
 1. Se puede configurar el comportamiento de las 12 herramientas desde la interfaz (B5).
 2. No queda ningún componente construido sin consumidor ni estado producido y descartado (B6). — ✅ **cumplido**; `SimulationPanel` queda reservado a C15 de forma explícita.
-3. Todo estado del sistema se comunica con la verdad: guardado, error, sin conexión, inválido, no ejecutable (B7, B8). — B7 ✅; **falta B8** (estados visuales del nodo).
+3. Todo estado del sistema se comunica con la verdad: guardado, error, sin conexión, inválido, no ejecutable (B7, B8). — ✅ **cumplido**.
 4. Ningún control visible carece de comportamiento (B10, B14). — B14 ✅; **falta B10**: «Duplicar», «Archivar» y «Mover a…» en el menú de la lista de automatizaciones siguen sin comportamiento.
 5. La estructura frontend es estable: una responsabilidad por módulo, sin mapas globales, sin singletons mutables, sin dos dueños del mismo estado (B14). — ✅ **cumplido**; queda solo el color fuera de tema de dos superficies, que depende de B5/B8.
 6. Responsive validado en los tamaños acordados (B12) y accesibilidad revisada (B13).
@@ -537,3 +541,4 @@ Cada vez que se cierra una tarea:
 | 2026-11-08 | **Decisión de producto: sin publicación.** Los flujos se autoguardan y lo guardado es lo que corre; estado activo/archivado, como en Leona. Se retirarán el botón y el circuito de publicar/rollback (`PublishDraftService`, `RollbackDraftService`, `publishedSnapshots`, `useBuilderPublishing`, `ReleasePanel`). En la FASE C el motor ejecuta el borrador guardado. |
 | 2026-11-08 | **Modelo de activación de flujos.** Un flujo corre cuando una conexión de WhatsApp lo tiene asignado (`TriggerBinding` conexión → flujo), como en Leona: se crea la conexión, se elige el flujo y se escanea el QR (WhatsApp Web) o se configura la API oficial. D1 pasa a cubrir los dos modos. |
 | 2026-11-08 | **B6 y B7 cerrados.** Revisión del flujo estructurada (`reviewFlow`) y visible en el lienzo con navegación al bloque; retirado todo el circuito de publicación (frontend y backend) y los paneles obsoletos; aviso y estado «Sin conexión» con reintento seguro. |
+| 2026-11-08 | **B8 cerrado.** Estado de cada bloque en el lienzo: anillo y marca por gravedad con los motivos, y pestaña «Próximamente» en las herramientas que el motor aún no ejecuta. |

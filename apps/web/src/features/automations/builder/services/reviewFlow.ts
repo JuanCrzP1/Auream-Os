@@ -194,3 +194,26 @@ export function reviewFlow(nodes: ReadonlyArray<CanvasNode>, edges: ReadonlyArra
   const warnings = issues.filter((issue) => issue.severity === "warning");
   return { issues: [...errors, ...warnings], errorCount: errors.length, warningCount: warnings.length };
 }
+
+/** Estado de un bloque en el lienzo según la revisión. */
+export interface NodeReviewStatus {
+  /** La peor gravedad de sus problemas. */
+  readonly severity: FlowIssueSeverity;
+  /** Los motivos, errores primero. */
+  readonly messages: ReadonlyArray<string>;
+}
+
+/** Problemas agrupados por bloque. Los bloques sin problemas no aparecen. */
+export function groupIssuesByNode(review: FlowReview): ReadonlyMap<string, NodeReviewStatus> {
+  const byNode = new Map<string, NodeReviewStatus>();
+  for (const issue of review.issues) {
+    if (!issue.nodeId) continue;
+    const current = byNode.get(issue.nodeId);
+    byNode.set(issue.nodeId, {
+      // `issues` llega con los errores primero: el primero manda la gravedad.
+      severity: current?.severity ?? issue.severity,
+      messages: [...(current?.messages ?? []), issue.message]
+    });
+  }
+  return byNode;
+}

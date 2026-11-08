@@ -9,6 +9,7 @@ import { SaveStatusPill } from "../components/builder-shell/SaveStatusPill";
 import { OfflineNotice } from "../components/builder-shell/OfflineNotice";
 import { PalettePanel } from "../components/panels/PalettePanel";
 import { BuilderEditingProvider } from "../context/BuilderEditingContext";
+import { FlowReviewProvider } from "../context/FlowReviewContext";
 import { useBuilderWorkspace } from "../hooks/useBuilderWorkspace";
 import { resolveToolUi } from "../tools/ui-registry";
 import type { CanvasNode } from "../types/canvas";
@@ -82,6 +83,8 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
         {/* Área de trabajo: el lienzo ocupa todo el ancho y la paleta flota
             encima. La paleta NO es una columna del layout. */}
         <div className="builder-workspace">
+          {/* Cada tarjeta lee de aquí su estado en la revisión (B8). */}
+          <FlowReviewProvider review={builder.review}>
           <BuilderCanvas
             nodes={builder.nodes}
             edges={builder.edges}
@@ -95,6 +98,7 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
             onPaneClick={builder.handleCollapseNodes}
             review={builder.review}
           />
+          </FlowReviewProvider>
           <PalettePanel onAddNode={builder.handleAddNode} />
           {builder.offline ? <OfflineNotice onRetry={onReload} /> : null}
         </div>

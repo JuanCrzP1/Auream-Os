@@ -23,11 +23,8 @@ import type { NodePatch } from "@features/automations/builder/services/applyNode
 /** Operaciones que una tarjeta del canvas puede solicitar sobre el grafo. */
 export interface BuilderEditingOperations {
   /**
-   * Abre el editor del nodo FUERA del lienzo.
-   *
-   * Es el camino heredado: el modal genérico de nombre y texto. Sigue siendo el
-   * único disponible para las herramientas que todavía no declaran editor
-   * propio, y se retirará cuando todas lo tengan.
+   * Pide abrir el editor del nodo (lápiz o doble clic). La página decide: solo
+   * se abre si la herramienta declara `Editor`; los nodos de sistema no.
    */
   readonly requestEdit: (nodeId: string) => void;
   /**
