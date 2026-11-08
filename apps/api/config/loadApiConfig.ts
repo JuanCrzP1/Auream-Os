@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { readSecretKeyRing, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
 
 // ---------------------------------------------------------------------------
 // loadApiConfig
@@ -51,6 +52,13 @@ export interface ApiConfig {
    * `INTEGRATIONS_ALLOW_PRIVATE_NETWORK=true`. Prohibido en producción.
    */
   readonly integrationsAllowPrivateNetwork: boolean;
+  /**
+   * Claves maestras con las que se cifran los secretos de los clientes
+   * (conexiones de IA). `CREDENTIALS_ENCRYPTION_KEY`, obligatoria en
+   * producción. Sin ella, en desarrollo, las conexiones de IA no están
+   * disponibles.
+   */
+  readonly credentialsKeyRing: SecretKeyRing | null;
 }
 
 /** ¿Es una zona IANA que el motor sabe usar? */
@@ -120,6 +128,15 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (isProduction && integrationsAllowPrivateNetwork) {
     throw new ApiConfigError("INTEGRATIONS_ALLOW_PRIVATE_NETWORK no se puede activar en producción: abriría la red interna a las integraciones.");
   }
+  const credentialsKeyRing = readSecretKeyRing(env);
+  if (isProduction && !credentialsKeyRing) {
+    throw new ApiConfigError("CREDENTIALS_ENCRYPTION_KEY es obligatoria en producción: cifra las claves de IA de los clientes.");
+  }
+  for (const [version, key] of Object.entries(credentialsKeyRing?.keys ?? {})) {
+    if (key.length !== 32) {
+      throw new ApiConfigError(`La clave maestra «${version}» debe ser base64 de 32 bytes (genera una con: openssl rand -base64 32).`);
+    }
+  }
   if (isProduction && store !== "sql") {
     throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
   }
@@ -133,6 +150,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     dataDirectory: env["DATA_DIR"] ?? join(process.cwd(), "data", "builder-workspaces"),
     automationsStore: store,
     defaultTimezone,
-    integrationsAllowPrivateNetwork
+    integrationsAllowPrivateNetwork,
+    credentialsKeyRing
   };
 }

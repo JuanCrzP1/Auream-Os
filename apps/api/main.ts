@@ -6,6 +6,7 @@ import { composeAuthService } from "./composition/composeAuthService";
 import { composeBuilderServices } from "./composition/composeBuilderServices";
 import { composeTenancyServices } from "./composition/composeTenancyServices";
 import { composeContactsServices } from "./composition/composeContactsServices";
+import { composeIntegrationsServices } from "./composition/composeIntegrationsServices";
 import { createApiServer } from "./bootstrap/createApiServer";
 import { StructuredLogger } from "../../platform/observability/logging/StructuredLogger";
 import { RequestLogger } from "../../platform/observability/logging/RequestLogger";
@@ -39,10 +40,12 @@ function start(): void {
 
   const logger = new StructuredLogger({ service: "bots-ai-platform-api" });
   const tenancy = composeTenancyServices(databaseConfig);
+  const integrations = composeIntegrationsServices(tenancy.sqlClient, config.credentialsKeyRing);
 
   const server = createApiServer(config, {
-    services: composeBuilderServices(config, tenancy.sqlClient),
+    services: composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway),
     contactsServices: composeContactsServices(tenancy.sqlClient),
+    integrationsServices: integrations,
     meServices: {
       membershipRepository: tenancy.membershipRepository,
       onboarding: tenancy.onboarding

@@ -133,8 +133,10 @@ describe("Extensión IA", () => {
     ]);
   });
 
-  it("un modelo que no es del proveedor cae al primero del proveedor", () => {
-    expect(readAiConfig({ provider: "gemini", model: "gpt-5" }).model).toBe("gemini-2.5-flash");
+  it("usa una conexión de la cuenta, no una clave en el bloque", () => {
+    const read = readAiConfig({ provider: "gemini", apiKey: "sk-viejo", credentialId: "c1", model: "gemini-2.5-flash" });
+    expect(read).toMatchObject({ credentialId: "c1", model: "gemini-2.5-flash" });
+    expect(read).not.toHaveProperty("apiKey");
   });
 
   it("rechaza nombres de salida repetidos o con espacios", () => {
@@ -142,7 +144,8 @@ describe("Extensión IA", () => {
     const intent = (id: string, key: string) => ({ id, description: "x", key });
     expect(validate({}, { intents: [intent("a", "precios"), intent("b", "Precios")] }).valid).toBe(false);
     expect(validate({}, { intents: [intent("a", "mal nombre")] }).valid).toBe(false);
-    expect(validate({}, { intents: [intent("a", "precios")] }).valid).toBe(true);
+    expect(validate({}, { credentialId: "c1", model: "m", intents: [intent("a", "precios")] }).valid).toBe(true);
+    expect(validate({}, { model: "m", intents: [intent("a", "precios")] }).valid).toBe(false);
   });
 });
 

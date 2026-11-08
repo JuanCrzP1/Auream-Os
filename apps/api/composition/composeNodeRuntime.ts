@@ -19,6 +19,8 @@ import type { ContactDirectory } from "../../../flow-engine/ports/ContactDirecto
 import type { HttpRequester } from "../../../flow-engine/ports/HttpRequester";
 import { ConversationTemplates } from "../../../flow-engine/templates/ConversationTemplates";
 import { DisabledHttpRequester } from "../../../infrastructure/http/DisabledHttpRequester";
+import type { AiGateway } from "../../../flow-engine/ports/AiGateway";
+import { DisabledAiGateway } from "../../../infrastructure/ai/DisabledAiGateway";
 import { ContactDirectoryService } from "../../../domains/contacts/application/ContactDirectoryService";
 import {
   InMemoryContactRepository,
@@ -34,19 +36,22 @@ export interface NodeRuntimeDependencies {
   readonly contacts: ContactDirectory;
   /** Peticiones de la Integración. Producción: `SafeHttpRequester`. */
   readonly http: HttpRequester;
+  /** Modelos de la Extensión IA con las conexiones de la cuenta. Producción: `VaultAiGateway`. */
+  readonly ai: AiGateway;
 }
 
 /**
  * Dependencias aisladas para simular: no tocan turnos ni contactos reales.
- * Sin red por defecto; la API inyecta el cliente HTTP protegido para que
- * «Probar» y la simulación del builder llamen al servicio de verdad.
+ * Sin red ni IA por defecto; la API inyecta el cliente HTTP protegido y la
+ * pasarela de IA de la cuenta para que la simulación del builder llame de verdad.
  */
-export function simulationDependencies(overrides: Partial<Pick<NodeRuntimeDependencies, "http">> = {}): NodeRuntimeDependencies {
+export function simulationDependencies(overrides: Partial<Pick<NodeRuntimeDependencies, "http" | "ai">> = {}): NodeRuntimeDependencies {
   const store = new InMemoryContactsStore();
   return {
     roundRobin: new InMemoryRoundRobinCounter(),
     contacts: new ContactDirectoryService(new InMemoryContactRepository(store), new InMemoryLabelRepository(store)),
-    http: overrides.http ?? new DisabledHttpRequester()
+    http: overrides.http ?? new DisabledHttpRequester(),
+    ai: overrides.ai ?? new DisabledAiGateway()
   };
 }
 
@@ -76,7 +81,7 @@ export function composeNodeRuntime(
     new ConditionNodeHandler(dependencies.contacts),
     new DistributorNodeHandler(dependencies.roundRobin),
     new PixelNodeHandler(),
-    new AiNodeHandler(),
+    new AiNodeHandler(dependencies.ai, dependencies.contacts),
     new DelayNodeHandler(),
     new IntegrationNodeHandler(dependencies.http, dependencies.contacts),
     new MenuNodeHandler(templates),

@@ -41,7 +41,7 @@ La navegación es fija: doce áreas en orden inmutable. `app/navigation/sidebar/
 | Automatizaciones | `/automations` | `IMPLEMENTADO` — hub y builder |
 | Conexiones | `/connections` | `PREPARADO` — placeholder |
 | Contactos | `/contacts` | `IMPLEMENTADO` — lista con búsqueda y filtro, ficha editable y catálogo de etiquetas |
-| Integraciones | `/integrations` | `NO IMPLEMENTADO` |
+| Integraciones | `/integrations` | `IMPLEMENTADO` — conexiones de IA (conectar, verificar, cambiar clave, renombrar, eliminar) |
 | AI Agents | `/ai-agents` | `PREPARADO` — placeholder |
 | Equipo | `/team` | `NO IMPLEMENTADO` |
 | Facturación | `/billing` | `NO IMPLEMENTADO` |
@@ -115,3 +115,13 @@ Dentro de una misma feature se usan rutas relativas; los aliases son para cruzar
 Aparte de esa identidad de usuario, existe una vía separada de **credencial de máquina** para desarrollo local y scripts: `shared/config/getDevApiKey.ts` lee `VITE_DEV_API_KEY` **sólo cuando `import.meta.env.DEV` es true**, de modo que la rama se elimina del build de producción y ninguna credencial queda compilada en el bundle. Si la variable no está definida, no se envía cabecera `X-Api-Key`. No sustituye a la identidad de usuario; conviven.
 
 `getBuilderApiBaseUrl()` exige `VITE_API_BASE_URL` en producción y falla si falta: es preferible a apuntar a `localhost` desde un despliegue real.
+
+## Piezas comunes de página (`shared/ui`)
+
+Los módulos de la aplicación (Contactos, Integraciones…) comparten:
+
+- `page/page.css` — `.ui-page`, cabecera, pestañas y panel.
+- `controls/controls.css` — botones (`.ui-btn`), campos, errores de formulario y el diálogo centrado (`.ui-overlay` / `.ui-dialog`).
+- `state/StateCard` — la tarjeta de error, vacío o sin resultados, con `RetryButton` e iconos (`stateIcons`).
+
+Cada módulo conserva solo lo propio en su CSS (la tabla de Contactos, las tarjetas de Integraciones). Una feature no importa de otra: lo que usan dos o más vive aquí.

@@ -25,7 +25,8 @@ describe("loadApiConfig", () => {
     const config = loadApiConfig({
       NODE_ENV: "production",
       JWT_SECRET: VALID_SECRET,
-      CORS_ALLOWED_ORIGINS: "https://app.example.com"
+      CORS_ALLOWED_ORIGINS: "https://app.example.com",
+      CREDENTIALS_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString("base64")
     });
 
     expect(config.devApiKey).toBeNull();

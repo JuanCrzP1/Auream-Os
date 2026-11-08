@@ -1,0 +1,84 @@
+/* ===== Página de un módulo (Contactos, Integraciones…) =====
+   Cabecera, pestañas y panel comunes. Solo tokens del tema. */
+
+.ui-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--app-canvas);
+}
+
+.ui-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-page__title {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.ui-page__subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.ui-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 32px 0;
+}
+
+.ui-tab {
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ui-tab[aria-selected="true"] {
+  border-bottom-color: var(--primary);
+  color: var(--text);
+}
+
+.ui-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.ui-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 32px 32px;
+}
+
+@media (max-width: 720px) {
+  .ui-page__header,
+  .ui-tabs,
+  .ui-panel {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .ui-page__header {
+    flex-wrap: wrap;
+  }
+}

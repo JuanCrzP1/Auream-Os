@@ -91,9 +91,18 @@ No se implementa Telegram.
 
 ---
 
-## integrations · `NO IMPLEMENTADO`
+## integrations · `IMPLEMENTADO` (parcial — conexiones de IA, 2026-11-08)
 
-Proveedores externos que no son canal de mensajería: CRMs, calendarios, plataformas de anuncios, webhooks salientes.
+Proveedores externos que no son canal de mensajería: proveedores de IA, CRMs, calendarios, plataformas de anuncios, webhooks salientes.
+
+**Conexiones de IA** (`domains/integrations`):
+
+- **Entidad** `AiCredential`: proveedor (`openai` · `gemini` · `openrouter`), nombre único por cuenta, la clave como **sobre cifrado** (AES-256-GCM, atado a `tenantId:credentialId`), su pista (`••••3f9a`) y estado (`active` · `invalid`).
+- **Casos de uso:** listar, conectar (la clave se verifica con el proveedor ANTES de guardarse), renombrar o cambiar la clave (se vuelve a verificar), verificar, borrar y listar los modelos de esa cuenta (con caché). Ninguno devuelve la clave.
+- **`AiCredentialVault`:** el único que descifra, para USAR la clave (lo usa `VaultAiGateway` al ejecutar el bloque de IA).
+- **Puertos:** `AiCredentialRepository` (SQL `007_ai_credentials.sql` / memoria) y `AiProviderAccess` (clientes de `infrastructure/ai`). El cifrado es `platform/security/secrets/SecretCipher`.
+- **API:** `GET/POST /ai-credentials`, `PATCH/DELETE /ai-credentials/:id`, `POST /ai-credentials/:id/verify`, `GET /ai-credentials/:id/models`. Ver: `credentials.read` (también operadores, para elegir en un bloque); administrar: `credentials.write` (dueños y administradores).
+- **Clave maestra:** `CREDENTIALS_ENCRYPTION_KEY` (obligatoria en producción; admite rotación por versiones). Sin ella, la API responde 503 en estas rutas.
 
 **No contiene:** canales de mensajería (`connections`) · credenciales de identidad de la plataforma (`platform/identity`).
 

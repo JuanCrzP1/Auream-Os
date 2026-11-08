@@ -28,6 +28,10 @@ import { SafeHttpRequester } from "../../../infrastructure/http/SafeHttpRequeste
 import { InMemoryRateLimiter } from "../../../platform/security/rate-limiting/application/InMemoryRateLimiter";
 import { TestIntegrationRequestService } from "../../../domains/automations/builder/application/TestIntegrationRequestService";
 import { EngineIntegrationRequestTester } from "./EngineIntegrationRequestTester";
+import { EngineAiStepTester } from "./EngineAiStepTester";
+import { TestAiStepService } from "../../../domains/automations/builder/application/TestAiStepService";
+import type { AiGateway } from "../../../flow-engine/ports/AiGateway";
+import { DisabledAiGateway } from "../../../infrastructure/ai/DisabledAiGateway";
 import { composeNodeRuntime, simulationDependencies } from "./composeNodeRuntime";
 import type { ApiConfig } from "../config/loadApiConfig";
 
@@ -45,6 +49,7 @@ import type { ApiConfig } from "../config/loadApiConfig";
 export interface ApiServices {
   readonly getWorkspaceService: GetBuilderWorkspaceService;
   readonly testIntegrationService: TestIntegrationRequestService;
+  readonly testAiService: TestAiStepService;
   readonly saveDraftService: SaveDraftService;
   readonly simulateDraftService: SimulateDraftService;
   readonly deleteAutomationService: DeleteAutomationService;
@@ -99,7 +104,7 @@ function composeAutomationsPersistence(config: ApiConfig, sqlClient: SqlClient):
   };
 }
 
-export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient): ApiServices {
+export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient, ai: AiGateway = new DisabledAiGateway()): ApiServices {
   const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
     composeAutomationsPersistence(config, sqlClient);
   // Un único cliente HTTP protegido (SSRF, plazos, tamaños) para la simulación
@@ -114,9 +119,10 @@ export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient):
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
     simulateDraftService: new SimulateDraftService(
-      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http })), config.defaultTimezone)
+      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http, ai })), config.defaultTimezone)
     ),
     testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), new InMemoryRateLimiter()),
+    testAiService: new TestAiStepService(new EngineAiStepTester(ai), new InMemoryRateLimiter()),
     deleteAutomationService: new DeleteAutomationService(unitOfWork),
     createAutomationService: new CreateAutomationService(unitOfWork, buildInitialBuilderWorkspace),
     duplicateAutomationService: new DuplicateAutomationService(unitOfWork, buildInitialBuilderWorkspace),

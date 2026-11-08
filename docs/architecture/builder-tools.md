@@ -53,8 +53,8 @@ Lo vigilan los tests de arquitectura (`toolRegistry`, `toolUiRegistry`, `distrib
 
 Algunos editores usan cosas de la cuenta al configurar:
 
-- **Datos para ofrecer**: el catálogo de etiquetas. El bloque Etiquetas muestra la LISTA de etiquetas de la cuenta, con su color, para marcar o desmarcar (como el catálogo de Leona); la regla «Etiqueta» del Condicional las autocompleta. Mañana, píxeles o credenciales de IA.
-- **Capacidades**: `createLabel` (crear una etiqueta en el catálogo desde el bloque, con el siguiente color libre) y `testIntegration` (el botón «Probar» de la Integración). No lanzan: devuelven un resultado o un mensaje para mostrar.
+- **Datos para ofrecer**: el catálogo de etiquetas (el bloque Etiquetas muestra la LISTA de la cuenta, con su color, para marcar o desmarcar; la regla «Etiqueta» del Condicional las autocompleta) y las conexiones de IA de la cuenta (sin claves, con su estado). Mañana, píxeles.
+- **Capacidades**: `createLabel`, `testIntegration`, `createAiCredential` (conectar una IA sin salir del bloque), `listAiModels` (los modelos reales de esa cuenta del proveedor) y `testAi` («Probar» la Extensión IA). No lanzan: devuelven un resultado o un mensaje para mostrar.
 
 - Llegan por props, en `ToolEditorProps.resources` (`tools/ToolResources.ts`). Son opcionales: un editor funciona igual sin ellos.
 - Los carga el builder una vez por pantalla (`context/BuilderResourcesContext.tsx`, con `useLabelCatalog` de `shared/labels`) y el marco del nodo abierto los pasa al editor. La herramienta nunca llama a la API ni conoce el contexto.

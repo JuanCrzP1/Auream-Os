@@ -1,14 +1,14 @@
+import "./ai-editor.css";
 import type { ToolEditorProps } from "../ToolUi";
 import { SwitchField } from "../_kit/Switch";
-import { AddButton, InlineInput, ListCard, SelectField, TextAreaField, TextField, VariableHint } from "../_kit/fields";
+import { AddButton, InlineInput, ListCard, Notice, TextAreaField, TextField, VariableHint } from "../_kit/fields";
+import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import { CardSection, Counter, EmptyState, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { createLocalId } from "../_kit/createLocalId";
 import { removeById, replaceById } from "../_kit/read";
 import {
   AI_MAX_CONTEXT_TURNS,
   AI_MAX_INTENTS,
-  AI_MODELS,
-  AI_PROVIDER_OPTIONS,
   aiOutputs,
   readAiConfig,
   type AiConfig,
@@ -16,10 +16,15 @@ import {
 } from "./aiConfig";
 import { aiExtensionTool } from "./definition";
 import { AiExtensionIcon } from "./AiExtensionIcon";
+import { AiConnectionSection } from "./AiConnectionSection";
+import { AiTestPanel } from "./AiTestPanel";
 
-export function AiEditor({ draft, onChange }: ToolEditorProps) {
+export function AiEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readAiConfig(draft.config);
-  const update = (patch: Partial<AiConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
+  // Lo que se guarda es la configuración vigente: sin la clave ni el proveedor
+  // que guardaban las versiones anteriores del bloque.
+  const { apiKey: _legacyKey, provider: _legacyProvider, ...current } = draft.config;
+  const update = (patch: Partial<AiConfig>) => onChange({ config: { ...current, ...config, ...patch } });
   const patchIntent = (id: string, patch: Partial<AiIntent>) => update({ intents: replaceById(config.intents, id, patch) });
   const addIntent = () => update({ intents: [...config.intents, { id: createLocalId("intent"), description: "", key: "" }] });
 
@@ -31,24 +36,8 @@ export function AiEditor({ draft, onChange }: ToolEditorProps) {
       title="Extensión IA"
       description="Pide a un modelo de IA que responda, analice o clasifique el mensaje del cliente."
     >
-      <CardSection step={1} title="Modelo" description="Qué IA procesa el mensaje.">
-        <div className="kit-grid">
-          <SelectField
-            label="Proveedor"
-            value={config.provider}
-            options={AI_PROVIDER_OPTIONS}
-            onChange={(provider) => update({ provider, model: AI_MODELS[provider][0].value })}
-          />
-          <SelectField label="Modelo" value={config.model} options={AI_MODELS[config.provider]} onChange={(model) => update({ model })} />
-        </div>
-        <TextField
-          label="Clave de API"
-          type="password"
-          value={config.apiKey}
-          placeholder="sk-…"
-          hint="Se guardará cifrada cuando exista el almacén de credenciales."
-          onChange={(apiKey) => update({ apiKey })}
-        />
+      <CardSection step={1} title="Conexión y modelo" description="Qué cuenta de IA usa este bloque. La clave vive cifrada en tu cuenta, no en el flujo.">
+        <AiConnectionSection config={config} resources={resources} onChange={update} />
       </CardSection>
 
       <CardSection step={2} title="Instrucciones" description="Cómo debe comportarse y qué recibe.">
@@ -65,7 +54,7 @@ export function AiEditor({ draft, onChange }: ToolEditorProps) {
           hint="Normalmente una variable. Las instrucciones van arriba, no aquí."
           onChange={(userMessage) => update({ userMessage })}
         />
-        <VariableHint variables={["{last_message}", "{full_name}", "{comprobante}"]} />
+        <VariableHint variables={CONTACT_VARIABLES} />
       </CardSection>
 
       <CardSection step={3} title="Respuesta" description="Dónde queda lo que responde la IA.">
@@ -109,6 +98,7 @@ export function AiEditor({ draft, onChange }: ToolEditorProps) {
       </CardSection>
 
       <CardSection step={4} title="Entender archivos" description="Qué puede leer además del texto.">
+        <Notice>Se aplican cuando tu conexión de WhatsApp entregue archivos al flujo. Mientras tanto, la IA trabaja con el texto.</Notice>
         <SwitchField label="Audios" hint="Transcribe notas de voz." checked={config.understandAudio} onChange={(understandAudio) => update({ understandAudio })} />
         <SwitchField label="Imágenes" hint="Describe fotos y capturas." checked={config.understandImage} onChange={(understandImage) => update({ understandImage })} />
         <SwitchField label="PDF" hint="Lee documentos." checked={config.understandPdf} onChange={(understandPdf) => update({ understandPdf })} />
@@ -162,6 +152,10 @@ export function AiEditor({ draft, onChange }: ToolEditorProps) {
             />
           </>
         )}
+      </CardSection>
+
+      <CardSection step={6} title="Probar" description="Escribe lo que diría un cliente y mira qué responde la IA y por dónde sigue el flujo.">
+        <AiTestPanel rawConfig={draft.config} outputs={aiOutputs({ ...draft.config, ...config })} test={resources?.testAi} />
       </CardSection>
 
       <OutputsPreview outputs={aiOutputs({ ...draft.config, ...config })} />

@@ -18,7 +18,16 @@ import type { NeonAuthConfig } from "../config/loadNeonAuthConfig";
 // del entorno; `loadApiConfig` garantiza que sea null en producción.
 // ---------------------------------------------------------------------------
 
-const DEV_SCOPES = ["flows.read", "flows.write", "flows.publish", "runtime.execute", "contacts.read", "contacts.write"];
+const DEV_SCOPES = [
+  "flows.read",
+  "flows.write",
+  "flows.publish",
+  "runtime.execute",
+  "contacts.read",
+  "contacts.write",
+  "credentials.read",
+  "credentials.write"
+];
 
 export function composeAuthService(config: ApiConfig, authConfig: NeonAuthConfig): AuthService {
   const apiKeyRegistry = new InMemoryApiKeyRegistry();

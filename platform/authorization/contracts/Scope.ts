@@ -6,4 +6,6 @@ export type Scope =
   | "analytics.read"
   | "contacts.read"
   | "contacts.write"
+  | "credentials.read"
+  | "credentials.write"
   | "tenant.manage";

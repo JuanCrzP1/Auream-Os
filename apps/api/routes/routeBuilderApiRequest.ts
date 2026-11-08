@@ -8,6 +8,8 @@ import { SaveDraftService } from "../../../domains/automations/builder/applicati
 import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
 import { TestIntegrationRequestService } from "../../../domains/automations/builder/application/TestIntegrationRequestService";
 import type { IntegrationTestRequest } from "../../../contracts/IntegrationTestContracts";
+import { TestAiStepService } from "../../../domains/automations/builder/application/TestAiStepService";
+import type { AiTestRequest } from "../../../contracts/AiTestContracts";
 import { parseJsonBody } from "../http/parseJsonBody";
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
@@ -19,6 +21,7 @@ export interface BuilderApiServices {
   readonly saveDraftService: SaveDraftService;
   readonly simulateDraftService: SimulateDraftService;
   readonly testIntegrationService: TestIntegrationRequestService;
+  readonly testAiService: TestAiStepService;
 }
 
 /** Ids de flujo: uuid u otros identificadores seguros para URL. */
@@ -46,6 +49,18 @@ export async function routeBuilderApiRequest(
     requireScope(requestContext, FlowPermissions.write, tenantId);
     const body = await parseJsonBody<Partial<IntegrationTestRequest>>(request);
     sendJson(response, 200, await services.testIntegrationService.execute(tenantId, body));
+    return;
+  }
+
+  // «Probar» de la Extensión IA: usa la conexión de IA de la cuenta (gasta su saldo).
+  if (url.pathname === "/api/builder/ai/test") {
+    if (request.method !== "POST") {
+      sendJson(response, 405, { message: "Method not allowed" });
+      return;
+    }
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    const body = await parseJsonBody<Partial<AiTestRequest>>(request);
+    sendJson(response, 200, await services.testAiService.execute(tenantId, body));
     return;
   }
 

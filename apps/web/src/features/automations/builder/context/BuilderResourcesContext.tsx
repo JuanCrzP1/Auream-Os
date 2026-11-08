@@ -3,6 +3,8 @@ import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
 import { EMPTY_TOOL_RESOURCES, type ToolResources } from "@features/automations/builder/tools/ToolResources";
 import { testIntegrationRequest } from "@features/automations/builder/services/testIntegrationRequest";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
+import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
+import { connectAi, listAiModels, testAiStep } from "@features/automations/builder/services/aiCapabilities";
 
 // ---------------------------------------------------------------------------
 // Recursos de la cuenta (datos y capacidades) para los editores de herramientas.
@@ -20,6 +22,8 @@ const BuilderResourcesContext = createContext<ToolResources>(EMPTY_TOOL_RESOURCE
 export function BuilderResourcesProvider({ children }: { readonly children: ReactNode }) {
   const catalog = useLabelCatalog();
   const { create } = catalog;
+  const ai = useAiCredentials();
+  const { create: createAiCredential } = ai;
   const resources = useMemo<ToolResources>(
     () => ({
       labels: catalog.labels.map(({ name, color }) => ({ name, color })),
@@ -32,9 +36,14 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
           return { ok: false, message: apiErrorMessage(error, "No se pudo crear la etiqueta. Inténtalo de nuevo.") };
         }
       },
-      testIntegration: testIntegrationRequest
+      testIntegration: testIntegrationRequest,
+      aiCredentials: ai.credentials,
+      aiCredentialsStatus: ai.status,
+      createAiCredential: connectAi(createAiCredential),
+      listAiModels,
+      testAi: testAiStep
     }),
-    [catalog.labels, create]
+    [catalog.labels, create, ai.credentials, ai.status, createAiCredential]
   );
 
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;

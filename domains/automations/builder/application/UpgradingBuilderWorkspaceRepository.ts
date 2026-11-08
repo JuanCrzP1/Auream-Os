@@ -1,6 +1,7 @@
 import type { PersistedBuilderWorkspace } from "../../../../contracts/BuilderContracts";
 import { ensureStartEntry } from "../../../../contracts/FlowEntry";
 import type { BuilderWorkspaceRepository, SaveWorkspaceOptions } from "./BuilderWorkspaceRepository";
+import { stripInlineSecrets } from "./stripInlineSecrets";
 
 // ---------------------------------------------------------------------------
 // UpgradingBuilderWorkspaceRepository
@@ -15,6 +16,9 @@ import type { BuilderWorkspaceRepository, SaveWorkspaceOptions } from "./Builder
 //     un `message` (o en nada). Ver contracts/FlowEntry.ts.
 //   - Sin historial de publicación: `publishedSnapshots` se descarta. Los
 //     flujos ya no se publican (ROADMAP, B6).
+//   - Sin secretos: el bloque de IA ya no guarda `apiKey` (usa una conexión
+//     cifrada de la cuenta). Se quita al leer Y al escribir: ningún camino
+//     de guardado puede volver a persistir una clave en claro.
 //
 // Una migración nueva se añade en `upgradeWorkspace`, nunca en un caso de uso.
 // ---------------------------------------------------------------------------
@@ -26,7 +30,7 @@ interface LegacyWorkspaceFields {
 
 export function upgradeWorkspace(stored: PersistedBuilderWorkspace): PersistedBuilderWorkspace {
   const { publishedSnapshots, ...workspace } = stored as PersistedBuilderWorkspace & LegacyWorkspaceFields;
-  const draft = ensureStartEntry(workspace.draft);
+  const draft = stripInlineSecrets(ensureStartEntry(workspace.draft));
 
   if (publishedSnapshots === undefined && draft === workspace.draft) return stored;
   return { ...workspace, draft };
@@ -45,7 +49,8 @@ export class UpgradingBuilderWorkspaceRepository implements BuilderWorkspaceRepo
   }
 
   public saveWorkspace(workspace: PersistedBuilderWorkspace, options?: SaveWorkspaceOptions): Promise<void> {
-    return this.inner.saveWorkspace(workspace, options);
+    const draft = stripInlineSecrets(workspace.draft);
+    return this.inner.saveWorkspace(draft === workspace.draft ? workspace : { ...workspace, draft }, options);
   }
 
   public deleteWorkspace(tenantId: string, flowKey: string): Promise<void> {

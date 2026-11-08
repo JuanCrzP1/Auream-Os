@@ -4,6 +4,7 @@ import { BuilderPage } from "@features/automations/builder/pages/BuilderPage";
 import { ConnectionsPage } from "@features/connections/pages/ConnectionsPage";
 import { AiAgentsPage } from "@features/ai-agents/pages/AiAgentsPage";
 import { ContactsPage } from "@features/contacts/pages/ContactsPage";
+import { IntegrationsPage } from "@features/integrations/pages/IntegrationsPage";
 import { LoginPage } from "@features/auth/pages/LoginPage";
 import { RegisterPage } from "@features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@features/auth/pages/ForgotPasswordPage";
@@ -93,6 +94,16 @@ export function AppRouter() {
           <ProtectedRoute>
             <AppShell>
               <ContactsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/integrations"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <IntegrationsPage />
             </AppShell>
           </ProtectedRoute>
         }

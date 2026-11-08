@@ -26,12 +26,24 @@ const AUTH_CONFIG: NeonAuthConfig = {
 
 const PRODUCTION_ENV = {
   NODE_ENV: "production",
-  CORS_ALLOWED_ORIGINS: "https://app.example.com"
+  CORS_ALLOWED_ORIGINS: "https://app.example.com",
+  CREDENTIALS_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64")
 };
 
 function fakeRequest(headers: Record<string, string>, method = "GET"): IncomingMessage {
   return { headers, method } as unknown as IncomingMessage;
 }
+
+describe("los secretos de clientes se cifran en producción", () => {
+  it("la API no arranca en producción sin clave maestra de cifrado", () => {
+    const { CREDENTIALS_ENCRYPTION_KEY: _key, ...withoutKey } = PRODUCTION_ENV;
+    expect(() => loadApiConfig(withoutKey)).toThrow(/CREDENTIALS_ENCRYPTION_KEY es obligatoria/);
+  });
+
+  it("rechaza una clave maestra que no tiene 32 bytes", () => {
+    expect(() => loadApiConfig({ ...PRODUCTION_ENV, CREDENTIALS_ENCRYPTION_KEY: Buffer.alloc(16).toString("base64") })).toThrow(/32 bytes/);
+  });
+});
 
 describe("la API key de desarrollo no puede usarse en producción", () => {
   it("el proceso se niega a arrancar si DEV_API_KEY está definida en producción", () => {

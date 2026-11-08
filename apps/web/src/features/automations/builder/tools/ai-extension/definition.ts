@@ -4,11 +4,12 @@ import { summarizeAi } from "./summarizeAi";
 import { validateAi } from "./validateAi";
 
 /**
- * Extensión IA — llama a un modelo (GPT, Gemini u OpenRouter), guarda la
+ * Extensión IA — llama a un modelo (OpenAI, Gemini u OpenRouter) con una
+ * conexión de IA de la cuenta (clave cifrada, nunca en el flujo), guarda la
  * respuesta en una variable y opcionalmente clasifica la intención (una salida
  * por intención, más respaldo y error).
  *
- * No es un agente ni el AI Sales Engine. `executable: false`: falta `AiProvider`.
+ * No es un agente ni el AI Sales Engine. Lo ejecuta `AiNodeHandler`.
  */
 export const aiExtensionTool: ToolDefinition = {
   type: "ai",
@@ -18,7 +19,7 @@ export const aiExtensionTool: ToolDefinition = {
   editorTitle: "Editar extensión encapsulada",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultContent: {},
   defaultConfig: { ...AI_DEFAULT_CONFIG },
   outputs: aiOutputs,

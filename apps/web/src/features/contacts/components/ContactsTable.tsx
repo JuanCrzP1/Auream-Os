@@ -38,7 +38,7 @@ export function ContactsTable({ contacts, onOpen }: { readonly contacts: Readonl
                     {contact.labels.slice(0, MAX_VISIBLE_LABELS).map((label) => (
                       <LabelChip key={label.id} label={label} />
                     ))}
-                    {hidden > 0 ? <span className="contacts-muted">+{hidden}</span> : null}
+                    {hidden > 0 ? <span className="ui-muted">+{hidden}</span> : null}
                   </div>
                 </td>
               </tr>

@@ -1,6 +1,8 @@
 import { VALID, invalid, type ToolData, type ValidationResult } from "../ToolDefinition";
 import { AI_MAX_INTENTS, readAiConfig } from "./aiConfig";
 
+export const MISSING_CREDENTIAL_MESSAGE = "Elige la conexión de IA que usará el bloque.";
+export const MISSING_MODEL_MESSAGE = "Elige el modelo de IA.";
 export const MISSING_USER_MESSAGE = "Indica qué mensaje recibe la IA (por ejemplo {last_message}).";
 export const MISSING_VARIABLE_MESSAGE = "Indica en qué variable se guarda la respuesta.";
 export const INCOMPLETE_INTENT_MESSAGE = "Cada intención necesita una descripción y un nombre de salida.";
@@ -13,6 +15,8 @@ const KEY = /^[A-Za-z0-9_]+$/;
 export function validateAi(_content: ToolData, config: ToolData): ValidationResult {
   const read = readAiConfig(config);
 
+  if (!read.credentialId) return invalid(MISSING_CREDENTIAL_MESSAGE);
+  if (!read.model) return invalid(MISSING_MODEL_MESSAGE);
   if (read.userMessage.trim().length === 0) return invalid(MISSING_USER_MESSAGE);
   if (read.responseVariable.length === 0) return invalid(MISSING_VARIABLE_MESSAGE);
   if (read.intents.length > AI_MAX_INTENTS) return invalid(TOO_MANY_INTENTS_MESSAGE);

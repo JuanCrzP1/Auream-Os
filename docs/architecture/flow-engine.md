@@ -21,7 +21,7 @@ Es un motor técnico, no un dominio de negocio. No tiene entidades con reglas co
 | Resolver la versión publicada que debe ejecutarse | `registry/FlowRegistry.ts` |
 | Declarar lo que el motor necesita del exterior | `ports/RuntimePorts.ts` |
 | Declarar lo que el motor ofrece al exterior | `ports/FlowExecutor.ts` |
-| Declarar el proveedor que ejecutará el nodo de IA | `ports/AiProvider.ts` |
+| Declarar lo que el bloque de IA necesita de un modelo | `ports/AiGateway.ts` |
 | Resolver qué flow dispara un evento externo | `triggers/TriggerResolver.ts` |
 | Traducir un evento externo al envelope del motor | `triggers/toInboundEnvelope.ts` |
 
@@ -46,7 +46,7 @@ flow-engine/
 ├── nodes/        NodeRuntime · NodeHandler + un directorio por tipo de nodo
 ├── registry/     FlowRegistry · ActiveFlowVersion
 ├── triggers/     TriggerResolver · toInboundEnvelope
-└── ports/        RuntimePorts · FlowExecutor · AiProvider
+└── ports/        RuntimePorts · FlowExecutor · AiGateway · HttpRequester · ContactDirectory · RoundRobinCounter
 ```
 
 Estructura plana, sin `domain/` ni `application/`. Esa separación sirve a dominios con entidades y reglas de negocio; aquí solo añadiría un nivel sin significado.
@@ -75,7 +75,8 @@ Los nombres de directorio coinciden exactamente con los valores del tipo `NodeTy
 | `delay` | `PARCIAL` — pausa el flujo (`delayed`); reanudarlo es de la cola de tareas (C6). |
 | `tags` | `IMPLEMENTADO` (C10) — resuelve (o crea) el contacto que escribe por canal e identificador y le agrega o quita etiquetas a través del puerto `ContactDirectory`; al agregar, crea en el catálogo las que falten. Salida única. |
 | `integration` | `IMPLEMENTADO` (C10) — petición HTTP con variables codificadas según dónde caen (URL, cabecera, JSON) vía el puerto `HttpRequester`; 2xx sale por `success` y guarda los datos mapeados en el contacto (`ContactDirectory.setFields`) y en la conversación; cualquier otra cosa sale por `failure` con el motivo. El resultado no incluye cabeceras ni cuerpo enviados (pueden llevar credenciales). |
-| `payment-proof`, `pixel`, `notification`, `ai` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
+| `ai` | `IMPLEMENTADO` (C9/C10) — `runAiStep`: instrucciones y mensaje con variables, memoria de la conversación (en la sesión, últimos N intercambios), clasificación de intención (`{intent, reply}` en JSON; una salida por intención + respaldo + error), envío opcional de la respuesta y guardado en variable. Con el puerto `AiGateway`: el motor nunca ve una clave. Archivos (audio/imagen/PDF): se declaran pendientes hasta que el canal los entregue (FASE D). |
+| `payment-proof`, `pixel`, `notification` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
 
 La forma de la configuración de cada bloque es un contrato compartido con el builder (`contracts/*Config.ts`, lectores en `contracts/ConfigReaders.ts`): los dos lados leen lo mismo.
 
@@ -103,12 +104,15 @@ El motor declara `ports/HttpRequester.ts`; la composición inyecta `infrastructu
 ### Nodo de IA y proveedores
 
 ```
-AI Node → ports/AiProvider.ts → infrastructure/providers/ai/{openai,gemini}
+AiNodeHandler → ports/AiGateway.ts → VaultAiGateway (composición)
+                                       ├── AiCredentialVault: descifra la clave de la conexión, solo en su cuenta
+                                       └── infrastructure/ai: OpenAI · Gemini · OpenRouter
 ```
 
-El motor **nunca** importa un SDK de proveedor. El puerto declara credencial, modelo, prompt y el contexto autorizado.
-
-**Resuelto (FASE C5):** la cadena `NodeHandler → NodeRuntime → ExecutionLoop → ExecutionOrchestrator` es asíncrona, igual que los puertos que en producción tocan la base de datos (`SessionStore`, `FlowRegistry`, `TenantContextResolver`). `ContextWriter` sigue síncrono a propósito: aplicar un parche es una transformación pura. Un handler ya puede esperar a `AiProvider.complete`.
+- El bloque guarda el **id de una conexión de IA** de la cuenta, nunca una clave. `stripInlineSecrets` borra la `apiKey` que guardaban las versiones anteriores, al leer y al escribir cualquier flujo.
+- El motor **nunca** importa un SDK ni ve una clave: pide «genera con la conexión X» y recibe texto o un motivo de fallo (`invalid_key`, `quota_exceeded`, `rate_limited`, `model_not_found`, `content_filtered`, `timeout`…). Los mensajes de los proveedores se limpian de cualquier cosa con forma de clave.
+- Clientes en `infrastructure/ai`: OpenAI y OpenRouter comparten `OpenAiCompatibleClient` (Chat Completions); Gemini usa `generateContent` con la clave en cabecera, nunca en la URL.
+- «Probar» del editor (`POST /api/builder/ai/test`, `flows.write`, 10 por minuto y cuenta) recorre el mismo `runAiStep` con un mensaje de ejemplo y la conexión real.
 
 ## Edges
 

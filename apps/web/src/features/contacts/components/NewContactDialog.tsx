@@ -1,3 +1,4 @@
+import "@shared/ui/controls/controls.css";
 import { useState } from "react";
 import type { ContactSummary } from "@contracts/ContactContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
@@ -20,25 +21,25 @@ export function NewContactDialog({ onCreated, onClose }: { readonly onCreated: (
   };
 
   return (
-    <div className="contacts-drawer-overlay" role="dialog" aria-modal="true" aria-labelledby="new-contact-title" onClick={onClose}>
-      <form className="contacts-dialog" onClick={(e) => e.stopPropagation()} onSubmit={(e) => void submit(e)}>
+    <div className="ui-overlay" role="dialog" aria-modal="true" aria-labelledby="new-contact-title" onClick={onClose}>
+      <form className="ui-dialog" onClick={(e) => e.stopPropagation()} onSubmit={(e) => void submit(e)}>
         <h2 id="new-contact-title">Nuevo contacto</h2>
-        <label className="contacts-field">
+        <label className="ui-field">
           <span>Teléfono (con código de país)</span>
-          <input className="contacts-input" value={phone} placeholder="+57 300 123 4567" onChange={(e) => setPhone(e.target.value)} autoFocus />
+          <input className="ui-input" value={phone} placeholder="+57 300 123 4567" onChange={(e) => setPhone(e.target.value)} autoFocus />
         </label>
-        <label className="contacts-field">
+        <label className="ui-field">
           <span>Nombre</span>
-          <input className="contacts-input" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
+          <input className="ui-input" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
         </label>
-        <label className="contacts-field">
+        <label className="ui-field">
           <span>Correo</span>
-          <input className="contacts-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input className="ui-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
-        {error ? <p className="contacts-error" role="alert">{error}</p> : null}
-        <div className="contacts-drawer__footer">
-          <button type="button" className="contacts-btn contacts-btn--ghost" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="contacts-btn contacts-btn--primary" disabled={phone.trim() === ""}>Crear</button>
+        {error ? <p className="ui-error" role="alert">{error}</p> : null}
+        <div className="ui-dialog__footer">
+          <button type="button" className="ui-btn ui-btn--ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="ui-btn ui-btn--primary" disabled={phone.trim() === ""}>Crear</button>
         </div>
       </form>
     </div>

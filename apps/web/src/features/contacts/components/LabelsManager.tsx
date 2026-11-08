@@ -3,7 +3,8 @@ import { DEFAULT_LABEL_COLOR, type LabelSummary } from "@contracts/ContactContra
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { ColorSwatches } from "./ColorSwatches";
 import { LabelChip } from "./LabelChip";
-import { ContactsState, RetryButton } from "./ContactsState";
+import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
+import { StateIcons } from "@shared/ui/state/stateIcons";
 import type { LabelCatalogStatus } from "@shared/labels/useLabelCatalog";
 
 interface LabelsManagerProps {
@@ -36,12 +37,12 @@ function LabelRow({ label, onUpdate, onDelete }: { readonly label: LabelSummary 
   if (editing) {
     return (
       <li className="contacts-label-row contacts-label-row--editing">
-        <input className="contacts-input" value={name} maxLength={40} aria-label="Nombre de la etiqueta" onChange={(e) => setName(e.target.value)} />
+        <input className="ui-input" value={name} maxLength={40} aria-label="Nombre de la etiqueta" onChange={(e) => setName(e.target.value)} />
         <ColorSwatches value={color} onChange={setColor} />
-        {error ? <p className="contacts-error" role="alert">{error}</p> : null}
+        {error ? <p className="ui-error" role="alert">{error}</p> : null}
         <div className="contacts-row-actions">
-          <button type="button" className="contacts-btn contacts-btn--ghost" onClick={() => setEditing(false)}>Cancelar</button>
-          <button type="button" className="contacts-btn contacts-btn--primary" onClick={() => void save()} disabled={name.trim() === ""}>Guardar</button>
+          <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setEditing(false)}>Cancelar</button>
+          <button type="button" className="ui-btn ui-btn--primary" onClick={() => void save()} disabled={name.trim() === ""}>Guardar</button>
         </div>
       </li>
     );
@@ -50,18 +51,18 @@ function LabelRow({ label, onUpdate, onDelete }: { readonly label: LabelSummary 
   return (
     <li className="contacts-label-row">
       <LabelChip label={label} />
-      <span className="contacts-muted">{label.contactCount ?? 0} contactos</span>
+      <span className="ui-muted">{label.contactCount ?? 0} contactos</span>
       <div className="contacts-row-actions">
         {confirming ? (
           <>
-            <span className="contacts-muted">¿Borrarla de todos sus contactos?</span>
-            <button type="button" className="contacts-btn contacts-btn--ghost" onClick={() => setConfirming(false)}>No</button>
-            <button type="button" className="contacts-btn contacts-btn--danger" onClick={() => void onDelete(label.id)}>Sí, borrar</button>
+            <span className="ui-muted">¿Borrarla de todos sus contactos?</span>
+            <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setConfirming(false)}>No</button>
+            <button type="button" className="ui-btn ui-btn--danger" onClick={() => void onDelete(label.id)}>Sí, borrar</button>
           </>
         ) : (
           <>
-            <button type="button" className="contacts-btn contacts-btn--ghost" onClick={() => setEditing(true)} aria-label={`Editar ${label.name}`}>Editar</button>
-            <button type="button" className="contacts-btn contacts-btn--ghost" onClick={() => setConfirming(true)} aria-label={`Borrar ${label.name}`}>Borrar</button>
+            <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setEditing(true)} aria-label={`Editar ${label.name}`}>Editar</button>
+            <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setConfirming(true)} aria-label={`Borrar ${label.name}`}>Borrar</button>
           </>
         )}
       </div>
@@ -91,19 +92,19 @@ export function LabelsManager({ labels, status, onRetry, onCreate, onUpdate, onD
   };
 
   return (
-    <section className="contacts-panel" aria-label="Etiquetas">
+    <section className="ui-panel" aria-label="Etiquetas">
       <form className="contacts-label-form" onSubmit={(e) => void create(e)}>
-        <input className="contacts-input" value={name} maxLength={40} placeholder="Nueva etiqueta (ej. Cliente VIP)" aria-label="Nombre de la nueva etiqueta" onChange={(e) => setName(e.target.value)} />
+        <input className="ui-input" value={name} maxLength={40} placeholder="Nueva etiqueta (ej. Cliente VIP)" aria-label="Nombre de la nueva etiqueta" onChange={(e) => setName(e.target.value)} />
         <ColorSwatches value={color} onChange={setColor} />
-        <button type="submit" className="contacts-btn contacts-btn--primary" disabled={name.trim() === ""}>Crear etiqueta</button>
-        {error ? <p className="contacts-error" role="alert">{error}</p> : null}
+        <button type="submit" className="ui-btn ui-btn--primary" disabled={name.trim() === ""}>Crear etiqueta</button>
+        {error ? <p className="ui-error" role="alert">{error}</p> : null}
       </form>
 
       {status === "error" || retrying ? (
-        <ContactsState
+        <StateCard
           role="alert"
           tone="warning"
-          icon="offline"
+          icon={StateIcons.offline}
           title="No pudimos cargar tus etiquetas"
           description="Parece un problema de conexión momentáneo. Vuelve a intentarlo en unos segundos."
           actions={
@@ -117,8 +118,8 @@ export function LabelsManager({ labels, status, onRetry, onCreate, onUpdate, onD
           }
         />
       ) : labels.length === 0 && status === "ready" ? (
-        <ContactsState
-          icon="tag"
+        <StateCard
+          icon={StateIcons.tag}
           title="Aún no tienes etiquetas"
           description="Créalas arriba para clasificar a tus contactos, o deja que el bloque Etiquetas de tus flujos las cree al usarlas."
         />

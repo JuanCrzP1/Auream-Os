@@ -55,6 +55,8 @@ Se usa en pruebas y en el runtime de simulación del builder, donde cada simulac
 
 Decisión: el flujo es un documento, no filas de bloques y conexiones. El editor lo lee y escribe siempre entero y su forma la define (y migra) el contrato `BuilderFlowSnapshot`.
 
+**Conexiones de IA** (`007_ai_credentials.sql`, `SqlAiCredentialRepository`): una fila por conexión, nombre único por cuenta sin distinguir mayúsculas. La clave se guarda como sobre AES-256-GCM (`<versión>.<iv>.<etiqueta>.<cifrado>`, una restricción de la tabla rechaza cualquier otra cosa) atado a su cuenta y su conexión: copiado a otra fila no se descifra. Solo `secret_hint` (`••••3f9a`) es legible.
+
 Reglas de los repositorios: toda consulta filtra por `tenant_id`; un `save` no puede sobrescribir una fila de otro tenant (`on conflict … where tenant_id = …`); un id que no es uuid se trata como inexistente en lugar de provocar un error de base de datos.
 
 **Transacciones (C3):** las operaciones que escriben en varias tablas (crear, duplicar, guardar borrador + nombre, borrar) se hacen dentro de `AutomationsUnitOfWork.run` (puerto en `domains/automations/builder/application`). En SQL, `SqlAutomationsUnitOfWork` abre una transacción real y entrega repositorios ligados a ella: si algo falla, rollback de todo. Con archivos, `DirectUnitOfWork` ejecuta sin garantía (solo desarrollo).

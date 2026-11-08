@@ -1,0 +1,168 @@
+/* ===== Controles comunes: botones, campos, enlaces, errores y diálogo =====
+   Solo tokens del tema (claro y oscuro). */
+
+.ui-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color var(--speed-fast) ease, box-shadow var(--speed-fast) ease;
+}
+
+.ui-input:focus {
+  border-color: var(--primary);
+  box-shadow: var(--glow-soft);
+}
+
+.ui-input:disabled {
+  opacity: 0.6;
+}
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter var(--speed-fast) ease, border-color var(--speed-fast) ease, color var(--speed-fast) ease;
+}
+
+.ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-btn--primary {
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.ui-btn--primary:hover:not(:disabled) {
+  box-shadow: var(--glow-primary);
+  filter: brightness(1.08);
+}
+
+.ui-btn--ghost {
+  border-color: var(--line);
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.ui-btn--ghost:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--line));
+  color: var(--primary);
+}
+
+.ui-btn--danger {
+  background: var(--status-danger);
+  color: var(--on-primary);
+}
+
+.ui-btn:focus-visible,
+.ui-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.ui-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ui-muted {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Error de un formulario: caja suave, no texto rojo suelto. */
+.ui-error {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--rose) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rose) 9%, transparent);
+  color: color-mix(in srgb, var(--rose) 80%, var(--text));
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* --- Diálogo centrado ---------------------------------------------------- */
+
+.ui-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ui-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  animation: ui-dialog-in 180ms var(--ease-out);
+}
+
+.ui-dialog h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.ui-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+}
+
+@keyframes ui-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-dialog {
+    animation: none;
+  }
+}
