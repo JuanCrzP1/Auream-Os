@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, writeFile, unlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
+import type { BuilderWorkspaceRepository, SaveWorkspaceOptions } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
+import { ConflictError } from "../../../platform/observability/errors/ConflictError";
 import type { PersistedBuilderWorkspace } from "../../../contracts/BuilderContracts";
 
 export class JsonBuilderWorkspaceRepository implements BuilderWorkspaceRepository {
@@ -31,7 +32,14 @@ export class JsonBuilderWorkspaceRepository implements BuilderWorkspaceRepositor
     return workspaces.filter((workspace): workspace is PersistedBuilderWorkspace => workspace !== null);
   }
 
-  public async saveWorkspace(workspace: PersistedBuilderWorkspace): Promise<void> {
+  /** Con `expectedRevision`: leer-comparar-escribir. NO es atómico (solo desarrollo). */
+  public async saveWorkspace(workspace: PersistedBuilderWorkspace, options: SaveWorkspaceOptions = {}): Promise<void> {
+    if (options.expectedRevision !== undefined) {
+      const current = await this.getWorkspace(workspace.tenantId, workspace.flowKey);
+      if (current && current.autosaveRevision !== options.expectedRevision) {
+        throw new ConflictError("El borrador cambió desde que se abrió. Recarga para ver la última versión.");
+      }
+    }
     const filePath = this.getFilePath(workspace.tenantId, workspace.flowKey);
     await mkdir(dirname(filePath), { recursive: true });
     await writeFile(filePath, JSON.stringify(workspace, null, 2), "utf-8");

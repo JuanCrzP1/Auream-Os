@@ -4,6 +4,7 @@ import { DuplicateAutomationService } from "../../domains/automations/builder/ap
 import { SetAutomationArchivedService } from "../../domains/automations/catalog/application/SetAutomationArchivedService.js";
 import { buildInitialBuilderWorkspace } from "../../apps/api/composition/buildInitialBuilderWorkspace.js";
 import { NotFoundError } from "../../platform/observability/errors/NotFoundError.js";
+import { DirectUnitOfWork } from "../../domains/automations/builder/application/AutomationsUnitOfWork.js";
 import type { AutomationRepository } from "../../domains/automations/catalog/application/AutomationRepository.js";
 import type { FolderRepository } from "../../domains/automations/catalog/application/FolderRepository.js";
 import type { BuilderWorkspaceRepository } from "../../domains/automations/builder/application/BuilderWorkspaceRepository.js";
@@ -55,7 +56,8 @@ beforeEach(() => {
   folders.items.push({ id: "carpeta-ajena", tenantId: "otro", name: "Ajena", createdAt: "2026-01-01" });
 });
 
-const create = () => new CreateAutomationService(catalog, folders, workspaces, buildInitialBuilderWorkspace);
+const uow = () => new DirectUnitOfWork({ automations: catalog, folders, workspaces });
+const create = () => new CreateAutomationService(uow(), buildInitialBuilderWorkspace);
 
 describe("CreateAutomationService", () => {
   it("crea la entrada del catálogo y el borrador inicial, con id del servidor", async () => {
@@ -103,7 +105,7 @@ describe("DuplicateAutomationService", () => {
     return flow;
   }
 
-  const duplicate = () => new DuplicateAutomationService(catalog, workspaces, buildInitialBuilderWorkspace);
+  const duplicate = () => new DuplicateAutomationService(uow(), buildInitialBuilderWorkspace);
 
   it("copia el borrador completo con id y nombre nuevos, en la misma carpeta", async () => {
     const source = await original();

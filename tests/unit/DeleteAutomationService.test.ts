@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { DeleteAutomationService } from "../../domains/automations/builder/application/DeleteAutomationService.js";
+import { DirectUnitOfWork } from "../../domains/automations/builder/application/AutomationsUnitOfWork.js";
 import type { AutomationRepository } from "../../domains/automations/catalog/application/AutomationRepository.js";
 import type { BuilderWorkspaceRepository } from "../../domains/automations/builder/application/BuilderWorkspaceRepository.js";
 import type { AutomationFlow } from "../../domains/automations/catalog/domain/AutomationFlow.js";
@@ -68,7 +69,9 @@ describe("DeleteAutomationService", () => {
   beforeEach(() => {
     automationRepo = new InMemoryAutomationRepo();
     workspaceRepo = new InMemoryWorkspaceRepo();
-    sut = new DeleteAutomationService(automationRepo, workspaceRepo);
+    sut = new DeleteAutomationService(
+      new DirectUnitOfWork({ automations: automationRepo, folders: { findByTenant: async () => [], findById: async () => undefined, save: async () => {} }, workspaces: workspaceRepo })
+    );
   });
 
   it("elimina el flow del catálogo", async () => {

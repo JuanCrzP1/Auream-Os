@@ -38,6 +38,7 @@ export function useBuilderWorkspace(flowKey: string) {
     draft: currentDraft,
     // Lo que el servidor tiene, no lo que hay en pantalla. Ver `useBuilderLoader`.
     seedSignature: serverSignature,
+    seedRevision: workspace?.autosaveRevision ?? null,
     // Sin servidor no hay a dónde guardar: intentarlo solo produciría errores.
     enabled: workspace !== null && !offline,
     onSaved: setWorkspace

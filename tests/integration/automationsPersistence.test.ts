@@ -4,6 +4,7 @@ import type { SqlClient } from "../../infrastructure/persistence/sql/SqlClient.j
 import { SqlAutomationRepository } from "../../infrastructure/persistence/sql/SqlAutomationRepository.js";
 import { SqlFolderRepository } from "../../infrastructure/persistence/sql/SqlFolderRepository.js";
 import { SqlBuilderWorkspaceRepository } from "../../infrastructure/persistence/sql/SqlBuilderWorkspaceRepository.js";
+import { SqlAutomationsUnitOfWork } from "../../infrastructure/persistence/sql/SqlAutomationsUnitOfWork.js";
 import { UpgradingBuilderWorkspaceRepository } from "../../domains/automations/builder/application/UpgradingBuilderWorkspaceRepository.js";
 import { CreateAutomationService } from "../../domains/automations/builder/application/CreateAutomationService.js";
 import { DuplicateAutomationService } from "../../domains/automations/builder/application/DuplicateAutomationService.js";
@@ -38,15 +39,16 @@ function stack() {
   const automations = new SqlAutomationRepository(sql);
   const folders = new SqlFolderRepository(sql);
   const workspaces = new UpgradingBuilderWorkspaceRepository(new SqlBuilderWorkspaceRepository(sql));
+  const uow = new SqlAutomationsUnitOfWork(sql, (inner) => new UpgradingBuilderWorkspaceRepository(inner));
   return {
     automations,
     folders,
     workspaces,
-    create: new CreateAutomationService(automations, folders, workspaces, buildInitialBuilderWorkspace),
-    duplicate: new DuplicateAutomationService(automations, workspaces, buildInitialBuilderWorkspace),
-    remove: new DeleteAutomationService(automations, workspaces),
+    create: new CreateAutomationService(uow, buildInitialBuilderWorkspace),
+    duplicate: new DuplicateAutomationService(uow, buildInitialBuilderWorkspace),
+    remove: new DeleteAutomationService(uow),
     open: new GetBuilderWorkspaceService(workspaces, buildInitialBuilderWorkspace, automations),
-    save: new SaveDraftService(workspaces, automations),
+    save: new SaveDraftService(uow),
     archive: new SetAutomationArchivedService(automations),
     list: new ListAutomationsService(automations, folders, workspaces),
     move: new MoveAutomationToFolderService(automations, folders),
@@ -189,5 +191,72 @@ describe("integridad", () => {
 
     await expect(sql.query("update automations set status = 'publicado' where id = $1", [flow.id])).rejects.toThrow();
     await expect(sql.query("update automations set name = '  ' where id = $1", [flow.id])).rejects.toThrow();
+  });
+});
+
+describe("transacciones (C3)", () => {
+  it("si algo falla a mitad, no queda nada guardado (rollback)", async () => {
+    const tenant = await insertTenant("rollback");
+    const uow = new SqlAutomationsUnitOfWork(sql);
+    const id = randomUUID();
+
+    await expect(
+      uow.run(async ({ automations }) => {
+        await automations.save({
+          id, tenantId: tenant, key: id, name: "A medias", status: "draft",
+          metadata: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+        });
+        throw new Error("fallo después de escribir el catálogo");
+      })
+    ).rejects.toThrow("fallo después");
+
+    expect(await new SqlAutomationRepository(sql).findById(tenant, id)).toBeUndefined();
+  });
+
+  it("crear: si el borrador no se puede guardar, tampoco queda la entrada del catálogo", async () => {
+    const tenant = await insertTenant("crear-atomico");
+    const brokenFactory = (tenantId: string, flowKey: string) =>
+      ({ ...buildInitialBuilderWorkspace(tenantId, flowKey), autosaveRevision: -1 }); // viola revision >= 0
+    const create = new CreateAutomationService(new SqlAutomationsUnitOfWork(sql), brokenFactory);
+
+    await expect(create.execute(tenant, { name: "No debe quedar" })).rejects.toThrow();
+    expect(await new SqlAutomationRepository(sql).findByTenant(tenant)).toEqual([]);
+  });
+});
+
+describe("edición concurrente (C4)", () => {
+  it("dos guardados sobre la misma revisión: el segundo se rechaza y el primero no se pierde", async () => {
+    const tenant = await insertTenant("concurrencia");
+    const s = stack();
+    const flow = await s.create.execute(tenant, { name: "Compartido" });
+    const tabA = (await s.open.execute(tenant, flow.key))!;
+    const tabB = (await s.open.execute(tenant, flow.key))!;
+
+    const fromA = { ...tabA.draft, flow: { ...tabA.draft.flow, name: "Cambio de A" } };
+    const fromB = { ...tabB.draft, flow: { ...tabB.draft.flow, name: "Cambio de B" } };
+
+    await s.save.execute(tabA, fromA, { baseRevision: tabA.autosaveRevision });
+    await expect(s.save.execute(tabB, fromB, { baseRevision: tabB.autosaveRevision })).rejects.toMatchObject({ statusCode: 409 });
+
+    const now = (await s.open.execute(tenant, flow.key))!;
+    expect(now.draft.flow.name).toBe("Cambio de A");
+    expect(now.autosaveRevision).toBe(tabA.autosaveRevision + 1);
+  });
+
+  it("la comprobación es atómica: aunque dos escrituras lean la misma revisión, solo entra una", async () => {
+    const tenant = await insertTenant("carrera");
+    const s = stack();
+    const flow = await s.create.execute(tenant);
+    const base = (await s.open.execute(tenant, flow.key))!;
+    const repo = new SqlBuilderWorkspaceRepository(sql);
+    const next = (name: string) => ({ ...base, draft: { ...base.draft, flow: { ...base.draft.flow, name } }, autosaveRevision: base.autosaveRevision + 1 });
+
+    const results = await Promise.allSettled([
+      repo.saveWorkspace(next("uno"), { expectedRevision: base.autosaveRevision }),
+      repo.saveWorkspace(next("dos"), { expectedRevision: base.autosaveRevision })
+    ]);
+
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((r) => r.status === "rejected")).toHaveLength(1);
   });
 });

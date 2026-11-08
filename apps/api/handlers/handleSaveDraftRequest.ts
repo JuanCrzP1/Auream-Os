@@ -4,6 +4,7 @@ import { sendJson } from "../http/sendJson";
 import type { BuilderFlowSnapshot } from "../../../contracts/FlowSnapshot";
 import { GetBuilderWorkspaceService } from "../../../domains/automations/builder/application/GetBuilderWorkspaceService";
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
+import { isBuilderFlowSnapshot } from "../../../domains/automations/builder/application/isBuilderFlowSnapshot";
 
 export async function handleSaveDraftRequest(
   request: IncomingMessage,
@@ -13,12 +14,26 @@ export async function handleSaveDraftRequest(
   tenantId: string,
   flowKey: string
 ): Promise<void> {
-  const body = await parseJsonBody<{ draft: BuilderFlowSnapshot }>(request);
+  const body = await parseJsonBody<{ draft?: unknown; baseRevision?: unknown }>(request);
+
+  // Forma del cuerpo (C4): un borrador legible y, si viene, una revisión base.
+  if (!isBuilderFlowSnapshot(body.draft)) {
+    sendJson(response, 400, { message: "draft no tiene la forma de un flujo" });
+    return;
+  }
+  if (body.baseRevision !== undefined && !(Number.isInteger(body.baseRevision) && (body.baseRevision as number) >= 0)) {
+    sendJson(response, 400, { message: "baseRevision debe ser un entero mayor o igual que cero" });
+    return;
+  }
+
   const workspace = await getWorkspaceService.execute(tenantId, flowKey);
   if (!workspace) {
     sendJson(response, 404, { message: "Automatización no encontrada" });
     return;
   }
-  const nextWorkspace = await saveDraftService.execute(workspace, body.draft);
+  const draft: BuilderFlowSnapshot = body.draft;
+  const nextWorkspace = await saveDraftService.execute(workspace, draft, {
+    ...(body.baseRevision !== undefined ? { baseRevision: body.baseRevision as number } : {})
+  });
   sendJson(response, 200, nextWorkspace);
 }

@@ -1,25 +1,21 @@
-import type { AutomationRepository } from "../../catalog/application/AutomationRepository";
-import type { BuilderWorkspaceRepository } from "./BuilderWorkspaceRepository";
+import type { AutomationsUnitOfWork } from "./AutomationsUnitOfWork";
 
 /**
- * DeleteAutomationService — elimina un flow del catálogo y su workspace del builder.
- *
- * Responsabilidad única: coordinación atómica del borrado en ambos repositorios.
- * Idempotente: si el flow o el workspace no existen, no lanza error.
+ * DeleteAutomationService — elimina una automatización: su borrador y su
+ * entrada en el catálogo, en UNA transacción (FASE C3). Idempotente: si no
+ * existe, no lanza.
  */
 export class DeleteAutomationService {
-  public constructor(
-    private readonly automationRepository: AutomationRepository,
-    private readonly workspaceRepository: BuilderWorkspaceRepository
-  ) {}
+  public constructor(private readonly unitOfWork: AutomationsUnitOfWork) {}
 
   public async execute(tenantId: string, flowId: string): Promise<void> {
-    const flow = await this.automationRepository.findById(tenantId, flowId);
-    const flowKey = flow?.key ?? flowId;
+    await this.unitOfWork.run(async ({ automations, workspaces }) => {
+      const flow = await automations.findById(tenantId, flowId);
+      const flowKey = flow?.key ?? flowId;
 
-    await Promise.all([
-      this.automationRepository.delete(tenantId, flowId),
-      this.workspaceRepository.deleteWorkspace(tenantId, flowKey)
-    ]);
+      // En serie: dentro de una transacción hay una sola conexión.
+      await workspaces.deleteWorkspace(tenantId, flowKey);
+      await automations.delete(tenantId, flowId);
+    });
   }
 }

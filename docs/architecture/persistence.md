@@ -57,6 +57,10 @@ Decisión: el flujo es un documento, no filas de bloques y conexiones. El editor
 
 Reglas de los repositorios: toda consulta filtra por `tenant_id`; un `save` no puede sobrescribir una fila de otro tenant (`on conflict … where tenant_id = …`); un id que no es uuid se trata como inexistente en lugar de provocar un error de base de datos.
 
+**Transacciones (C3):** las operaciones que escriben en varias tablas (crear, duplicar, guardar borrador + nombre, borrar) se hacen dentro de `AutomationsUnitOfWork.run` (puerto en `domains/automations/builder/application`). En SQL, `SqlAutomationsUnitOfWork` abre una transacción real y entrega repositorios ligados a ella: si algo falla, rollback de todo. Con archivos, `DirectUnitOfWork` ejecuta sin garantía (solo desarrollo).
+
+**Bloqueo optimista (C4):** cada guardado del builder envía `baseRevision`. `SaveDraftService` rechaza con `ConflictError` (409) si ya no es la actual, y `SqlBuilderWorkspaceRepository.saveWorkspace(…, { expectedRevision })` hace la comprobación y la escritura en una sola sentencia (`on conflict … where revision = $n`): dos escrituras simultáneas no pueden pasar las dos. El builder, ante un 409, deja de guardar y ofrece recargar.
+
 **Selección del almacén:** `AUTOMATIONS_STORE` (`sql` | `json`), resuelta en `apps/api/composition/composeBuilderServices.ts`. En producción solo se acepta `sql`: la API no arranca con `json`.
 
 **Importar los datos de archivos:** `apps/api/scripts/importJsonAutomations.ts` reutiliza los repositorios de ambos lados y `upgradeWorkspace`, escribe cada flujo en una transacción y es idempotente. Por defecto simula; `--apply` escribe.

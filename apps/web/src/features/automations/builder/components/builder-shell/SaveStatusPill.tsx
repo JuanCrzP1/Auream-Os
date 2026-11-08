@@ -28,7 +28,8 @@ const LABELS: Record<SaveStatus, string> = {
   saving: "Guardando...",
   saved: "Guardado",
   error: "Error al guardar",
-  offline: "Sin conexión"
+  offline: "Sin conexión",
+  conflict: "Desactualizado"
 };
 
 function StatusIcon({ status }: SaveStatusPillProps) {
@@ -40,7 +41,7 @@ function StatusIcon({ status }: SaveStatusPillProps) {
     );
   }
 
-  if (status === "error" || status === "offline") {
+  if (status === "error" || status === "offline" || status === "conflict") {
     return (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
         <circle cx="8" cy="8" r="6.2" />

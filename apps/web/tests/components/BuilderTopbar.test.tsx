@@ -28,7 +28,7 @@ vi.mock("../../src/features/automations/builder/components/panels/PalettePanel",
 }));
 
 const handleRenameFlow = vi.fn();
-const workspaceState = { offline: false };
+const workspaceState = { offline: false, autosaveStatus: "saved" };
 
 vi.mock("../../src/features/automations/builder/hooks/useBuilderWorkspace", () => ({
   useBuilderWorkspace: () => ({
@@ -36,7 +36,7 @@ vi.mock("../../src/features/automations/builder/hooks/useBuilderWorkspace", () =
     error: null,
     offline: workspaceState.offline,
     flowName: "Nueva automatización",
-    autosaveStatus: "saved",
+    autosaveStatus: workspaceState.autosaveStatus,
     nodes: [],
     edges: [],
     review: { issues: [], errorCount: 0, warningCount: 0 },
@@ -128,5 +128,17 @@ describe("topbar del builder", () => {
   it("con servidor no hay aviso de conexión", () => {
     renderTopbar();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("conflicto de versión: la cápsula dice «Desactualizado» y el aviso ofrece recargar", () => {
+    workspaceState.autosaveStatus = "conflict";
+    try {
+      renderTopbar();
+      expect(screen.getByRole("status")).toHaveTextContent(/desactualizado/i);
+      expect(screen.getByRole("alert")).toHaveTextContent(/otra pestaña/i);
+      expect(screen.getByRole("button", { name: /recargar/i })).toBeInTheDocument();
+    } finally {
+      workspaceState.autosaveStatus = "saved";
+    }
   });
 });

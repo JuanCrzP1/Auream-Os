@@ -257,7 +257,8 @@
 
 /* Error y sin conexión: las únicas variantes que sí deben llamar la atención. */
 .builder-topbar__save-pill--error,
-.builder-topbar__save-pill--offline {
+.builder-topbar__save-pill--offline,
+.builder-topbar__save-pill--conflict {
   color: var(--rose);
   border-color: var(--rose);
 }

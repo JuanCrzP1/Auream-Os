@@ -1,6 +1,6 @@
 import type { PersistedBuilderWorkspace } from "../../../../contracts/BuilderContracts";
 import { ensureStartEntry } from "../../../../contracts/FlowEntry";
-import type { BuilderWorkspaceRepository } from "./BuilderWorkspaceRepository";
+import type { BuilderWorkspaceRepository, SaveWorkspaceOptions } from "./BuilderWorkspaceRepository";
 
 // ---------------------------------------------------------------------------
 // UpgradingBuilderWorkspaceRepository
@@ -44,8 +44,8 @@ export class UpgradingBuilderWorkspaceRepository implements BuilderWorkspaceRepo
     return (await this.inner.getWorkspaces(tenantId, flowKeys)).map(upgradeWorkspace);
   }
 
-  public saveWorkspace(workspace: PersistedBuilderWorkspace): Promise<void> {
-    return this.inner.saveWorkspace(workspace);
+  public saveWorkspace(workspace: PersistedBuilderWorkspace, options?: SaveWorkspaceOptions): Promise<void> {
+    return this.inner.saveWorkspace(workspace, options);
   }
 
   public deleteWorkspace(tenantId: string, flowKey: string): Promise<void> {

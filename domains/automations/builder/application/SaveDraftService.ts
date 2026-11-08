@@ -1,7 +1,8 @@
 import type { BuilderFlowSnapshot } from "../../../../contracts/FlowSnapshot";
 import type { PersistedBuilderWorkspace } from "../../../../contracts/BuilderContracts";
-import type { BuilderWorkspaceRepository } from "./BuilderWorkspaceRepository";
 import type { AutomationRepository } from "../../catalog/application/AutomationRepository";
+import type { AutomationsUnitOfWork } from "./AutomationsUnitOfWork";
+import { ConflictError } from "../../../../platform/observability/errors/ConflictError";
 import { createVersionedBuilderSnapshot } from "./createVersionedBuilderSnapshot";
 
 /**
@@ -24,13 +25,34 @@ import { createVersionedBuilderSnapshot } from "./createVersionedBuilderSnapshot
  * hay, hecha donde ya se sabe que el borrador cambió.
  */
 export class SaveDraftService {
-  public constructor(
-    private readonly repository: BuilderWorkspaceRepository,
-    private readonly automationRepository: AutomationRepository
-  ) {}
+  public constructor(private readonly unitOfWork: AutomationsUnitOfWork) {}
 
-  public async execute(workspace: PersistedBuilderWorkspace, draft: BuilderFlowSnapshot): Promise<PersistedBuilderWorkspace> {
-    const normalizedDraft = createVersionedBuilderSnapshot(draft, "draft", draft.version.versionNumber);
+  /**
+   * Guarda el borrador y, si cambió, el nombre en el catálogo: en UNA
+   * transacción (FASE C3).
+   *
+   * BLOQUEO OPTIMISTA (FASE C4): `baseRevision` es la revisión sobre la que el
+   * cliente editó. Si ya no es la actual (otra pestaña u otra persona guardó
+   * antes), se rechaza con `ConflictError` en vez de pisar ese trabajo. Y aun
+   * sin ella, la escritura exige que la revisión no haya cambiado desde que se
+   * leyó `workspace` (atómico en SQL).
+   */
+  public async execute(
+    workspace: PersistedBuilderWorkspace,
+    draft: BuilderFlowSnapshot,
+    options: { readonly baseRevision?: number } = {}
+  ): Promise<PersistedBuilderWorkspace> {
+    if (options.baseRevision !== undefined && options.baseRevision !== workspace.autosaveRevision) {
+      throw new ConflictError("El borrador cambió desde que se abrió. Recarga para ver la última versión.");
+    }
+
+    // La identidad del flujo la fija el servidor: un borrador no puede
+    // declararse de otro flujo para colarse en él.
+    const normalizedDraft = createVersionedBuilderSnapshot(
+      { ...draft, flow: { ...draft.flow, id: workspace.draft.flow.id, key: workspace.flowKey } },
+      "draft",
+      draft.version.versionNumber
+    );
     const nextWorkspace: PersistedBuilderWorkspace = {
       ...workspace,
       draft: normalizedDraft,
@@ -38,33 +60,35 @@ export class SaveDraftService {
       autosaveRevision: workspace.autosaveRevision + 1
     };
 
-    await this.repository.saveWorkspace(nextWorkspace);
-    await this.renameFlowIfNeeded(nextWorkspace);
+    await this.unitOfWork.run(async ({ workspaces, automations }) => {
+      await workspaces.saveWorkspace(nextWorkspace, { expectedRevision: workspace.autosaveRevision });
+      await renameFlowIfNeeded(automations, nextWorkspace);
+    });
 
     return nextWorkspace;
   }
+}
 
-  /**
-   * Lleva al catálogo el nombre que el usuario puso en el editor.
-   *
-   * Solo escribe si de verdad cambió: el autoguardado corre con cada gesto del
-   * lienzo —mover un nodo, trazar una conexión— y ninguno de esos toca el
-   * nombre. Sin esta comparación, cada arrastre reescribiría la entrada del hub
-   * y le movería su `updatedAt` sin motivo.
-   *
-   * Un flujo sin entrada en el catálogo no se inventa aquí: crearla es de
-   * `GetBuilderWorkspaceService`, que es quien sabe que el flujo es nuevo.
-   */
-  private async renameFlowIfNeeded(workspace: PersistedBuilderWorkspace): Promise<void> {
-    const nombre = workspace.draft.flow.name;
-    const flow = await this.automationRepository.findById(workspace.tenantId, workspace.flowKey);
+/**
+ * Lleva al catálogo el nombre que el usuario puso en el editor.
+ *
+ * Solo escribe si de verdad cambió: el autoguardado corre con cada gesto del
+ * lienzo —mover un nodo, trazar una conexión— y ninguno de esos toca el
+ * nombre. Sin esta comparación, cada arrastre reescribiría la entrada del hub
+ * y le movería su `updatedAt` sin motivo.
+ *
+ * Un flujo sin entrada en el catálogo no se inventa aquí: crearla es de
+ * `GetBuilderWorkspaceService`, que es quien sabe que el flujo es nuevo.
+ */
+async function renameFlowIfNeeded(automations: AutomationRepository, workspace: PersistedBuilderWorkspace): Promise<void> {
+  const nombre = workspace.draft.flow.name;
+  const flow = await automations.findById(workspace.tenantId, workspace.flowKey);
 
-    if (!flow || flow.name === nombre) return;
+  if (!flow || flow.name === nombre) return;
 
-    await this.automationRepository.save({
-      ...flow,
-      name: nombre,
-      metadata: { ...flow.metadata, updatedAt: workspace.updatedAt }
-    });
-  }
+  await automations.save({
+    ...flow,
+    name: nombre,
+    metadata: { ...flow.metadata, updatedAt: workspace.updatedAt }
+  });
 }

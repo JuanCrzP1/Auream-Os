@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GetBuilderWorkspaceService } from "../../domains/automations/builder/application/GetBuilderWorkspaceService.js";
 import { SaveDraftService } from "../../domains/automations/builder/application/SaveDraftService.js";
+import { DirectUnitOfWork } from "../../domains/automations/builder/application/AutomationsUnitOfWork.js";
 import type { BuilderWorkspaceRepository } from "../../domains/automations/builder/application/BuilderWorkspaceRepository.js";
 import type { AutomationRepository } from "../../domains/automations/catalog/application/AutomationRepository.js";
 import type { PersistedBuilderWorkspace } from "../../contracts/BuilderContracts.js";
@@ -95,7 +96,9 @@ describe("el nombre del flujo tiene una sola fuente de verdad", () => {
     workspaces = new RepoWorkspaces();
     catalogo = new RepoCatalogo();
     leer = new GetBuilderWorkspaceService(workspaces, nuevoWorkspace, catalogo);
-    guardar = new SaveDraftService(workspaces, catalogo);
+    guardar = new SaveDraftService(
+      new DirectUnitOfWork({ automations: catalogo, folders: { findByTenant: async () => [], findById: async () => undefined, save: async () => {} }, workspaces })
+    );
     // La automatización ya creada (lo hace CreateAutomationService): entrada
     // en el catálogo y borrador inicial con el mismo nombre.
     const ahora = new Date().toISOString();

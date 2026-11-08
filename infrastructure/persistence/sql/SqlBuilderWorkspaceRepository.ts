@@ -1,4 +1,5 @@
-import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
+import type { BuilderWorkspaceRepository, SaveWorkspaceOptions } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
+import { ConflictError } from "../../../platform/observability/errors/ConflictError";
 import type { PersistedBuilderWorkspace } from "../../../contracts/BuilderContracts";
 import type { BuilderFlowSnapshot } from "../../../contracts/FlowSnapshot";
 import type { SqlExecutor } from "./SqlClient";
@@ -53,16 +54,34 @@ export class SqlBuilderWorkspaceRepository implements BuilderWorkspaceRepository
     return result.rows.map(toWorkspace);
   }
 
-  public async saveWorkspace(workspace: PersistedBuilderWorkspace): Promise<void> {
-    await this.sql.query(
+  /**
+   * Inserta o actualiza en UNA sentencia. Con `expectedRevision`, la
+   * actualización solo ocurre si la fila sigue en esa revisión: si otra
+   * escritura llegó antes, no se toca nada y se lanza `ConflictError`. Sin
+   * ventana entre comprobar y escribir.
+   */
+  public async saveWorkspace(workspace: PersistedBuilderWorkspace, options: SaveWorkspaceOptions = {}): Promise<void> {
+    const guarded = options.expectedRevision !== undefined;
+    const result = await this.sql.query(
       `insert into automation_drafts (${COLUMNS})
        values ($1, $2, $3::jsonb, $4, $5)
        on conflict (tenant_id, flow_key) do update set
          snapshot = excluded.snapshot,
          revision = excluded.revision,
-         updated_at = excluded.updated_at`,
-      [workspace.tenantId, workspace.flowKey, JSON.stringify(workspace.draft), workspace.autosaveRevision, workspace.updatedAt]
+         updated_at = excluded.updated_at
+       ${guarded ? "where automation_drafts.revision = $6" : ""}`,
+      [
+        workspace.tenantId,
+        workspace.flowKey,
+        JSON.stringify(workspace.draft),
+        workspace.autosaveRevision,
+        workspace.updatedAt,
+        ...(guarded ? [options.expectedRevision] : [])
+      ]
     );
+    if (guarded && result.rowCount === 0) {
+      throw new ConflictError("El borrador cambió desde que se abrió. Recarga para ver la última versión.");
+    }
   }
 
   public async deleteWorkspace(tenantId: string, flowKey: string): Promise<void> {

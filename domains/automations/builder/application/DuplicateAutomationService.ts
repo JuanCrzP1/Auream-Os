@@ -1,7 +1,6 @@
 import type { PersistedBuilderWorkspace } from "../../../../contracts/BuilderContracts";
-import type { AutomationRepository } from "../../catalog/application/AutomationRepository";
 import type { AutomationFlow } from "../../catalog/domain/AutomationFlow";
-import type { BuilderWorkspaceRepository } from "./BuilderWorkspaceRepository";
+import type { AutomationsUnitOfWork } from "./AutomationsUnitOfWork";
 import { cloneBuilderSnapshot } from "./cloneBuilderSnapshot";
 import { NotFoundError } from "../../../../platform/observability/errors/NotFoundError";
 
@@ -18,53 +17,54 @@ export function copyName(name: string): string {
  */
 export class DuplicateAutomationService {
   public constructor(
-    private readonly automationRepository: AutomationRepository,
-    private readonly workspaceRepository: BuilderWorkspaceRepository,
+    private readonly unitOfWork: AutomationsUnitOfWork,
     private readonly workspaceFactory: (tenantId: string, flowKey: string) => PersistedBuilderWorkspace
   ) {}
 
   public async execute(tenantId: string, flowId: string): Promise<AutomationFlow> {
-    const source = await this.automationRepository.findById(tenantId, flowId);
-    if (!source) throw new NotFoundError("La automatización no existe.");
+    return this.unitOfWork.run(async ({ automations, workspaces }) => {
+      const source = await automations.findById(tenantId, flowId);
+      if (!source) throw new NotFoundError("La automatización no existe.");
 
-    const id = crypto.randomUUID();
-    const name = copyName(source.name);
-    const now = new Date().toISOString();
-    // Un flujo creado y nunca guardado puede no tener borrador: se copia el inicial.
-    const sourceDraft =
-      (await this.workspaceRepository.getWorkspace(tenantId, source.key))?.draft ??
-      this.workspaceFactory(tenantId, source.key).draft;
-    const draft = cloneBuilderSnapshot(sourceDraft);
+      const id = crypto.randomUUID();
+      const name = copyName(source.name);
+      const now = new Date().toISOString();
+      // Un flujo creado y nunca guardado puede no tener borrador: se copia el inicial.
+      const sourceDraft =
+        (await workspaces.getWorkspace(tenantId, source.key))?.draft ??
+        this.workspaceFactory(tenantId, source.key).draft;
+      const draft = cloneBuilderSnapshot(sourceDraft);
 
-    const workspace: PersistedBuilderWorkspace = {
-      tenantId,
-      flowKey: id,
-      draft: {
-        ...draft,
-        flow: { id, key: id, name },
-        version: { ...draft.version, id: `${id}:v1:draft`, versionNumber: 1, status: "draft" }
-      },
-      updatedAt: now,
-      autosaveRevision: 0
-    };
-
-    const copy: AutomationFlow = {
-      id,
-      tenantId,
-      key: id,
-      name,
-      status: "draft",
-      ...(source.folderId !== undefined ? { folderId: source.folderId } : {}),
-      metadata: {
-        createdAt: now,
+      const workspace: PersistedBuilderWorkspace = {
+        tenantId,
+        flowKey: id,
+        draft: {
+          ...draft,
+          flow: { id, key: id, name },
+          version: { ...draft.version, id: `${id}:v1:draft`, versionNumber: 1, status: "draft" }
+        },
         updatedAt: now,
-        ...(source.metadata.tags !== undefined ? { tags: [...source.metadata.tags] } : {})
-      }
-    };
+        autosaveRevision: 0
+      };
 
-    // Catálogo primero: el borrador cuelga de él (FK en SQL).
-    await this.automationRepository.save(copy);
-    await this.workspaceRepository.saveWorkspace(workspace);
-    return copy;
+      const copy: AutomationFlow = {
+        id,
+        tenantId,
+        key: id,
+        name,
+        status: "draft",
+        ...(source.folderId !== undefined ? { folderId: source.folderId } : {}),
+        metadata: {
+          createdAt: now,
+          updatedAt: now,
+          ...(source.metadata.tags !== undefined ? { tags: [...source.metadata.tags] } : {})
+        }
+      };
+
+      // En una transacción (C3). Catálogo primero: el borrador cuelga de él.
+      await automations.save(copy);
+      await workspaces.saveWorkspace(workspace);
+      return copy;
+    });
   }
 }

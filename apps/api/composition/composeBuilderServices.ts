@@ -17,6 +17,8 @@ import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClien
 import { SqlAutomationRepository } from "../../../infrastructure/persistence/sql/SqlAutomationRepository";
 import { SqlFolderRepository } from "../../../infrastructure/persistence/sql/SqlFolderRepository";
 import { SqlBuilderWorkspaceRepository } from "../../../infrastructure/persistence/sql/SqlBuilderWorkspaceRepository";
+import { SqlAutomationsUnitOfWork } from "../../../infrastructure/persistence/sql/SqlAutomationsUnitOfWork";
+import { DirectUnitOfWork, type AutomationsUnitOfWork } from "../../../domains/automations/builder/application/AutomationsUnitOfWork";
 import { JsonAutomationRepository } from "../../../infrastructure/persistence/json/JsonAutomationRepository";
 import { JsonBuilderWorkspaceRepository } from "../../../infrastructure/persistence/json/JsonBuilderWorkspaceRepository";
 import { JsonFolderRepository } from "../../../infrastructure/persistence/json/JsonFolderRepository";
@@ -55,8 +57,15 @@ export interface ApiServices {
 interface AutomationsPersistence {
   readonly automationRepository: AutomationRepository;
   readonly folderRepository: FolderRepository;
+  /** Ya envuelto en el decorador de lectura (migraciones de formato). */
   readonly workspaceRepository: BuilderWorkspaceRepository;
+  /** Escrituras en varios repositorios: transacción real en SQL (C3). */
+  readonly unitOfWork: AutomationsUnitOfWork;
 }
+
+/** Toda lectura de un borrador sale migrada al formato vigente. */
+const upgrading = (inner: BuilderWorkspaceRepository): BuilderWorkspaceRepository =>
+  new UpgradingBuilderWorkspaceRepository(inner);
 
 /**
  * El ÚNICO punto que elige dónde viven las automatizaciones (`AUTOMATIONS_STORE`).
@@ -67,21 +76,27 @@ function composeAutomationsPersistence(config: ApiConfig, sqlClient: SqlClient):
     return {
       automationRepository: new SqlAutomationRepository(sqlClient),
       folderRepository: new SqlFolderRepository(sqlClient),
-      workspaceRepository: new SqlBuilderWorkspaceRepository(sqlClient)
+      workspaceRepository: upgrading(new SqlBuilderWorkspaceRepository(sqlClient)),
+      unitOfWork: new SqlAutomationsUnitOfWork(sqlClient, upgrading)
     };
   }
+  // Archivos: solo desarrollo. Sin transacciones (documentado en DirectUnitOfWork).
+  const repositories = {
+    automations: new JsonAutomationRepository(config.dataDirectory),
+    folders: new JsonFolderRepository(config.dataDirectory),
+    workspaces: upgrading(new JsonBuilderWorkspaceRepository(config.dataDirectory))
+  };
   return {
-    automationRepository: new JsonAutomationRepository(config.dataDirectory),
-    folderRepository: new JsonFolderRepository(config.dataDirectory),
-    workspaceRepository: new JsonBuilderWorkspaceRepository(config.dataDirectory)
+    automationRepository: repositories.automations,
+    folderRepository: repositories.folders,
+    workspaceRepository: repositories.workspaces,
+    unitOfWork: new DirectUnitOfWork(repositories)
   };
 }
 
 export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient): ApiServices {
-  const persistence = composeAutomationsPersistence(config, sqlClient);
-  // Toda lectura sale migrada al formato vigente (ver el decorador).
-  const workspaceRepository = new UpgradingBuilderWorkspaceRepository(persistence.workspaceRepository);
-  const { automationRepository, folderRepository } = persistence;
+  const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
+    composeAutomationsPersistence(config, sqlClient);
 
   return {
     getWorkspaceService: new GetBuilderWorkspaceService(
@@ -89,22 +104,13 @@ export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient):
       buildInitialBuilderWorkspace,
       automationRepository
     ),
-    saveDraftService: new SaveDraftService(workspaceRepository, automationRepository),
+    saveDraftService: new SaveDraftService(unitOfWork),
     simulateDraftService: new SimulateDraftService(
       new BuilderSimulationRuntimeFactory(composeNodeRuntime())
     ),
-    deleteAutomationService: new DeleteAutomationService(automationRepository, workspaceRepository),
-    createAutomationService: new CreateAutomationService(
-      automationRepository,
-      folderRepository,
-      workspaceRepository,
-      buildInitialBuilderWorkspace
-    ),
-    duplicateAutomationService: new DuplicateAutomationService(
-      automationRepository,
-      workspaceRepository,
-      buildInitialBuilderWorkspace
-    ),
+    deleteAutomationService: new DeleteAutomationService(unitOfWork),
+    createAutomationService: new CreateAutomationService(unitOfWork, buildInitialBuilderWorkspace),
+    duplicateAutomationService: new DuplicateAutomationService(unitOfWork, buildInitialBuilderWorkspace),
     setAutomationArchivedService: new SetAutomationArchivedService(automationRepository),
     listAutomationsService: new ListAutomationsService(
       automationRepository,

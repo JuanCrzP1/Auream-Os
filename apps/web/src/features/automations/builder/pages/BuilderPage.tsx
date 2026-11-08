@@ -118,6 +118,7 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
           />
           <PalettePanel onAddNode={addNodeAtCenter} />
           {builder.offline ? <OfflineNotice onRetry={onReload} /> : null}
+          {builder.autosaveStatus === "conflict" ? <OfflineNotice reason="conflict" onRetry={onReload} /> : null}
         </div>
       </div>
       </BuilderEditingProvider>

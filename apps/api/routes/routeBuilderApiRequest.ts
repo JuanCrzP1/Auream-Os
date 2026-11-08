@@ -17,6 +17,9 @@ export interface BuilderApiServices {
   readonly simulateDraftService: SimulateDraftService;
 }
 
+/** Ids de flujo: uuid u otros identificadores seguros para URL. */
+const FLOW_KEY_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
+
 // Los flujos no se publican ni se versionan: se autoguardan y lo guardado es
 // lo que corre (ver ROADMAP, B6). Por eso no hay rutas de publish/rollback.
 export async function routeBuilderApiRequest(
@@ -34,7 +37,14 @@ export async function routeBuilderApiRequest(
     return;
   }
 
-  const flowKey = pathParts[3];
+  const flowKey = pathParts[3]!;
+
+  // Forma del identificador (C4): letras, números, guion y guion bajo.
+  if (!FLOW_KEY_PATTERN.test(flowKey)) {
+    sendJson(response, 400, { message: "Identificador de flujo inválido" });
+    return;
+  }
+
   const action = pathParts[4] ?? "workspace";
 
   if (request.method === "GET" && action === "workspace") {
