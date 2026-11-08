@@ -65,6 +65,8 @@ export function PalettePanel({ onAddNode }: PalettePanelProps) {
             <line x1="12.5" y1="12.5" x2="17" y2="17"/>
           </svg>
           <input
+            type="search"
+            aria-label="Buscar herramienta"
             className="palette-header__input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -84,6 +86,7 @@ export function PalettePanel({ onAddNode }: PalettePanelProps) {
             type="button"
             draggable
             className="palette-block"
+            aria-label={`Añadir ${item.label}: ${item.description}`}
             onDragStart={(e) => handleDragStart(e, item.type)}
             onClick={() => onAddNode(item.type)}
           >

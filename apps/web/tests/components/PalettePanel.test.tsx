@@ -115,3 +115,25 @@ describe("PalettePanel", () => {
     }
   });
 });
+
+describe("PalettePanel — accesibilidad (B13)", () => {
+  it("el buscador tiene nombre accesible", async () => {
+    renderPalette();
+    await userEvent.click(toggle());
+
+    expect(screen.getByRole("searchbox", { name: "Buscar herramienta" })).toBeInTheDocument();
+  });
+
+  it("cada herramienta se anuncia como «Añadir …» y se añade con el teclado", async () => {
+    const onAddNode = vi.fn();
+    renderPalette(onAddNode);
+    await userEvent.click(toggle());
+
+    const [first] = listPaletteTools();
+    const button = screen.getByRole("button", { name: new RegExp(`^Añadir ${first!.label}:`) });
+    button.focus();
+    await userEvent.keyboard("{Enter}");
+
+    expect(onAddNode).toHaveBeenCalledWith(first!.type);
+  });
+});

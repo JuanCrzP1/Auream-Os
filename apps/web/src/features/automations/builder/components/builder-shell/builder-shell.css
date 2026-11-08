@@ -8,6 +8,8 @@
 .builder-shell {
   display: flex;
   height: 100vh;
+  /* En móvil la barra del navegador cambia el alto visible: `dvh` lo sigue. */
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--bg);
   background-image: var(--bg-ambient);
@@ -24,6 +26,16 @@
   min-width: 0;
 }
 
+/* Pantallas pequeñas (B12): el menú lateral de la aplicación (220px fijos) se
+   comía casi todo el ancho en un celular. Dentro del builder se oculta; para
+   salir está «Volver a automatizaciones» en la topbar. El menú del resto de la
+   aplicación en móvil es de la FASE G. */
+@media (max-width: 768px) {
+  .builder-shell > .app-sidebar {
+    display: none;
+  }
+}
+
 /* Área de trabajo bajo la topbar.
  *
  * Responsabilidad única: ser la superficie donde vive el lienzo y el contexto
@@ -38,17 +50,22 @@
 
 /* Aviso de builder sin servidor (respaldo en memoria). Abajo al centro: arriba
    viven la topbar, la Toolbox y la revisión del flujo. */
+/* Centrado con `left/right` + `margin: auto` y no con `left: 50%` + translate:
+   así puede usar todo el ancho disponible (con `left: 50%` solo podía ocupar
+   la mitad y en un celular partía el texto palabra por palabra). */
 .builder-offline {
   position: absolute;
   bottom: 16px;
-  left: 50%;
+  left: 16px;
+  right: 16px;
   z-index: 30;
   display: flex;
   align-items: center;
   gap: 10px;
-  max-width: min(620px, calc(100% - 32px));
+  width: fit-content;
+  max-width: 620px;
+  margin: 0 auto;
   padding: 8px 8px 8px 14px;
-  transform: translateX(-50%);
   border: 1px solid color-mix(in srgb, var(--rose) 50%, var(--line));
   border-radius: 14px;
   background: color-mix(in srgb, var(--rose) 12%, var(--surface-floating));
@@ -58,6 +75,14 @@
   color: var(--text);
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+/* Celular: abajo taparía el zoom y el minimapa; va bajo la Toolbox y la revisión. */
+@media (max-width: 600px) {
+  .builder-offline {
+    top: 68px;
+    bottom: auto;
+  }
 }
 
 .builder-offline > svg {

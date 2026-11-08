@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupIssuesByNode, reviewFlow } from "@features/automations/builder/services/reviewFlow";
+import { reviewFlow } from "@features/automations/builder/services/reviewFlow";
 import type { CanvasEdge, CanvasNode } from "@features/automations/builder/types/canvas";
 
 // ---------------------------------------------------------------------------
@@ -111,25 +111,5 @@ describe("reviewFlow", () => {
   it("el inicio sin nada detrás es un camino muerto del inicio", () => {
     const review = reviewFlow([start()], []);
     expect(review.issues).toEqual([expect.objectContaining({ code: "dead-end", nodeId: "Inicio" })]);
-  });
-});
-
-describe("groupIssuesByNode", () => {
-  it("agrupa por bloque con la peor gravedad y los motivos, errores primero", () => {
-    const empty = node("Etiquetas", "tags");
-    const byNode = groupIssuesByNode(reviewFlow([start(), message("Saludo"), empty, end()], [edge("e1", "Inicio", "Saludo"), edge("e2", "Saludo", "Fin")]));
-    const tags = byNode.get("Etiquetas");
-
-    expect(tags?.severity).toBe("error");
-    expect(tags?.messages.length).toBeGreaterThanOrEqual(2);
-    expect(tags?.messages.at(-1)).toMatch(/suelto/);
-  });
-
-  it("un bloque solo con avisos queda en aviso; los sanos no aparecen", () => {
-    const byNode = groupIssuesByNode(reviewFlow([start(), menu("Menú"), end()], [edge("e1", "Inicio", "Menú"), edge("e2", "Menú", "Fin", "o1")]));
-
-    expect(byNode.get("Menú")?.severity).toBe("warning");
-    expect(byNode.has("Inicio")).toBe(false);
-    expect(byNode.has("Fin")).toBe(false);
   });
 });

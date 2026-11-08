@@ -57,7 +57,7 @@
   /* Fijo, nunca elástico: un tamaño que dependiera del contenido haría saltar
      el nodo mientras se escribe. Y acotado por el viewport, para que en una
      pantalla pequeña el nodo no se salga del área de trabajo. */
-  width: var(--node-expanded-width);
+  width: min(var(--node-expanded-width), calc(100vw - 16px));
   height: min(var(--node-expanded-height), 82vh);
   display: flex;
   flex-direction: column;
@@ -296,4 +296,11 @@
 
 .node-expanded__guard-discard:hover {
   background: color-mix(in srgb, var(--rose) 16%, transparent);
+}
+
+/* Celular (B12): el editor ocupa casi toda la pantalla, sin salirse. */
+@media (max-width: 600px) {
+  .node-expanded {
+    height: calc(100dvh - 16px);
+  }
 }

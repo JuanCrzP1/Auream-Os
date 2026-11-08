@@ -138,3 +138,9 @@
   margin-left: auto;
   white-space: nowrap;
 }
+
+/* Teclado (B13): Tab recorre las herramientas y Enter añade la enfocada. */
+.palette-block:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

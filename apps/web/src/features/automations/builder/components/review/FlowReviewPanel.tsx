@@ -105,7 +105,7 @@ export function FlowReviewPanel({ review, onFocusNode }: FlowReviewPanelProps) {
         onClick={() => setOpen((current) => !current)}
       >
         <span className="flow-review__toggle-icon">{state === "ok" ? <CheckIcon /> : <AlertIcon />}</span>
-        <span>{summaryLabel(review)}</span>
+        <span className="flow-review__label">{summaryLabel(review)}</span>
         {review.errorCount > 0 ? (
           <span className="flow-review__count flow-review__count--error" aria-label={plural(review.errorCount, "error", "errores")}>
             {review.errorCount}

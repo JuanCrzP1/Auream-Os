@@ -32,6 +32,9 @@
   /* Acentos */
   --primary: #6c5ce7;
   --primary-hover: #5b4bd4;
+  /* Píldora del bloque Inicio: su degradado propio, igual en los dos temas. */
+  --entry-start: #6c5ce7;
+  --entry-end: #9333ea;
   --primary-soft: rgba(108, 92, 231, 0.3);
   --teal: #2dd4bf;
   --amber: #f59e0b;

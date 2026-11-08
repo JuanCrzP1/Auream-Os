@@ -230,3 +230,16 @@ const BASE: BuilderFlowSnapshot = {
 
 // Silencia el aviso de React Flow por el contenedor de tamaño cero en jsdom.
 vi.spyOn(console, "warn").mockImplementation(() => {});
+
+describe("conexión seleccionada (B14)", () => {
+  const trazo = (container: HTMLElement) =>
+    [...container.querySelectorAll<SVGPathElement>("path.react-flow__edge-path")].map((path) => path.style.strokeWidth);
+
+  it("se resalta con un trazo más grueso; sin seleccionar conserva el suyo", () => {
+    const { container: seleccionada } = render(<Lienzo inicial={[edge("e1", "inicio", "etiquetas", true)]} />);
+    expect(trazo(seleccionada)).toContain("3.6");
+
+    const { container: normal } = render(<Lienzo inicial={[edge("e2", "inicio", "etiquetas")]} />);
+    expect(trazo(normal)).not.toContain("3.6");
+  });
+});

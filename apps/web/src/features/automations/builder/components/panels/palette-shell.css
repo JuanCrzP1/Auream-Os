@@ -275,8 +275,12 @@
 }
 
 
+/* Pantallas pequeñas (B12): la Toolbox NO se oculta —era la única forma de
+   añadir bloques—. Arranca plegada en su botón y, abierta, no pasa del ancho
+   disponible. Tocar una herramienta añade el bloque en el centro de la vista. */
 @media (max-width: 768px) {
-  .builder-palette {
-    display: none;
+  .builder-palette:not(.builder-palette--collapsed) {
+    width: min(242px, calc(100% - 24px));
+    max-height: min(70%, calc(100% - 24px));
   }
 }

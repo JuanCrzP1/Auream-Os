@@ -259,3 +259,16 @@
     width: calc(100vw - 24px);
   }
 }
+
+/* Celular (B12): la cápsula se queda en icono y contadores; el resumen sigue
+   disponible para lectores de pantalla y en la tarjeta al abrirla. */
+@media (max-width: 480px) {
+  .flow-review__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}

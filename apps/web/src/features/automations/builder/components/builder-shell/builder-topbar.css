@@ -297,3 +297,15 @@
     width: 140px;
   }
 }
+
+/* Celular (B12): la topbar llega casi al borde y el nombre cede ancho. */
+@media (max-width: 480px) {
+  .builder-topbar {
+    margin: 4px 8px;
+    padding: 0 6px;
+  }
+
+  .builder-topbar__name-input {
+    width: 112px;
+  }
+}

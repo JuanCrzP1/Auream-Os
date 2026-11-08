@@ -3,8 +3,7 @@ import { Handle, Position, useUpdateNodeInternals, type NodeProps } from "@xyflo
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 import { useBuilderEditing } from "@features/automations/builder/context/BuilderEditingContext";
 import { isExecutableType, resolveTool } from "@features/automations/builder/tools/registry";
-import { useNodeReview } from "@features/automations/builder/context/FlowReviewContext";
-import { NodeStatusBadge, NotExecutableTab } from "./NodeStatusBadge";
+import { NotExecutableTab } from "./NotExecutableTab";
 import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
 import { listNodeOutputs } from "@features/automations/builder/services/nodeOutputs";
 
@@ -28,9 +27,6 @@ import { listNodeOutputs } from "@features/automations/builder/services/nodeOutp
  */
 export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
   const { requestEdit, duplicateNode, removeNode } = useBuilderEditing();
-  // Estado del bloque según la revisión del flujo (B8): error, aviso o nada.
-  const review = useNodeReview(id);
-  const reviewClass = review ? ` flow-node--has-${review.severity}` : "";
   // `resolveTool` degrada a una presentación neutra si el flow guardado trae un
   // tipo que esta versión ya no soporta, en lugar de romper el canvas entero.
   const tool = resolveTool(data.nodeType);
@@ -57,9 +53,8 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
   if (data.isEntry) {
     return (
       <article
-        className={`flow-node flow-node--entry${selected ? " flow-node--selected" : ""}${reviewClass}`}
+        className={`flow-node flow-node--entry${selected ? " flow-node--selected" : ""}`}
       >
-        {review ? <NodeStatusBadge status={review} /> : null}
         <div className="flow-node__entry-inner">
           <span className="flow-node__entry-chip" aria-hidden="true">
             <svg viewBox="0 0 16 16" fill="currentColor">
@@ -79,7 +74,7 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
 
   return (
     <article
-      className={`flow-node${selected ? " flow-node--selected" : ""}${reviewClass}`}
+      className={`flow-node${selected ? " flow-node--selected" : ""}`}
       /* El color de la herramienta se PUBLICA, no se aplica.
        *
        * Antes esta tarjeta escribía `background: <color>` directamente en la
@@ -111,7 +106,6 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
         className="flow-node__handle flow-node__handle--target"
       />
       {isExecutableType(data.nodeType) ? null : <NotExecutableTab />}
-      {review ? <NodeStatusBadge status={review} /> : null}
       <header className="flow-node__header">
         <span className="flow-node__type-icon" aria-hidden="true">
           <Icon />

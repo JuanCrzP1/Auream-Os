@@ -117,7 +117,7 @@ El canvas está aislado: `BuilderCanvas` renderiza, y el estado del editor vive 
 | Topbar | Arriba a la izquierda | Volver, nombre editable y estado del autoguardado (`SaveStatusPill`). Sin publicar, versión ni rollback |
 | Toolbox (`PalettePanel`) | Flotando sobre el lienzo | Las 12 herramientas |
 | Revisión del flujo (`review/FlowReviewPanel`) | Arriba a la derecha del lienzo | Lista lo que está mal o incompleto (`services/reviewFlow.ts`) y lleva a cada bloque. Solo informa |
-| Estado del bloque (`canvas/NodeStatusBadge`) | En cada nodo | Anillo y marca roja o ámbar con los motivos (`FlowReviewContext`), y «Próximamente» si el motor aún no lo ejecuta |
+| «Próximamente» (`canvas/NotExecutableTab`) | En cada nodo que el motor aún no ejecuta | Se configura, pero todavía no corre con clientes. Los problemas NO se marcan bloque a bloque (saturaba el lienzo): están en la revisión del flujo |
 | Editor del bloque (`ExpandedNodeOverlay`) | Sobre el nodo | El `Editor` de cada herramienta. Los nodos de sistema (Inicio, Finalizar) no se editan |
 | Aviso sin servidor (`OfflineNotice`) | Abajo al centro | Si la API no responde, el builder abre un respaldo en memoria: lo dice, no intenta guardar y ofrece «Reintentar» (recarga desde cero) |
 

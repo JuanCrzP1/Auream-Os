@@ -8,8 +8,6 @@ import { createNodeDraft } from "@features/automations/builder/services/createNo
 import { listAllTools, resolveTool } from "@features/automations/builder/tools/registry";
 import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
-import { FlowReviewProvider } from "@features/automations/builder/context/FlowReviewContext";
-import type { FlowReview } from "@features/automations/builder/services/reviewFlow";
 
 // ---------------------------------------------------------------------------
 // Icono del nodo cerrado en el lienzo.
@@ -151,51 +149,10 @@ describe("FlowNodeCard — acción Editar", () => {
   });
 });
 
-describe("FlowNodeCard — estado del bloque (B8)", () => {
-  function montarConRevision(node: CanvasNode, review: FlowReview) {
-    return render(
-      <ReactFlowProvider>
-        <BuilderEditingProvider requestEdit={vi.fn()} toggleExpand={vi.fn()} updateNode={vi.fn()} duplicateNode={vi.fn()} removeNode={vi.fn()}>
-          <FlowReviewProvider review={review}>
-            <FlowNodeCard {...({ id: node.id, data: node.data, selected: false } as NodeProps<CanvasNode>)} />
-          </FlowReviewProvider>
-        </BuilderEditingProvider>
-      </ReactFlowProvider>
-    );
-  }
-
-  const issue = (nodeId: string, severity: "error" | "warning", message: string) =>
-    ({ id: `${severity}:${message}`, severity, code: "dead-end" as const, message, nodeId });
-
-  it("un bloque sano no lleva marca ni anillo", () => {
-    const nodo = createNodeDraft("message", 0);
-    const { container } = montarConRevision(nodo, { issues: [], errorCount: 0, warningCount: 0 });
-
+describe("FlowNodeCard — estado del bloque", () => {
+  it("el lienzo no marca problemas bloque a bloque: viven en la revisión del flujo", () => {
+    const { container } = montar(createNodeDraft("menu", 0));
     expect(container.querySelector(".flow-node__status")).toBeNull();
-    expect(container.querySelector(".flow-node--has-error, .flow-node--has-warning")).toBeNull();
-  });
-
-  it("un bloque con errores lleva la marca roja con el número y los motivos", () => {
-    const nodo = createNodeDraft("message", 0);
-    const review = {
-      issues: [issue(nodo.id, "error", "No continúa."), issue(nodo.id, "warning", "Está suelto.")],
-      errorCount: 1,
-      warningCount: 1
-    };
-    const { container, getByRole } = montarConRevision(nodo, review);
-
-    expect(container.querySelector(".flow-node--has-error")).not.toBeNull();
-    const marca = getByRole("img", { name: /con errores/i });
-    expect(marca).toHaveTextContent("2");
-    expect(marca).toHaveAccessibleName(/No continúa\. Está suelto\./);
-  });
-
-  it("solo avisos: marca ámbar", () => {
-    const nodo = createNodeDraft("message", 0);
-    const { container } = montarConRevision(nodo, { issues: [issue(nodo.id, "warning", "Salidas sin conectar.")], errorCount: 0, warningCount: 1 });
-
-    expect(container.querySelector(".flow-node__status--warning")).toHaveTextContent("!");
-    expect(container.querySelector(".flow-node--has-warning")).not.toBeNull();
   });
 
   it("dice «Próximamente» en los bloques que el motor aún no ejecuta, y solo en esos", () => {

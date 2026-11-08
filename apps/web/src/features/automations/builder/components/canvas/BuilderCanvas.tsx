@@ -18,12 +18,13 @@ import {
   type OnNodesChange,
   ReactFlow,
   ReactFlowProvider,
+  useNodesInitialized,
   useReactFlow,
   type Connection,
   type Edge,
   type FinalConnectionState
 } from "@xyflow/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { checkConnection } from "@features/automations/builder/services/connectionRules";
 import { nodeTypes } from "./nodeTypes";
 import { edgeTypes } from "./edgeTypes";
@@ -54,7 +55,16 @@ interface BuilderCanvasProps {
   onPaneClick: () => void;
   /** Revisión del flujo que se muestra en la esquina del lienzo. */
   review: FlowReview;
+  /**
+   * Entrega a la página una función que dice qué punto del flujo está en el
+   * centro de la pantalla. La usa la Toolbox para que un bloque añadido con un
+   * toque aparezca donde el usuario está mirando (clave en pantallas pequeñas).
+   */
+  registerViewportCenter?: (getCenter: () => { x: number; y: number }) => void;
 }
+
+/** Encuadre inicial: algo alejado, con aire alrededor. */
+const INITIAL_FIT = { padding: 0.25, maxZoom: 0.8 } as const;
 
 /** Encuadre al ir a un bloque desde la revisión. */
 const FOCUS_VIEW = { duration: 420, maxZoom: 1.1, padding: 0.8 } as const;
@@ -64,6 +74,28 @@ const NOTICE_MS = 3600;
 
 function CanvasInner(props: BuilderCanvasProps) {
   const { screenToFlowPosition, fitView } = useReactFlow();
+  const surfaceRef = useRef<HTMLDivElement>(null);
+
+  // Encuadre inicial completo. El `fitView` del componente se aplica antes de
+  // que React Flow haya medido todos los bloques y en la práctica encuadraba
+  // solo el primero (Inicio), dejando el resto fuera de la pantalla. Se repite
+  // UNA vez, cuando todos están medidos; después manda el usuario.
+  const nodesInitialized = useNodesInitialized();
+  const framed = useRef(false);
+  useEffect(() => {
+    if (framed.current || !nodesInitialized) return;
+    framed.current = true;
+    void fitView(INITIAL_FIT);
+  }, [nodesInitialized, fitView]);
+  const { registerViewportCenter } = props;
+
+  useEffect(() => {
+    registerViewportCenter?.(() => {
+      const rect = surfaceRef.current?.getBoundingClientRect();
+      if (!rect) return screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+      return screenToFlowPosition({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    });
+  }, [registerViewportCenter, screenToFlowPosition]);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -105,6 +137,21 @@ function CanvasInner(props: BuilderCanvasProps) {
     [nodes, onNodesChange, fitView]
   );
 
+  // Teclado (B13): con un bloque enfocado (Tab), Enter abre su editor.
+  // Suprimir/Retroceso ya los borra React Flow; Escape cierra el editor.
+  const { onEditNode } = props;
+  const onCanvasKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "Enter") return;
+      const node = (event.target as HTMLElement).closest<HTMLElement>(".react-flow__node");
+      const nodeId = node?.dataset.id;
+      if (!nodeId || event.target !== node) return;
+      event.preventDefault();
+      onEditNode(nodeId);
+    },
+    [onEditNode]
+  );
+
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
@@ -138,7 +185,7 @@ function CanvasInner(props: BuilderCanvasProps) {
           </linearGradient>
         </defs>
       </svg>
-      <div className="builder-canvas-shell__surface">
+      <div className="builder-canvas-shell__surface" ref={surfaceRef}>
         {notice ? (
           <div className="canvas-connection-notice" role="status">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
@@ -150,13 +197,15 @@ function CanvasInner(props: BuilderCanvasProps) {
         ) : null}
         <FlowReviewPanel review={props.review} onFocusNode={focusNode} />
         <ReactFlow<CanvasNode, CanvasEdge>
+          aria-label="Lienzo del flujo. Tab recorre los bloques, Enter abre el editor del bloque enfocado y Suprimir lo borra."
+          onKeyDown={onCanvasKeyDown}
           fitView
           /* Sin opciones, `fitView` encuadra al 100% y con un único nodo el
              lienzo abre "encima" de él. El tope de 0.8 deja el flujo algo
              alejado y el padding le da aire alrededor. Sólo afecta al encuadre
              inicial: el zoom que elija el usuario después no se toca, y el
              tamaño real de los nodos no cambia. */
-          fitViewOptions={{ padding: 0.25, maxZoom: 0.8 }}
+          fitViewOptions={INITIAL_FIT}
           /* El límite real de alejamiento interactivo, no el del encuadre
              inicial de arriba. React Flow trae 0.5 por defecto —a mitad de
              tamaño real—, que se queda corto en cuanto la automatización

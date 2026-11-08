@@ -11,3 +11,15 @@
 .react-flow__attribution {
   display: none;
 }
+
+/* Teclado (B13): el bloque enfocado con Tab se ve. React Flow pone el foco en
+   su envoltorio (`.react-flow__node`), no en la tarjeta. `!important` porque
+   la tarjeta declara su `outline` en línea (el de la selección). */
+.react-flow__node:focus-visible {
+  outline: none;
+}
+
+.react-flow__node:focus-visible > .flow-node {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 4px !important;
+}

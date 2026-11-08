@@ -35,6 +35,10 @@ import type { CanvasEdge } from "@features/automations/builder/types/canvas";
  * mover o acercar. Su contenedor no recibe puntero —para no robar clics al
  * lienzo—, y por eso el botón se lo devuelve a sí mismo en la hoja de estilos.
  */
+/** Trazo de la conexión seleccionada: más grueso que el normal (2.3) y con halo. */
+const SELECTED_STROKE_WIDTH = 3.6;
+const SELECTED_GLOW = "drop-shadow(0 0 6px var(--primary-soft))";
+
 export function DeletableEdge(props: EdgeProps<CanvasEdge>) {
   const { deleteElements } = useReactFlow();
   const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, selected } = props;
@@ -50,7 +54,13 @@ export function DeletableEdge(props: EdgeProps<CanvasEdge>) {
 
   return (
     <>
-      <BezierEdge {...props} />
+      {/* Seleccionada (B14): trazo más grueso y con halo. Se decide aquí, en la
+          presentación de la arista, porque su `style` en línea gana a cualquier
+          hoja de estilos. */}
+      <BezierEdge
+        {...props}
+        style={selected ? { ...props.style, strokeWidth: SELECTED_STROKE_WIDTH, filter: SELECTED_GLOW } : props.style}
+      />
       {selected && (
         <EdgeLabelRenderer>
           <button

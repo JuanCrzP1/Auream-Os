@@ -1,6 +1,6 @@
 import "../components/builder-shell/builder-topbar.css";
 import "./builder-page.css";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { BuilderCanvas } from "../components/canvas/BuilderCanvas";
 import { BuilderShell } from "../components/builder-shell/BuilderShell";
@@ -9,10 +9,13 @@ import { SaveStatusPill } from "../components/builder-shell/SaveStatusPill";
 import { OfflineNotice } from "../components/builder-shell/OfflineNotice";
 import { PalettePanel } from "../components/panels/PalettePanel";
 import { BuilderEditingProvider } from "../context/BuilderEditingContext";
-import { FlowReviewProvider } from "../context/FlowReviewContext";
 import { useBuilderWorkspace } from "../hooks/useBuilderWorkspace";
 import { resolveToolUi } from "../tools/ui-registry";
 import type { CanvasNode } from "../types/canvas";
+import type { NodeType } from "@contracts/FlowSnapshot";
+
+/** Medio ancho y medio alto aproximados de un bloque: se centra en el punto. */
+const NODE_HALF_SIZE = { x: 132, y: 48 } as const;
 
 interface BuilderViewProps {
   readonly flowKey: string;
@@ -23,6 +26,22 @@ interface BuilderViewProps {
 function BuilderView({ flowKey, onReload }: BuilderViewProps) {
   const navigate = useNavigate();
   const builder = useBuilderWorkspace(flowKey);
+
+  // Añadir desde la Toolbox con un toque: el bloque aparece en el centro de lo
+  // que se está viendo, no en una posición fija que puede quedar fuera de la
+  // pantalla (en un celular, casi siempre).
+  const viewportCenter = useRef<(() => { x: number; y: number }) | null>(null);
+  const registerViewportCenter = useCallback((getCenter: () => { x: number; y: number }) => {
+    viewportCenter.current = getCenter;
+  }, []);
+  const addNodeAtCenter = useCallback(
+    (nodeType: NodeType) => {
+      const center = viewportCenter.current?.();
+      if (!center) return builder.handleAddNode(nodeType);
+      builder.handleDropNode(nodeType, { x: center.x - NODE_HALF_SIZE.x, y: center.y - NODE_HALF_SIZE.y });
+    },
+    [builder.handleAddNode, builder.handleDropNode]
+  );
 
   /**
    * Abre el editor de un nodo dentro del lienzo. ÚNICO punto de decisión, para
@@ -83,8 +102,6 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
         {/* Área de trabajo: el lienzo ocupa todo el ancho y la paleta flota
             encima. La paleta NO es una columna del layout. */}
         <div className="builder-workspace">
-          {/* Cada tarjeta lee de aquí su estado en la revisión (B8). */}
-          <FlowReviewProvider review={builder.review}>
           <BuilderCanvas
             nodes={builder.nodes}
             edges={builder.edges}
@@ -97,9 +114,9 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
             onDropNode={builder.handleDropNode}
             onPaneClick={builder.handleCollapseNodes}
             review={builder.review}
+            registerViewportCenter={registerViewportCenter}
           />
-          </FlowReviewProvider>
-          <PalettePanel onAddNode={builder.handleAddNode} />
+          <PalettePanel onAddNode={addNodeAtCenter} />
           {builder.offline ? <OfflineNotice onRetry={onReload} /> : null}
         </div>
       </div>

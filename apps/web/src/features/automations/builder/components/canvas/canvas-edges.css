@@ -11,8 +11,7 @@
  * Por eso NO hay aquí reglas de `:hover` ni de `.selected` sobre el trazo: las
  * había, y nunca se aplicaron —un `style` en línea gana siempre a una hoja—.
  * Eran CSS muerto que aparentaba dar realimentación de selección. El estado
- * visual de una conexión seleccionada se resolverá donde corresponde, en la
- * presentación del edge (B7/B8). */
+ * visual de la conexión seleccionada vive en `DeletableEdge` (B14). */
 
 .react-flow__edge-path {
   stroke: var(--edge-stroke);
@@ -109,17 +108,20 @@
 }
 
 /* Aviso de conexión no permitida (reglas: docs/architecture/flow-connections.md). */
+/* Centrado sin `left: 50%` (ver `.builder-offline`): usa todo el ancho útil. */
 .canvas-connection-notice {
   position: absolute;
   top: 16px;
-  left: 50%;
+  left: 16px;
+  right: 16px;
   z-index: 20;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
-  max-width: min(520px, calc(100% - 32px));
+  width: fit-content;
+  max-width: 520px;
+  margin: 0 auto;
   padding: 9px 14px;
-  transform: translateX(-50%);
   border: 1px solid color-mix(in srgb, #f59e0b 45%, var(--border));
   border-radius: 12px;
   background: color-mix(in srgb, #f59e0b 12%, var(--surface));
@@ -142,7 +144,7 @@
 @keyframes canvas-notice-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -6px);
+    transform: translateY(-6px);
   }
 }
 

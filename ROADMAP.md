@@ -64,7 +64,7 @@ Decisión de producto tomada el 2026-09-01: **la experiencia visual y UX de Auto
 ```
 FASE A  Fundación y control arquitectónico        🟢 COMPLETADA
    ↓
-FASE B  Automatizaciones — producto visual        🟡 EN PROGRESO
+FASE B  Automatizaciones — producto visual        🟢 COMPLETADA
    ↓
 FASE C  Persistencia y Runtime real               ⬜
    ↓
@@ -92,7 +92,7 @@ Verificado contra el repositorio el 2026-09-01, no copiado de la revisión anter
 | Seguridad | 🟢 COMPLETADO | CORS por allowlist, sin credenciales hardcodeadas, tests en `tests/security/` |
 | Branding | 🟢 COMPLETADO | Identidad AUREAM OS, tema claro/oscuro |
 | **Automations — Builder base** | 🟢 COMPLETADO | Catalog + builder + validation + simulación funcionan de punta a punta |
-| **Automations — experiencia visual completa** | 🟡 EN PROGRESO | Es la FASE B. Toolbox, conexiones y modularidad cerradas; editor de configuración, paneles, estados y gestión, pendientes |
+| **Automations — experiencia visual completa** | 🟢 COMPLETADO | FASE B cerrada (2026-11-08): 12 herramientas con editor, bloque de inicio, revisión del flujo, estados de bloque, gestión completa, responsive y accesibilidad. Ejecución real: FASE C |
 | Toolbox (paleta de herramientas) | 🟢 COMPLETADO | Overlay flotante, cristal, plegado vertical, 12 herramientas, búsqueda, iconos propios |
 | Arquitectura modular de herramientas | 🟢 COMPLETADO | `builder/tools/` con registry puro como única frontera; grafo de imports acíclico |
 | Conexiones del canvas | 🟢 COMPLETADO | Bézier flexible, identidad azul→violeta, sin rótulo de prioridad |
@@ -224,7 +224,7 @@ Queda explícitamente **prohibido**, en cualquier fase futura:
 
 ## FASE B — Automatizaciones: producto visual completo
 
-**Estado: 🟡 EN PROGRESO**
+**Estado: 🟢 COMPLETADA (2026-11-08)**
 
 Objetivo: cerrar **toda** la experiencia visual y de uso del módulo Automatizaciones antes de tocar persistencia o runtime.
 
@@ -332,7 +332,7 @@ Defectos verificados, todos de experiencia:
 
 Cada bloque dice su estado en el propio lienzo, sin abrir nada:
 
-- **Error / aviso:** anillo rojo o ámbar y una marca en la esquina con el número de problemas; los motivos al pasar el ratón y para lectores de pantalla. Sale de la misma revisión del flujo (`groupIssuesByNode` + `FlowReviewContext`), sin reglas nuevas. El anillo es un `::after` propio para no chocar con los `box-shadow` de selección, Inicio y Mensaje.
+- **Error / aviso:** se probó un anillo y una marca por bloque y se **retiró por decisión de producto** (2026-11-08): saturaba el lienzo sin aportar más que la revisión del flujo, que ya lista cada problema y lleva al bloque. El lienzo queda limpio.
 - **No ejecutable:** pestaña «Próximamente» en las 8 herramientas con `executable: false`. Se configuran, pero aún no corren con clientes (FASE C).
 - «Deshabilitado» no aplica: no existe ese concepto en el producto.
 
@@ -358,15 +358,24 @@ Ningún control del menú queda sin comportamiento:
 
 Queda fuera, para más adelante: carpetas anidadas y estado activo/pausado en la tarjeta (llega con las conexiones, FASE D).
 
-#### B12 — Responsive · 🟡 EN PROGRESO
+#### B12 — Responsive · 🟢 COMPLETADO (2026-11-08)
 
-Un único breakpoint en todo el builder (`max-width: 768px`, en topbar, modal de nodo y paleta): por debajo la paleta se oculta y no hay forma de añadir nodos. Falta decidir y validar el comportamiento en tablet y móvil, y revisar 1366 y 1024 con la topbar completa.
+Validado con emulación real de dispositivo en 1440, 1024, 768 (tablet) y 390 (celular), en los dos temas:
 
-#### B13 — Accesibilidad · ⬜ POR HACER
+- **El menú lateral de la aplicación** (220px fijos, sin ninguna regla responsive) no se adaptaba nunca: en un celular dejaba ~158px al builder. Dentro del builder se oculta por debajo de 768px; «Volver a automatizaciones» queda en la topbar. El menú del resto de la aplicación en móvil es de la FASE G.
+- **La Toolbox ya no se oculta** en pantallas pequeñas (era la única forma de añadir bloques): arranca plegada y, abierta, no pasa del ancho disponible.
+- **Añadir con un toque** coloca el bloque en el centro de lo que se está viendo (`registerViewportCenter`), no en una posición fija fuera de la pantalla.
+- **El editor del bloque** cabe en la pantalla (`min(560px, 100vw − 16px)`, alto completo en celular); la topbar, la revisión (solo icono y contadores) y los avisos se compactan. Los avisos centrados dejaron de usar `left: 50%`, que partía el texto palabra por palabra.
+- **Encuadre inicial corregido** (defecto previo, visible en cualquier tamaño): el `fitView` se aplicaba antes de medir los bloques y solo encuadraba Inicio. Ahora se repite una vez con todos medidos (`useNodesInitialized`).
 
-Revisado parcialmente: el control de la Toolbox tiene `aria-label`, `title`, `aria-expanded` y `focus-visible`. Pendiente en el resto: los botones de acción del nodo son emoji con `title` pero sin `aria-label`; el canvas no tiene alternativa de teclado para crear o conectar nodos; falta revisar contraste de los textos secundarios sobre el cristal y el foco visible en la lista de herramientas.
+#### B13 — Accesibilidad · 🟢 COMPLETADO (2026-11-08)
 
-#### B14 — Deuda de arquitectura frontend · 🟡 EN PROGRESO
+- **Teclado en el lienzo:** Tab recorre los bloques (foco visible), Enter abre el editor del bloque enfocado, Suprimir lo borra y Escape cierra el editor. El lienzo se anuncia con instrucciones (`aria-label`).
+- **Toolbox:** buscador con nombre accesible; cada herramienta se anuncia «Añadir …» y se añade con Enter; foco visible.
+- **Ya cubierto en tareas anteriores:** acciones del bloque con `aria-label`, revisión del flujo y marcas de estado anunciadas a lectores de pantalla, avisos con `role="status"`/`"alert"`, `prefers-reduced-motion` en las animaciones, contraste mínimo vigilado por test en la paleta de herramientas.
+- **Limitación conocida:** crear conexiones sigue requiriendo puntero (React Flow no ofrece conexión por teclado). Se registra para la FASE G.
+
+#### B14 — Deuda de arquitectura frontend · 🟢 COMPLETADO (2026-11-08)
 
 **Corregido:**
 
@@ -379,35 +388,35 @@ Revisado parcialmente: el control de la Toolbox tiene `aria-label`, `title`, `ar
 - **Adaptadores protegidos.** `mapCanvasToSnapshot` / `mapSnapshotToCanvas` no tenían ningún test y son el punto exacto por donde puede perderse trabajo del usuario. 17 tests de ida y vuelta: posiciones, prioridad, condición, fallback, orden de ejecución, metadatos ajenos a la UI, tipos retirados y conexiones huérfanas.
 - **Hueco de iconografía cerrado.** Una herramienta sin icono se pintaba sin él, en silencio. `listIconTypes()` permite comprobar la paridad entre definición e icono en ambos sentidos.
 
-**Pendiente:**
+**Cerrado también (2026-11-08):**
 
-- **Colores fuera del sistema de temas** en `flow-node.css` (`#6c5ce7`, `#9333ea` de la píldora de Inicio). Los de `node-editor-modal.css` desaparecieron con el modal (B9). Es una decisión de diseño: pasar la píldora a tokens cambia su aspecto.
-- **Realimentación visual de la conexión seleccionada**: al retirar el CSS muerto queda explícito que no existe. Corresponde a B7/B8, en la presentación del edge, no en una hoja de estilos.
+- **Colores de la píldora de Inicio** pasan a tokens del tema (`--entry-start`, `--entry-end`), con el mismo aspecto; sus sombras se derivan con `color-mix`.
+- **Conexión seleccionada:** trazo más grueso y con halo, decidido en `DeletableEdge` (su `style` en línea gana a cualquier hoja).
 
-#### B15 — Auditoría visual final y cierre · ⬜ POR HACER
+#### B15 — Auditoría visual final y cierre · 🟢 COMPLETADO (2026-11-08)
 
-Revisión completa con capturas de los dos temas, los tamaños de la lista de B12 y todos los estados de B7/B8, antes de declarar la fase cerrada.
+Capturas con emulación real de dispositivo de la composición real del builder (menú lateral, topbar, Toolbox, lienzo, revisión, editor y avisos) en escritorio 1440, 1024, tablet 768 y celular 390, temas oscuro y claro, con todos los estados: flujo con errores y avisos, «Próximamente», revisión abierta, editor abierto, Toolbox abierta, sin conexión y conexión seleccionada. Lo que la auditoría encontró se corrigió en B12 (encuadre inicial, avisos partidos, menú lateral). Verificación final: `check` y `test` de backend y web, `build`, `build:web`, `git diff --check` y el escenario en Chrome real, todo en verde.
 
 ### Criterio de cierre de la FASE B
 
 La fase pasa a 🟢 COMPLETADA **solo** cuando se cumplan todos estos puntos:
 
-1. Se puede configurar el comportamiento de las 12 herramientas desde la interfaz (B5).
+1. Se puede configurar el comportamiento de las 12 herramientas desde la interfaz (B5). — ✅ **cumplido**.
 2. No queda ningún componente construido sin consumidor ni estado producido y descartado (B6). — ✅ **cumplido**; `SimulationPanel` queda reservado a C15 de forma explícita.
 3. Todo estado del sistema se comunica con la verdad: guardado, error, sin conexión, inválido, no ejecutable (B7, B8). — ✅ **cumplido**.
 4. Ningún control visible carece de comportamiento (B10, B14). — ✅ **cumplido**.
-5. La estructura frontend es estable: una responsabilidad por módulo, sin mapas globales, sin singletons mutables, sin dos dueños del mismo estado (B14). — ✅ **cumplido**; queda solo el color fuera de tema de dos superficies, que depende de B5/B8.
-6. Responsive validado en los tamaños acordados (B12) y accesibilidad revisada (B13).
-7. `npm run check`, `npm --prefix apps/web run check`, `npm test`, `npm --prefix apps/web run test`, `npm run build`, `npm run build:web` y `git diff --check` en verde.
-8. Revisión visual final con capturas de ambos temas (B15).
+5. La estructura frontend es estable: una responsabilidad por módulo, sin mapas globales, sin singletons mutables, sin dos dueños del mismo estado (B14). — ✅ **cumplido**.
+6. Responsive validado en los tamaños acordados (B12) y accesibilidad revisada (B13). — ✅ **cumplido**.
+7. `npm run check`, `npm --prefix apps/web run check`, `npm test`, `npm --prefix apps/web run test`, `npm run build`, `npm run build:web` y `git diff --check` en verde. — ✅ **cumplido** (414 + 1537 tests).
+8. Revisión visual final con capturas de ambos temas (B15). — ✅ **cumplido**.
 
-**Solo entonces se desbloquea la FASE C.**
+**✅ Los 8 puntos se cumplen: FASE B COMPLETADA (2026-11-08). La FASE C queda desbloqueada.**
 
 ---
 
 ## FASE C — Persistencia y Runtime real
 
-**Estado: ⬜ POR HACER** — bloqueada por el cierre de la FASE B.
+**Estado: ⬜ POR HACER** — desbloqueada (FASE B cerrada el 2026-11-08). Primero C1 y C2: los flujos a PostgreSQL/Neon por cuenta.
 
 Objetivo: que un flow activo se ejecute solo (lo último guardado; no hay publicación, ver B6), sin depender del builder, sobre una persistencia que soporte más de un proceso y más de un desarrollador.
 
@@ -547,3 +556,5 @@ Cada vez que se cierra una tarea:
 | 2026-11-08 | **B6 y B7 cerrados.** Revisión del flujo estructurada (`reviewFlow`) y visible en el lienzo con navegación al bloque; retirado todo el circuito de publicación (frontend y backend) y los paneles obsoletos; aviso y estado «Sin conexión» con reintento seguro. |
 | 2026-11-08 | **B8 cerrado.** Estado de cada bloque en el lienzo: anillo y marca por gravedad con los motivos, y pestaña «Próximamente» en las herramientas que el motor aún no ejecuta. |
 | 2026-11-08 | **B10 cerrado.** Duplicar, archivar/restaurar, «Mover a…» y creación explícita por `POST /automations`; abrir el builder deja de crear (cierra C13). |
+| 2026-11-08 | **FASE B COMPLETADA.** B12 (responsive validado en 4 tamaños, Toolbox y editor en celular, encuadre inicial corregido), B13 (teclado en lienzo y Toolbox), B14 (Inicio a tokens, conexión seleccionada resaltada) y B15 (auditoría visual con capturas en ambos temas). Los 8 criterios de cierre se cumplen; se desbloquea la FASE C. |
+| 2026-11-08 | **Decisión de producto:** sin marcas de error por bloque en el lienzo (saturaban); los problemas viven solo en la revisión del flujo. Se mantiene «Próximamente». |

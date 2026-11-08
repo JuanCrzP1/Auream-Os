@@ -41,63 +41,16 @@
   min-width: 140px;
   border-radius: 999px;
   cursor: grab;
-  background: linear-gradient(135deg, #6c5ce7, #9333ea);
-  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.55), 0 0 0 3px rgba(108, 92, 231, 0.2);
+  background: linear-gradient(135deg, var(--entry-start), var(--entry-end));
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--entry-start) 55%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--entry-start) 20%, transparent);
 }
 
 .flow-node--entry.flow-node--selected {
-  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.65), 0 0 0 3px rgba(147, 51, 234, 0.5);
-}
-
-/* --- Estado del bloque según la revisión del flujo (B8) ------------------- */
-
-/* Anillo por gravedad. Es una caja propia (`::after`) y no un `box-shadow`
-   del nodo: la selección, la píldora de Inicio y el tratamiento de Mensaje ya
-   usan `box-shadow`, y cualquiera de ellos lo taparía. */
-.flow-node--has-warning::after,
-.flow-node--has-error::after {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.flow-node--has-warning::after {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 75%, transparent);
-}
-
-.flow-node--has-error::after {
-  box-shadow: 0 0 0 2px var(--rose);
-}
-
-.flow-node__status {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border: 2px solid var(--bg);
-  border-radius: 999px;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  cursor: help;
-}
-
-.flow-node__status--error {
-  background: var(--rose);
-}
-
-.flow-node__status--warning {
-  background: var(--amber);
-  color: rgba(0, 0, 0, 0.78);
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--entry-start) 65%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--entry-end) 50%, transparent);
 }
 
 /* Pestaña «Próximamente»: se configura, pero el motor aún no lo ejecuta. */
