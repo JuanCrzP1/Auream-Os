@@ -28,7 +28,7 @@ export class InMemoryFlowRegistry implements FlowRegistry {
   // Versiones activas por tenant+flow. El runtime consulta esto para nuevas sesiones.
   private readonly activeVersionsByFlow = new Map<string, ActiveFlowVersion>();
 
-  public getPublishedSnapshot(tenantId: string, flowKey: string): FlowSnapshot {
+  public async getPublishedSnapshot(tenantId: string, flowKey: string): Promise<FlowSnapshot> {
     const publishedVersionId = this.publishedByTenantAndKey.get(`${tenantId}:${flowKey}`);
 
     if (!publishedVersionId) {
@@ -45,7 +45,7 @@ export class InMemoryFlowRegistry implements FlowRegistry {
   }
 
   // tenantId y flowId son parte de la clave — nunca cross-tenant.
-  public getSnapshotByVersion(tenantId: string, flowId: string, versionId: string): FlowSnapshot {
+  public async getSnapshotByVersion(tenantId: string, flowId: string, versionId: string): Promise<FlowSnapshot> {
     const key = `${tenantId}:${flowId}:${versionId}`;
     const snapshot = this.snapshotsByVersion.get(key);
 
@@ -61,7 +61,7 @@ export class InMemoryFlowRegistry implements FlowRegistry {
   // Publica un snapshot y lo activa como versión runtime activa.
   // La clave de almacenamiento incluye tenantId+flowId para tenant isolation.
   // La clave pública (getPublishedSnapshot) usa tenantId+flowKey para el routing.
-  public publish(snapshot: FlowSnapshot): void {
+  public async publish(snapshot: FlowSnapshot): Promise<void> {
     const storageKey = `${snapshot.flow.tenantId}:${snapshot.flow.id}:${snapshot.version.id}`;
     this.snapshotsByVersion.set(storageKey, snapshot);
 
@@ -80,7 +80,7 @@ export class InMemoryFlowRegistry implements FlowRegistry {
     this.activeVersionsByFlow.set(routingKey, activeVersion);
   }
 
-  public getActiveVersion(tenantId: string, flowKey: string): ActiveFlowVersion | undefined {
+  public async getActiveVersion(tenantId: string, flowKey: string): Promise<ActiveFlowVersion | undefined> {
     return this.activeVersionsByFlow.get(`${tenantId}:${flowKey}`);
   }
 }

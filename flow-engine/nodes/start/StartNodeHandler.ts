@@ -16,7 +16,7 @@ export class StartNodeHandler implements NodeHandler {
     return nodeType === "start";
   }
 
-  public execute(node: FlowNode, _input: RuntimeInput, _session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
     return {
       executionStatus: "success",
       outputMessages: [],

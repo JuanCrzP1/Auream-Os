@@ -29,11 +29,14 @@ export class ExecutionLoop {
     private readonly eventTracker: ExecutionEventTracker
   ) {}
 
-  public run(
+  /** Máximo de bloques por mensaje: corta un ciclo sin espera (protección). */
+  private static readonly MAX_HOPS = 32;
+
+  public async run(
     snapshot: FlowSnapshot,
     initialSession: Session,
     envelope: InboundEnvelope
-  ): NodeExecutionResult {
+  ): Promise<NodeExecutionResult> {
     let session = initialSession;
 
     const aggregate = {
@@ -44,7 +47,14 @@ export class ExecutionLoop {
       domainEvents: [] as string[]
     };
 
-    for (let hop = 0; hop < 32; hop += 1) {
+    const finish = async (status: "completed" | "failed" | "waiting_input" | "delayed", event?: string) => {
+      session = await this.sessionService.updateStatus(session, status);
+      aggregate.executionStatus = status;
+      if (event) aggregate.domainEvents.push(event);
+      return aggregate;
+    };
+
+    for (let hop = 0; hop < ExecutionLoop.MAX_HOPS; hop += 1) {
       const currentNode = snapshot.nodes[session.currentNodeId];
 
       if (!currentNode) {
@@ -57,7 +67,7 @@ export class ExecutionLoop {
         isWaitingInput: session.status === "waiting_input"
       };
 
-      const execution = this.nodeRuntime.execute(currentNode, runtimeInput, session);
+      const execution = await this.nodeRuntime.execute(currentNode, runtimeInput, session);
 
       session = this.contextService.applyPatch(session, execution.contextPatch);
 
@@ -68,53 +78,33 @@ export class ExecutionLoop {
 
       this.eventTracker.trackNodeExecuted(session, currentNode.id, execution.executionStatus);
 
-      if (execution.executionStatus === "waiting_input") {
-        session = this.sessionService.updateStatus(session, "waiting_input");
-        aggregate.executionStatus = "waiting_input";
-        return aggregate;
-      }
-
-      if (execution.executionStatus === "delayed") {
-        session = this.sessionService.updateStatus(session, "delayed");
-        aggregate.executionStatus = "delayed";
-        return aggregate;
-      }
-
-      if (execution.executionStatus === "failed") {
-        session = this.sessionService.updateStatus(session, "failed");
-        aggregate.executionStatus = "failed";
-        return aggregate;
-      }
-
-      if (execution.executionStatus === "completed") {
-        session = this.sessionService.updateStatus(session, "completed");
-        aggregate.executionStatus = "completed";
-        return aggregate;
+      if (execution.executionStatus !== "success") {
+        return finish(execution.executionStatus);
       }
 
       const outgoingEdges = snapshot.edgesBySource[currentNode.id] ?? [];
 
       if (outgoingEdges.length === 0) {
-        session = this.sessionService.updateStatus(session, "completed");
-        aggregate.executionStatus = "completed";
-        return aggregate;
+        return finish("completed");
       }
 
-      const selectedEdge = this.edgeEvaluator.select(outgoingEdges, session, execution);
+      const selection = this.edgeEvaluator.select(outgoingEdges, session, execution);
 
-      if (!selectedEdge) {
-        session = this.sessionService.updateStatus(session, "failed");
-        aggregate.executionStatus = "failed";
-        aggregate.domainEvents.push(`edge_selection_failed:${currentNode.id}`);
-        return aggregate;
+      // Salida sin conectar: el usuario decidió que la rama acaba ahí (C14).
+      if (selection.kind === "unconnected-output") {
+        return finish("completed", `output_not_connected:${currentNode.id}:${selection.output}`);
       }
 
-      this.eventTracker.trackEdgeSelected(session, selectedEdge);
+      if (selection.kind === "no-match") {
+        return finish("failed", `edge_selection_failed:${currentNode.id}`);
+      }
 
-      session = this.sessionService.moveToNode(session, selectedEdge.toNodeId, "active");
+      this.eventTracker.trackEdgeSelected(session, selection.edge);
+
+      session = await this.sessionService.moveToNode(session, selection.edge.toNodeId, "active");
     }
 
-    session = this.sessionService.updateStatus(session, "failed");
+    session = await this.sessionService.updateStatus(session, "failed");
     return {
       executionStatus: "failed",
       outputMessages: aggregate.outputMessages,

@@ -41,6 +41,8 @@ export function convertBuilderSnapshotToRuntime(snapshot: BuilderFlowSnapshot, t
           flowVersionId: snapshot.version.id,
           fromNodeId: edge.fromNodeId,
           toNodeId: edge.toNodeId,
+          // La salida de la que arranca: el motor enruta por ella (C14).
+          ...(edge.fromOutput !== undefined ? { fromOutput: edge.fromOutput } : {}),
           priority: edge.priority,
           isFallback: edge.isFallback,
           condition: edge.condition

@@ -13,25 +13,25 @@ describe("ExecutionLoop — hop-by-hop execution", () => {
     loop = buildLoop();
   });
 
-  it("avanza de message → question y devuelve waiting_input", () => {
+  it("avanza de message → question y devuelve waiting_input", async () => {
     const session = makeSession({ currentNodeId: "node-entry" });
-    const result = loop.run(validLeadCaptureFlow, session, makeEnvelope());
+    const result = await loop.run(validLeadCaptureFlow, session, makeEnvelope());
 
     expect(result.executionStatus).toBe("waiting_input");
     expect(result.outputMessages.length).toBeGreaterThan(0);
   });
 
-  it("cuando ya está en waiting_input con mensaje, avanza a capture → end → completed", () => {
+  it("cuando ya está en waiting_input con mensaje, avanza a capture → end → completed", async () => {
     const session = makeSession({
       currentNodeId: "node-question",
       status: "waiting_input"
     });
-    const result = loop.run(validLeadCaptureFlow, session, makeEnvelope("Ana"));
+    const result = await loop.run(validLeadCaptureFlow, session, makeEnvelope("Ana"));
 
     expect(result.executionStatus).toBe("completed");
   });
 
-  it("no supera el límite de hops (max_hops_exceeded)", () => {
+  it("no supera el límite de hops (max_hops_exceeded)", async () => {
     // Construye un snapshot con un bucle infinito: node-a → node-a
     const loopSnapshot = {
       ...validLeadCaptureFlow,
@@ -64,13 +64,13 @@ describe("ExecutionLoop — hop-by-hop execution", () => {
     };
 
     const session = makeSession({ currentNodeId: "node-a" });
-    const result = loop.run(loopSnapshot, session, makeEnvelope());
+    const result = await loop.run(loopSnapshot, session, makeEnvelope());
 
     expect(result.executionStatus).toBe("failed");
     expect(result.domainEvents).toContain("max_hops_exceeded");
   });
 
-  it("devuelve failed cuando no hay edge seleccionable (sin fallback)", () => {
+  it("devuelve failed cuando no hay edge seleccionable (sin fallback)", async () => {
     const snapshot = {
       ...validLeadCaptureFlow,
       nodes: {
@@ -106,15 +106,15 @@ describe("ExecutionLoop — hop-by-hop execution", () => {
     };
 
     const session = makeSession({ currentNodeId: "node-a" });
-    const result = loop.run(snapshot, session, makeEnvelope());
+    const result = await loop.run(snapshot, session, makeEnvelope());
 
     expect(result.executionStatus).toBe("failed");
   });
 
-  it("acumula outputMessages de múltiples hops", () => {
+  it("acumula outputMessages de múltiples hops", async () => {
     // message → question produce al menos 2 mensajes de salida
     const session = makeSession({ currentNodeId: "node-entry" });
-    const result = loop.run(validLeadCaptureFlow, session, makeEnvelope());
+    const result = await loop.run(validLeadCaptureFlow, session, makeEnvelope());
 
     expect(result.outputMessages.length).toBeGreaterThanOrEqual(1);
   });

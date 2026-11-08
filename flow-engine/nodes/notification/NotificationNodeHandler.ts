@@ -20,7 +20,7 @@ export class NotificationNodeHandler implements NodeHandler {
     return nodeType === "notification";
   }
 
-  public execute(node: FlowNode, _input: RuntimeInput, _session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
     return {
       executionStatus: "failed",
       outputMessages: [],

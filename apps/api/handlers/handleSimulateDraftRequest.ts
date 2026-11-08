@@ -19,6 +19,6 @@ export async function handleSimulateDraftRequest(
     return;
   }
   const body = await parseJsonBody<BuilderSimulationRequest>(request);
-  const result = simulateDraftService.simulate(workspace, body);
+  const result = await simulateDraftService.simulate(workspace, body);
   sendJson(response, 200, result);
 }

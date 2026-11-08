@@ -8,7 +8,7 @@ export class ConditionNodeHandler implements NodeHandler {
     return nodeType === "condition";
   }
 
-  public execute(node: FlowNode, _input: RuntimeInput, _session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
     return {
       executionStatus: "success",
       outputMessages: [],

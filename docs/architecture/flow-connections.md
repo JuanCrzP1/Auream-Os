@@ -92,12 +92,12 @@ La aplica `UpgradingBuilderWorkspaceRepository`, un decorador del repositorio de
 - **Rechazar, no reemplazar.** Conectar desde una salida ocupada no sustituye la conexión anterior en silencio: se avisa y el usuario decide. Así no se pierde una rama sin querer.
 - **El fallback de Esperar respuesta ya no es obligatorio.** La regla anterior (`QUESTION_NO_FALLBACK`) exigía una arista de rescate. Con el modelo de salidas, el caso «no respondió» es la salida «Tiempo agotado», y una espera sin límite tiene una sola salida legítima.
 
-## Pendiente (Fase C)
+## En el motor (FASE C14)
 
-El motor (`EdgeEvaluator`) todavía no elige la arista por su salida de origen. Para que la ejecución respete este modelo:
+La ejecución respeta este modelo:
 
-1. `fromOutput` debe viajar del snapshot del builder al de ejecución.
-2. Cada handler debe declarar en su resultado por cuál salida sigue: `respuesta`/`tiempo-agotado`, `true`/`false`, el turno del Distribuidor, la opción del Menú…
-3. `EdgeEvaluator` debe seleccionar la arista de esa salida.
+1. `fromOutput` viaja del snapshot del builder al de ejecución (`convertBuilderSnapshotToRuntime` → `FlowEdge.fromOutput`).
+2. Cada handler declara por qué salida sigue en `NodeExecutionResult.output` (`respuesta`/`tiempo-agotado`, `true`/`false`, el turno del Distribuidor, la opción del Menú…).
+3. `EdgeEvaluator` sigue la conexión de esa salida. **Si la salida no está conectada, la rama termina** (`completed`, evento `output_not_connected:<bloque>:<salida>`): es una decisión del usuario, no un error. Un bloque de salida única, o un flujo guardado antes de las salidas con nombre, sigue por condiciones de arista y rescate.
 
-Hasta entonces, la regla «una conexión por salida con nombre» la garantiza el builder y no el backend.
+Hoy declara su salida «Esperar respuesta» (`respuesta`). El resto de bloques con salidas lo hace al implementar su ejecución (C10); «tiempo agotado» llega con la cola de tareas (C6).

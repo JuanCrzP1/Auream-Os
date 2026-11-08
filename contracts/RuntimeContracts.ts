@@ -85,6 +85,13 @@ export interface OutboundMessage {
 
 export interface NodeExecutionResult {
   readonly executionStatus: ExecutionStatus;
+  /**
+   * Por qué salida con nombre sale el bloque (FASE C14): «respuesta» o
+   * «tiempo-agotado», «true» o «false», la opción elegida del Menú… El motor
+   * sigue la conexión de esa salida y, si no está conectada, la rama termina.
+   * Ausente: el bloque tiene salida única (o enruta por condiciones de arista).
+   */
+  readonly output?: string;
   readonly outputMessages: ReadonlyArray<OutboundMessage>;
   readonly contextPatch: Readonly<Record<string, unknown>>;
   readonly nodeResult: Readonly<Record<string, unknown>>;

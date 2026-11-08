@@ -2,6 +2,7 @@ import type { FlowNode } from "../../../contracts/FlowSnapshot";
 import type { NodeExecutionResult, OutboundMessage, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
 import {
+  WAIT_RESPONSE_OUTPUT,
   readWaitResponseConfig,
   resolveContextKey,
   waitResponseTimeoutMs
@@ -42,7 +43,7 @@ export class QuestionNodeHandler implements NodeHandler {
     return nodeType === "question";
   }
 
-  public execute(node: FlowNode, input: RuntimeInput, _session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
     const config = readWaitResponseConfig(node.config);
     const inboundText = input.envelope.payload.text;
 
@@ -77,6 +78,9 @@ export class QuestionNodeHandler implements NodeHandler {
 
       return {
         executionStatus: "success",
+        // Sale por «Respuesta» (C14). «Tiempo agotado» lo dispara el
+        // vencimiento de la espera cuando exista la cola de tareas (C6).
+        output: WAIT_RESPONSE_OUTPUT.answer,
         outputMessages: reaccion,
         contextPatch: contextKey ? { [contextKey]: inboundText } : {},
         nodeResult: {

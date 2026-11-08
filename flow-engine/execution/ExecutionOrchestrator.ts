@@ -24,21 +24,21 @@ export class ExecutionOrchestrator {
     private readonly executionLoop: ExecutionLoop
   ) {}
 
-  public handle(envelope: InboundEnvelope): NodeExecutionResult {
-    const tenant = this.tenantResolver.resolve(envelope.tenantId);
-    const publishedSnapshot = this.flowRegistry.getPublishedSnapshot(tenant.tenantId, envelope.flowKey);
+  public async handle(envelope: InboundEnvelope): Promise<NodeExecutionResult> {
+    const tenant = await this.tenantResolver.resolve(envelope.tenantId);
+    const publishedSnapshot = await this.flowRegistry.getPublishedSnapshot(tenant.tenantId, envelope.flowKey);
 
-    const initialSession = this.sessionService.getOrCreateActive(
+    const initialSession = await this.sessionService.getOrCreateActive(
       tenant.tenantId,
       envelope,
       publishedSnapshot
     );
 
-    const snapshot = this.resolveSnapshot(initialSession, publishedSnapshot);
+    const snapshot = await this.resolveSnapshot(initialSession, publishedSnapshot);
     return this.executionLoop.run(snapshot, initialSession, envelope);
   }
 
-  private resolveSnapshot(session: Session, publishedSnapshot: FlowSnapshot): FlowSnapshot {
+  private async resolveSnapshot(session: Session, publishedSnapshot: FlowSnapshot): Promise<FlowSnapshot> {
     if (session.flowVersionId === publishedSnapshot.version.id) {
       return publishedSnapshot;
     }

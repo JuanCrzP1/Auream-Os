@@ -49,22 +49,28 @@ function makeEdge(overrides: Partial<FlowEdge> = {}): FlowEdge {
 
 const evaluator = new EdgeEvaluator();
 
+/** La arista elegida, o null si el flujo no sigue (para las aserciones por id). */
+const pick = (...args: Parameters<EdgeEvaluator["select"]>) => {
+  const selection = evaluator.select(...args);
+  return selection.kind === "edge" ? selection.edge : null;
+};
+
 describe("EdgeEvaluator — condición 'always'", () => {
   it("selecciona el único edge con operator 'always'", () => {
     const edge = makeEdge({ condition: { operator: "always" } });
-    const result = evaluator.select([edge], makeSession(), makeExecution());
+    const result = pick([edge], makeSession(), makeExecution());
     expect(result?.id).toBe("edge-test");
   });
 
   it("selecciona el edge de menor priority cuando hay varios 'always'", () => {
     const high = makeEdge({ id: "high-priority", priority: 10 });
     const low = makeEdge({ id: "low-priority", priority: 0 });
-    const result = evaluator.select([high, low], makeSession(), makeExecution());
+    const result = pick([high, low], makeSession(), makeExecution());
     expect(result?.id).toBe("low-priority");
   });
 
   it("devuelve null si no hay edges", () => {
-    const result = evaluator.select([], makeSession(), makeExecution());
+    const result = pick([], makeSession(), makeExecution());
     expect(result).toBeNull();
   });
 });
@@ -75,7 +81,7 @@ describe("EdgeEvaluator — condición 'eq'", () => {
       condition: { operator: "eq", fact: "context.score", value: "high" }
     });
     const session = makeSession({ score: "high" });
-    const result = evaluator.select([edge], session, makeExecution());
+    const result = pick([edge], session, makeExecution());
     expect(result?.id).toBe("edge-test");
   });
 
@@ -91,7 +97,7 @@ describe("EdgeEvaluator — condición 'eq'", () => {
       condition: { operator: "always" }
     });
     const session = makeSession({ score: "low" });
-    const result = evaluator.select([edge, fallback], session, makeExecution());
+    const result = pick([edge, fallback], session, makeExecution());
     // El 'eq' no matchea, debe seleccionar el fallback
     expect(result?.id).toBe("edge-fallback");
   });
@@ -103,7 +109,7 @@ describe("EdgeEvaluator — condición 'neq'", () => {
       condition: { operator: "neq", fact: "context.status", value: "vip" }
     });
     const session = makeSession({ status: "standard" });
-    const result = evaluator.select([edge], session, makeExecution());
+    const result = pick([edge], session, makeExecution());
     expect(result?.id).toBe("edge-test");
   });
 
@@ -119,7 +125,7 @@ describe("EdgeEvaluator — condición 'neq'", () => {
       condition: { operator: "always" }
     });
     const session = makeSession({ status: "vip" });
-    const result = evaluator.select([edge, fallback], session, makeExecution());
+    const result = pick([edge, fallback], session, makeExecution());
     expect(result?.id).toBe("fallback");
   });
 });
@@ -130,7 +136,7 @@ describe("EdgeEvaluator — condición 'exists'", () => {
       condition: { operator: "exists", fact: "context.email" }
     });
     const session = makeSession({ email: "test@example.com" });
-    const result = evaluator.select([edge], session, makeExecution());
+    const result = pick([edge], session, makeExecution());
     expect(result?.id).toBe("edge-test");
   });
 
@@ -146,7 +152,7 @@ describe("EdgeEvaluator — condición 'exists'", () => {
       condition: { operator: "always" }
     });
     const session = makeSession({});  // sin email
-    const result = evaluator.select([edge, fallback], session, makeExecution());
+    const result = pick([edge, fallback], session, makeExecution());
     expect(result?.id).toBe("fallback");
   });
 });
@@ -157,7 +163,7 @@ describe("EdgeEvaluator — evaluación sobre node_result", () => {
       condition: { operator: "eq", fact: "node_result.capturedInput", value: "sí" }
     });
     const execution = makeExecution({ capturedInput: "sí" });
-    const result = evaluator.select([edge], makeSession(), execution);
+    const result = pick([edge], makeSession(), execution);
     expect(result?.id).toBe("edge-test");
   });
 });
@@ -175,7 +181,7 @@ describe("EdgeEvaluator — fallback como último recurso", () => {
       isFallback: true,
       condition: { operator: "always" }
     });
-    const result = evaluator.select([conditional, fallback], makeSession(), makeExecution());
+    const result = pick([conditional, fallback], makeSession(), makeExecution());
     expect(result?.id).toBe("edge-fallback");
   });
 });

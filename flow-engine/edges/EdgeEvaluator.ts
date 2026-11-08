@@ -2,22 +2,45 @@ import type { FlowEdge } from "../../contracts/FlowSnapshot";
 import type { NodeExecutionResult } from "../../contracts/RuntimeContracts";
 import type { Session } from "../../contracts/RuntimeContracts";
 
+// ---------------------------------------------------------------------------
+// EdgeEvaluator — decide por qué conexión sigue el flujo.
+//
+// DOS MODOS, según el bloque:
+//
+//   POR SALIDA (C14)   el bloque declara `execution.output` («true», «respuesta»,
+//                      la opción del Menú…). Se sigue la conexión que arranca de
+//                      esa salida. Si nadie la conectó, la rama TERMINA: es una
+//                      decisión del usuario, no un error.
+//   POR CONDICIONES    bloques de salida única (o flujos guardados antes de las
+//                      salidas con nombre): condiciones de arista por prioridad
+//                      y, si ninguna aplica, la de rescate (`isFallback`).
+// ---------------------------------------------------------------------------
+
+export type EdgeSelection =
+  | { readonly kind: "edge"; readonly edge: FlowEdge }
+  /** La salida declarada no tiene conexión: fin limpio de la rama. */
+  | { readonly kind: "unconnected-output"; readonly output: string }
+  /** Ninguna condición aplica y no hay rescate: el flujo no sabe seguir. */
+  | { readonly kind: "no-match" };
+
 export class EdgeEvaluator {
-  public select(edges: ReadonlyArray<FlowEdge>, session: Session, execution: NodeExecutionResult): FlowEdge | null {
+  public select(edges: ReadonlyArray<FlowEdge>, session: Session, execution: NodeExecutionResult): EdgeSelection {
     const ordered = [...edges].sort((left, right) => left.priority - right.priority);
-    const fallback = ordered.find((edge) => edge.isFallback) ?? null;
+    const hasNamedOutputs = ordered.some((edge) => edge.fromOutput !== undefined);
 
-    for (const edge of ordered) {
-      if (edge.isFallback) {
-        continue;
-      }
-
-      if (this.matches(edge, session, execution)) {
-        return edge;
-      }
+    // Por salida. Un flujo antiguo sin `fromOutput` en ninguna arista cae al
+    // modo por condiciones para no quedarse sin camino.
+    if (execution.output !== undefined && hasNamedOutputs) {
+      const edge = ordered.find((candidate) => candidate.fromOutput === execution.output);
+      return edge ? { kind: "edge", edge } : { kind: "unconnected-output", output: execution.output };
     }
 
-    return fallback;
+    for (const edge of ordered) {
+      if (!edge.isFallback && this.matches(edge, session, execution)) return { kind: "edge", edge };
+    }
+
+    const fallback = ordered.find((edge) => edge.isFallback);
+    return fallback ? { kind: "edge", edge: fallback } : { kind: "no-match" };
   }
 
   private matches(edge: FlowEdge, session: Session, execution: NodeExecutionResult): boolean {

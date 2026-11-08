@@ -87,6 +87,12 @@ export interface FlowEdge {
   readonly flowVersionId: string;
   readonly fromNodeId: string;
   readonly toNodeId: string;
+  /**
+   * Salida con nombre del bloque de origen de la que arranca (FASE C14). El
+   * motor sigue la conexión de la salida que el bloque declara en
+   * `NodeExecutionResult.output`. Ausente: salida única.
+   */
+  readonly fromOutput?: string;
   readonly priority: number;
   readonly isFallback: boolean;
   readonly condition: EdgeCondition;
@@ -160,9 +166,9 @@ export interface BuilderFlowEdge {
    * en herramientas que declaran `outputs()`; ausente = salida única.
    * Opcional: sin migración.
    *
-   * HOY ES SOLO REPRESENTACIÓN: `EdgeEvaluator` no lo usa todavía, así que el
-   * motor no distingue una salida de otra. Enrutar por salida es trabajo de la
-   * Fase C (ver docs/architecture/builder-tools.md).
+   * El motor lo usa para enrutar (FASE C14): viaja al snapshot de ejecución
+   * (`FlowEdge.fromOutput`) y `EdgeEvaluator` sigue la salida que declara el
+   * bloque.
    */
   readonly fromOutput?: string;
   readonly priority: number;

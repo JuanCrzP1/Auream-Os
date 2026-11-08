@@ -46,21 +46,21 @@ describe("InMemorySessionRepository — tenant isolation", () => {
       updatedAt: now
     };
 
-    repo.save(sessionA);
-    repo.save(sessionB);
+    await repo.save(sessionA);
+    await repo.save(sessionB);
 
     // tenant-a no puede acceder a la sesión de tenant-b usando su propia clave
-    const foundViaA = repo.find("tenant-a:conv-001");
+    const foundViaA = await repo.find("tenant-a:conv-001");
     expect(foundViaA?.tenantId).toBe("tenant-a");
     expect(foundViaA?.tenantId).not.toBe("tenant-b");
 
     // tenant-b no puede acceder a la sesión de tenant-a usando su propia clave
-    const foundViaB = repo.find("tenant-b:conv-001");
+    const foundViaB = await repo.find("tenant-b:conv-001");
     expect(foundViaB?.tenantId).toBe("tenant-b");
     expect(foundViaB?.tenantId).not.toBe("tenant-a");
 
     // Intento de cross-tenant con clave de tenant-a → no encuentra sesión de tenant-b
-    const crossAttempt = repo.find("tenant-a:conv-001");
+    const crossAttempt = await repo.find("tenant-a:conv-001");
     expect(crossAttempt?.id).toBe("tenant-a:conv-001");
     expect(crossAttempt?.id).not.toBe("tenant-b:conv-001");
   });

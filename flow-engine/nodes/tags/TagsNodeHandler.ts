@@ -20,7 +20,7 @@ export class TagsNodeHandler implements NodeHandler {
     return nodeType === "tags";
   }
 
-  public execute(node: FlowNode, _input: RuntimeInput, _session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
     return {
       executionStatus: "failed",
       outputMessages: [],

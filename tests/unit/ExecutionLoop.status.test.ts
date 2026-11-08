@@ -9,15 +9,15 @@ describe("ExecutionLoop — status transitions", () => {
     loop = buildLoop();
   });
 
-  it("detecta nodo inexistente y lanza error", () => {
+  it("detecta nodo inexistente y lanza error", async () => {
     const session = makeSession({ currentNodeId: "node-does-not-exist" });
 
-    expect(() => loop.run(validLeadCaptureFlow, session, makeEnvelope())).toThrow(
+    await expect(loop.run(validLeadCaptureFlow, session, makeEnvelope())).rejects.toThrow(
       /nodo actual inexistente/i
     );
   });
 
-  it("devuelve completed cuando el flow termina en end sin edges de salida", () => {
+  it("devuelve completed cuando el flow termina en end sin edges de salida", async () => {
     const snapshot = {
       ...validLeadCaptureFlow,
       nodes: {
@@ -36,7 +36,7 @@ describe("ExecutionLoop — status transitions", () => {
     };
 
     const session = makeSession({ currentNodeId: "node-end" });
-    const result = loop.run(snapshot, session, makeEnvelope());
+    const result = await loop.run(snapshot, session, makeEnvelope());
 
     expect(result.executionStatus).toBe("completed");
   });

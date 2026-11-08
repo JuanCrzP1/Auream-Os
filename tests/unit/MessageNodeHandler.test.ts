@@ -72,7 +72,7 @@ function run(node: FlowNode, context: Record<string, unknown> = {}) {
 }
 
 describe("MessageNodeHandler — secuencia de textos", () => {
-  it("emite un mensaje por cada contenido de texto", () => {
+  it("emite un mensaje por cada contenido de texto", async () => {
     const node = makeNode({
       config: {
         items: [
@@ -82,10 +82,10 @@ describe("MessageNodeHandler — secuencia de textos", () => {
       }
     });
 
-    expect(run(node).outputMessages).toHaveLength(2);
+    expect((await run(node)).outputMessages).toHaveLength(2);
   });
 
-  it("conserva el orden de la secuencia", () => {
+  it("conserva el orden de la secuencia", async () => {
     const node = makeNode({
       config: {
         items: [
@@ -96,22 +96,22 @@ describe("MessageNodeHandler — secuencia de textos", () => {
       }
     });
 
-    expect(run(node).outputMessages.map((m) => m.content)).toEqual([
+    expect((await run(node)).outputMessages.map((m) => m.content)).toEqual([
       "primero",
       "segundo",
       "tercero"
     ]);
   });
 
-  it("dirige cada mensaje al canal y la conversación del envelope", () => {
+  it("dirige cada mensaje al canal y la conversación del envelope", async () => {
     const node = makeNode({ config: { items: [{ id: "1", kind: "text", text: "Hola" }] } });
 
-    const [mensaje] = run(node).outputMessages;
+    const [mensaje] = (await run(node)).outputMessages;
     expect(mensaje.channel).toBe("whatsapp");
     expect(mensaje.conversationKey).toBe("conv-1");
   });
 
-  it("resuelve las variables de contexto en cada contenido", () => {
+  it("resuelve las variables de contexto en cada contenido", async () => {
     const node = makeNode({
       config: {
         items: [
@@ -121,22 +121,22 @@ describe("MessageNodeHandler — secuencia de textos", () => {
       }
     });
 
-    expect(run(node, { nombre: "Ana", plan: "Pro" }).outputMessages.map((m) => m.content)).toEqual([
+    expect((await run(node, { nombre: "Ana", plan: "Pro" })).outputMessages.map((m) => m.content)).toEqual([
       "Hola Ana",
       "Tu plan es Pro"
     ]);
   });
 
-  it("sustituye por vacío una variable que no está en el contexto", () => {
+  it("sustituye por vacío una variable que no está en el contexto", async () => {
     const node = makeNode({ config: { items: [{ id: "1", kind: "text", text: "Hola {{context.nombre}}" }] } });
 
-    expect(run(node).outputMessages[0].content).toBe("Hola ");
+    expect((await run(node)).outputMessages[0].content).toBe("Hola ");
   });
 
-  it("continúa el flujo", () => {
+  it("continúa el flujo", async () => {
     const node = makeNode({ config: { items: [{ id: "1", kind: "text", text: "Hola" }] } });
 
-    expect(run(node).executionStatus).toBe("success");
+    expect((await run(node)).executionStatus).toBe("success");
   });
 });
 
@@ -151,66 +151,66 @@ describe("MessageNodeHandler — contenidos que el motor no puede entregar", () 
     }
   });
 
-  it("no inventa un envío para los medios", () => {
-    expect(run(conMedios).outputMessages.map((m) => m.content)).toEqual([
+  it("no inventa un envío para los medios", async () => {
+    expect((await run(conMedios)).outputMessages.map((m) => m.content)).toEqual([
       "Mira esto",
       "¿Qué te parece?"
     ]);
   });
 
-  it("deja constancia observable de lo omitido, en lugar de callarlo", () => {
-    expect(run(conMedios).domainEvents).toContain("message_item_not_deliverable:n-mensaje:image");
+  it("deja constancia observable de lo omitido, en lugar de callarlo", async () => {
+    expect((await run(conMedios)).domainEvents).toContain("message_item_not_deliverable:n-mensaje:image");
   });
 
-  it("no falla el nodo por contener medios: el texto sí se entrega", () => {
-    expect(run(conMedios).executionStatus).toBe("success");
+  it("no falla el nodo por contener medios: el texto sí se entrega", async () => {
+    expect((await run(conMedios)).executionStatus).toBe("success");
   });
 });
 
 describe("MessageNodeHandler — compatibilidad y datos no fiables", () => {
-  it("sigue enviando un nodo antiguo que solo tiene content.text", () => {
+  it("sigue enviando un nodo antiguo que solo tiene content.text", async () => {
     const node = makeNode({ content: { text: "Mensaje de siempre" } });
 
-    expect(run(node).outputMessages.map((m) => m.content)).toEqual(["Mensaje de siempre"]);
+    expect((await run(node)).outputMessages.map((m) => m.content)).toEqual(["Mensaje de siempre"]);
   });
 
-  it("da prioridad a la secuencia cuando el nodo tiene las dos cosas", () => {
+  it("da prioridad a la secuencia cuando el nodo tiene las dos cosas", async () => {
     const node = makeNode({
       content: { text: "viejo" },
       config: { items: [{ id: "1", kind: "text", text: "nuevo" }] }
     });
 
-    expect(run(node).outputMessages.map((m) => m.content)).toEqual(["nuevo"]);
+    expect((await run(node)).outputMessages.map((m) => m.content)).toEqual(["nuevo"]);
   });
 
-  it("no emite nada cuando el nodo no tiene contenidos", () => {
-    expect(run(makeNode()).outputMessages).toEqual([]);
+  it("no emite nada cuando el nodo no tiene contenidos", async () => {
+    expect((await run(makeNode())).outputMessages).toEqual([]);
   });
 
-  it("no se cae si `items` no es una lista", () => {
+  it("no se cae si `items` no es una lista", async () => {
     const node = makeNode({ config: { items: "esto no es una lista" } });
 
-    expect(() => run(node)).not.toThrow();
-    expect(run(node).outputMessages).toEqual([]);
+    await expect(run(node)).resolves.toBeDefined();
+    expect((await run(node)).outputMessages).toEqual([]);
   });
 
-  it("descarta las entradas ilegibles y conserva las buenas", () => {
+  it("descarta las entradas ilegibles y conserva las buenas", async () => {
     const node = makeNode({
       config: {
         items: [null, { id: "1", kind: "text", text: "válido" }, 42, { sinKind: true }]
       }
     });
 
-    expect(run(node).outputMessages.map((m) => m.content)).toEqual(["válido"]);
+    expect((await run(node)).outputMessages.map((m) => m.content)).toEqual(["válido"]);
   });
 
-  it("trata un texto ausente como vacío en vez de romper", () => {
+  it("trata un texto ausente como vacío en vez de romper", async () => {
     const node = makeNode({ config: { items: [{ id: "1", kind: "text" }] } });
 
-    expect(run(node).outputMessages.map((m) => m.content)).toEqual([""]);
+    expect((await run(node)).outputMessages.map((m) => m.content)).toEqual([""]);
   });
 
-  it("emite siempre el evento de ejecución del nodo", () => {
-    expect(run(makeNode()).domainEvents).toContain("message_node_executed:n-mensaje");
+  it("emite siempre el evento de ejecución del nodo", async () => {
+    expect((await run(makeNode())).domainEvents).toContain("message_node_executed:n-mensaje");
   });
 });

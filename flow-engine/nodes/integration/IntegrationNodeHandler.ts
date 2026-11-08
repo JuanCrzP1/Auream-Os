@@ -25,7 +25,7 @@ export class IntegrationNodeHandler implements NodeHandler {
     return nodeType === "integration";
   }
 
-  public execute(node: FlowNode, _input: RuntimeInput, _session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
     return {
       executionStatus: "failed",
       outputMessages: [],

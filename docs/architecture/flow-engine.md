@@ -81,11 +81,16 @@ AI Node → ports/AiProvider.ts → infrastructure/providers/ai/{openai,gemini}
 
 El motor **nunca** importa un SDK de proveedor. El puerto declara credencial, modelo, prompt y el contexto autorizado.
 
-**Bloqueo conocido:** `NodeHandler.execute` es síncrono y `AiProvider.complete` es asíncrono. Conectarlos exige convertir en asíncrona la cadena `NodeHandler → NodeRuntime → ExecutionLoop → ExecutionOrchestrator`. Decisión pendiente.
+**Resuelto (FASE C5):** la cadena `NodeHandler → NodeRuntime → ExecutionLoop → ExecutionOrchestrator` es asíncrona, igual que los puertos que en producción tocan la base de datos (`SessionStore`, `FlowRegistry`, `TenantContextResolver`). `ContextWriter` sigue síncrono a propósito: aplicar un parche es una transformación pura. Un handler ya puede esperar a `AiProvider.complete`.
 
 ## Edges
 
-`EdgeEvaluator` decide qué edge se sigue: evalúa las condiciones (`always`, `eq`, `neq`, `exists`) por prioridad y aplica el fallback cuando ninguna se cumple. Es la única pieza que decide el recorrido del grafo.
+`EdgeEvaluator` decide qué edge se sigue, en dos modos:
+
+- **Por salida (C14):** si el bloque declara `output`, se sigue la conexión con ese `fromOutput`. Sin conexión, la rama termina (`unconnected-output`).
+- **Por condiciones:** bloques de salida única o flujos antiguos: condiciones (`always`, `eq`, `neq`, `exists`) por prioridad y fallback si ninguna se cumple; si no hay ninguno, `no-match` y la ejecución falla.
+
+Devuelve una decisión explícita (`edge` | `unconnected-output` | `no-match`), no un nulo ambiguo. Es la única pieza que decide el recorrido del grafo. Ver [flow-connections.md](flow-connections.md).
 
 ## Contexto y estado
 

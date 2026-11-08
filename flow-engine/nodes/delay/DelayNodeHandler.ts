@@ -8,7 +8,7 @@ export class DelayNodeHandler implements NodeHandler {
     return nodeType === "delay";
   }
 
-  public execute(node: FlowNode, input: RuntimeInput, _session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
     return {
       executionStatus: "delayed",
       outputMessages: node.content.text

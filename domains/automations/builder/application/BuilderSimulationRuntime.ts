@@ -24,14 +24,14 @@ export class BuilderSimulationRuntime {
     private readonly flowRegistry: FlowRegistry
   ) {}
 
-  public simulate(
+  public async simulate(
     snapshot: BuilderFlowSnapshot,
     request: BuilderSimulationRequest
-  ): NodeExecutionResult {
+  ): Promise<NodeExecutionResult> {
     // Publicar el draft actual en el registry aislado de simulación.
     // Esto actualiza la versión activa del runtime de simulación
     // para que el orchestrator use el draft más reciente.
-    this.flowRegistry.publish(convertBuilderSnapshotToRuntime(snapshot, this.tenantId));
+    await this.flowRegistry.publish(convertBuilderSnapshotToRuntime(snapshot, this.tenantId));
 
     return this.orchestrator.handle({
       tenantId: this.tenantId,

@@ -19,13 +19,13 @@ import type { SessionRepository } from "./SessionRepository";
 export class SessionService {
   public constructor(private readonly repository: SessionRepository) {}
 
-  public getOrCreateActive(
+  public async getOrCreateActive(
     tenantId: string,
     envelope: InboundEnvelope,
     snapshot: FlowSnapshot
-  ): Session {
+  ): Promise<Session> {
     const key = `${tenantId}:${envelope.conversationKey}`;
-    const existing = this.repository.find(key);
+    const existing = await this.repository.find(key);
 
     if (existing) {
       return existing;
@@ -49,11 +49,11 @@ export class SessionService {
       updatedAt: now
     };
 
-    this.repository.save(session);
+    await this.repository.save(session);
     return session;
   }
 
-  public moveToNode(session: Session, nextNodeId: string, status: SessionStatus): Session {
+  public async moveToNode(session: Session, nextNodeId: string, status: SessionStatus): Promise<Session> {
     const next: Session = {
       ...session,
       currentNodeId: nextNodeId,
@@ -61,18 +61,18 @@ export class SessionService {
       revision: session.revision + 1,
       updatedAt: new Date().toISOString()
     };
-    this.repository.save(next);
+    await this.repository.save(next);
     return next;
   }
 
-  public updateStatus(session: Session, status: SessionStatus): Session {
+  public async updateStatus(session: Session, status: SessionStatus): Promise<Session> {
     const next: Session = {
       ...session,
       status,
       revision: session.revision + 1,
       updatedAt: new Date().toISOString()
     };
-    this.repository.save(next);
+    await this.repository.save(next);
     return next;
   }
 }

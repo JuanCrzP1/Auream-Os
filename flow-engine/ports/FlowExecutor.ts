@@ -14,5 +14,5 @@ import type { InboundEnvelope, NodeExecutionResult } from "../../contracts/Runti
 // ---------------------------------------------------------------------------
 
 export interface FlowExecutor {
-  handle(envelope: InboundEnvelope): NodeExecutionResult;
+  handle(envelope: InboundEnvelope): Promise<NodeExecutionResult>;
 }

@@ -68,7 +68,7 @@ export class MessageNodeHandler implements NodeHandler {
     return nodeType === "message";
   }
 
-  public execute(node: FlowNode, input: RuntimeInput, session: Session): NodeExecutionResult {
+  public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const items = readItems(node);
     const outputMessages: OutboundMessage[] = [];
     const domainEvents: string[] = [];

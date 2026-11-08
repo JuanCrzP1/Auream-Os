@@ -6,7 +6,7 @@ import type { NodeHandler } from "./NodeHandler";
 export class NodeRuntime {
   public constructor(private readonly handlers: NodeHandler[]) {}
 
-  public execute(node: FlowNode, input: RuntimeInput, session: Session): NodeExecutionResult {
+  public execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const handler = this.handlers.find((candidate) => candidate.supports(node.type));
 
     if (!handler) {
