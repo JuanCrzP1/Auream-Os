@@ -6,10 +6,13 @@ import { readTagsConfig, type TagsConfig } from "./tagsConfig";
 import { tagsTool } from "./definition";
 import { TagsIcon } from "./TagsIcon";
 
-export function TagsEditor({ draft, onChange }: ToolEditorProps) {
+export function TagsEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readTagsConfig(draft.config);
   const update = (patch: Partial<TagsConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
   const adding = config.action === "add";
+  const catalog = resources?.labels ?? [];
+  const suggestions = catalog.map((label) => ({ value: label.name, color: label.color }));
+  const unknown = config.tags.filter((tag) => !catalog.some((label) => label.name.toLocaleLowerCase() === tag.toLocaleLowerCase()));
 
   return (
     <ToolEditorLayout
@@ -34,12 +37,14 @@ export function TagsEditor({ draft, onChange }: ToolEditorProps) {
       <CardSection
         step={2}
         title={adding ? "Etiquetas a agregar" : "Etiquetas a quitar"}
-        description="Todas van en este mismo bloque. Pulsa Enter o coma después de cada una."
+        description="Elige de tus etiquetas o escribe una nueva y pulsa Enter."
       >
         <ChipsField
           label={adding ? "Etiquetas a agregar" : "Etiquetas a quitar"}
           values={config.tags}
           placeholder="cliente, vip, interesado…"
+          suggestions={suggestions}
+          {...(adding && unknown.length > 0 ? { hint: `Se crearán en tu catálogo al usarse: ${unknown.join(", ")}.` } : {})}
           onChange={(tags) => update({ tags })}
         />
       </CardSection>

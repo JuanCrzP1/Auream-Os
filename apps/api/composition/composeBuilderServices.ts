@@ -106,7 +106,7 @@ export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient):
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
     simulateDraftService: new SimulateDraftService(
-      new BuilderSimulationRuntimeFactory(composeNodeRuntime())
+      new BuilderSimulationRuntimeFactory(composeNodeRuntime(), config.defaultTimezone)
     ),
     deleteAutomationService: new DeleteAutomationService(unitOfWork),
     createAutomationService: new CreateAutomationService(unitOfWork, buildInitialBuilderWorkspace),

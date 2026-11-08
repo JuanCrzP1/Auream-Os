@@ -1,42 +1,11 @@
 import type { ToolData } from "../ToolDefinition";
-import { normalizeOutputId, type DistributorOutput } from "./distributorOutputs";
+// Las salidas en orden (= orden de los turnos) las lee el contrato compartido
+// con el motor; aquí queda solo lo que necesita el editor.
+export { readDistributorOutputs } from "@contracts/DistributorConfig";
 
 /**
- * Salidas legibles de un nodo Distribuidor.
- *
- * Defensivo: `config` es JSON de disco. Se descarta lo ilegible sin inventar
- * nada. Una salida sin id se descarta (su id ES el punto al que apuntan las
- * aristas; fabricar uno dejaría un punto colgando); un rótulo perdido se
- * repone por posición. Ids repetidos: se conserva el primero, para que dos
- * `Handle` no compartan identidad. Que el dato llegue así lo señala
- * `validateDistributor`.
- */
-export function readDistributorOutputs(config: ToolData): DistributorOutput[] {
-  const raw = config.outputs;
-  if (!Array.isArray(raw)) return [];
-
-  const seen = new Set<string>();
-  const outputs: DistributorOutput[] = [];
-
-  raw.forEach((entry, index) => {
-    if (typeof entry !== "object" || entry === null) return;
-
-    const record = entry as Record<string, unknown>;
-    const id = normalizeOutputId(record.id);
-    if (id === null || seen.has(id)) return;
-    seen.add(id);
-
-    const label = typeof record.label === "string" ? record.label.trim() : "";
-    outputs.push({ id, label: label.length > 0 ? label : `Salida ${index + 1}` });
-  });
-
-  return outputs;
-}
-
-/**
- * Nombre guardado de cada salida, sin reponer el de cortesía. Lo usa el
- * editor para que vaciar el campo y reescribirlo no devuelva «Salida n» bajo
- * el cursor.
+ * Rótulos TAL CUAL se guardaron (vacíos incluidos), por id. El editor los
+ * necesita sin reponer: vaciar el campo no debe volver a «Salida n».
  */
 export function readRawOutputLabels(config: ToolData): ReadonlyMap<string, string> {
   const labels = new Map<string, string>();

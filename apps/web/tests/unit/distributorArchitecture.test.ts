@@ -151,11 +151,8 @@ describe("la herramienta está bien declarada en el catálogo", () => {
     expect(tool.defaultConfig).toEqual({ outputs: [] });
   });
 
-  it("sigue declarando que el motor todavía no sabe ejecutarla", () => {
-    // Tener editor no es tener comportamiento: `DistributorNodeHandler` sigue
-    // fallando con `distributor_executor_not_implemented`. Declararla ejecutable
-    // por haber ganado configuración sería fingir capacidad.
-    expect(resolveTool("distributor").executable).toBe(false);
+  it("declara que el motor la ejecuta (reparto por turnos, C10)", () => {
+    expect(resolveTool("distributor").executable).toBe(true);
   });
 
   it("su color no lo usa ninguna otra herramienta", () => {

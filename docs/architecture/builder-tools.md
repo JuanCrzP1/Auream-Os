@@ -42,12 +42,22 @@ tools/
 
 | Desde | Puede importar | No puede importar |
 |---|---|---|
-| Una herramienta | `_kit/`, `ToolDefinition`, `ToolUi`, `@contracts/*` | Otra herramienta, el núcleo del builder (salvo el tipo `NodePatch`) |
+| Una herramienta | `_kit/`, `ToolDefinition`, `ToolUi`, `ToolResources`, `@contracts/*` | Otra herramienta, el núcleo del builder (salvo el tipo `NodePatch`) |
 | `_kit/` | React, React Flow | Ninguna herramienta |
 | El núcleo | `registry`, `ui-registry`, `ToolDefinition`, `ToolUi` | El interior de una herramienta |
 | `definition.ts` y su cadena | Módulos puros (`.ts`) | Cualquier `.tsx`: el test de paridad del backend corre en Node sin React |
 
 Lo vigilan los tests de arquitectura (`toolRegistry`, `toolUiRegistry`, `distributorArchitecture`, `intervalArchitecture`) y `tests/contract/toolRegistryParity.test.ts`.
+
+## Recursos de la cuenta en los editores
+
+Algunos editores ofrecen datos de la cuenta al configurar: hoy, el catálogo de etiquetas (Etiquetas sugiere las existentes con su color; la regla «Etiqueta» del Condicional las autocompleta). Mañana, integraciones, píxeles o credenciales de IA.
+
+- Llegan por props, en `ToolEditorProps.resources` (`tools/ToolResources.ts`). Son opcionales: un editor funciona igual sin ellos.
+- Los carga el builder una vez por pantalla (`context/BuilderResourcesContext.tsx`, con `useLabelCatalog` de `shared/labels`) y el marco del nodo abierto los pasa al editor. La herramienta nunca llama a la API ni conoce el contexto.
+- Son sugerencias, no validación: un flujo puede nombrar una etiqueta que aún no existe; el motor la crea al ejecutarse.
+
+Para añadir un recurso nuevo: ampliar `ToolResources`, cargarlo en `BuilderResourcesProvider` y leerlo en el editor que lo necesite.
 
 ## Salidas con nombre
 

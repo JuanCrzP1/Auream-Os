@@ -5,6 +5,7 @@ import { VALID, type ToolDefinition } from "@features/automations/builder/tools/
 import type { ToolDraft, ToolUi } from "@features/automations/builder/tools/ToolUi";
 import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
+import { useBuilderResources } from "@features/automations/builder/context/BuilderResourcesContext";
 import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
 
 interface NodeExpandedFrameProps {
@@ -44,6 +45,7 @@ export function NodeExpandedFrame({
   onClose
 }: NodeExpandedFrameProps) {
   const Editor = ui.Editor;
+  const resources = useBuilderResources();
 
   // Lo que hay guardado en el nodo, ahora mismo.
   const saved = useMemo<ToolDraft>(
@@ -162,6 +164,7 @@ export function NodeExpandedFrame({
         {Editor ? (
           <Editor
             draft={draft}
+            resources={resources}
             onChange={(patch) => setDraft((previous) => ({ ...previous, ...patch }))}
           />
         ) : (

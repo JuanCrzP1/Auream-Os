@@ -100,4 +100,4 @@ La ejecución respeta este modelo:
 2. Cada handler declara por qué salida sigue en `NodeExecutionResult.output` (`respuesta`/`tiempo-agotado`, `true`/`false`, el turno del Distribuidor, la opción del Menú…).
 3. `EdgeEvaluator` sigue la conexión de esa salida. **Si la salida no está conectada, la rama termina** (`completed`, evento `output_not_connected:<bloque>:<salida>`): es una decisión del usuario, no un error. Un bloque de salida única, o un flujo guardado antes de las salidas con nombre, sigue por condiciones de arista y rescate.
 
-Hoy declara su salida «Esperar respuesta» (`respuesta`). El resto de bloques con salidas lo hace al implementar su ejecución (C10); «tiempo agotado» llega con la cola de tareas (C6).
+Hoy declaran su salida «Esperar respuesta» (`respuesta`), Condicional (`true`/`false`), Menú (la opción elegida o `menu-other`) y Distribuidor (la salida del turno). Integración, Extensión IA y Comprobante lo harán al implementarse (C10); «tiempo agotado» llega con la cola de tareas (C6).

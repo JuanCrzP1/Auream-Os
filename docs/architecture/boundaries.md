@@ -56,9 +56,17 @@ Conversations **no controla flows**: ni los construye, ni los ejecuta, ni decide
 
 ---
 
-## contacts · `NO IMPLEMENTADO`
+## contacts · `IMPLEMENTADO` (C10, 2026-11-08)
 
-Modelo y gestión de contactos por tenant: identidad del contacto, atributos, variables.
+Contactos por tenant y su catálogo de etiquetas.
+
+- **Contacto:** identidad única por `(tenant, canal, identificador)` —en WhatsApp, el teléfono en dígitos—, nombre, correo y campos personalizados (los que guardan los flujos).
+- **Etiquetas:** catálogo de la cuenta (nombre único sin distinguir mayúsculas, color). Un contacto tiene varias; borrar una la quita de todos.
+- **Casos de uso** (`application/`): catálogo (listar, crear, renombrar/recolorear, borrar), contactos (listar con búsqueda/filtro/paginación, ver, crear, editar, fijar etiquetas) y `ContactDirectoryService`, la cara que ve el motor: resolver o crear el contacto que escribe, agregar/quitar etiquetas por nombre (crea las que falten) y guardar campos.
+- **Puertos:** `ContactRepository` y `LabelRepository`; adaptadores SQL (`006_contacts.sql`) y en memoria (simulación y tests).
+- **API:** `GET/POST /labels`, `PATCH/DELETE /labels/:id`, `GET/POST /contacts`, `GET/PATCH /contacts/:id`, `PUT /contacts/:id/labels`, con los permisos `contacts.read` / `contacts.write`.
+
+El motor no importa este dominio: habla con el puerto `flow-engine/ports/ContactDirectory.ts`, que la composición conecta con `ContactDirectoryService`.
 
 **No contiene:** conversaciones ni mensajes · lógica de canal.
 

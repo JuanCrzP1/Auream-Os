@@ -4,6 +4,8 @@ import { resolveRequestContext } from "../middleware/resolveRequestContext";
 import { routeAutomationsRequest } from "./routeAutomationsRequest";
 import { routeBuilderApiRequest } from "./routeBuilderApiRequest";
 import { routeMeRequest, type MeServices } from "./routeMeRequest";
+import { routeContactsRequest } from "./routeContactsRequest";
+import type { ContactsServices } from "../composition/composeContactsServices";
 import { sendJson } from "../http/sendJson";
 import type { ApiServices } from "../composition/composeBuilderServices";
 import type { AuthService } from "../../../platform/identity/application/AuthService";
@@ -23,6 +25,7 @@ import type { RequestLogger } from "../../../platform/observability/logging/Requ
 export interface ApiRouterDependencies {
   readonly services: ApiServices;
   readonly meServices: MeServices;
+  readonly contactsServices: ContactsServices;
   readonly authService: AuthService;
   readonly requestLogger: RequestLogger;
 }
@@ -33,7 +36,7 @@ export async function routeApiRequest(
   url: URL,
   dependencies: ApiRouterDependencies
 ): Promise<void> {
-  const { services, meServices, authService, requestLogger } = dependencies;
+  const { services, meServices, contactsServices, authService, requestLogger } = dependencies;
   const method = request.method ?? "GET";
 
   if (url.pathname === "/health") {
@@ -77,6 +80,10 @@ export async function routeApiRequest(
 
   const requestContext = resolution.context;
   requestLogger.logReceived(requestContext, method, url.pathname);
+
+  if (url.pathname.startsWith("/contacts") || url.pathname.startsWith("/labels")) {
+    if (await routeContactsRequest(request, response, url, contactsServices, requestContext)) return;
+  }
 
   const handledByAutomations = await routeAutomationsRequest(
     request,

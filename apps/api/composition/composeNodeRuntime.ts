@@ -13,6 +13,32 @@ import { PixelNodeHandler } from "../../../flow-engine/nodes/pixel/PixelNodeHand
 import { StartNodeHandler } from "../../../flow-engine/nodes/start/StartNodeHandler";
 import { QuestionNodeHandler } from "../../../flow-engine/nodes/question/QuestionNodeHandler";
 import { TagsNodeHandler } from "../../../flow-engine/nodes/tags/TagsNodeHandler";
+import type { RoundRobinCounter } from "../../../flow-engine/ports/RoundRobinCounter";
+import { InMemoryRoundRobinCounter } from "../../../infrastructure/persistence/memory/InMemoryRoundRobinCounter";
+import type { ContactDirectory } from "../../../flow-engine/ports/ContactDirectory";
+import { ContactDirectoryService } from "../../../domains/contacts/application/ContactDirectoryService";
+import {
+  InMemoryContactRepository,
+  InMemoryContactsStore,
+  InMemoryLabelRepository
+} from "../../../infrastructure/persistence/memory/InMemoryContactRepositories";
+
+/** Dependencias externas de los bloques. Cada entorno inyecta las suyas. */
+export interface NodeRuntimeDependencies {
+  /** Turnos del Distribuidor. Simulación: en memoria; producción: PostgreSQL. */
+  readonly roundRobin: RoundRobinCounter;
+  /** Contacto de la conversación. Simulación: en memoria; producción: PostgreSQL. */
+  readonly contacts: ContactDirectory;
+}
+
+/** Dependencias aisladas para simular: no tocan turnos ni contactos reales. */
+export function simulationDependencies(): NodeRuntimeDependencies {
+  const store = new InMemoryContactsStore();
+  return {
+    roundRobin: new InMemoryRoundRobinCounter(),
+    contacts: new ContactDirectoryService(new InMemoryContactRepository(store), new InMemoryLabelRepository(store))
+  };
+}
 
 // ---------------------------------------------------------------------------
 // composeNodeRuntime
@@ -26,15 +52,17 @@ import { TagsNodeHandler } from "../../../flow-engine/nodes/tags/TagsNodeHandler
 // del AI Sales Engine, no del Flow Engine.
 // ---------------------------------------------------------------------------
 
-export function composeNodeRuntime(): NodeRuntime {
+export function composeNodeRuntime(
+  dependencies: NodeRuntimeDependencies = simulationDependencies()
+): NodeRuntime {
   return new NodeRuntime([
     new StartNodeHandler(),
     new MessageNodeHandler(),
     new QuestionNodeHandler(),
-    new TagsNodeHandler(),
+    new TagsNodeHandler(dependencies.contacts),
     new PaymentProofNodeHandler(),
-    new ConditionNodeHandler(),
-    new DistributorNodeHandler(),
+    new ConditionNodeHandler(dependencies.contacts),
+    new DistributorNodeHandler(dependencies.roundRobin),
     new PixelNodeHandler(),
     new AiNodeHandler(),
     new DelayNodeHandler(),

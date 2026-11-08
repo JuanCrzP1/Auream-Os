@@ -8,9 +8,8 @@ import { validateDistributor } from "./validateDistributor";
  * Distribuidor — reparte la conversación entre varias salidas sin mirar el
  * contexto (eso lo hace Condicional).
  *
- * `executable: false`: ya se declaran y conectan las salidas, pero la política
- * de reparto no existe y `DistributorNodeHandler` falla con
- * `distributor_executor_not_implemented`.
+ * Se ejecuta (`DistributorNodeHandler`): reparte por turnos, en el orden de las
+ * salidas, con un contador compartido entre conversaciones.
  *
  * Sin `duplicateConfig`: los ids de salida se resuelven dentro de su nodo, así
  * que un duplicado puede conservarlos.
@@ -23,7 +22,7 @@ export const distributorTool: ToolDefinition = {
   editorTitle: "Editar distribuidor",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultConfig: { ...DISTRIBUTOR_DEFAULT_CONFIG },
   outputs: readDistributorOutputs,
   summarize: summarizeDistributor,

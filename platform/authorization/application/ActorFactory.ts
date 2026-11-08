@@ -9,6 +9,8 @@ const KNOWN_SCOPES: ReadonlySet<string> = new Set<Scope>([
   "flows.publish",
   "runtime.execute",
   "analytics.read",
+  "contacts.read",
+  "contacts.write",
   "tenant.manage"
 ]);
 

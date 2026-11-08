@@ -55,7 +55,7 @@ No existen carpetas `runtime/` ni `context/`: `NodeRuntime` vive en `nodes/`, qu
 
 ## Nodos
 
-Un directorio por tipo, con un handler cada uno: `message`, `question`, `capture`, `action`, `condition`, `delay`, `fallback`, `end`, `ai`.
+Un directorio por tipo, con un handler cada uno: `start`, `message`, `question`, `tags`, `payment-proof`, `condition`, `distributor`, `pixel`, `ai`, `delay`, `integration`, `menu`, `notification`, `end`.
 
 **No existe un nodo `handoff`.** Derivar a un asesor humano es responsabilidad del AI Sales Engine; ver [`ai-sales-engine.md`](ai-sales-engine.md).
 
@@ -67,9 +67,15 @@ Los nombres de directorio coinciden exactamente con los valores del tipo `NodeTy
 
 | Handler | Estado |
 |---|---|
-| `message`, `question`, `capture`, `condition`, `delay`, `fallback`, `end` | `IMPLEMENTADO` |
-| `action` | `NO IMPLEMENTADO` — no existe ejecutor de efectos externos. Falla explícitamente con `action_node_not_implemented` en lugar de simular un resultado. |
-| `ai` | `NO IMPLEMENTADO` — no existe implementación de `ports/AiProvider.ts`. Falla explícitamente con `ai_provider_not_implemented`. |
+| `start`, `message`, `question`, `end` | `IMPLEMENTADO` |
+| `condition` | `IMPLEMENTADO` (C10) — `evaluateCondition`: día, hora y fecha en la zona del negocio (`RuntimeInput.timezone`), ventana de 24 h, datos y campos del contacto; «todas»/«cualquiera». Las etiquetas se leen del contacto real (Contactos). Atención, asesor y variables globales se reportan como no disponibles (regla no cumplida) hasta que existan Conversaciones. Sale por `true`/`false`. |
+| `menu` | `IMPLEMENTADO` (C10) — envía el menú (texto numerado + `OutboundMessage.interactive` para botones/lista nativos) y espera; reconoce la opción por id nativo, número o texto (`matchMenuReply`) y sale por ella o por `menu-other`. |
+| `distributor` | `IMPLEMENTADO` (C10) — turnos por cuenta, flujo y bloque con el puerto `RoundRobinCounter` (memoria en simulación; `SqlRoundRobinCounter` atómico en producción). |
+| `delay` | `PARCIAL` — pausa el flujo (`delayed`); reanudarlo es de la cola de tareas (C6). |
+| `tags` | `IMPLEMENTADO` (C10) — resuelve (o crea) el contacto que escribe por canal e identificador y le agrega o quita etiquetas a través del puerto `ContactDirectory`; al agregar, crea en el catálogo las que falten. Salida única. |
+| `payment-proof`, `pixel`, `integration`, `notification`, `ai` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
+
+La forma de la configuración de cada bloque es un contrato compartido con el builder (`contracts/*Config.ts`, lectores en `contracts/ConfigReaders.ts`): los dos lados leen lo mismo.
 
 `nodes/ai/AiNodeHandler.ts` es un tipo de nodo del grafo. **No es un agente** ni tiene relación con `domains/ai-agents` ni con el AI Sales Engine. Un flow con nodo de IA sigue siendo determinístico.
 

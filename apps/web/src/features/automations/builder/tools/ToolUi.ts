@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import type { NodeType } from "@contracts/FlowSnapshot";
 import type { NodePatch } from "../services/applyNodePatch";
 import type { ToolOutput } from "./ToolDefinition";
+import type { ToolResources } from "./ToolResources";
 
 /**
  * Mitad REACT del contrato de una herramienta: cómo se ve y cómo se configura.
@@ -44,6 +45,11 @@ export interface ToolCompactProps {
 export interface ToolEditorProps {
   readonly draft: ToolDraft;
   readonly onChange: (patch: NodePatch) => void;
+  /**
+   * Recursos de la cuenta para ofrecer al configurar (p. ej. el catálogo de
+   * etiquetas). Opcional: el editor funciona igual sin ellos.
+   */
+  readonly resources?: ToolResources;
 }
 
 export interface ToolUi {

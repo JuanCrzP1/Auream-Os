@@ -3,6 +3,7 @@ import { AutomationsHubPage } from "@features/automations/list/pages/Automations
 import { BuilderPage } from "@features/automations/builder/pages/BuilderPage";
 import { ConnectionsPage } from "@features/connections/pages/ConnectionsPage";
 import { AiAgentsPage } from "@features/ai-agents/pages/AiAgentsPage";
+import { ContactsPage } from "@features/contacts/pages/ContactsPage";
 import { LoginPage } from "@features/auth/pages/LoginPage";
 import { RegisterPage } from "@features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@features/auth/pages/ForgotPasswordPage";
@@ -82,6 +83,16 @@ export function AppRouter() {
           <ProtectedRoute>
             <AppShell>
               <ConnectionsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/contacts"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <ContactsPage />
             </AppShell>
           </ProtectedRoute>
         }

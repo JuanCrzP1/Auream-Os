@@ -35,7 +35,7 @@ export class ExecutionOrchestrator {
     );
 
     const snapshot = await this.resolveSnapshot(initialSession, publishedSnapshot);
-    return this.executionLoop.run(snapshot, initialSession, envelope);
+    return this.executionLoop.run(snapshot, initialSession, envelope, { timezone: tenant.timezone });
   }
 
   private async resolveSnapshot(session: Session, publishedSnapshot: FlowSnapshot): Promise<FlowSnapshot> {

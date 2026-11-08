@@ -4,4 +4,6 @@ export type Scope =
   | "flows.publish"
   | "runtime.execute"
   | "analytics.read"
+  | "contacts.read"
+  | "contacts.write"
   | "tenant.manage";

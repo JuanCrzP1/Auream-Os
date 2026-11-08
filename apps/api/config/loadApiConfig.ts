@@ -40,6 +40,21 @@ export interface ApiConfig {
    * (archivos en `dataDirectory`, solo desarrollo). En producción siempre `sql`.
    */
   readonly automationsStore: AutomationsStore;
+  /**
+   * Zona horaria IANA con la que se ejecutan los flujos mientras las cuentas
+   * no tengan la suya propia (ajustes de cuenta). `DEFAULT_TENANT_TIMEZONE`.
+   */
+  readonly defaultTimezone: string;
+}
+
+/** ¿Es una zona IANA que el motor sabe usar? */
+function isValidTimezone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export type AutomationsStore = "json" | "sql";
@@ -91,6 +106,10 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (store !== "json" && store !== "sql") {
     throw new ApiConfigError(`AUTOMATIONS_STORE debe ser "sql" o "json" (llegó "${store}").`);
   }
+  const defaultTimezone = env["DEFAULT_TENANT_TIMEZONE"] ?? "America/Bogota";
+  if (!isValidTimezone(defaultTimezone)) {
+    throw new ApiConfigError(`DEFAULT_TENANT_TIMEZONE no es una zona horaria válida: "${defaultTimezone}".`);
+  }
   if (isProduction && store !== "sql") {
     throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
   }
@@ -102,6 +121,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     devApiKey: isProduction ? null : devApiKey,
     devTenantId: env["DEV_TENANT_ID"] ?? "test-tenant",
     dataDirectory: env["DATA_DIR"] ?? join(process.cwd(), "data", "builder-workspaces"),
-    automationsStore: store
+    automationsStore: store,
+    defaultTimezone
   };
 }

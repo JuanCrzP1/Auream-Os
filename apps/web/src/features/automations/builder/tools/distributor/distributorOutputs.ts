@@ -1,39 +1,21 @@
 import { createLocalId } from "../_kit/createLocalId";
-import type { ToolOutput } from "../ToolDefinition";
 
 // ---------------------------------------------------------------------------
-// Salidas de un Distribuidor: forma y operaciones puras.
+// Salidas de un Distribuidor: operaciones del editor (añadir, quitar, rotular).
 //
-// Vive en la herramienta y no en `contracts/` porque el motor todavía no lee
-// esta configuración (`DistributorNodeHandler` es `not_implemented`). Sube a
-// `contracts/` sin cambios de forma cuando el motor aprenda a repartir.
+// La FORMA de una salida es el contrato compartido con el motor
+// (`contracts/DistributorConfig.ts`): `id` es identidad persistida
+// (`fromOutput`) y no se renumera; `label` se guarda para que borrar una
+// salida no renombre a las siguientes.
 // ---------------------------------------------------------------------------
 
-/**
- * Una salida del reparto. `id` es identidad persistida (`fromOutput`): se crea
- * una vez y no se renumera. `label` se guarda en vez de derivarse de la
- * posición para que borrar una salida no renombre a las siguientes.
- */
-export type DistributorOutput = ToolOutput;
-
-/**
- * Solo las salidas: la política de reparto (turnos, peso, fijación) no está
- * decidida, y un campo que nadie ejecuta sería una promesa escrita en disco.
- */
-export interface DistributorConfig {
-  readonly outputs: ReadonlyArray<DistributorOutput>;
-}
-
-/** Nace sin salidas: las crea el usuario. */
-export const DISTRIBUTOR_DEFAULT_CONFIG: DistributorConfig = { outputs: [] };
-
-/** Identidad utilizable de una salida, o `null`. Regla compartida por lector y validación. */
-export function normalizeOutputId(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
+export {
+  DISTRIBUTOR_DEFAULT_CONFIG,
+  normalizeOutputId,
+  type DistributorConfig,
+  type DistributorOutput
+} from "@contracts/DistributorConfig";
+import type { DistributorOutput } from "@contracts/DistributorConfig";
 
 function labelNumber(label: string): number | null {
   const match = /^Salida\s+(\d+)$/.exec(label.trim());

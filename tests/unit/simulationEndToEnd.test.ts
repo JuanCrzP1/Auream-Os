@@ -47,3 +47,67 @@ describe("simulación de punta a punta", () => {
     expect(second.outputMessages.map((m) => m.content)).toEqual(["Encantado, Ana"]);
   });
 });
+
+describe("simulación — Menú, Condicional y Distribuidor juntos", () => {
+  const always = { operator: "always" as const };
+  const link = (from: string, to: string, fromOutput?: string) => ({
+    id: `${from}-${to}`, fromNodeId: from, toNodeId: to, priority: 10, isFallback: false, condition: always,
+    ...(fromOutput ? { fromOutput } : {})
+  });
+  const end = (id: string, text: string) => ({ id, type: "end" as const, name: id, content: { text }, config: {}, metadata: {} });
+
+  function flow(): PersistedBuilderWorkspace {
+    const base = buildInitialBuilderWorkspace("tenant-sim", "soporte");
+    return {
+      ...base,
+      draft: {
+        ...base.draft,
+        nodes: {
+          ...base.draft.nodes,
+          menu: { id: "menu", type: "menu", name: "Menú", content: {}, metadata: {}, config: {
+            format: "buttons", message: "¿En qué te ayudo?",
+            options: [{ id: "precios", title: "Precios" }, { id: "horarios", title: "Horarios" }, { id: "asesor", title: "Asesor" }]
+          } },
+          precios: end("precios", "El plan cuesta $50.000"),
+          horario: { id: "horario", type: "condition", name: "¿Abierto?", content: {}, metadata: {}, config: {
+            match: "all", rules: [{ id: "r1", category: "time", operator: "after", value: "00:00", field: "" }]
+          } },
+          abierto: end("abierto", "Estamos abiertos"),
+          cerrado: end("cerrado", "Estamos cerrados"),
+          reparto: { id: "reparto", type: "distributor", name: "Reparto", content: {}, metadata: {}, config: {
+            outputs: [{ id: "ana", label: "Ana" }, { id: "beto", label: "Beto" }]
+          } },
+          ana: end("ana", "Te atiende Ana"),
+          beto: end("beto", "Te atiende Beto"),
+          otra: end("otra", "No entendí tu respuesta")
+        },
+        edgesBySource: {
+          start: [link("start", "menu")],
+          menu: [link("menu", "precios", "precios"), link("menu", "horario", "horarios"), link("menu", "reparto", "asesor"), link("menu", "otra", "menu-other")],
+          horario: [link("horario", "abierto", "true"), link("horario", "cerrado", "false")],
+          reparto: [link("reparto", "ana", "ana"), link("reparto", "beto", "beto")]
+        }
+      }
+    };
+  }
+
+  async function chat(service: SimulateDraftService, conversation: string, ...messages: string[]) {
+    const replies: string[][] = [];
+    for (const message of messages) {
+      const result = await service.simulate(flow(), { message, conversationKey: conversation, userKey: conversation });
+      replies.push(result.outputMessages.map((m) => m.content));
+    }
+    return replies;
+  }
+
+  it("cada opción del menú lleva a su camino, y el asesor se reparte por turnos", async () => {
+    const service = new SimulateDraftService(new BuilderSimulationRuntimeFactory(composeNodeRuntime(), "America/Bogota"));
+
+    expect((await chat(service, "c1", "hola", "1"))[1]).toEqual(["El plan cuesta $50.000"]);
+    expect((await chat(service, "c2", "hola", "horarios"))[1]).toEqual(["Estamos abiertos"]);
+    expect((await chat(service, "c3", "hola", "quiero otra cosa"))[1]).toEqual(["No entendí tu respuesta"]);
+    expect((await chat(service, "c4", "hola", "3"))[1]).toEqual(["Te atiende Ana"]);
+    expect((await chat(service, "c5", "hola", "Asesor"))[1]).toEqual(["Te atiende Beto"]);
+    expect((await chat(service, "c6", "hola", "3"))[1]).toEqual(["Te atiende Ana"]);
+  });
+});

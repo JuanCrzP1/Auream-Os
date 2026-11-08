@@ -23,7 +23,17 @@ import {
 import { conditionalTool } from "./definition";
 import { ConditionalIcon } from "./ConditionalIcon";
 
-function RuleValue({ rule, index, onChange }: { rule: ConditionRule; index: number; onChange: (value: string) => void }) {
+function RuleValue({
+  rule,
+  index,
+  labelNames,
+  onChange
+}: {
+  rule: ConditionRule;
+  index: number;
+  labelNames: ReadonlyArray<string>;
+  onChange: (value: string) => void;
+}) {
   const label = `Valor de la regla ${index + 1}`;
 
   switch (rule.category) {
@@ -48,14 +58,16 @@ function RuleValue({ rule, index, onChange }: { rule: ConditionRule; index: numb
           value={rule.value}
           ariaLabel={label}
           placeholder={rule.category === "tag" ? "Nombre de la etiqueta" : rule.category === "attendant" ? "Nombre o correo del asesor" : "Valor o {variable}"}
+          {...(rule.category === "tag" ? { options: labelNames } : {})}
           onChange={onChange}
         />
       );
   }
 }
 
-export function ConditionEditor({ draft, onChange }: ToolEditorProps) {
+export function ConditionEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readConditionConfig(draft.config);
+  const labelNames = (resources?.labels ?? []).map((label) => label.name);
   const update = (patch: Partial<ConditionConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
   const patchRule = (id: string, patch: Partial<ConditionRule>) => update({ rules: replaceById(config.rules, id, patch) });
   const addRule = () => update({ rules: [...config.rules, createRule(createLocalId("rule"))] });
@@ -131,7 +143,7 @@ export function ConditionEditor({ draft, onChange }: ToolEditorProps) {
                         onChange={(operator) => patchRule(rule.id, { operator })}
                       />
                       {operatorNeedsValue(rule) ? (
-                        <RuleValue rule={rule} index={index} onChange={(value) => patchRule(rule.id, { value })} />
+                        <RuleValue rule={rule} index={index} labelNames={labelNames} onChange={(value) => patchRule(rule.id, { value })} />
                       ) : null}
                     </div>
                   </ListCard>

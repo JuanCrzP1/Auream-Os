@@ -1,26 +1,35 @@
-import type { ToolData, ToolOutput } from "../ToolDefinition";
+import type { ToolOutput } from "../ToolDefinition";
 import type { Option } from "../_kit/fields";
-import { readEnum, readItems, readString } from "../_kit/read";
+import {
+  CONDITION_OUTPUT,
+  categoryHasField,
+  operatorNeedsValue,
+  ruleOperators,
+  type ConditionRule,
+  type RuleCategory
+} from "@contracts/ConditionConfig";
+
+// La forma de los datos (reglas, operadores válidos, lectura, salidas) es el
+// contrato compartido con el motor. Aquí vive solo lo visual: rótulos y frases.
+export {
+  CONDITION_DEFAULT_CONFIG,
+  CONDITION_OUTPUT,
+  FIELD_OPERATORS,
+  RULE_CATEGORIES,
+  categoryHasField,
+  createRule,
+  operatorNeedsValue,
+  readConditionConfig,
+  type ConditionConfig,
+  type ConditionRule,
+  type MatchMode,
+  type RuleCategory
+} from "@contracts/ConditionConfig";
 
 // ---------------------------------------------------------------------------
 // Condicional: reglas sobre el contacto, la conversación y el momento, que se
 // combinan con «todas» (Y) o «cualquiera» (O) y deciden la salida.
 // ---------------------------------------------------------------------------
-
-export const RULE_CATEGORIES = [
-  "tag",
-  "weekday",
-  "time",
-  "date",
-  "messageWindow",
-  "attendance",
-  "attendant",
-  "contactField",
-  "customField",
-  "globalVariable"
-] as const;
-
-export type RuleCategory = (typeof RULE_CATEGORIES)[number];
 
 export const RULE_CATEGORY_OPTIONS: ReadonlyArray<Option<RuleCategory>> = [
   { value: "tag", label: "Etiqueta del contacto" },
@@ -34,19 +43,6 @@ export const RULE_CATEGORY_OPTIONS: ReadonlyArray<Option<RuleCategory>> = [
   { value: "customField", label: "Campo personalizado" },
   { value: "globalVariable", label: "Variable global" }
 ];
-
-export const FIELD_OPERATORS = [
-  "equal",
-  "different",
-  "contains",
-  "not_contains",
-  "starts_with",
-  "has_value",
-  "greater_than",
-  "less_than",
-  "greater_or_equal",
-  "less_or_equal"
-] as const;
 
 const OPERATOR_LABELS: Readonly<Record<string, string>> = {
   equal: "es igual a",
@@ -65,40 +61,20 @@ const OPERATOR_LABELS: Readonly<Record<string, string>> = {
   closed: "está cerrada"
 };
 
-/** Operadores por categoría, con rótulos propios donde la frase lo pide. */
+/** Rótulos propios de algunas categorías, donde la frase lo pide. */
+const CATEGORY_OPERATOR_LABELS: Partial<Record<RuleCategory, Readonly<Record<string, string>>>> = {
+  tag: { equal: "tiene", different: "no tiene" },
+  weekday: { equal: "es", different: "no es" },
+  attendance: { equal: "es", different: "no es" },
+  attendant: { equal: "es", different: "no es" },
+  time: { equal: "igual a" },
+  date: { equal: "igual a" }
+};
+
+/** Operadores por categoría (los del contrato), con su rótulo. */
 export function operatorsFor(category: RuleCategory): ReadonlyArray<Option<string>> {
-  switch (category) {
-    case "tag":
-      return [
-        { value: "equal", label: "tiene" },
-        { value: "different", label: "no tiene" }
-      ];
-    case "weekday":
-      return [
-        { value: "equal", label: "es" },
-        { value: "different", label: "no es" }
-      ];
-    case "time":
-    case "date":
-      return [
-        { value: "before", label: "antes de" },
-        { value: "equal", label: "igual a" },
-        { value: "after", label: "después de" }
-      ];
-    case "messageWindow":
-      return [
-        { value: "open", label: "está abierta" },
-        { value: "closed", label: "está cerrada" }
-      ];
-    case "attendance":
-    case "attendant":
-      return [
-        { value: "equal", label: "es" },
-        { value: "different", label: "no es" }
-      ];
-    default:
-      return FIELD_OPERATORS.map((value) => ({ value, label: OPERATOR_LABELS[value] }));
-  }
+  const labels = CATEGORY_OPERATOR_LABELS[category] ?? {};
+  return ruleOperators(category).map((value) => ({ value, label: labels[value] ?? OPERATOR_LABELS[value] ?? value }));
 }
 
 export const WEEKDAY_OPTIONS: ReadonlyArray<Option<string>> = [
@@ -122,64 +98,6 @@ export const CONTACT_FIELD_OPTIONS: ReadonlyArray<Option<string>> = [
   { value: "phone", label: "Teléfono" },
   { value: "email", label: "Correo" }
 ];
-
-export interface ConditionRule {
-  readonly id: string;
-  readonly category: RuleCategory;
-  readonly operator: string;
-  /** Campo evaluado (dato, campo personalizado o variable global). */
-  readonly field: string;
-  readonly value: string;
-}
-
-export type MatchMode = "all" | "any";
-
-export interface ConditionConfig {
-  readonly match: MatchMode;
-  readonly rules: ReadonlyArray<ConditionRule>;
-}
-
-export const CONDITION_DEFAULT_CONFIG: ConditionConfig = { match: "all", rules: [] };
-
-/** Regla nueva de una categoría, con su operador, campo y valor iniciales. */
-export function createRule(id: string, category: RuleCategory = "tag"): ConditionRule {
-  const operator = operatorsFor(category)[0].value;
-  const field = category === "contactField" ? "name" : "";
-  const value =
-    category === "weekday" ? "monday" : category === "attendance" ? "waiting" : category === "time" ? "09:00" : "";
-
-  return { id, category, operator, field, value };
-}
-
-/** ¿El operador necesita un valor? */
-export function operatorNeedsValue(rule: ConditionRule): boolean {
-  return rule.category !== "messageWindow" && rule.operator !== "has_value";
-}
-
-/** ¿La categoría evalúa un campo con nombre? */
-export function categoryHasField(category: RuleCategory): boolean {
-  return category === "contactField" || category === "customField" || category === "globalVariable";
-}
-
-export function readConditionConfig(config: ToolData): ConditionConfig {
-  return {
-    match: readEnum(config.match, ["all", "any"] as const, "all"),
-    rules: readItems(config.rules, "rule", (record, id) => {
-      const category = readEnum(record.category, RULE_CATEGORIES, "tag");
-      const operators = operatorsFor(category).map((option) => option.value);
-      const base = createRule(id, category);
-      return {
-        id,
-        category,
-        operator: readEnum(record.operator, operators, base.operator),
-        field: readString(record.field, base.field),
-        value: readString(record.value, base.value)
-      };
-    })
-  };
-}
-
-export const CONDITION_OUTPUT = { met: "true", unmet: "false" } as const;
 
 export function conditionOutputs(): ReadonlyArray<ToolOutput> {
   return [

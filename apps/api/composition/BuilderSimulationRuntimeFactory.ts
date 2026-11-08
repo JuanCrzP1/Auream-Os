@@ -32,7 +32,11 @@ const SIMULATION_TENANT_LIMITS = {
 } as const;
 
 export class BuilderSimulationRuntimeFactory implements SimulationRuntimeFactory {
-  public constructor(private readonly nodeRuntime: NodeRuntime) {}
+  public constructor(
+    private readonly nodeRuntime: NodeRuntime,
+    /** Zona del negocio con la que se simula (reglas de día, hora y fecha). */
+    private readonly timezone: string = "UTC"
+  ) {}
 
   public create(tenantId: string): BuilderSimulationRuntime {
     const flowRegistry = new InMemoryFlowRegistry();
@@ -52,6 +56,7 @@ export class BuilderSimulationRuntimeFactory implements SimulationRuntimeFactory
         [tenantId]: {
           tenantId,
           tenantKey: tenantId,
+          timezone: this.timezone,
           limits: SIMULATION_TENANT_LIMITS
         }
       }),

@@ -1,0 +1,516 @@
+/* ===== CONTACTOS =====
+   Módulo propio: no reutiliza clases del hub de automatizaciones para no
+   acoplar features. Solo tokens del tema (claro y oscuro). */
+
+.contacts-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--app-canvas);
+}
+
+.contacts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.contacts-header__title {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.contacts-header__subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+/* --- Pestañas ------------------------------------------------------------ */
+
+.contacts-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 32px 0;
+}
+
+.contacts-tab {
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contacts-tab[aria-selected="true"] {
+  border-bottom-color: var(--primary);
+  color: var(--text);
+}
+
+.contacts-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 32px 32px;
+}
+
+/* --- Controles ----------------------------------------------------------- */
+
+.contacts-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.contacts-toolbar__search {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+.contacts-toolbar__filter {
+  flex: 0 1 220px;
+}
+
+.contacts-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color var(--speed-fast) ease, box-shadow var(--speed-fast) ease;
+}
+
+.contacts-input:focus {
+  border-color: var(--primary);
+  box-shadow: var(--glow-soft);
+}
+
+.contacts-input:disabled {
+  opacity: 0.6;
+}
+
+.contacts-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter var(--speed-fast) ease, border-color var(--speed-fast) ease, color var(--speed-fast) ease;
+}
+
+.contacts-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.contacts-btn--primary {
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.contacts-btn--primary:hover:not(:disabled) {
+  box-shadow: var(--glow-primary);
+  filter: brightness(1.08);
+}
+
+.contacts-btn--ghost {
+  border-color: var(--line);
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.contacts-btn--ghost:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--line));
+  color: var(--primary);
+}
+
+.contacts-btn--danger {
+  background: var(--status-danger);
+  color: var(--on-primary);
+}
+
+.contacts-btn:focus-visible,
+.contacts-tab:focus-visible,
+.contacts-table__open:focus-visible,
+.contacts-swatch:focus-visible,
+.contacts-label-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.contacts-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.contacts-muted {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.contacts-error {
+  margin: 0;
+  color: var(--rose);
+  font-size: 0.82rem;
+}
+
+.contacts-empty {
+  margin: 24px 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* --- Tabla --------------------------------------------------------------- */
+
+.contacts-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-glass);
+}
+
+.contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.contacts-table th {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.contacts-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.contacts-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.contacts-table tbody tr:hover {
+  background: var(--chip-bg);
+}
+
+.contacts-table__open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.contacts-table__open:hover {
+  color: var(--primary);
+}
+
+.contacts-table__phone {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.contacts-table__labels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.contacts-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* --- Etiquetas ----------------------------------------------------------- */
+
+.contacts-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--chip-color) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chip-color) 16%, transparent);
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.contacts-chip__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--chip-color);
+}
+
+.contacts-chip__remove {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.contacts-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contacts-swatch {
+  width: 22px;
+  height: 22px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.contacts-swatch--active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.contacts-label-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 520px;
+}
+
+.contacts-label-form .contacts-btn {
+  align-self: flex-start;
+}
+
+.contacts-label-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-glass);
+  list-style: none;
+}
+
+.contacts-label-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.contacts-label-row:last-child {
+  border-bottom: 0;
+}
+
+.contacts-label-row--editing {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.contacts-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* --- Ficha y diálogo ----------------------------------------------------- */
+
+.contacts-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.contacts-drawer,
+.contacts-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.contacts-drawer {
+  width: min(440px, 100vw);
+  height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
+  animation: contacts-drawer-in 180ms var(--ease-out);
+}
+
+.contacts-dialog {
+  width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.contacts-drawer h2,
+.contacts-dialog h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.contacts-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.contacts-drawer__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.contacts-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.contacts-label-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contacts-label-toggle {
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity var(--speed-fast) ease;
+}
+
+.contacts-label-toggle--on {
+  opacity: 1;
+}
+
+.contacts-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.contacts-fields div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--chip-bg);
+}
+
+.contacts-fields dt {
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+  font-weight: 500;
+}
+
+.contacts-fields dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+@keyframes contacts-drawer-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contacts-drawer {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .contacts-header,
+  .contacts-tabs,
+  .contacts-panel {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .contacts-header {
+    flex-wrap: wrap;
+  }
+
+  .contacts-table__email {
+    display: none;
+  }
+}

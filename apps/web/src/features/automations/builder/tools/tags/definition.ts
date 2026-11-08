@@ -6,8 +6,8 @@ import { validateTags } from "./validateTags";
 /**
  * Etiquetas — agrega o quita etiquetas del contacto (todas en un mismo bloque).
  *
- * `executable: false`: el editor está completo; falta el dominio `contacts`
- * en el motor.
+ * Lo ejecuta `TagsNodeHandler` sobre el directorio de contactos: las
+ * etiquetas que no existan en el catálogo de la cuenta se crean al agregarlas.
  */
 export const tagsTool: ToolDefinition = {
   type: "tags",
@@ -17,7 +17,7 @@ export const tagsTool: ToolDefinition = {
   editorTitle: "Editar etiquetas",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultContent: {},
   defaultConfig: { ...TAGS_DEFAULT_CONFIG },
   summarize: summarizeTags,

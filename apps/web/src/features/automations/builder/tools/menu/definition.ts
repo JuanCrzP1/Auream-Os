@@ -7,7 +7,8 @@ import { validateMenu } from "./validateMenu";
  * Menú — lista o botones interactivos de WhatsApp. Una salida por opción, más
  * «Otra respuesta» y, con límite, «Tiempo agotado».
  *
- * `executable: false`: el editor está completo; falta enrutar por opción.
+ * Se ejecuta (`MenuNodeHandler`): envía el menú, reconoce la opción por botón,
+ * número o texto y sale por ella. «Tiempo agotado» llega con la cola (C6).
  */
 export const menuTool: ToolDefinition = {
   type: "menu",
@@ -17,7 +18,7 @@ export const menuTool: ToolDefinition = {
   editorTitle: "Editar menú",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultContent: {},
   defaultConfig: { ...MENU_DEFAULT_CONFIG },
   outputs: menuOutputs,

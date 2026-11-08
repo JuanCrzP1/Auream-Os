@@ -431,7 +431,7 @@ Objetivo: que un flow activo se ejecute solo (lo último guardado; no hay public
 | C7 | Endpoint de recepción de eventos externos + implementar `flow-engine/triggers/TriggerResolver` (hoy es puerto sin cuerpo) + almacén de bindings + idempotencia por `messageId` (hoy una reentrega reejecuta) | ⬜ POR HACER — depende de C5 |
 | C8 | Nodo `integration` real: ejecutor de efectos externos (hoy falla explícitamente con `integration_executor_not_implemented`) | ⬜ POR HACER — depende de C5 |
 | C9 | Nodo `ai` conectado a un `AiProvider` real vía **OpenRouter**, detrás del puerto `flow-engine/ports/AiProvider.ts`. Es un tipo de nodo del grafo, **no** el AI Sales Engine | ⬜ POR HACER — depende de C5 |
-| C10 | Implementar el comportamiento de ejecución de las herramientas que hoy declaran `executable: false`: Etiquetas, Comprobante automático, Distribuidor, Pixel, Menú, Notificación, Integración y Extensión IA. Cada una necesita especificación de negocio antes de implementarse | ⬜ POR HACER — depende de C5 y de sus dominios |
+| C10 | Implementar el comportamiento de ejecución de las herramientas que hoy declaran `executable: false`. Cada una con su contrato de configuración compartido (`contracts/*Config.ts`) | 🟡 EN PROGRESO — **Condicional, Menú, Distribuidor y Etiquetas funcionando** (2026-11-08, con contadores atómicos en PostgreSQL, módulo de Contactos y simulación de punta a punta). Faltan: Integración, Extensión IA (C9), Pixel, Comprobante, Notificación (canal, FASE D) |
 | C11 | Conectar `platform/security/rate-limiting` (implementado y probado) a `apps/api` | ⬜ POR HACER |
 | C12 | Persistir ejecuciones (`Execution`, `ExecutionStep`) y conectar la observabilidad que ya existe sin consumidor, para poder auditar qué pasó en un flow | ⬜ POR HACER — depende de C6 |
 | C13 | ~~Corregir el hueco de autorización: `POST /automations` explícito y retirar la escritura del `GET .../workspace`~~ | 🟢 COMPLETADO en B10 (2026-11-08) |
@@ -503,7 +503,7 @@ Las áreas del sidebar que siguen sin implementación. Dependen de que las fases
 | Tarea | Descripción | Estado |
 |---|---|---|
 | G1 | Dashboard — depende de D y F teniendo actividad real | ⬜ POR HACER |
-| G2 | Contactos (`domains/contacts`) | ⬜ POR HACER |
+| G2 | Contactos (`domains/contacts`) | 🟢 COMPLETADO (2026-11-08, adelantado por C10) — contactos, catálogo de etiquetas, API y pantalla `/contacts` |
 | G3 | Integraciones (`domains/integrations`) | ⬜ POR HACER |
 | G4 | Mi perfil | ⬜ POR HACER |
 | G5 | Configuración — incluida la pantalla de seguridad que usará `passwordClient.change`, ya implementado en el cliente | ⬜ POR HACER |
@@ -561,3 +561,5 @@ Cada vez que se cierra una tarea:
 | 2026-11-08 | **FASE C iniciada: C1 y C2.** Esquema de automatizaciones en PostgreSQL (documento `jsonb` por flujo), repositorios SQL tras los puertos existentes, selección por `AUTOMATIONS_STORE` (producción solo `sql`) e importación idempotente desde archivos, verificada en la rama test. |
 | 2026-11-08 | **C3 y C4 cerrados.** Unit of Work con transacción real en PostgreSQL para crear/duplicar/guardar/borrar; bloqueo optimista atómico con aviso de conflicto en el builder; validación de entrada de la API (tamaño, JSON, forma, identificador). Verificado en Neon y contra la API real. |
 | 2026-11-08 | **C5 y C14 cerrados.** Motor asíncrono de punta a punta (bloques, loop, orquestador, sesiones, registro, simulación) y enrutado por salida con decisión explícita del evaluador. Probado con la cadena real de la API: saluda, espera, sale por «respuesta» y usa el dato guardado. |
+| 2026-11-08 | **C10 (1/3): Condicional, Menú y Distribuidor se ejecutan.** Contratos de configuración compartidos builder↔motor; reglas en la zona horaria del negocio sin inventar datos; menú con botones nativos y reconocimiento por id, número o texto; reparto por turnos atómico (`005_automation_counters.sql`). Menú y Distribuidor dejan de decir «Próximamente». |
+| 2026-11-08 | **C10 (2/3): Contactos y Etiquetas.** Dominio `contacts` (contacto único por canal y teléfono, campos personalizados, catálogo de etiquetas con color) en PostgreSQL (`006_contacts.sql`), API con permisos `contacts.read`/`contacts.write` y pantalla `/contacts`. El bloque Etiquetas se ejecuta (crea en el catálogo las que falten) y el Condicional lee las etiquetas reales; sus editores ofrecen el catálogo de la cuenta. Verificado en Neon y contra la API real. |

@@ -7,7 +7,10 @@ import { validateCondition } from "./validateCondition";
  * Condicional — evalúa reglas (etiquetas, día, hora, fecha, ventana de 24 h,
  * atención, asesor, campos y variables) y sigue por «Se cumple» o «No se cumple».
  *
- * `executable: true` heredado: el handler existe pero aún no evalúa estas reglas.
+ * Se ejecuta (`ConditionNodeHandler`): día, hora y fecha en la zona del
+ * negocio, ventana de 24 h, datos y campos del contacto. Etiquetas, atención,
+ * asesor y variables globales cuentan como «no disponible» (regla no cumplida)
+ * hasta que existan Contactos y Conversaciones.
  */
 export const conditionalTool: ToolDefinition = {
   type: "condition",

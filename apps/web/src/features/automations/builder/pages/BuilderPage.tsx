@@ -9,6 +9,7 @@ import { SaveStatusPill } from "../components/builder-shell/SaveStatusPill";
 import { OfflineNotice } from "../components/builder-shell/OfflineNotice";
 import { PalettePanel } from "../components/panels/PalettePanel";
 import { BuilderEditingProvider } from "../context/BuilderEditingContext";
+import { BuilderResourcesProvider } from "../context/BuilderResourcesContext";
 import { useBuilderWorkspace } from "../hooks/useBuilderWorkspace";
 import { resolveToolUi } from "../tools/ui-registry";
 import type { CanvasNode } from "../types/canvas";
@@ -79,6 +80,7 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
         duplicateNode={builder.handleDuplicateNode}
         removeNode={builder.handleRemoveNode}
       >
+      <BuilderResourcesProvider>
       <div className="builder-stage">
         <header className="builder-topbar">
           <div className="builder-topbar__left">
@@ -121,6 +123,7 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
           {builder.autosaveStatus === "conflict" ? <OfflineNotice reason="conflict" onRetry={onReload} /> : null}
         </div>
       </div>
+      </BuilderResourcesProvider>
       </BuilderEditingProvider>
     </BuilderShell>
   );

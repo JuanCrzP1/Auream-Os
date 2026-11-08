@@ -1,34 +1,40 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
 import type { NodeExecutionResult, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
+import { readTagsConfig } from "../../../contracts/TagsConfig";
+import { identityOf, type ContactDirectory } from "../../ports/ContactDirectory";
 import type { NodeHandler } from "../NodeHandler";
 
 // ---------------------------------------------------------------------------
-// TagsNodeHandler
-//
-// Estado: NO IMPLEMENTADO — la herramienta existe en el catálogo y en el
-// builder, pero su comportamiento de ejecución todavía no está especificado.
-//
-// Aplicará o retirará etiquetas sobre el contacto de la conversación. Requiere el dominio `contacts`, que todavía no existe.
-//
-// Falla de forma explícita en lugar de devolver un resultado inventado: un flow
-// que llegue a este nodo se detiene y lo dice. No se finge funcionalidad.
+// TagsNodeHandler — agrega o quita etiquetas al contacto de la conversación.
+// Por nombre; las que falten en el catálogo las crea el directorio. Salida
+// única: el flujo sigue.
 // ---------------------------------------------------------------------------
 
 export class TagsNodeHandler implements NodeHandler {
+  public constructor(private readonly contacts: ContactDirectory) {}
+
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "tags";
   }
 
-  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
+  public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
+    const config = readTagsConfig(node.config);
+    const contact = await this.contacts.resolve(session.tenantId, identityOf(input.envelope));
+
+    const updated =
+      config.tags.length === 0
+        ? contact
+        : config.action === "add"
+          ? await this.contacts.addTags(session.tenantId, contact.id, config.tags)
+          : await this.contacts.removeTags(session.tenantId, contact.id, config.tags);
+
     return {
-      executionStatus: "failed",
+      executionStatus: "success",
       outputMessages: [],
       contextPatch: {},
-      nodeResult: {
-        reason: "tags_executor_not_implemented"
-      },
-      domainEvents: [`tags_node_not_implemented:${node.id}`]
+      nodeResult: { contactId: contact.id, contactTags: updated.tags },
+      domainEvents: [`tags_${config.action === "add" ? "added" : "removed"}:${node.id}:${config.tags.length}`]
     };
   }
 }

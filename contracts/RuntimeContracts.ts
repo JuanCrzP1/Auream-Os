@@ -33,6 +33,11 @@ export type ExecutionStatus =
 export interface TenantContext {
   readonly tenantId: string;
   readonly tenantKey: string;
+  /**
+   * Zona horaria IANA del negocio («America/Bogota», «Europe/Madrid»…). Las
+   * reglas de día, hora y fecha se evalúan en ella, no en la del servidor.
+   */
+  readonly timezone: string;
   readonly limits: {
     readonly maxActiveSessions: number;
     readonly maxWebhookRetries: number;
@@ -81,6 +86,22 @@ export interface OutboundMessage {
   readonly replyToMessageId?: string;
   /** Ausente = `"text"`. Ver `OutboundKind`. */
   readonly kind?: OutboundKind;
+  /**
+   * Mensaje interactivo (botones o lista de WhatsApp). `content` lleva SIEMPRE
+   * la versión en texto (opciones numeradas) para canales que no los admiten;
+   * el adaptador de canal (FASE D) usa esto para pintarlo nativo.
+   */
+  readonly interactive?: OutboundInteractive;
+}
+
+export interface OutboundInteractive {
+  readonly type: "buttons" | "list";
+  readonly header?: string;
+  readonly body: string;
+  readonly footer?: string;
+  /** Texto del botón que abre la lista (solo `list`). */
+  readonly buttonLabel?: string;
+  readonly options: ReadonlyArray<{ readonly id: string; readonly title: string; readonly description?: string }>;
 }
 
 export interface NodeExecutionResult {
@@ -102,6 +123,10 @@ export interface RuntimeInput {
   readonly envelope: InboundEnvelope;
   readonly sessionContext: Readonly<Record<string, unknown>>;
   readonly isWaitingInput: boolean;
+  /** Instante de la ejecución (ISO 8601). Lo fija el motor, no cada bloque. */
+  readonly now: string;
+  /** Zona horaria IANA del negocio (ver `TenantContext.timezone`). */
+  readonly timezone: string;
 }
 
 // ---------------------------------------------------------------------------

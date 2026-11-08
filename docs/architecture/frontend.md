@@ -40,7 +40,7 @@ La navegación es fija: doce áreas en orden inmutable. `app/navigation/sidebar/
 | Conversaciones | `/conversations` | `NO IMPLEMENTADO` |
 | Automatizaciones | `/automations` | `IMPLEMENTADO` — hub y builder |
 | Conexiones | `/connections` | `PREPARADO` — placeholder |
-| Contactos | `/contacts` | `NO IMPLEMENTADO` |
+| Contactos | `/contacts` | `IMPLEMENTADO` — lista con búsqueda y filtro, ficha editable y catálogo de etiquetas |
 | Integraciones | `/integrations` | `NO IMPLEMENTADO` |
 | AI Agents | `/ai-agents` | `PREPARADO` — placeholder |
 | Equipo | `/team` | `NO IMPLEMENTADO` |

@@ -5,6 +5,7 @@ import { loadNeonAuthConfig } from "./config/loadNeonAuthConfig";
 import { composeAuthService } from "./composition/composeAuthService";
 import { composeBuilderServices } from "./composition/composeBuilderServices";
 import { composeTenancyServices } from "./composition/composeTenancyServices";
+import { composeContactsServices } from "./composition/composeContactsServices";
 import { createApiServer } from "./bootstrap/createApiServer";
 import { StructuredLogger } from "../../platform/observability/logging/StructuredLogger";
 import { RequestLogger } from "../../platform/observability/logging/RequestLogger";
@@ -41,6 +42,7 @@ function start(): void {
 
   const server = createApiServer(config, {
     services: composeBuilderServices(config, tenancy.sqlClient),
+    contactsServices: composeContactsServices(tenancy.sqlClient),
     meServices: {
       membershipRepository: tenancy.membershipRepository,
       onboarding: tenancy.onboarding

@@ -108,12 +108,11 @@ describe("registry de herramientas", () => {
   });
 
   it("declara si el motor sabe ejecutar cada herramienta, sin fingir capacidad", () => {
-    // Las herramientas sin comportamiento de ejecución deben declararlo: su
-    // handler falla explícitamente con `*_not_implemented`.
-    expect(isExecutableType("message")).toBe(true);
-    expect(isExecutableType("question")).toBe(true);
-    expect(isExecutableType("tags")).toBe(false);
-    expect(isExecutableType("menu")).toBe(false);
+    // La lista exacta: añadir una herramienta ejecutable exige actualizarla
+    // (y su handler debe existir). Las demás fallan con `*_not_implemented` y
+    // el lienzo dice «Próximamente».
+    const executable = listAllTools().filter((tool) => tool.executable).map((tool) => tool.type).sort();
+    expect(executable).toEqual(["condition", "delay", "distributor", "end", "menu", "message", "question", "start", "tags"]);
   });
 
   it("degrada un tipo desconocido en lugar de romper el canvas", () => {

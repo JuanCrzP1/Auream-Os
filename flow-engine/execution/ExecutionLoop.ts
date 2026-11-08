@@ -20,13 +20,18 @@ import { ExecutionEventTracker } from "./ExecutionEventTracker";
 // transición. Nunca se muta el objeto original.
 // ---------------------------------------------------------------------------
 
+/** Zona por defecto si quien ejecuta no indica la del negocio. */
+export const DEFAULT_TIMEZONE = "UTC";
+
 export class ExecutionLoop {
   public constructor(
     private readonly sessionService: SessionStore,
     private readonly contextService: ContextWriter,
     private readonly nodeRuntime: NodeRuntime,
     private readonly edgeEvaluator: EdgeEvaluator,
-    private readonly eventTracker: ExecutionEventTracker
+    private readonly eventTracker: ExecutionEventTracker,
+    /** Reloj inyectable: las pruebas fijan el momento de la ejecución. */
+    private readonly clock: () => Date = () => new Date()
   ) {}
 
   /** Máximo de bloques por mensaje: corta un ciclo sin espera (protección). */
@@ -35,9 +40,12 @@ export class ExecutionLoop {
   public async run(
     snapshot: FlowSnapshot,
     initialSession: Session,
-    envelope: InboundEnvelope
+    envelope: InboundEnvelope,
+    options: { readonly timezone?: string } = {}
   ): Promise<NodeExecutionResult> {
     let session = initialSession;
+    const now = this.clock().toISOString();
+    const timezone = options.timezone ?? DEFAULT_TIMEZONE;
 
     const aggregate = {
       executionStatus: "success" as NodeExecutionResult["executionStatus"],
@@ -64,7 +72,9 @@ export class ExecutionLoop {
       const runtimeInput: RuntimeInput = {
         envelope,
         sessionContext: session.context,
-        isWaitingInput: session.status === "waiting_input"
+        isWaitingInput: session.status === "waiting_input",
+        now,
+        timezone
       };
 
       const execution = await this.nodeRuntime.execute(currentNode, runtimeInput, session);

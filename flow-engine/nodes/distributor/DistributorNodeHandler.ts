@@ -1,34 +1,48 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
 import type { NodeExecutionResult, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
+import { readDistributorOutputs } from "../../../contracts/DistributorConfig";
+import type { RoundRobinCounter } from "../../ports/RoundRobinCounter";
 import type { NodeHandler } from "../NodeHandler";
 
 // ---------------------------------------------------------------------------
-// DistributorNodeHandler
-//
-// Estado: NO IMPLEMENTADO — la herramienta existe en el catálogo y en el
-// builder, pero su comportamiento de ejecución todavía no está especificado.
-//
-// Repartirá la conversación entre varias rutas o destinatarios. La política de reparto (round-robin, peso, sticky) no está decidida.
-//
-// Falla de forma explícita en lugar de devolver un resultado inventado: un flow
-// que llegue a este nodo se detiene y lo dice. No se finge funcionalidad.
+// DistributorNodeHandler — reparte por turnos entre sus salidas, en el orden
+// configurado: el 1.er cliente por la 1.ª, el 2.º por la 2.ª… y vuelta a
+// empezar. Los turnos son por cuenta, flujo y bloque, compartidos entre
+// conversaciones (`RoundRobinCounter`).
 // ---------------------------------------------------------------------------
 
 export class DistributorNodeHandler implements NodeHandler {
+  public constructor(private readonly turns: RoundRobinCounter) {}
+
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "distributor";
   }
 
-  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
+  public async execute(node: FlowNode, _input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
+    const outputs = readDistributorOutputs(node.config);
+
+    if (outputs.length === 0) {
+      // Sin salidas no hay a quién repartir: la rama termina aquí.
+      return {
+        executionStatus: "success",
+        outputMessages: [],
+        contextPatch: {},
+        nodeResult: {},
+        domainEvents: [`distributor_without_outputs:${node.id}`]
+      };
+    }
+
+    const turn = await this.turns.next(session.tenantId, `${session.flowId}:${node.id}`);
+    const chosen = outputs[turn % outputs.length]!;
+
     return {
-      executionStatus: "failed",
+      executionStatus: "success",
+      output: chosen.id,
       outputMessages: [],
       contextPatch: {},
-      nodeResult: {
-        reason: "distributor_executor_not_implemented"
-      },
-      domainEvents: [`distributor_node_not_implemented:${node.id}`]
+      nodeResult: { distributorTurn: turn, distributorOutput: chosen.id },
+      domainEvents: [`distributor_assigned:${node.id}:${chosen.id}`]
     };
   }
 }
