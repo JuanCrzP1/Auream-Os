@@ -104,7 +104,7 @@ No se implementa Telegram.
 
 ---
 
-## integrations · `IMPLEMENTADO` (parcial — conexiones de IA, 2026-11-08)
+## integrations · `IMPLEMENTADO` (conexiones de IA y píxeles de Meta, 2026-11-08)
 
 Proveedores externos que no son canal de mensajería: proveedores de IA, CRMs, calendarios, plataformas de anuncios, webhooks salientes.
 
@@ -115,6 +115,13 @@ Proveedores externos que no son canal de mensajería: proveedores de IA, CRMs, c
 - **`AiCredentialVault`:** el único que descifra, para USAR la clave (lo usa `VaultAiGateway` al ejecutar el bloque de IA).
 - **Puertos:** `AiCredentialRepository` (SQL `007_ai_credentials.sql` / memoria) y `AiProviderAccess` (clientes de `infrastructure/ai`). El cifrado es `platform/security/secrets/SecretCipher`.
 - **API:** `GET/POST /ai-credentials`, `PATCH/DELETE /ai-credentials/:id`, `POST /ai-credentials/:id/verify`, `GET /ai-credentials/:id/models`. Ver: `credentials.read` (también operadores, para elegir en un bloque); administrar: `credentials.write` (dueños y administradores).
+**Píxeles de Meta** (mismo dominio, mismo patrón):
+
+- **Entidad** `PixelConnection`: nombre, ID del píxel (público) y el token de la API de Conversiones como sobre cifrado, con su pista y estado. Meta verifica el acceso al píxel antes de guardar.
+- **Casos de uso:** listar, conectar, renombrar o cambiar el token, verificar y borrar. `PixelConnectionVault` es el único que descifra, para enviar eventos (`VaultConversionTracker`).
+- **Puertos:** `PixelConnectionRepository` (SQL `009_pixel_connections.sql`) y `MetaPixelAccess` (`infrastructure/meta/MetaConversionsClient`).
+- **API:** `GET/POST /pixel-connections`, `PATCH/DELETE /pixel-connections/:id`, `POST /pixel-connections/:id/verify`. Mismos permisos que las conexiones de IA.
+
 - **Clave maestra:** `CREDENTIALS_ENCRYPTION_KEY` (obligatoria en producción; admite rotación por versiones). Sin ella, la API responde 503 en estas rutas.
 
 **No contiene:** canales de mensajería (`connections`) · credenciales de identidad de la plataforma (`platform/identity`).

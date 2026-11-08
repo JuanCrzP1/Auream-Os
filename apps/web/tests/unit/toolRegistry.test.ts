@@ -112,7 +112,7 @@ describe("registry de herramientas", () => {
     // (y su handler debe existir). Las demás fallan con `*_not_implemented` y
     // el lienzo dice «Próximamente».
     const executable = listAllTools().filter((tool) => tool.executable).map((tool) => tool.type).sort();
-    expect(executable).toEqual(["ai", "condition", "delay", "distributor", "end", "integration", "menu", "message", "question", "start", "tags"]);
+    expect(executable).toEqual(["ai", "condition", "delay", "distributor", "end", "integration", "menu", "message", "pixel", "question", "start", "tags"]);
   });
 
   it("degrada un tipo desconocido en lugar de romper el canvas", () => {

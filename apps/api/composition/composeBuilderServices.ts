@@ -32,6 +32,10 @@ import { EngineAiStepTester } from "./EngineAiStepTester";
 import { TestAiStepService } from "../../../domains/automations/builder/application/TestAiStepService";
 import type { AiGateway } from "../../../flow-engine/ports/AiGateway";
 import { DisabledAiGateway } from "../../../infrastructure/ai/DisabledAiGateway";
+import type { ConversionTracker } from "../../../flow-engine/ports/ConversionTracker";
+import { DisabledConversionTracker } from "../../../infrastructure/meta/DisabledConversionTracker";
+import { TestPixelEventService } from "../../../domains/automations/builder/application/TestPixelEventService";
+import { EnginePixelEventTester } from "./EnginePixelEventTester";
 import { composeNodeRuntime, simulationDependencies } from "./composeNodeRuntime";
 import type { ApiConfig } from "../config/loadApiConfig";
 
@@ -50,6 +54,7 @@ export interface ApiServices {
   readonly getWorkspaceService: GetBuilderWorkspaceService;
   readonly testIntegrationService: TestIntegrationRequestService;
   readonly testAiService: TestAiStepService;
+  readonly testPixelService: TestPixelEventService;
   readonly saveDraftService: SaveDraftService;
   readonly simulateDraftService: SimulateDraftService;
   readonly deleteAutomationService: DeleteAutomationService;
@@ -104,7 +109,12 @@ function composeAutomationsPersistence(config: ApiConfig, sqlClient: SqlClient):
   };
 }
 
-export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient, ai: AiGateway = new DisabledAiGateway()): ApiServices {
+export function composeBuilderServices(
+  config: ApiConfig,
+  sqlClient: SqlClient,
+  ai: AiGateway = new DisabledAiGateway(),
+  conversions: ConversionTracker = new DisabledConversionTracker()
+): ApiServices {
   const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
     composeAutomationsPersistence(config, sqlClient);
   // Un único cliente HTTP protegido (SSRF, plazos, tamaños) para la simulación
@@ -119,10 +129,11 @@ export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient, 
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
     simulateDraftService: new SimulateDraftService(
-      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http, ai })), config.defaultTimezone)
+      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http, ai, conversions })), config.defaultTimezone)
     ),
     testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), new InMemoryRateLimiter()),
     testAiService: new TestAiStepService(new EngineAiStepTester(ai), new InMemoryRateLimiter()),
+    testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), new InMemoryRateLimiter()),
     deleteAutomationService: new DeleteAutomationService(unitOfWork),
     createAutomationService: new CreateAutomationService(unitOfWork, buildInitialBuilderWorkspace),
     duplicateAutomationService: new DuplicateAutomationService(unitOfWork, buildInitialBuilderWorkspace),

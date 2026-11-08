@@ -10,6 +10,8 @@ import { TestIntegrationRequestService } from "../../../domains/automations/buil
 import type { IntegrationTestRequest } from "../../../contracts/IntegrationTestContracts";
 import { TestAiStepService } from "../../../domains/automations/builder/application/TestAiStepService";
 import type { AiTestRequest } from "../../../contracts/AiTestContracts";
+import { TestPixelEventService } from "../../../domains/automations/builder/application/TestPixelEventService";
+import type { PixelTestRequest } from "../../../contracts/PixelTestContracts";
 import { parseJsonBody } from "../http/parseJsonBody";
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
@@ -22,6 +24,7 @@ export interface BuilderApiServices {
   readonly simulateDraftService: SimulateDraftService;
   readonly testIntegrationService: TestIntegrationRequestService;
   readonly testAiService: TestAiStepService;
+  readonly testPixelService: TestPixelEventService;
 }
 
 /** Ids de flujo: uuid u otros identificadores seguros para URL. */
@@ -61,6 +64,18 @@ export async function routeBuilderApiRequest(
     requireScope(requestContext, FlowPermissions.write, tenantId);
     const body = await parseJsonBody<Partial<AiTestRequest>>(request);
     sendJson(response, 200, await services.testAiService.execute(tenantId, body));
+    return;
+  }
+
+  // «Probar» del Pixel: envía a Meta con código de prueba (no cuenta como real).
+  if (url.pathname === "/api/builder/pixel/test") {
+    if (request.method !== "POST") {
+      sendJson(response, 405, { message: "Method not allowed" });
+      return;
+    }
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    const body = await parseJsonBody<Partial<PixelTestRequest>>(request);
+    sendJson(response, 200, await services.testPixelService.execute(tenantId, body));
     return;
   }
 

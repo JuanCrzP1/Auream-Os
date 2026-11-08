@@ -2,7 +2,7 @@ import "../_kit/kit.css";
 import type { ToolCompactProps } from "../ToolUi";
 import { PIXEL_EVENT_LABELS, readPixelConfig } from "./pixelConfig";
 
-/** Nodo cerrado: evento como insignia, valor si es compra y el pixel abreviado. */
+/** Nodo cerrado: el evento como insignia y el valor si es compra. */
 export function PixelCompactBody({ draft }: ToolCompactProps) {
   const read = readPixelConfig(draft.config);
 
@@ -17,9 +17,7 @@ export function PixelCompactBody({ draft }: ToolCompactProps) {
           </span>
         ) : null}
       </div>
-      <span className="kit-node__meta">
-        {read.pixelId ? `Pixel ···${read.pixelId.slice(-6)}` : "Sin ID de pixel"}
-      </span>
+      {read.connectionId ? null : <span className="kit-node__meta">Sin píxel elegido</span>}
     </div>
   );
 }

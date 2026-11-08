@@ -46,7 +46,7 @@ flow-engine/
 ├── nodes/        NodeRuntime · NodeHandler + un directorio por tipo de nodo
 ├── registry/     FlowRegistry · ActiveFlowVersion
 ├── triggers/     TriggerResolver · toInboundEnvelope
-└── ports/        RuntimePorts · FlowExecutor · AiGateway · HttpRequester · ContactDirectory · RoundRobinCounter
+└── ports/        RuntimePorts · FlowExecutor · AiGateway · ConversionTracker · HttpRequester · ContactDirectory · RoundRobinCounter
 ```
 
 Estructura plana, sin `domain/` ni `application/`. Esa separación sirve a dominios con entidades y reglas de negocio; aquí solo añadiría un nivel sin significado.
@@ -76,7 +76,8 @@ Los nombres de directorio coinciden exactamente con los valores del tipo `NodeTy
 | `tags` | `IMPLEMENTADO` (C10) — resuelve (o crea) el contacto que escribe por canal e identificador y le agrega o quita etiquetas a través del puerto `ContactDirectory`; al agregar, crea en el catálogo las que falten. Salida única. |
 | `integration` | `IMPLEMENTADO` (C10) — petición HTTP con variables codificadas según dónde caen (URL, cabecera, JSON) vía el puerto `HttpRequester`; 2xx sale por `success` y guarda los datos mapeados en el contacto (`ContactDirectory.setFields`) y en la conversación; cualquier otra cosa sale por `failure` con el motivo. El resultado no incluye cabeceras ni cuerpo enviados (pueden llevar credenciales). |
 | `ai` | `IMPLEMENTADO` (C9/C10) — `runAiStep`: instrucciones y mensaje con variables, memoria de la conversación (en la sesión, últimos N intercambios), clasificación de intención (`{intent, reply}` en JSON; una salida por intención + respaldo + error), envío opcional de la respuesta y guardado en variable. Con el puerto `AiGateway`: el motor nunca ve una clave. Archivos (audio/imagen/PDF): se declaran pendientes hasta que el canal los entregue (FASE D). |
-| `payment-proof`, `pixel`, `notification` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
+| `pixel` | `IMPLEMENTADO` (C10) — `runPixelStep`: arma el evento (Lead/Compra, valor tal como se escribe en Latinoamérica: «$ 49.900», «1.234,50»; atribución al anuncio de clic a WhatsApp si el contacto trae `ctwa_clid` y el bloque la página: `LeadSubmitted`/`business_messaging`) y lo envía por el puerto `ConversionTracker`. Datos del cliente cifrados con SHA-256 en el adaptador; el motor nunca ve el token. Si Meta falla, el flujo SIGUE y el motivo queda en el resultado. |
+| `payment-proof`, `notification` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
 
 La forma de la configuración de cada bloque es un contrato compartido con el builder (`contracts/*Config.ts`, lectores en `contracts/ConfigReaders.ts`): los dos lados leen lo mismo.
 

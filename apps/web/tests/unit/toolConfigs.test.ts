@@ -61,9 +61,14 @@ describe("Notificación", () => {
 describe("Pixel", () => {
   it("una compra exige valor; un lead no", () => {
     const validate = getTool("pixel")!.validate!;
-    expect(validate({}, { pixelId: "123", event: "lead" }).valid).toBe(true);
-    expect(validate({}, { pixelId: "123", event: "purchase" }).valid).toBe(false);
-    expect(validate({}, { pixelId: "123", event: "purchase", value: "{comprobante.valor}" }).valid).toBe(true);
+    expect(validate({}, { connectionId: "p1", event: "lead" }).valid).toBe(true);
+    expect(validate({}, { connectionId: "p1", event: "purchase" }).valid).toBe(false);
+    expect(validate({}, { connectionId: "p1", event: "purchase", value: "{comprobante.valor}" }).valid).toBe(true);
+  });
+
+  it("usa un píxel de la cuenta, no un ID escrito en el bloque", () => {
+    const validate = getTool("pixel")!.validate!;
+    expect(validate({}, { pixelId: "123", event: "lead" }).valid).toBe(false);
   });
 });
 

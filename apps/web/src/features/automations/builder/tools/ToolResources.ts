@@ -2,6 +2,8 @@ import type { IntegrationTestRequest, IntegrationTestResult } from "@contracts/I
 import type { AiCredentialSummary, AiModelOption, CreateAiCredentialRequest } from "@contracts/AiContracts";
 import type { AiTestRequest, AiTestResult } from "@contracts/AiTestContracts";
 import type { MediaAssetSummary, MediaKind } from "@contracts/MediaContracts";
+import type { CreatePixelConnectionRequest, PixelConnectionSummary } from "@contracts/PixelContracts";
+import type { PixelTestRequest, PixelTestResult } from "@contracts/PixelTestContracts";
 
 // ---------------------------------------------------------------------------
 // Lo que un editor puede usar de la cuenta al configurar:
@@ -56,6 +58,10 @@ export interface ToolCapabilities {
   readonly listAiModels?: (credentialId: string) => Promise<ToolOutcome<ReadonlyArray<AiModelOption>>>;
   /** Prueba el bloque de IA con un mensaje de ejemplo. */
   readonly testAi?: (request: AiTestRequest) => Promise<ToolOutcome<AiTestResult>>;
+  /** Conecta un píxel de Meta (el servidor verifica el token y lo guarda cifrado). */
+  readonly createPixelConnection?: (request: CreatePixelConnectionRequest) => Promise<ToolOutcome<PixelConnectionSummary>>;
+  /** Envía el evento de un bloque Pixel con el código de prueba de Meta. */
+  readonly testPixel?: (request: PixelTestRequest) => Promise<ToolOutcome<PixelTestResult>>;
   /** Crea una etiqueta en el catálogo de la cuenta (queda para todos los flujos). */
   readonly createLabel?: (input: { readonly name: string; readonly color: string }) => Promise<CreateLabelOutcome>;
   /** Envía una vez la petición de un bloque Integración y devuelve la respuesta. */
@@ -67,6 +73,9 @@ export interface ToolResources extends ToolCapabilities {
   /** Conexiones de IA de la cuenta (sin claves: solo su pista). */
   readonly aiCredentials?: ReadonlyArray<AiCredentialSummary>;
   readonly aiCredentialsStatus?: ToolAiCredentialsStatus;
+  /** Píxeles de Meta de la cuenta (sin tokens: solo su pista). */
+  readonly pixelConnections?: ReadonlyArray<PixelConnectionSummary>;
+  readonly pixelConnectionsStatus?: ToolAiCredentialsStatus;
 }
 
 export const EMPTY_TOOL_RESOURCES: ToolResources = { labels: [] };

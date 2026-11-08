@@ -18,6 +18,7 @@ function stubApi(seed: AiCredentialSummary[] = [], options: { listStatus?: numbe
     const url = new URL(String(input), "http://api.test");
     const method = init?.method ?? "GET";
     const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, string>) : {};
+    if (url.pathname === "/pixel-connections" && method === "GET") return reply(200, { connections: [] });
     if (url.pathname === "/ai-credentials" && method === "GET") {
       return options.listStatus ? reply(options.listStatus, { message: "x" }) : reply(200, { credentials: items });
     }
@@ -119,9 +120,9 @@ describe("administrar", () => {
 
 describe("estados", () => {
   it.each([
-    [503, "Conexiones de IA no disponibles"],
-    [403, "Sin acceso a las conexiones"],
-    [500, "No pudimos cargar tus conexiones"]
+    [503, "Inteligencia artificial: no disponible"],
+    [403, "Sin acceso a tus conexiones de IA"],
+    [500, "No pudimos cargar tus conexiones de IA"]
   ])("HTTP %i → %s", async (status, title) => {
     stubApi([], { listStatus: status });
     render(<IntegrationsPage />);

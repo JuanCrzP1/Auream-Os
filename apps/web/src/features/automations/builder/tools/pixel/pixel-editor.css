@@ -1,0 +1,130 @@
+/* Editor del Pixel: conexión y «Probar». Solo tokens del tema. */
+
+.pixel-connect,
+.pixel-test {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pixel-connect__label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pixel-connect__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--kit-accent, var(--primary));
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pixel-connect__link:hover {
+  text-decoration: underline;
+}
+
+.pixel-connect__links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -4px;
+}
+
+.pixel-connect__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pixel-connect__primary,
+.pixel-test__send {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--kit-accent, var(--primary));
+  color: var(--on-primary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pixel-test__send {
+  align-self: flex-start;
+}
+
+.pixel-connect__primary:disabled,
+.pixel-test__send:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pixel-connect__ghost {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pixel-connect__link:focus-visible,
+.pixel-connect__primary:focus-visible,
+.pixel-connect__ghost:focus-visible,
+.pixel-test__send:focus-visible {
+  outline: 2px solid var(--kit-accent, var(--primary));
+  outline-offset: 2px;
+}
+
+.pixel-connect__error {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--rose) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rose) 9%, transparent);
+  color: color-mix(in srgb, var(--rose) 80%, var(--text));
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.pixel-test__ok,
+.pixel-test__ko {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.pixel-test__ok {
+  background: color-mix(in srgb, var(--status-active-text) 12%, transparent);
+}
+
+.pixel-test__ok strong {
+  color: var(--status-active-text);
+}
+
+.pixel-test__ko {
+  background: color-mix(in srgb, var(--rose) 10%, transparent);
+}
+
+.pixel-test__ko strong {
+  color: var(--rose);
+}
+
+.pixel-test__muted {
+  color: var(--muted);
+}

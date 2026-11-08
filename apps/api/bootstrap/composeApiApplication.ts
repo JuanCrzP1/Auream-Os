@@ -34,10 +34,10 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
 
   const logger = new StructuredLogger({ service: "bots-ai-platform-api" });
   const tenancy = composeTenancyServices(databaseConfig);
-  const integrations = composeIntegrationsServices(tenancy.sqlClient, config.credentialsKeyRing);
+  const integrations = composeIntegrationsServices(tenancy.sqlClient, config.credentialsKeyRing, undefined, { metaGraphVersion: config.metaGraphVersion });
 
   const listener = createApiRequestListener(config, {
-    services: composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway),
+    services: composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker),
     contactsServices: composeContactsServices(tenancy.sqlClient),
     integrationsServices: integrations,
     mediaServices: composeMediaServices(config, tenancy.sqlClient),

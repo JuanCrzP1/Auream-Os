@@ -4,10 +4,10 @@ import { summarizePixel } from "./summarizePixel";
 import { validatePixel } from "./validatePixel";
 
 /**
- * Pixel — envía un evento (Lead o Compra) a la API de Conversiones de Meta.
- *
- * `executable: false`: el editor está completo; faltan el dominio
- * `integrations` y las credenciales por tenant.
+ * Pixel — registra una conversión (Lead o Compra) en la API de Conversiones
+ * de Meta con un píxel de la cuenta (token cifrado, nunca en el flujo). Si el
+ * contacto llegó por un anuncio de clic a WhatsApp, se atribuye a ese anuncio.
+ * Lo ejecuta `PixelNodeHandler`; si Meta falla, el flujo sigue.
  */
 export const pixelTool: ToolDefinition = {
   type: "pixel",
@@ -17,7 +17,7 @@ export const pixelTool: ToolDefinition = {
   editorTitle: "Editar pixel",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultContent: {},
   defaultConfig: { ...PIXEL_DEFAULT_CONFIG },
   summarize: summarizePixel,

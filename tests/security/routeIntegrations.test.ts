@@ -103,3 +103,40 @@ describe("POST /api/builder/ai/test", () => {
     await expect(routeBuilderApiRequest(req("POST", "/api/builder/ai/test", body), recorder() as never, s, makeContext({ scopes: ["flows.write"] }))).rejects.toThrow(TooManyRequestsError);
   });
 });
+
+describe("/pixel-connections y «Probar» del Pixel", () => {
+  const pixelServices = () => {
+    const summary = { id: "p1", name: "Ventas", pixelId: "3151000009796", tokenHint: "••••ZDZD", status: "active", lastVerifiedAt: null, createdAt: "x" };
+    const fn = () => ({ execute: vi.fn(async () => summary) });
+    const pixels = { list: { execute: vi.fn(async () => [summary]) }, create: fn(), update: fn(), remove: { execute: vi.fn(async () => undefined) }, verify: fn() };
+    return { pixels, services: { aiCredentials: null, aiGateway: {}, pixelConnections: pixels, conversionTracker: {} } as unknown as IntegrationsServices };
+  };
+
+  it("ver exige credentials.read; conectar, cambiar o borrar exige credentials.write", async () => {
+    const { services: s } = pixelServices();
+    expect((await run("GET", "/pixel-connections", ["credentials.read"], s)).response.statusCode).toBe(200);
+    await expect(run("POST", "/pixel-connections", ["credentials.read"], s, { pixelId: "1", accessToken: "x" })).rejects.toThrow(AccessError);
+    await expect(run("DELETE", "/pixel-connections/p1", ["credentials.read"], s)).rejects.toThrow(AccessError);
+    await expect(run("GET", "/pixel-connections", ["flows.read"], s)).rejects.toThrow(AccessError);
+  });
+
+  it("la respuesta nunca trae el token, solo su pista", async () => {
+    const { services: s } = pixelServices();
+    const { response } = await run("GET", "/pixel-connections", ["credentials.read"], s);
+    expect(response.body).toContain("••••ZDZD");
+    expect(response.body).not.toMatch(/accessToken|secret/);
+  });
+
+  it("«Probar» exige el código de prueba de Meta y respeta el límite", async () => {
+    const { TestPixelEventService } = await import("../../domains/automations/builder/application/TestPixelEventService.js");
+    const tester = { test: vi.fn(async () => ({ succeeded: true, durationMs: 1, missingVariables: [] })) };
+    const service = new TestPixelEventService(tester, new InMemoryRateLimiter(), { windowMs: 60_000, maxRequests: 1 });
+    const builder = { testPixelService: service } as unknown as BuilderApiServices;
+    const body = (code: string) => ({ config: { connectionId: "p1", event: "lead" }, testEventCode: code });
+
+    await expect(routeBuilderApiRequest(req("POST", "/api/builder/pixel/test", body("")), recorder() as never, builder, makeContext({ scopes: ["flows.write"] }))).rejects.toThrow(/código de prueba/);
+    await routeBuilderApiRequest(req("POST", "/api/builder/pixel/test", body("TEST12345")), recorder() as never, builder, makeContext({ scopes: ["flows.write"] }));
+    expect(tester.test).toHaveBeenCalledWith("test-tenant", { connectionId: "p1", event: "lead" }, "TEST12345", {});
+    await expect(routeBuilderApiRequest(req("POST", "/api/builder/pixel/test", body("TEST12345")), recorder() as never, builder, makeContext({ scopes: ["flows.write"] }))).rejects.toThrow(TooManyRequestsError);
+  });
+});

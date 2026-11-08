@@ -6,6 +6,8 @@ import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
 import { connectAi, listAiModels, testAiStep } from "@features/automations/builder/services/aiCapabilities";
 import { uploadMediaForTool } from "@features/automations/builder/services/mediaCapabilities";
+import { connectPixel, testPixelEvent } from "@features/automations/builder/services/pixelCapabilities";
+import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
 
 // ---------------------------------------------------------------------------
 // Recursos de la cuenta (datos y capacidades) para los editores de herramientas.
@@ -25,6 +27,8 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
   const { create } = catalog;
   const ai = useAiCredentials();
   const { create: createAiCredential } = ai;
+  const pixels = usePixelConnections();
+  const { create: createPixel } = pixels;
   const resources = useMemo<ToolResources>(
     () => ({
       labels: catalog.labels.map(({ name, color }) => ({ name, color })),
@@ -43,9 +47,13 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       createAiCredential: connectAi(createAiCredential),
       listAiModels,
       testAi: testAiStep,
-      uploadMedia: uploadMediaForTool
+      uploadMedia: uploadMediaForTool,
+      pixelConnections: pixels.connections,
+      pixelConnectionsStatus: pixels.status,
+      createPixelConnection: connectPixel(createPixel),
+      testPixel: testPixelEvent
     }),
-    [catalog.labels, create, ai.credentials, ai.status, createAiCredential]
+    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, createPixel]
   );
 
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;

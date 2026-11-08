@@ -40,6 +40,7 @@
 .provider-mark--openai { --mark: var(--teal); }
 .provider-mark--gemini { --mark: var(--slate); }
 .provider-mark--openrouter { --mark: var(--primary); }
+.provider-mark--meta { --mark: var(--rose); }
 
 /* --- Tarjetas ------------------------------------------------------------- */
 
@@ -242,6 +243,16 @@
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 10%, var(--surface-alt));
   box-shadow: var(--glow-soft);
+}
+
+.pixel-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pixel-dialog__head p {
+  margin: 4px 0 0;
 }
 
 .ai-dialog__label-row {

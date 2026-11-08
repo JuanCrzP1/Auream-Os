@@ -36,6 +36,13 @@ export const StateIcons = {
       <path d="M19 3v3M17.5 4.5h3M5 17v3M3.5 18.5h3" />
     </svg>
   ),
+  target: (
+    <svg {...svg}>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+    </svg>
+  ),
   lock: (
     <svg {...svg}>
       <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />

@@ -21,6 +21,8 @@ import { ConversationTemplates } from "../../../flow-engine/templates/Conversati
 import { DisabledHttpRequester } from "../../../infrastructure/http/DisabledHttpRequester";
 import type { AiGateway } from "../../../flow-engine/ports/AiGateway";
 import { DisabledAiGateway } from "../../../infrastructure/ai/DisabledAiGateway";
+import type { ConversionTracker } from "../../../flow-engine/ports/ConversionTracker";
+import { DisabledConversionTracker } from "../../../infrastructure/meta/DisabledConversionTracker";
 import { ContactDirectoryService } from "../../../domains/contacts/application/ContactDirectoryService";
 import {
   InMemoryContactRepository,
@@ -38,6 +40,8 @@ export interface NodeRuntimeDependencies {
   readonly http: HttpRequester;
   /** Modelos de la Extensión IA con las conexiones de la cuenta. Producción: `VaultAiGateway`. */
   readonly ai: AiGateway;
+  /** Conversiones del Pixel con los píxeles de la cuenta. Producción: `VaultConversionTracker`. */
+  readonly conversions: ConversionTracker;
 }
 
 /**
@@ -45,13 +49,14 @@ export interface NodeRuntimeDependencies {
  * Sin red ni IA por defecto; la API inyecta el cliente HTTP protegido y la
  * pasarela de IA de la cuenta para que la simulación del builder llame de verdad.
  */
-export function simulationDependencies(overrides: Partial<Pick<NodeRuntimeDependencies, "http" | "ai">> = {}): NodeRuntimeDependencies {
+export function simulationDependencies(overrides: Partial<Pick<NodeRuntimeDependencies, "http" | "ai" | "conversions">> = {}): NodeRuntimeDependencies {
   const store = new InMemoryContactsStore();
   return {
     roundRobin: new InMemoryRoundRobinCounter(),
     contacts: new ContactDirectoryService(new InMemoryContactRepository(store), new InMemoryLabelRepository(store)),
     http: overrides.http ?? new DisabledHttpRequester(),
-    ai: overrides.ai ?? new DisabledAiGateway()
+    ai: overrides.ai ?? new DisabledAiGateway(),
+    conversions: overrides.conversions ?? new DisabledConversionTracker()
   };
 }
 
@@ -80,7 +85,7 @@ export function composeNodeRuntime(
     new PaymentProofNodeHandler(),
     new ConditionNodeHandler(dependencies.contacts),
     new DistributorNodeHandler(dependencies.roundRobin),
-    new PixelNodeHandler(),
+    new PixelNodeHandler(dependencies.conversions, dependencies.contacts),
     new AiNodeHandler(dependencies.ai, dependencies.contacts),
     new DelayNodeHandler(),
     new IntegrationNodeHandler(dependencies.http, dependencies.contacts),

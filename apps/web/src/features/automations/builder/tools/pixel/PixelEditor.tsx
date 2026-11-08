@@ -1,3 +1,4 @@
+import "./pixel-editor.css";
 import type { ToolEditorProps } from "../ToolUi";
 import { Notice, SelectField, TextField, VariableHint } from "../_kit/fields";
 import { CardSection, ChoiceCards, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
@@ -6,10 +7,15 @@ import { CURRENCIES } from "../_kit/catalogs";
 import { readPixelConfig, type PixelConfig } from "./pixelConfig";
 import { pixelTool } from "./definition";
 import { PixelIcon } from "./PixelIcon";
+import { PixelConnectionSection } from "./PixelConnectionSection";
+import { PixelTestPanel } from "./PixelTestPanel";
 
-export function PixelEditor({ draft, onChange }: ToolEditorProps) {
+export function PixelEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readPixelConfig(draft.config);
-  const update = (patch: Partial<PixelConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
+  // Lo que se guarda es la configuración vigente: sin el ID de píxel que
+  // guardaban las versiones anteriores (ahora vive en la conexión).
+  const { pixelId: _legacyPixelId, platform: _legacyPlatform, ...current } = draft.config;
+  const update = (patch: Partial<PixelConfig>) => onChange({ config: { ...current, ...config, ...patch } });
 
   return (
     <ToolEditorLayout
@@ -19,15 +25,8 @@ export function PixelEditor({ draft, onChange }: ToolEditorProps) {
       title="Pixel de Meta"
       description="Registra una conversión en la API de Conversiones de Meta (Facebook e Instagram)."
     >
-      <CardSection step={1} title="Pixel" description="El conjunto de datos de Meta que recibe el evento.">
-        <TextField
-          label="ID del pixel"
-          value={config.pixelId}
-          placeholder="1234567890123456"
-          monospace
-          hint="Lo encuentras en el Administrador de eventos de Meta."
-          onChange={(pixelId) => update({ pixelId: pixelId.trim() })}
-        />
+      <CardSection step={1} title="Píxel" description="El píxel de Meta que recibe el evento. Su token vive cifrado en tu cuenta, no en el flujo.">
+        <PixelConnectionSection connectionId={config.connectionId} resources={resources} onChange={(connectionId) => update({ connectionId })} />
       </CardSection>
 
       <CardSection step={2} title="Evento" description="Qué conversión se registra.">
@@ -44,7 +43,13 @@ export function PixelEditor({ draft, onChange }: ToolEditorProps) {
         {config.event === "purchase" ? (
           <>
             <div className="kit-grid">
-              <TextField label="Valor" value={config.value} placeholder="49900 o {comprobante.valor}" onChange={(value) => update({ value })} />
+              <TextField
+                label="Valor"
+                value={config.value}
+                placeholder="49.900 o {comprobante.valor}"
+                hint="Como lo escribes: 49.900, $ 149.900, 1.234,50 o una variable."
+                onChange={(value) => update({ value })}
+              />
               <SelectField label="Moneda" value={config.currency} options={CURRENCIES} onChange={(currency) => update({ currency })} />
             </div>
             <VariableHint variables={["{comprobante.valor}"]} />
@@ -52,17 +57,22 @@ export function PixelEditor({ draft, onChange }: ToolEditorProps) {
         ) : null}
       </CardSection>
 
-      <CardSection step={3} title="Opcional" description="Solo para campañas de clic a WhatsApp.">
+      <CardSection step={3} title="Anuncios de clic a WhatsApp" description="Opcional. Atribuye el evento al anuncio por el que llegó el cliente.">
         <TextField
           label="ID de la página de Facebook"
           value={config.pageId}
-          placeholder="Página asociada al anuncio"
+          placeholder="Página del anuncio, p. ej. 1029384756"
           monospace
+          hint="Si el cliente llegó por un anuncio de clic a WhatsApp, el evento se atribuye a ese anuncio (el Lead se envía como LeadSubmitted). Sin página, se registra como conversación."
           onChange={(pageId) => update({ pageId: pageId.trim() })}
         />
       </CardSection>
 
-      <Notice>Evita poner dos bloques Pixel seguidos con el mismo evento: Meta contaría la conversión dos veces.</Notice>
+      <CardSection step={4} title="Probar" description="Envía el evento a Meta con un código de prueba y confírmalo en el Administrador de eventos.">
+        <PixelTestPanel rawConfig={draft.config} test={resources?.testPixel} />
+      </CardSection>
+
+      <Notice>Evita poner dos bloques Pixel seguidos con el mismo evento: Meta contaría la conversión dos veces. Si Meta no responde, la conversación sigue igual.</Notice>
       <OutputsPreview outputs={null} />
     </ToolEditorLayout>
   );

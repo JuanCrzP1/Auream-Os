@@ -67,6 +67,8 @@ export interface ApiConfig {
   readonly blobReadWriteToken: string | null;
   /** Dirección pública de la API para las URLs de los medios locales (desarrollo). */
   readonly publicApiBaseUrl: string;
+  /** Versión de la Graph API de Meta para el Pixel (`META_GRAPH_API_VERSION`, p. ej. `v23.0`). */
+  readonly metaGraphVersion: string;
 }
 
 /** ¿Es una zona IANA que el motor sabe usar? */
@@ -145,6 +147,10 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
       throw new ApiConfigError(`La clave maestra «${version}» debe ser base64 de 32 bytes (genera una con: openssl rand -base64 32).`);
     }
   }
+  const metaGraphVersion = env["META_GRAPH_API_VERSION"]?.trim() || "v23.0";
+  if (!/^v\d+\.\d+$/.test(metaGraphVersion)) {
+    throw new ApiConfigError(`META_GRAPH_API_VERSION debe tener la forma v23.0 (llegó "${metaGraphVersion}").`);
+  }
   if (isProduction && store !== "sql") {
     throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
   }
@@ -161,6 +167,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     integrationsAllowPrivateNetwork,
     credentialsKeyRing,
     blobReadWriteToken: env["BLOB_READ_WRITE_TOKEN"]?.trim() || null,
-    publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`
+    publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`,
+    metaGraphVersion
   };
 }
