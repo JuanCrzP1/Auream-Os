@@ -163,3 +163,19 @@ describe("las rutas /me/* son exclusivas de usuarios humanos", () => {
     expect(ensureInitialTenant).toHaveBeenCalledWith("user-1", "Mi espacio");
   });
 });
+
+describe("las automatizaciones de producción viven en PostgreSQL (C2)", () => {
+  it("en producción el almacén por defecto es SQL", () => {
+    expect(loadApiConfig(PRODUCTION_ENV).automationsStore).toBe("sql");
+  });
+
+  it("el proceso se niega a arrancar si producción pide archivos JSON", () => {
+    expect(() => loadApiConfig({ ...PRODUCTION_ENV, AUTOMATIONS_STORE: "json" })).toThrow(ApiConfigError);
+  });
+
+  it("en desarrollo se puede elegir, y un valor desconocido se rechaza", () => {
+    expect(loadApiConfig({}).automationsStore).toBe("json");
+    expect(loadApiConfig({ AUTOMATIONS_STORE: "sql" }).automationsStore).toBe("sql");
+    expect(() => loadApiConfig({ AUTOMATIONS_STORE: "mongo" })).toThrow(ApiConfigError);
+  });
+});

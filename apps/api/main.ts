@@ -40,7 +40,7 @@ function start(): void {
   const tenancy = composeTenancyServices(databaseConfig);
 
   const server = createApiServer(config, {
-    services: composeBuilderServices(config),
+    services: composeBuilderServices(config, tenancy.sqlClient),
     meServices: {
       membershipRepository: tenancy.membershipRepository,
       onboarding: tenancy.onboarding

@@ -48,10 +48,11 @@ export class CreateAutomationService {
       metadata: { createdAt: workspace.updatedAt, updatedAt: workspace.updatedAt }
     };
 
-    // Primero el borrador: si falla, no queda en el catálogo una entrada que
-    // no se puede abrir. (La atomicidad real llega con SQL, FASE C3.)
-    await this.workspaceRepository.saveWorkspace(workspace);
+    // Primero el catálogo: el borrador cuelga de él (FK en SQL). Si el segundo
+    // paso fallara, la automatización se abre con el borrador inicial (lo sirve
+    // GetBuilderWorkspaceService): nada queda corrupto. Atomicidad: FASE C3.
     await this.automationRepository.save(flow);
+    await this.workspaceRepository.saveWorkspace(workspace);
     return flow;
   }
 }

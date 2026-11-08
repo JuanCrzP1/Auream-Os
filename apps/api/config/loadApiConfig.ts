@@ -35,7 +35,14 @@ export interface ApiConfig {
   readonly devApiKey: string | null;
   readonly devTenantId: string;
   readonly dataDirectory: string;
+  /**
+   * Dónde se guardan las automatizaciones: `sql` (PostgreSQL) o `json`
+   * (archivos en `dataDirectory`, solo desarrollo). En producción siempre `sql`.
+   */
+  readonly automationsStore: AutomationsStore;
 }
+
+export type AutomationsStore = "json" | "sql";
 
 export class ApiConfigError extends Error {}
 
@@ -80,12 +87,21 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
 
   const allowedOrigins = configuredOrigins.length > 0 ? configuredOrigins : DEFAULT_DEV_ORIGINS;
 
+  const store = env["AUTOMATIONS_STORE"] ?? (isProduction ? "sql" : "json");
+  if (store !== "json" && store !== "sql") {
+    throw new ApiConfigError(`AUTOMATIONS_STORE debe ser "sql" o "json" (llegó "${store}").`);
+  }
+  if (isProduction && store !== "sql") {
+    throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
+  }
+
   return {
     port: Number(env["PORT"] ?? DEFAULT_PORT),
     isProduction,
     allowedOrigins,
     devApiKey: isProduction ? null : devApiKey,
     devTenantId: env["DEV_TENANT_ID"] ?? "test-tenant",
-    dataDirectory: env["DATA_DIR"] ?? join(process.cwd(), "data", "builder-workspaces")
+    dataDirectory: env["DATA_DIR"] ?? join(process.cwd(), "data", "builder-workspaces"),
+    automationsStore: store
   };
 }

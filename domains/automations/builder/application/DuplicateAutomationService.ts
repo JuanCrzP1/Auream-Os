@@ -62,8 +62,9 @@ export class DuplicateAutomationService {
       }
     };
 
-    await this.workspaceRepository.saveWorkspace(workspace);
+    // Catálogo primero: el borrador cuelga de él (FK en SQL).
     await this.automationRepository.save(copy);
+    await this.workspaceRepository.saveWorkspace(workspace);
     return copy;
   }
 }

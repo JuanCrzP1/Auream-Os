@@ -12,6 +12,11 @@ import { ListAutomationsService } from "../../../domains/automations/catalog/app
 import { CreateFolderService } from "../../../domains/automations/catalog/application/CreateFolderService";
 import type { AutomationRepository } from "../../../domains/automations/catalog/application/AutomationRepository";
 import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
+import type { FolderRepository } from "../../../domains/automations/catalog/application/FolderRepository";
+import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
+import { SqlAutomationRepository } from "../../../infrastructure/persistence/sql/SqlAutomationRepository";
+import { SqlFolderRepository } from "../../../infrastructure/persistence/sql/SqlFolderRepository";
+import { SqlBuilderWorkspaceRepository } from "../../../infrastructure/persistence/sql/SqlBuilderWorkspaceRepository";
 import { JsonAutomationRepository } from "../../../infrastructure/persistence/json/JsonAutomationRepository";
 import { JsonBuilderWorkspaceRepository } from "../../../infrastructure/persistence/json/JsonBuilderWorkspaceRepository";
 import { JsonFolderRepository } from "../../../infrastructure/persistence/json/JsonFolderRepository";
@@ -47,13 +52,36 @@ export interface ApiServices {
   readonly workspaceRepository: BuilderWorkspaceRepository;
 }
 
-export function composeBuilderServices(config: ApiConfig): ApiServices {
+interface AutomationsPersistence {
+  readonly automationRepository: AutomationRepository;
+  readonly folderRepository: FolderRepository;
+  readonly workspaceRepository: BuilderWorkspaceRepository;
+}
+
+/**
+ * El ÚNICO punto que elige dónde viven las automatizaciones (`AUTOMATIONS_STORE`).
+ * Los casos de uso reciben los puertos y no saben cuál es.
+ */
+function composeAutomationsPersistence(config: ApiConfig, sqlClient: SqlClient): AutomationsPersistence {
+  if (config.automationsStore === "sql") {
+    return {
+      automationRepository: new SqlAutomationRepository(sqlClient),
+      folderRepository: new SqlFolderRepository(sqlClient),
+      workspaceRepository: new SqlBuilderWorkspaceRepository(sqlClient)
+    };
+  }
+  return {
+    automationRepository: new JsonAutomationRepository(config.dataDirectory),
+    folderRepository: new JsonFolderRepository(config.dataDirectory),
+    workspaceRepository: new JsonBuilderWorkspaceRepository(config.dataDirectory)
+  };
+}
+
+export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient): ApiServices {
+  const persistence = composeAutomationsPersistence(config, sqlClient);
   // Toda lectura sale migrada al formato vigente (ver el decorador).
-  const workspaceRepository = new UpgradingBuilderWorkspaceRepository(
-    new JsonBuilderWorkspaceRepository(config.dataDirectory)
-  );
-  const automationRepository = new JsonAutomationRepository(config.dataDirectory);
-  const folderRepository = new JsonFolderRepository(config.dataDirectory);
+  const workspaceRepository = new UpgradingBuilderWorkspaceRepository(persistence.workspaceRepository);
+  const { automationRepository, folderRepository } = persistence;
 
   return {
     getWorkspaceService: new GetBuilderWorkspaceService(

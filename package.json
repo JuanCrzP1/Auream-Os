@@ -18,7 +18,9 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:migrate:test": "node scripts/db/migrate.mjs",
     "db:migrate:prod": "node scripts/db/migrate.mjs --confirm-production",
-    "db:seed:test": "node scripts/db/seed-dev.mjs"
+    "db:seed:test": "node scripts/db/seed-dev.mjs",
+    "db:import-automations:test": "npm run build && node --env-file=.env.test dist/apps/api/scripts/importJsonAutomations.js",
+    "db:import-automations:prod": "npm run build && node --env-file=.env dist/apps/api/scripts/importJsonAutomations.js --confirm-production"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",

@@ -38,13 +38,33 @@ Registries y repositorios en memoria: sesiones, registro de flows, credenciales 
 
 Se usa en pruebas y en el runtime de simulación del builder, donde cada simulación necesita un stack aislado y efímero. No sobrevive al reinicio, y no pretende hacerlo.
 
-### `persistence/sql` · `IMPLEMENTADO` (tenancy) · `NO IMPLEMENTADO` (automations)
+### `persistence/sql` · `IMPLEMENTADO`
 
-Implementado para tenancy: `SqlClient` (único punto que conoce el driver `pg`),
-`SqlTenantRepository`, `SqlMembershipRepository` y `SqlOnboardingRepository`.
+`SqlClient` es el único punto que conoce el driver `pg`.
 
-Los repositorios de automations siguen en `json/`: migrarlos es trabajo posterior
-y no requiere cambiar ningún contrato, porque sus puertos ya existen.
+- **Tenancy:** `SqlTenantRepository`, `SqlMembershipRepository`, `SqlOnboardingRepository`.
+- **Automatizaciones (FASE C1/C2):** `SqlAutomationRepository` (catálogo), `SqlFolderRepository` (carpetas) y `SqlBuilderWorkspaceRepository` (borrador). Implementan los mismos puertos que los de `json/`: ningún caso de uso cambió.
+
+**Modelo de automatizaciones** (`004_automations.sql`):
+
+| Tabla | Contenido |
+|---|---|
+| `automation_folders` | Carpetas, por tenant. |
+| `automations` | El catálogo: nombre, estado, carpeta, etiquetas. `(tenant_id, key)` único. |
+| `automation_drafts` | **Un documento por flujo** (`snapshot jsonb`) y `revision` para el bloqueo optimista. Cuelga de `automations (tenant_id, key)` en cascada: borrar la automatización borra su borrador. |
+
+Decisión: el flujo es un documento, no filas de bloques y conexiones. El editor lo lee y escribe siempre entero y su forma la define (y migra) el contrato `BuilderFlowSnapshot`.
+
+Reglas de los repositorios: toda consulta filtra por `tenant_id`; un `save` no puede sobrescribir una fila de otro tenant (`on conflict … where tenant_id = …`); un id que no es uuid se trata como inexistente en lugar de provocar un error de base de datos.
+
+**Selección del almacén:** `AUTOMATIONS_STORE` (`sql` | `json`), resuelta en `apps/api/composition/composeBuilderServices.ts`. En producción solo se acepta `sql`: la API no arranca con `json`.
+
+**Importar los datos de archivos:** `apps/api/scripts/importJsonAutomations.ts` reutiliza los repositorios de ambos lados y `upgradeWorkspace`, escribe cada flujo en una transacción y es idempotente. Por defecto simula; `--apply` escribe.
+
+```
+npm run db:import-automations:test -- --apply     rama test
+npm run db:import-automations:prod -- --apply     producción (exige DATABASE_URL de producción)
+```
 
 #### Migraciones
 
@@ -61,6 +81,16 @@ nunca se reaplica ni se ignora en silencio.
 
 El flujo obligatorio es `test → tests de integración → revisión → producción`.
 Producción nunca se migra desde la suite de tests.
+
+#### Entornos de Neon
+
+| Entorno | Rama | Dónde vive su credencial |
+|---|---|---|
+| Desarrollo local | **test** (`ep-rapid-lake…`), base y login | `.env` (`DATABASE_URL`) y `.env.test` (`TEST_DATABASE_URL`), ambos fuera de git |
+| Tests de integración | **test** | `.env.test` |
+| Producción | **producción** (`ep-lingering-shape…`) | Solo en el entorno de despliegue. Nunca en un equipo de desarrollo |
+
+Las migraciones y la importación de automatizaciones se aplican primero en test (con sus tests de integración) y en producción al desplegar, con `--confirm-production` y verificación del host.
 
 #### Aislamiento de entornos
 
