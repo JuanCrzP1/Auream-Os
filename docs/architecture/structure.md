@@ -97,7 +97,7 @@ La regla que rige qué entra: si el tipo cruza una frontera y es un dato puro de
 
 `scripts/dev/` contiene los launchers. No existen `scripts/build`, `scripts/test` ni `scripts/maintenance`: se crearán cuando haya un script real que colocar.
 
-`config/tsconfig.base.json` centraliza las opciones de compilación; cada app extiende de él.
+`tsconfig.json` (raíz) tiene las opciones de compilación del backend completas, sin `extends`: así Vercel compila la función `api/index.ts` exactamente igual que el equipo local (con `extends` Vercel no aplicaba `strict`). La web tiene el suyo en `apps/web`.
 
 `tests/` guarda lo que cruza fronteras. Los tests unitarios pueden vivir junto a su módulo.
 

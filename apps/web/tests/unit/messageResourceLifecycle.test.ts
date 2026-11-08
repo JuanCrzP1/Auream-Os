@@ -126,14 +126,21 @@ describe("duplicar no puede inventar un archivo que no existe", () => {
     expect(sessionObjectUrl(copia.id)).toBeNull();
   });
 
-  it("la copia NO pasa la validación: pide que se elija un archivo", () => {
-    // Es la invariante que importa. Antes valía por tener nombre, y al publicar
-    // no habría habido nada que subir.
+  it("un archivo SIN subir no se copia como si existiera: ni el original ni la copia son enviables", () => {
     const items = [medio("a", "video", { fileName: "uno.mp4" })] as unknown as MessageItem[];
     const [, copia] = duplicateItem(items, "a");
 
+    expect((copia as { fileName?: string }).fileName).toBe("");
     expect(validateMessageContent({}, { items: [copia] }).valid).toBe(false);
-    expect(validateMessageContent({}, { items }).valid).toBe(true);
+    expect(validateMessageContent({}, { items }).valid).toBe(false);
+  });
+
+  it("un archivo SUBIDO se conserva en la copia: su URL es un dato y sirve igual", () => {
+    const items = [medio("a", "video", { fileName: "uno.mp4", url: "https://blob.test/uno.mp4", mediaId: "media-1" })] as unknown as MessageItem[];
+    const [, copia] = duplicateItem(items, "a");
+
+    expect(copia).toMatchObject({ fileName: "uno.mp4", url: "https://blob.test/uno.mp4", mediaId: "media-1" });
+    expect(validateMessageContent({}, { items: [copia] }).valid).toBe(true);
   });
 
   it("el ENLACE sí se conserva: es un dato, no una referencia a memoria", () => {

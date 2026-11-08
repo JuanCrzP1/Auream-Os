@@ -10,6 +10,8 @@ interface MediaFilePreviewProps {
   readonly name: string;
   /** Texto secundario, solo donde no hay nada que mostrar. */
   readonly size: string;
+  /** Mientras se sube: 0–100. */
+  readonly progress?: number;
   /** Reabre el MISMO selector de archivo del contenedor. */
   readonly onChange: () => void;
   readonly onRemove: () => void;
@@ -98,7 +100,9 @@ function AudioPlayer({ src, name, size }: { src: string; name: string; size: str
   };
 
   const progress = duration > 0 ? Math.min(elapsed / duration, 1) : 0;
-  const bars = waveHeights(`${name}:${size}`);
+  // Semilla estable por archivo: el texto de estado («Subiendo… 40%») cambia
+  // y la onda no debe redibujarse con él.
+  const bars = waveHeights(`${name}:${src}`);
   const playedBars = Math.round(progress * BAR_COUNT);
 
   const seekTo = (ratio: number) => {
@@ -219,7 +223,7 @@ function NamedFile({ Icon, name, size }: { Icon: ComponentType; name: string; si
  * dentro de `.media-file`, que garantiza el alto. Medio a la izquierda (todo el
  * espacio) y acciones compactas a la derecha.
  */
-export function MediaFilePreview({ kind, src, name, size, onChange, onRemove }: MediaFilePreviewProps) {
+export function MediaFilePreview({ kind, src, name, size, progress, onChange, onRemove }: MediaFilePreviewProps) {
   const Icon = getItemIcon(kind);
 
   return (
@@ -236,13 +240,21 @@ export function MediaFilePreview({ kind, src, name, size, onChange, onRemove }: 
           // reinicia su estado y detiene el anterior.
           <AudioPlayer key={src} src={src} name={name} size={size} />
         )}
+        {/* Imagen, video y audio no tienen línea de texto: el estado va como
+            etiqueta sobre el medio («Guardado», «Subiendo… 40%», «Sin guardar»). */}
+        {src !== "" && kind !== "file" && size ? <span className="media-file__status">{size}</span> : null}
+        {progress !== undefined ? (
+          <span className="media-file__progress" role="progressbar" aria-label={`Subiendo ${name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+            <span className="media-file__progress-bar" style={{ width: `${progress}%` }} />
+          </span>
+        ) : null}
       </div>
 
       <span className="media-file__actions">
-        <button type="button" className="media-file__control nodrag" onClick={onChange}>
+        <button type="button" className="media-file__control nodrag" onClick={onChange} disabled={progress !== undefined}>
           Cambiar
         </button>
-        <button type="button" className="media-file__control media-file__control--clear nodrag" onClick={onRemove}>
+        <button type="button" className="media-file__control media-file__control--clear nodrag" onClick={onRemove} disabled={progress !== undefined}>
           Quitar
         </button>
       </span>

@@ -135,8 +135,9 @@ describe("con la red privada permitida (desarrollo)", () => {
     expect(result.ok && result.response.status).toBe(404);
   });
 
+  // Depende del DNS del equipo: plazo holgado para que una red lenta no lo vuelva intermitente.
   it("dominio inexistente → network_error legible", async () => {
-    const result = await open.send(req("http://no-existe.invalid/"));
+    const result = await open.send(req("http://no-existe.invalid/", { timeoutMs: 15_000 }));
     expect(result.ok ? null : [result.reason, result.message]).toEqual(["network_error", "No se encontró el dominio."]);
-  });
+  }, 20_000);
 });

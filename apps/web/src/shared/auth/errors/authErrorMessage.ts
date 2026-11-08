@@ -26,7 +26,7 @@ const MESSAGES: Record<string, string> = {
   [AUTH_ERROR_CODES.invalidToken]:
     "Este enlace de recuperación no es válido o ha caducado. Solicita uno nuevo.",
   [AUTH_ERROR_CODES.invalidOrigin]:
-    "Esta dirección no está autorizada para iniciar sesión. Abre la aplicación desde su URL oficial."
+    "No pudimos iniciar sesión desde esta página. Recárgala e inténtalo de nuevo."
 };
 
 export function authErrorMessage(error: unknown): string {

@@ -2,18 +2,15 @@ import type { FlowSnapshot, NodeType } from "../../../../../contracts/FlowSnapsh
 import type { ValidationIssue } from "../ValidationReport";
 
 /**
- * Tipos de nodo que DEBEN tener al menos un edge saliente.
- * El nodo terminal (end) no está incluido porque por definición no tiene salida.
+ * Tipos de nodo que DEBEN tener al menos un edge saliente: solo el inicio.
+ *
+ * Cualquier otro bloque puede ser el último del flujo (un Mensaje de
+ * despedida, unas Etiquetas…): al no tener salida, la ejecución termina ahí
+ * limpiamente (`EdgeEvaluator` → `unconnected-output`). Un inicio sin salida,
+ * en cambio, es un flujo que no hace nada.
  */
-const EXPECTED_OUTGOING_TYPES: ReadonlySet<NodeType> = new Set([
-  "start", "message", "question", "tags", "payment-proof", "condition", "distributor",
-  "pixel", "ai", "delay", "integration", "menu", "notification"
-]);
+const EXPECTED_OUTGOING_TYPES: ReadonlySet<NodeType> = new Set(["start"]);
 
-/**
- * Verifica que los nodos no terminales tengan al menos un edge saliente.
- * Un nodo sin salida es un dead-end que detiene el flujo sin completarlo.
- */
 export function validateNodeDegree(snapshot: FlowSnapshot): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
@@ -26,7 +23,7 @@ export function validateNodeDegree(snapshot: FlowSnapshot): ValidationIssue[] {
     if (outgoing.length === 0) {
       issues.push({
         code: "NODE_NO_OUTGOING_EDGES",
-        message: `El nodo '${nodeId}' (tipo '${node.type}') no tiene edges salientes y no es terminal.`,
+        message: `El nodo '${nodeId}' (tipo '${node.type}') no lleva a ningún bloque.`,
         nodeId
       });
     }

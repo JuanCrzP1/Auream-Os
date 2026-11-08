@@ -28,7 +28,7 @@ import { detectUnreachable } from "./rules/detectUnreachable";
 // Y las que se dejan fuera, deliberadamente, porque hablan de si el flujo está
 // TERMINADO o si el motor podrá ejecutarlo —no de si está conectado—:
 //
-//   validateNodeDegree      exige rama terminada en `end`
+//   validateNodeDegree      exige que el inicio lleve a algún bloque
 //   validateOutgoingLimits  exige una conexión como mucho por salida
 //   validateEdgePriorities  exige desempate determinista entre flechas
 //   detectCycles            exige que el flujo pueda terminar

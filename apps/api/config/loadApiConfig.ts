@@ -59,6 +59,14 @@ export interface ApiConfig {
    * disponibles.
    */
   readonly credentialsKeyRing: SecretKeyRing | null;
+  /**
+   * Medios (imágenes, videos…): con `BLOB_READ_WRITE_TOKEN` van a Vercel Blob
+   * (producción y vistas previas; Vercel lo crea al conectar el almacén). Sin
+   * él, en desarrollo, a una carpeta local servida por la API.
+   */
+  readonly blobReadWriteToken: string | null;
+  /** Dirección pública de la API para las URLs de los medios locales (desarrollo). */
+  readonly publicApiBaseUrl: string;
 }
 
 /** ¿Es una zona IANA que el motor sabe usar? */
@@ -151,6 +159,8 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     automationsStore: store,
     defaultTimezone,
     integrationsAllowPrivateNetwork,
-    credentialsKeyRing
+    credentialsKeyRing,
+    blobReadWriteToken: env["BLOB_READ_WRITE_TOKEN"]?.trim() || null,
+    publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`
   };
 }

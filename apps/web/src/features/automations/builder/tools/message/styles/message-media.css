@@ -724,3 +724,67 @@ video.media-file__media {
   font-size: 0.79rem;
   color: var(--text);
 }
+
+/* --- Subida -------------------------------------------------------------- */
+
+/* La barra se apoya en el borde inferior del medio mientras se sube. */
+.media-file__preview {
+  position: relative;
+}
+
+.media-file__progress {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  left: 6px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+.media-file__progress-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--kit-accent, var(--primary));
+  transition: width 160ms var(--ease-out);
+}
+
+.media-file__status {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.media-file__control:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.media-file__error {
+  margin: 6px 0 0;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--rose) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rose) 9%, transparent);
+  color: color-mix(in srgb, var(--rose) 80%, var(--text));
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-file__progress-bar {
+    transition: none;
+  }
+}

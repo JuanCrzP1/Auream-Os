@@ -72,6 +72,19 @@ El motor no importa este dominio: habla con el puerto `flow-engine/ports/Contact
 
 ---
 
+## media · `IMPLEMENTADO` (2026-11-08)
+
+Archivos que usan los bloques (imágenes, videos, audios y documentos).
+
+- **Entidad** `MediaAsset`: cuenta, tipo, ruta en el almacén (siempre `tenants/<cuenta>/media/…`), URL pública, tipo MIME, tamaño y nombre.
+- **Casos de uso:** `CreateMediaUploadService` (permiso de subida de un solo uso con los formatos y tamaños de WhatsApp) y `RegisterMediaService` (registra lo que REALMENTE quedó en el almacén; si no cumple, lo borra).
+- **Puertos:** `MediaRepository` (SQL `008_media_assets.sql`) y `MediaStorage` (Vercel Blob en la nube; carpeta local en desarrollo).
+- **API:** `POST /media/uploads`, `POST /media` (`flows.write`).
+
+Los bytes nunca pasan por la API.
+
+---
+
 ## connections · `NO IMPLEMENTADO`
 
 Responsabilidad exclusiva: gestionar conexiones externas de WhatsApp.

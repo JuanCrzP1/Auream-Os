@@ -79,12 +79,17 @@ describe("reviewFlow", () => {
     expect(issue?.message).not.toContain("Precios");
   });
 
-  it("un bloque sin ninguna salida conectada es un camino muerto, no una lista de salidas abiertas", () => {
-    const review = reviewFlow([start(), menu("Menú")], [edge("e1", "Inicio", "Menú")]);
-    const codes = review.issues.filter((issue) => issue.nodeId === "Menú").map((issue) => issue.code);
+  it("un Mensaje (o cualquier bloque de una salida) puede ser el último: no es un error", () => {
+    const review = reviewFlow([start(), message("Despedida")], [edge("e1", "Inicio", "Despedida")]);
+    expect(review.issues).toEqual([]);
+  });
 
-    expect(codes).toContain("dead-end");
-    expect(codes).not.toContain("open-outputs");
+  it("un bloque que reparte caminos sin ninguna conectada avisa de todas sus salidas (aviso, no error)", () => {
+    const review = reviewFlow([start(), menu("Menú")], [edge("e1", "Inicio", "Menú")]);
+    const issues = review.issues.filter((issue) => issue.nodeId === "Menú");
+
+    expect(issues.map((issue) => [issue.code, issue.severity])).toEqual([["open-outputs", "warning"]]);
+    expect(review.errorCount).toBe(0);
   });
 
   it("ordena los errores antes que los avisos y los cuenta", () => {

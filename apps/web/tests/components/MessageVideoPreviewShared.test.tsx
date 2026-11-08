@@ -47,9 +47,17 @@ const bloque = (extra: Record<string, unknown> = {}) => ({
  * archivo no cambiaría nada y la prueba mediría un editor congelado.
  */
 function EditorDeVideo({ inicial = "" }: { inicial?: string }) {
-  const [nombre, setNombre] = useState(inicial);
+  const [fuente, setFuente] = useState({ fileName: inicial, url: "", mediaId: "" });
   return (
-    <FileSource kind="video" position={1} itemId="v1" savedFileName={nombre} onPick={setNombre} />
+    <FileSource
+      kind="video"
+      position={1}
+      itemId="v1"
+      savedFileName={fuente.fileName}
+      savedUrl={fuente.url}
+      mediaId={fuente.mediaId}
+      onPick={setFuente}
+    />
   );
 }
 

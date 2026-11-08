@@ -20,3 +20,6 @@ data/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Secretos locales (clave maestra de producción, etc.): NUNCA al repositorio.
+.secrets/

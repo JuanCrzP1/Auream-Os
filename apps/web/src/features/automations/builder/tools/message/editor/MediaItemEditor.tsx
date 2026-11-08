@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { MessageMediaItem } from "../types";
 import { useAutoHeight } from "../../_kit/useAutoHeight";
 import { MediaSourceTabs, type MediaSource } from "./MediaSourceTabs";
-import { FileSource } from "./FileSource";
+import { FileSource, type FileSourceChange } from "./FileSource";
 import { UrlSource } from "./UrlSource";
 import { SendOnceSwitch } from "./SendOnceSwitch";
 
@@ -18,7 +18,7 @@ interface MediaItemEditorProps {
   readonly item: MessageMediaItem;
   readonly position: number;
   readonly onEdit: (
-    change: { url: string } | { fileName: string } | { caption: string } | { sendOnce: boolean }
+    change: { url: string } | FileSourceChange | { caption: string } | { sendOnce: boolean }
   ) => void;
 }
 
@@ -28,10 +28,12 @@ interface MediaItemEditorProps {
  * cambia el acento (heredado del bloque) y las etiquetas.
  *
  * La pestaña activa es estado de interfaz, no configuración: no va al snapshot.
- * Del archivo se guarda el NOMBRE (los bytes viven en la sesión).
+ * Un archivo se sube al almacén de la cuenta al elegirlo: el bloque guarda su
+ * URL, su nombre y su registro.
  */
 export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps) {
-  const [source, setSource] = useState<MediaSource>("file");
+  // Se abre en la pestaña de donde salió el medio: enlace escrito o archivo.
+  const [source, setSource] = useState<MediaSource>(item.url && !item.mediaId ? "url" : "file");
   const captionRef = useAutoHeight(item.caption);
 
   return (
@@ -44,7 +46,9 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
           position={position}
           itemId={item.id}
           savedFileName={item.fileName ?? ""}
-          onPick={(fileName) => onEdit({ fileName })}
+          savedUrl={item.url}
+          mediaId={item.mediaId ?? ""}
+          onPick={(change) => onEdit(change)}
         />
       ) : (
         <UrlSource kind={item.kind} position={position} url={item.url} onChange={(url) => onEdit({ url })} />

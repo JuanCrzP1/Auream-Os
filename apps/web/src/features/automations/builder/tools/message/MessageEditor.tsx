@@ -23,13 +23,14 @@ import { MessageItemRow } from "./editor/MessageItemRow";
 import { MessageLibrary } from "./editor/MessageLibrary";
 import { MessageEmptyState } from "./editor/MessageEmptyState";
 import { MessageDropZone } from "./editor/MessageDropZone";
+import { MediaUploadProvider } from "./editor/MediaUploadContext";
 
 /**
  * Constructor de la secuencia de un Mensaje. La secuencia se lee de `config`
  * en cada render; solo es estado local lo que dura menos que un gesto (posición
  * del arrastre, bloque recién creado), que nunca llega al snapshot.
  */
-export function MessageEditor({ draft, onChange }: ToolEditorProps) {
+export function MessageEditor({ draft, onChange, resources }: ToolEditorProps) {
   const items = readMessageItems(draft.config, draft.content);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [revealId, setRevealId] = useState<string | null>(null);
@@ -118,6 +119,7 @@ export function MessageEditor({ draft, onChange }: ToolEditorProps) {
   const dragging = dropIndex !== null;
 
   return (
+    <MediaUploadProvider value={resources?.uploadMedia}>
     <div
       className="message-shell"
       style={editorAccent(messageTool.colors.header)}
@@ -197,5 +199,6 @@ export function MessageEditor({ draft, onChange }: ToolEditorProps) {
         </section>
       </div>
     </div>
+    </MediaUploadProvider>
   );
 }

@@ -106,14 +106,17 @@ export function reviewFlow(nodes: ReadonlyArray<CanvasNode>, edges: ReadonlyArra
       add("error", "incomplete-config", `${quote(node)}: ${config.reason}`, node.id);
     }
 
-    if (!node.data.isTerminal && outgoing.length === 0) {
-      // Alineado con el backend (validateNodeDegree).
-      add("error", "dead-end", `${quote(node)} no continúa: conecta su salida al siguiente bloque.`, node.id);
+    // Cualquier bloque puede ser el último: el flujo termina ahí (como en
+    // Leona). Solo el inicio sin nada detrás es un error: el flujo no haría
+    // nada. Alineado con el backend (validateNodeDegree).
+    if (node.data.nodeType === START_NODE_TYPE && outgoing.length === 0) {
+      add("error", "dead-end", `${quote(node)} no lleva a ningún bloque: conecta el primer paso del flujo.`, node.id);
       continue;
     }
 
+    // Bloques que reparten caminos: avisar de las salidas sin conectar.
     const outputs = listNodeOutputs(node.data.nodeType, node.data.config);
-    if (outputs && outgoing.length > 0) {
+    if (outputs) {
       const used = new Set(outgoing.map((edge) => edge.sourceHandle ?? outputs[0]?.id));
       const open = outputs.filter((output) => !used.has(output.id)).map((output) => output.label);
       if (open.length > 0) {

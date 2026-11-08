@@ -7,6 +7,8 @@ import { routeMeRequest, type MeServices } from "./routeMeRequest";
 import { routeContactsRequest } from "./routeContactsRequest";
 import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
+import { routeLocalMediaRequest, routeMediaRequest } from "./routeMediaRequest";
+import type { MediaServices } from "../composition/composeMediaServices";
 import type { IntegrationsServices } from "../composition/composeIntegrationsServices";
 import { sendJson } from "../http/sendJson";
 import type { ApiServices } from "../composition/composeBuilderServices";
@@ -29,6 +31,8 @@ export interface ApiRouterDependencies {
   readonly meServices: MeServices;
   readonly contactsServices: ContactsServices;
   readonly integrationsServices: IntegrationsServices;
+  /** `null` si no hay almacén de medios configurado. */
+  readonly mediaServices: MediaServices | null;
   readonly authService: AuthService;
   readonly requestLogger: RequestLogger;
 }
@@ -39,13 +43,16 @@ export async function routeApiRequest(
   url: URL,
   dependencies: ApiRouterDependencies
 ): Promise<void> {
-  const { services, meServices, contactsServices, integrationsServices, authService, requestLogger } = dependencies;
+  const { services, meServices, contactsServices, integrationsServices, mediaServices, authService, requestLogger } = dependencies;
   const method = request.method ?? "GET";
 
   if (url.pathname === "/health") {
     sendJson(response, 200, { status: "ok" });
     return;
   }
+
+  // Almacén local de medios (solo desarrollo): autoriza el permiso firmado, no la sesión.
+  if (await routeLocalMediaRequest(request, response, url, mediaServices)) return;
 
   const principal = await authenticateRequest(request, authService);
 
@@ -89,6 +96,7 @@ export async function routeApiRequest(
   }
 
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
+  if (await routeMediaRequest(request, response, url, mediaServices, requestContext)) return;
 
   const handledByAutomations = await routeAutomationsRequest(
     request,

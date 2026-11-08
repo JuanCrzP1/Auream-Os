@@ -18,14 +18,19 @@ export function isUsableUrl(url: string): boolean {
   }
 }
 
+/** ¿El archivo del bloque está subido (tiene su URL guardada)? */
+export function isUploaded(item: MessageItem): boolean {
+  return item.kind !== "text" && item.kind !== "interval" && Boolean(item.mediaId) && isUsableUrl(item.url);
+}
+
 /**
- * El bloque sin su archivo local. Para copias: los bytes están indexados por el
- * id original y una copia que conservara `fileName` diría tener un archivo que
- * nadie puede encontrar. El enlace sí se conserva (es un dato).
+ * El bloque para una copia. Un archivo SUBIDO se conserva tal cual (su URL es
+ * un dato y sirve igual a la copia). Uno sin subir no: sus bytes no existen
+ * fuera de esta sesión y la copia diría tener un archivo que nadie encuentra.
  */
 export function withoutLocalFile<T extends MessageItem>(item: T): T {
   if (item.kind === "text" || item.kind === "interval") return item;
-  if (!item.fileName) return item;
+  if (!item.fileName || isUploaded(item)) return item;
 
   return { ...item, fileName: "" };
 }

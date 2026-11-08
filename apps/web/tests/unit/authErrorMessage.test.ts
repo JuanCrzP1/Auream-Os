@@ -30,7 +30,7 @@ describe("authErrorMessage", () => {
 
     const message = authErrorMessage(error);
 
-    expect(message).toMatch(/no está autorizada/i);
+    expect(message).toMatch(/desde esta página/i);
     expect(message).not.toMatch(/contraseña incorrect/i);
   });
 

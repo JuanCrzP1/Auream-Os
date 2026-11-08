@@ -64,6 +64,29 @@ Haz push a `main`, o en Vercel → *Deployments* → *Redeploy*. En el registro 
 
 Si algo falla: Vercel → *Deployments* → el despliegue → *Logs* (build) o *Functions* (API). Los mensajes de configuración dicen exactamente qué falta y nunca incluyen secretos.
 
+## Estado actual (2026-11-08)
+
+- **Production** (`https://auream-os.vercel.app`) → Neon rama `production`: base con las migraciones 001–007, Neon Auth con el dominio de confianza registrado, clave de cifrado propia.
+- **Preview** (despliegues de ramas y PR) → Neon rama `test`: su base (el build migra `test` con `TEST_DATABASE_URL`), su Neon Auth y otra clave de cifrado. Una vista previa nunca toca datos reales. Para iniciar sesión en una URL de vista previa hay que agregar ese dominio en Neon Auth de la rama `test`.
+- **Archivos (Vercel Blob), separados igual:** `auream-media-produccion` → Production; `auream-media-pruebas` → Preview y Development. Vercel pone en cada entorno su `BLOB_READ_WRITE_TOKEN`; el build de producción lo exige.
+- Ninguna variable de desarrollo (`DEV_API_KEY`, `VITE_DEV_API_KEY`, `DEV_TENANT_ID`, `DATA_DIR`, `PORT`, `NODE_ENV`) existe en Production ni en Preview.
+
+## Archivos de los mensajes (Vercel Blob)
+
+Imágenes, videos, audios y documentos de los bloques no pasan por la API (las funciones de Vercel no aceptan cuerpos grandes):
+
+1. `POST /api/media/uploads` → el servidor valida tipo y tamaño (los límites de WhatsApp) y entrega un **permiso de un solo uso** para UNA ruta dentro de la carpeta de la cuenta (`tenants/<cuenta>/media/<id>/<nombre>`), con vencimiento.
+2. El navegador sube los bytes **directo a Vercel Blob** con ese permiso.
+3. `POST /api/media` → el servidor mira lo que REALMENTE quedó en Blob (tipo y tamaño), lo registra en `media_assets` (Neon) o lo borra si no cumple. El bloque guarda la URL pública.
+
+Si se crea un almacén nuevo: Vercel → *Storage* → *Blob* → crear y conectar al proyecto en el entorno que corresponda (o `vercel blob create-store <nombre> --access public --environment production`). En desarrollo, sin token, la API guarda en `data/media` y sirve los archivos ella misma.
+
+## Una sola dirección oficial
+
+Cada despliegue de Vercel responde en varias direcciones (la oficial, la del equipo, la de la rama y la propia del despliegue). Neon Auth solo acepta iniciar sesión desde la oficial. Por eso el build de producción le da a la web su dirección oficial (`VITE_APP_URL`, sacada de `VERCEL_PROJECT_PRODUCTION_URL`) y la web lleva ahí, antes de pintar nada, a quien entre por cualquier otra, conservando la ruta.
+
+Al conectar un dominio propio (p. ej. `app.auream.com`) en Vercel como dominio de producción, pasa a ser la dirección oficial solo. Hay que agregarlo también en Neon Auth (rama production → *Auth* → *Domains*) y en `CORS_ALLOWED_ORIGINS`.
+
 ## Límites conocidos de este modelo
 
 - **Funciones efímeras.** Los límites de uso («Probar» integración o IA) cuentan por instancia de función, no globalmente. Suficiente para empezar; si hace falta exactitud, se mueven a la base.

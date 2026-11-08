@@ -25,11 +25,13 @@ const texto = (text = "Hola") => ({ id: "t", kind: "text", text });
 const pausa = (id = "p") => ({ id, kind: "interval", amount: 5, unit: "seconds" });
 const medio = (kind: string, url = "") => ({ id: kind, kind, url, caption: "", sendOnce: false });
 /** El mismo medio, pero configurado con un archivo del dispositivo. */
+/** Archivo del dispositivo YA SUBIDO: su URL pública, su nombre y su registro. */
 const conArchivo = (kind: string, fileName = "foto.png") => ({
   id: kind,
   kind,
-  url: "",
+  url: fileName.trim() ? `https://blob.test/${fileName.trim()}` : "",
   fileName,
+  mediaId: fileName.trim() ? `media-${kind}` : "",
   caption: "",
   sendOnce: false
 });
@@ -129,7 +131,7 @@ describe("el contenido válido hace válido el mensaje", () => {
 // ---------------------------------------------------------------------------
 
 describe("para un medio basta con UNA fuente", () => {
-  it.each(MEDIOS)("%s con ARCHIVO elegido es válido", (kind) => {
+  it.each(MEDIOS)("%s con ARCHIVO subido es válido", (kind) => {
     expect(validar([conArchivo(kind)])).toEqual({ valid: true, reason: null });
   });
 
@@ -154,10 +156,8 @@ describe("para un medio basta con UNA fuente", () => {
     expect(validar([conArchivo("image", "   ")]).valid).toBe(false);
   });
 
-  it("la validez NO depende de que el archivo sobreviva a recargar", () => {
-    // Validez y persistencia son dos preguntas distintas. El borrador está
-    // bien configurado; que los bytes no sobrevivan es asunto de la Fase C.
-    expect(validar([conArchivo("video", "clip.mp4")]).valid).toBe(true);
+  it("un archivo elegido pero NO subido no es válido: sus bytes no están guardados en ningún lado", () => {
+    expect(validar([{ ...conArchivo("video", "clip.mp4"), url: "", mediaId: "" }])).toEqual({ valid: false, reason: MISSING_SOURCE_MESSAGE });
   });
 });
 

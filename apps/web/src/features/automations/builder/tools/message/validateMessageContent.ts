@@ -5,7 +5,7 @@ import { isUsableUrl } from "./mediaSource";
 
 export const NO_CONTENT_MESSAGE = "Agrega al menos un contenido para enviar antes de guardar.";
 
-export const MISSING_SOURCE_MESSAGE = "Completa el archivo o el enlace de tu contenido antes de guardar.";
+export const MISSING_SOURCE_MESSAGE = "Sube el archivo o escribe el enlace de cada imagen, video, audio o documento.";
 
 /** Texto del preview cuando el cliente no recibiría nada. */
 export const EMPTY_PREVIEW_TEXT = "Sin contenido para enviar";
@@ -17,14 +17,15 @@ export function isContentItem(item: MessageItem): boolean {
 
 /**
  * ¿Tiene de dónde sacar lo que envía? Un texto se sostiene solo (aunque esté
- * vacío: regla acordada). Un medio necesita enlace usable O archivo elegido;
- * que el archivo no sobreviva a recargar es persistencia, no validez.
+ * vacío: regla acordada). Un medio necesita una URL usable: un enlace escrito
+ * o un archivo ya SUBIDO. Un archivo elegido que no se subió no se puede
+ * enviar (sus bytes no están guardados en ningún lado).
  */
 function hasSource(item: MessageItem): boolean {
   if (item.kind === "interval") return false;
   if (item.kind === "text") return true;
 
-  return isUsableUrl(item.url) || (item.fileName ?? "").trim().length > 0;
+  return isUsableUrl(item.url);
 }
 
 /**

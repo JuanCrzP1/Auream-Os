@@ -29,15 +29,20 @@ export interface MessageTextItem extends MessageItemBase {
 }
 
 /**
- * Imagen, video, audio o archivo. Dos fuentes, basta una: `url` (un dato que
- * sobrevive a todo) o `fileName` (un archivo del dispositivo cuyos bytes viven
- * en `mediaSourceSession` y no sobreviven a recargar). En Fase C, subir el
- * archivo rellenará `url`.
+ * Imagen, video, audio o archivo. Dos fuentes:
+ *   · un enlace escrito (`url`), o
+ *   · un archivo del dispositivo, que se SUBE al almacén de la cuenta: queda
+ *     su URL pública en `url`, su nombre en `fileName` y el registro en
+ *     `mediaId`. Sobrevive a recargar, a duplicar y a cambiar de equipo.
+ * Un `fileName` sin `url` es un archivo de antes de la subida (o una subida
+ * que no terminó): no tiene bytes guardados y hay que volver a elegirlo.
  */
 export interface MessageMediaItem extends MessageItemBase {
   readonly kind: MessageMediaKind;
   readonly url: string;
   readonly fileName?: string;
+  /** Registro del archivo subido (`media_assets.id`). */
+  readonly mediaId?: string;
   readonly caption: string;
   /** Enviar una sola vez por conversación. Modelado; lo ejecutará el motor. */
   readonly sendOnce: boolean;

@@ -27,10 +27,9 @@ describe("GraphValidator — corrupción: orphan edge", () => {
     expect(issue?.nodeId).toBe("node-deleted");
   });
 
-  it("también reporta NODE_NO_OUTGOING_EDGES porque el único edge del entry es inválido", () => {
-    // Con el edge inválido, desde el punto de vista del grafo el nodo entry
-    // tiene un edge que no lleva a ningún nodo válido. El mensaje llega al entry
-    // y no puede avanzar. El validador debe forzar el rechazo por el target inválido.
+  it("un flujo cuyo único edge apunta a un nodo inexistente no es válido", () => {
+    // El rechazo lo fuerza el target inválido (EDGE_INVALID_TARGET), no la
+    // falta de salida.
     const report = validator.validate(corruptedOrphanEdgeFlow);
     expect(report.isValid).toBe(false);
   });

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MessageEditor } from "@features/automations/builder/tools/message/MessageEditor";
 import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
+import { acceptAttribute } from "@contracts/MediaContracts";
 
 // ---------------------------------------------------------------------------
 // Selector de origen del archivo: Archivo / URL.
@@ -177,16 +178,20 @@ describe("zona de archivo", () => {
     expect(screen.getByText("Suelta aquí")).toBeTruthy();
   });
 
-  it("el input acepta el tipo que corresponde", () => {
+  it("el selector solo ofrece los formatos de audio que WhatsApp entrega", () => {
     const { container } = renderBloque("audio");
 
-    expect(container.querySelector<HTMLInputElement>(".media-file__input")?.accept).toBe("audio/*");
+    expect(container.querySelector<HTMLInputElement>(".media-file__input")?.accept).toBe(acceptAttribute("audio"));
+    expect(acceptAttribute("audio")).toContain("audio/mpeg");
   });
 
-  it("Archivo no restringe el tipo: es cualquier documento", () => {
+  it("Archivo ofrece los documentos que WhatsApp entrega (PDF, Office, texto)", () => {
     const { container } = renderBloque("file");
+    const accept = container.querySelector<HTMLInputElement>(".media-file__input")?.accept ?? "";
 
-    expect(container.querySelector<HTMLInputElement>(".media-file__input")?.accept).toBe("");
+    expect(accept).toContain("application/pdf");
+    expect(accept).toContain("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    expect(accept).not.toContain("application/x-msdownload");
   });
 });
 

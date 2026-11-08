@@ -7,6 +7,9 @@ import { resolveTool } from "@features/automations/builder/tools/registry";
 import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
 import { readMessageItems } from "@features/automations/builder/tools/message/readMessageConfig";
 import { releaseFile } from "@features/automations/builder/tools/message/mediaSourceSession";
+import { StaticBuilderResourcesProvider } from "@features/automations/builder/context/BuilderResourcesContext";
+import type { ToolResources } from "@features/automations/builder/tools/ToolResources";
+import { MISSING_SOURCE_MESSAGE } from "@features/automations/builder/tools/message/validateMessageContent";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 
 // ---------------------------------------------------------------------------
@@ -16,11 +19,9 @@ import type { CanvasNode } from "@features/automations/builder/types/canvas";
 // `applyNodePatch` (el mismo mutador del builder) → nodo → reapertura del
 // editor con ese nodo. Si el dato se pierde en cualquier tramo, aquí se ve.
 //
-// LO QUE ESTAS PRUEBAS DISTINGUEN, y es la clave del asunto: un ENLACE es un
-// dato y viaja; un ARCHIVO LOCAL es un `File` del navegador y no puede viajar
-// —no hay dónde subirlo todavía—. Perder lo primero sería un defecto; lo
-// segundo es una limitación declarada del sistema, y se prueba como tal para
-// que nadie la confunda con un fallo.
+// Dos fuentes, y las dos deben sobrevivir: un ENLACE escrito, y un ARCHIVO del
+// dispositivo, que se SUBE al almacén de la cuenta al elegirlo y deja en el
+// bloque su URL pública. Un archivo que no se subió no es enviable.
 // ---------------------------------------------------------------------------
 
 const MEDIOS = [
@@ -37,18 +38,20 @@ function nodoCon(items: ReadonlyArray<Record<string, unknown>>): CanvasNode {
 }
 
 /** Abre el editor sobre un nodo y devuelve lo que «Guardar» confirmaría. */
-function abrir(nodo: CanvasNode) {
+function abrir(nodo: CanvasNode, resources: ToolResources = { labels: [] }) {
   const onCommit = vi.fn();
   const onClose = vi.fn();
 
   const utils = render(
-    <NodeExpandedFrame
-      data={nodo.data}
-      tool={resolveTool("message")}
-      ui={resolveToolUi("message")}
-      onCommit={onCommit}
-      onClose={onClose}
-    />
+    <StaticBuilderResourcesProvider resources={resources}>
+      <NodeExpandedFrame
+        data={nodo.data}
+        tool={resolveTool("message")}
+        ui={resolveToolUi("message")}
+        onCommit={onCommit}
+        onClose={onClose}
+      />
+    </StaticBuilderResourcesProvider>
   );
 
   return { ...utils, onCommit, onClose };
@@ -156,15 +159,11 @@ describe("una secuencia mixta sobrevive entera", () => {
 });
 
 // ---------------------------------------------------------------------------
-// El archivo local: la limitación, probada como limitación.
+// Archivo del dispositivo: se sube al almacén de la cuenta y el bloque guarda
+// su URL. Sobrevive a recargar porque ya no depende de la memoria del navegador.
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Archivo del dispositivo: qué sobrevive y qué no.
-//
-// Se separan dos cosas que antes iban juntas: los BYTES no sobreviven —no hay
-// dónde subirlos— pero la ELECCIÓN sí, porque es información del mensaje.
-// ---------------------------------------------------------------------------
+const TIPOS = { image: "image/png", video: "video/mp4", audio: "audio/mpeg", file: "application/pdf" } as const;
 
 /** Elige un archivo por el diálogo del sistema. */
 function elegirArchivo(container: HTMLElement, nombre: string, tipo: string) {
@@ -174,42 +173,46 @@ function elegirArchivo(container: HTMLElement, nombre: string, tipo: string) {
   fireEvent.change(input);
 }
 
+/** Almacén falso: «sube» y devuelve una URL pública estable. */
+const almacen = (fallo?: string): ToolResources => ({
+  labels: [],
+  uploadMedia: vi.fn(async (file: File, kind) =>
+    fallo
+      ? { ok: false as const, message: fallo }
+      : { ok: true as const, value: { id: "media-1", kind, url: `https://blob.test/${file.name}`, contentType: file.type, size: file.size, fileName: file.name, createdAt: "x" } }
+  )
+});
+
 describe.each(MEDIOS)("$kind configurado por ARCHIVO", ({ kind }) => {
-  const nombre = `elegido-${kind}.bin`;
+  const nombre = `elegido-${kind}.${kind === "file" ? "pdf" : "bin"}`;
 
-  it("Guardar está PERMITIDO: una fuente basta", () => {
+  it("se sube al elegirlo y el bloque guarda su URL, su nombre y su registro", async () => {
+    const recursos = almacen();
     const nodo = nodoCon([{ id: "m1", kind, url: "", caption: "", sendOnce: false }]);
-    const editor = abrir(nodo);
+    const editor = abrir(nodo, recursos);
 
-    elegirArchivo(editor.container, nombre, "application/octet-stream");
+    elegirArchivo(editor.container, nombre, TIPOS[kind]);
+    expect(await screen.findByText("Guardado")).toBeTruthy();
     const guardado = guardar(nodo, editor.onCommit);
 
-    // No se rechazó: no hay aviso y el parche llegó al nodo.
-    expect(screen.queryByRole("alert")).toBeNull();
-    expect(editor.onClose).toHaveBeenCalledTimes(1);
-
-    // Y la ELECCIÓN quedó registrada en la configuración.
-    const enElNodo = readMessageItems(guardado.data.config, guardado.data.content);
-    expect(enElNodo[0]).toMatchObject({ kind, url: "", fileName: nombre });
+    expect(recursos.uploadMedia).toHaveBeenCalledWith(expect.any(File), kind, expect.any(Function));
+    expect(readMessageItems(guardado.data.config, guardado.data.content)[0]).toMatchObject({
+      kind,
+      url: `https://blob.test/${nombre}`,
+      fileName: nombre,
+      mediaId: "media-1"
+    });
+    expect(JSON.stringify(guardado.data.config)).not.toContain("blob:http");
   });
 
-  it("ESTADO 1 — reabrir con los bytes aún en sesión: se ve el archivo real", () => {
-    const nodo = nodoCon([{ id: "m1", kind, url: "", caption: "", sendOnce: false }]);
-    const editor = abrir(nodo);
-    elegirArchivo(editor.container, nombre, "application/octet-stream");
-    const guardado = guardar(nodo, editor.onCommit);
-    editor.unmount();
+  it("al reabrir en otra sesión (sin los bytes) se ve desde su URL guardada", () => {
+    const nodo = nodoCon([{ id: "m1", kind, url: `https://blob.test/${nombre}`, fileName: nombre, mediaId: "media-1", caption: "", sendOnce: false }]);
+    releaseFile("m1");
+    const reabierto = abrir(nodo, almacen());
 
-    const reabierto = abrir(guardado);
-
-    // No vuelve al estado vacío, y NO aparece el aviso de pendiente: los bytes
-    // siguen ahí, así que se enseña el archivo de verdad.
     expect(reabierto.container.querySelector(".media-file__hint")).toBeNull();
-    expect(reabierto.container.textContent).not.toContain("Se volverá a adjuntar");
-
-    // Cada tipo se representa como le corresponde.
     if (kind === "image") {
-      expect(reabierto.container.querySelector("img.media-file__media")).not.toBeNull();
+      expect(reabierto.container.querySelector<HTMLImageElement>("img.media-file__media")?.src).toBe(`https://blob.test/${nombre}`);
     } else if (kind === "video") {
       expect(reabierto.container.querySelector("video.media-file__media")).not.toBeNull();
     } else if (kind === "audio") {
@@ -218,52 +221,34 @@ describe.each(MEDIOS)("$kind configurado por ARCHIVO", ({ kind }) => {
       expect(reabierto.container.querySelector(".media-file__name")?.textContent).toBe(nombre);
     }
 
-    // Y se puede volver a guardar sin reelegir nada.
+    // Se puede volver a guardar sin reelegir nada.
     fireEvent.change(screen.getByLabelText(/^Descripción/), { target: { value: "x" } });
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
     expect(screen.queryByRole("alert")).toBeNull();
     reabierto.unmount();
   });
 
-  it("ESTADO 2 — sin los bytes: consta la elección y se dice con honestidad", () => {
-    const nodo = nodoCon([{ id: "m1", kind, url: "", caption: "", sendOnce: false }]);
-    const editor = abrir(nodo);
-    elegirArchivo(editor.container, nombre, "application/octet-stream");
-    const guardado = guardar(nodo, editor.onCommit);
-    editor.unmount();
-
-    // Se simula una recarga: la configuración sobrevive, los bytes no.
+  it("un archivo de antes (solo el nombre, sin subir) avisa y no deja guardar", () => {
+    const nodo = nodoCon([{ id: "m1", kind, url: "", fileName: nombre, caption: "", sendOnce: false }]);
     releaseFile("m1");
+    const reabierto = abrir(nodo, almacen());
 
-    const reabierto = abrir(guardado);
-
-    // Ni zona vacía ni imagen inventada: el nombre y el estado pendiente.
-    expect(reabierto.container.querySelector(".media-file__hint")).toBeNull();
-    expect(reabierto.container.querySelector(".media-file__media")).toBeNull();
-    expect(reabierto.container.querySelector(".media-file__name")?.textContent).toBe(nombre);
-    expect(reabierto.container.textContent).toContain("Se volverá a adjuntar al publicar");
-
-    // Y SIGUE SIENDO VÁLIDO: la elección consta, así que se puede guardar.
+    expect(reabierto.container.textContent).toContain("No se guardó: vuelve a elegir el archivo");
     fireEvent.change(screen.getByLabelText(/^Descripción/), { target: { value: "x" } });
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
-    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("alert").textContent).toContain(MISSING_SOURCE_MESSAGE);
     reabierto.unmount();
   });
 });
 
-describe("los bytes del archivo son la limitación real, y está acotada", () => {
-  it("no se guarda el contenido del archivo, solo su nombre", () => {
+describe("si la subida falla", () => {
+  it("lo explica y el bloque no queda a medias", async () => {
     const nodo = nodoCon([{ id: "m1", kind: "image", url: "", caption: "", sendOnce: false }]);
-    const editor = abrir(nodo);
+    const editor = abrir(nodo, almacen("La imagen supera el máximo de WhatsApp (5 MB)."));
 
-    elegirArchivo(editor.container, "foto.png", "image/png");
-    const guardado = guardar(nodo, editor.onCommit);
-
-    // Ni bytes, ni blob URL: solo el nombre, que es un dato del mensaje.
-    const serializado = JSON.stringify(guardado.data.config);
-    expect(serializado).toContain("foto.png");
-    expect(serializado).not.toContain("blob:");
-    // El enlace real sigue vacío: nadie finge que esté subido.
-    expect(readMessageItems(guardado.data.config, {})[0]).toMatchObject({ url: "" });
+    elegirArchivo(editor.container, "enorme.png", "image/png");
+    expect((await screen.findByText(/supera el máximo de WhatsApp/)).textContent).toContain("5 MB");
+    expect(editor.container.querySelector(".media-file__hint")).not.toBeNull();
+    editor.unmount();
   });
 });

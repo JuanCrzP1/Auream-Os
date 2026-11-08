@@ -68,12 +68,22 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
     frontendWarns: true
   },
   {
-    name: "dead end",
+    // Cualquier bloque puede ser el último: el flujo termina ahí (como en Leona).
+    name: "a message can be the last block",
     nodes: [
       { id: "entry", type: "start" },
-      { id: "colgado", type: "message" }
+      { id: "despedida", type: "message" }
     ],
-    edges: [{ id: "e1", from: "entry", to: "colgado", priority: 1 }],
+    edges: [{ id: "e1", from: "entry", to: "despedida", priority: 1 }],
+    entryNodeId: "entry",
+    backendRejects: false,
+    frontendWarns: false
+  },
+  {
+    // Un inicio sin nada detrás es un flujo que no hace nada.
+    name: "start leading nowhere",
+    nodes: [{ id: "entry", type: "start" }],
+    edges: [],
     entryNodeId: "entry",
     backendRejects: true,
     frontendWarns: true

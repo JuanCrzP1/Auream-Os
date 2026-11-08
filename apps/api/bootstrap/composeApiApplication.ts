@@ -6,6 +6,7 @@ import { composeBuilderServices } from "../composition/composeBuilderServices";
 import { composeTenancyServices } from "../composition/composeTenancyServices";
 import { composeContactsServices } from "../composition/composeContactsServices";
 import { composeIntegrationsServices } from "../composition/composeIntegrationsServices";
+import { composeMediaServices } from "../composition/composeMediaServices";
 import { StructuredLogger } from "../../../platform/observability/logging/StructuredLogger";
 import { RequestLogger } from "../../../platform/observability/logging/RequestLogger";
 import { ErrorLogger } from "../../../platform/observability/logging/ErrorLogger";
@@ -39,6 +40,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     services: composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway),
     contactsServices: composeContactsServices(tenancy.sqlClient),
     integrationsServices: integrations,
+    mediaServices: composeMediaServices(config, tenancy.sqlClient),
     meServices: {
       membershipRepository: tenancy.membershipRepository,
       onboarding: tenancy.onboarding

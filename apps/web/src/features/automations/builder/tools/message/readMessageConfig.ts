@@ -44,6 +44,7 @@ function toItem(raw: unknown, index: number): MessageItem | null {
       kind: record.kind,
       url: toText(record.url),
       fileName: toText(record.fileName),
+      ...(typeof record.mediaId === "string" && record.mediaId ? { mediaId: record.mediaId } : {}),
       caption: toText(record.caption),
       sendOnce: record.sendOnce === true
     };

@@ -1,14 +1,15 @@
 import type { IntegrationTestRequest, IntegrationTestResult } from "@contracts/IntegrationTestContracts";
 import type { AiCredentialSummary, AiModelOption, CreateAiCredentialRequest } from "@contracts/AiContracts";
 import type { AiTestRequest, AiTestResult } from "@contracts/AiTestContracts";
+import type { MediaAssetSummary, MediaKind } from "@contracts/MediaContracts";
 
 // ---------------------------------------------------------------------------
 // Lo que un editor puede usar de la cuenta al configurar:
 //
 //   · DATOS para ofrecer (el catálogo de etiquetas, las conexiones de IA;
 //     mañana píxeles…).
-//   · CAPACIDADES puntuales (crear una etiqueta, conectar una IA, listar sus
-//     modelos, probar una integración o un bloque de IA).
+//   · CAPACIDADES puntuales (subir un archivo, crear una etiqueta, conectar
+//     una IA, listar sus modelos, probar una integración o un bloque de IA).
 //
 // Llegan por props, ya preparados: una herramienta nunca llama a la API ni
 // conoce el contexto que los carga (`BuilderResourcesProvider`). Las
@@ -44,6 +45,11 @@ export type ToolOutcome<T> = { readonly ok: true; readonly value: T } | { readon
 export type ToolAiCredentialsStatus = "loading" | "ready" | "forbidden" | "unavailable" | "error";
 
 export interface ToolCapabilities {
+  /**
+   * Sube un archivo (imagen, video, audio, documento) al almacén de la cuenta
+   * y devuelve su URL pública y estable. `onProgress` recibe 0–100.
+   */
+  readonly uploadMedia?: (file: File, kind: MediaKind, onProgress?: (percentage: number) => void) => Promise<ToolOutcome<MediaAssetSummary>>;
   /** Conecta una cuenta de IA (el servidor verifica la clave y la guarda cifrada). */
   readonly createAiCredential?: (request: CreateAiCredentialRequest) => Promise<ToolOutcome<AiCredentialSummary>>;
   /** Modelos que puede usar esa conexión, según el proveedor. */

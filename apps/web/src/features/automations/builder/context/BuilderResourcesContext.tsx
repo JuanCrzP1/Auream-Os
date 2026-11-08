@@ -5,6 +5,7 @@ import { testIntegrationRequest } from "@features/automations/builder/services/t
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
 import { connectAi, listAiModels, testAiStep } from "@features/automations/builder/services/aiCapabilities";
+import { uploadMediaForTool } from "@features/automations/builder/services/mediaCapabilities";
 
 // ---------------------------------------------------------------------------
 // Recursos de la cuenta (datos y capacidades) para los editores de herramientas.
@@ -41,11 +42,20 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       aiCredentialsStatus: ai.status,
       createAiCredential: connectAi(createAiCredential),
       listAiModels,
-      testAi: testAiStep
+      testAi: testAiStep,
+      uploadMedia: uploadMediaForTool
     }),
     [catalog.labels, create, ai.credentials, ai.status, createAiCredential]
   );
 
+  return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;
+}
+
+/**
+ * Publica unos recursos ya hechos (pruebas, vistas sueltas). El builder real
+ * usa `BuilderResourcesProvider`, que los carga de la API.
+ */
+export function StaticBuilderResourcesProvider({ resources, children }: { readonly resources: ToolResources; readonly children: ReactNode }) {
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;
 }
 

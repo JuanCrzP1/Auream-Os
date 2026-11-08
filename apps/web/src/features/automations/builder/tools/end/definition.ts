@@ -3,11 +3,9 @@ import type { ToolDefinition } from "../ToolDefinition";
 /**
  * Finalizar — nodo de SISTEMA. `availableInPalette: false`.
  *
- * No se ofrece al usuario, pero no puede desaparecer del modelo: es el único
- * nodo terminal del grafo. `validateNodeDegree` exige un edge saliente a todo
- * tipo salvo éste, y `EndNodeHandler` es lo único que devuelve
- * `executionStatus: "completed"`. Sin él, ningún flow podría cerrarse ni
- * publicarse.
+ * No se ofrece al usuario. Un flujo puede terminar en cualquier bloque (una
+ * salida sin conectar termina la rama limpiamente); `end` se conserva porque
+ * los flujos guardados pueden contenerlo y `EndNodeHandler` lo ejecuta.
  *
  * Se mantiene su definición visual porque un flow ya guardado puede contenerlo
  * y el canvas debe seguir pintándolo correctamente.

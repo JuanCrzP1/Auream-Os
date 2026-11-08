@@ -37,7 +37,8 @@ if (target === "production") {
     ["NEON_AUTH_ISSUER", "issuer de Neon Auth de la rama de producción"],
     ["VITE_NEON_AUTH_URL", "la misma URL de Neon Auth, para la web"],
     ["CORS_ALLOWED_ORIGINS", "el dominio de producción, p. ej. https://auream-os.vercel.app"],
-    ["CREDENTIALS_ENCRYPTION_KEY", "clave maestra de cifrado (openssl rand -base64 32)"]
+    ["CREDENTIALS_ENCRYPTION_KEY", "clave maestra de cifrado (openssl rand -base64 32)"],
+    ["BLOB_READ_WRITE_TOKEN", "almacén de archivos: Vercel → Storage → Blob → conectar al proyecto (lo crea Vercel)"]
   ];
   const missing = required.filter(([name]) => !env[name]).map(([name, what]) => `falta ${name}: ${what}`);
   const forbidden = ["DEV_API_KEY", "VITE_DEV_API_KEY", "INTEGRATIONS_ALLOW_PRIVATE_NETWORK"]
@@ -58,5 +59,11 @@ if (target === "production") {
 }
 
 // 3. Web ----------------------------------------------------------------------
-console.log("→ Web");
-run("npm", ["--prefix", "apps/web", "run", "build"], { VITE_API_BASE_URL: env.VITE_API_BASE_URL || "/api" });
+// En producción, la dirección oficial (el dominio de producción del proyecto,
+// que Vercel expone al build): la web lleva ahí a quien entre por otra.
+const appUrl = target === "production" && env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
+console.log(`→ Web${appUrl ? ` (dirección oficial: ${appUrl})` : ""}`);
+run("npm", ["--prefix", "apps/web", "run", "build"], {
+  VITE_API_BASE_URL: env.VITE_API_BASE_URL || "/api",
+  ...(appUrl ? { VITE_APP_URL: appUrl } : {})
+});

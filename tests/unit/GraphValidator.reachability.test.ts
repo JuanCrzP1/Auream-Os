@@ -32,11 +32,11 @@ describe("GraphValidator — ciclo infinito", () => {
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Nodo sin edges salientes (no terminal)
+// Nodo sin edges salientes: cualquier bloque puede ser el último; el inicio no
 // ---------------------------------------------------------------------------
 
 describe("GraphValidator — nodo sin edges salientes", () => {
-  it("emite NODE_NO_OUTGOING_EDGES para un nodo message sin edges", () => {
+  it("un Mensaje puede ser el último bloque: NO emite NODE_NO_OUTGOING_EDGES", () => {
     const snapshot: FlowSnapshot = {
       ...validLeadCaptureFlow,
       nodes: {
@@ -55,8 +55,18 @@ describe("GraphValidator — nodo sin edges salientes", () => {
       // No hay edge desde node-stranded en edgesBySource
     };
     const report = validator.validate(snapshot);
-    const codes = report.errors.map((e) => e.code);
-    expect(codes).toContain("NODE_NO_OUTGOING_EDGES");
+    expect(report.errors.filter((e) => e.code === "NODE_NO_OUTGOING_EDGES" && e.nodeId === "node-stranded")).toHaveLength(0);
+  });
+
+  it("un inicio sin nada detrás sí emite NODE_NO_OUTGOING_EDGES", () => {
+    const entryId = "node-start";
+    const snapshot: FlowSnapshot = {
+      ...validLeadCaptureFlow,
+      nodes: { [entryId]: validLeadCaptureFlow.nodes[entryId]! },
+      edgesBySource: {}
+    };
+    const report = validator.validate(snapshot);
+    expect(report.errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: "NODE_NO_OUTGOING_EDGES", nodeId: entryId })]));
   });
 
   it("NO emite NODE_NO_OUTGOING_EDGES para nodos tipo 'end'", () => {
