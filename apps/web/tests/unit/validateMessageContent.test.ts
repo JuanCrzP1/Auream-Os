@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  CONTENIDO_SIN_FUENTE,
-  SIN_CONTENIDO,
+  MISSING_SOURCE_MESSAGE,
+  NO_CONTENT_MESSAGE,
   validateMessageContent
 } from "@features/automations/builder/tools/message/validateMessageContent";
-import { getTool } from "@features/automations/builder/tools/registry";
+import { getTool, listPaletteTools } from "@features/automations/builder/tools/registry";
 
 // ---------------------------------------------------------------------------
 // ¿Hay algo que enviar?
@@ -39,22 +39,22 @@ const ENLACE = "https://cdn.test/archivo.ext";
 
 describe("un mensaje sin nada que enviar no es válido", () => {
   it("una secuencia vacía", () => {
-    expect(validar([])).toEqual({ valido: false, motivo: SIN_CONTENIDO });
+    expect(validar([])).toEqual({ valid: false, reason: NO_CONTENT_MESSAGE });
   });
 
   it("una sola pausa", () => {
-    expect(validar([pausa()])).toEqual({ valido: false, motivo: SIN_CONTENIDO });
+    expect(validar([pausa()])).toEqual({ valid: false, reason: NO_CONTENT_MESSAGE });
   });
 
   it("varias pausas seguidas", () => {
     expect(validar([pausa("a"), pausa("b"), pausa("c")])).toEqual({
-      valido: false,
-      motivo: SIN_CONTENIDO
+      valid: false,
+      reason: NO_CONTENT_MESSAGE
     });
   });
 
   it("una configuración que ni siquiera trae secuencia", () => {
-    expect(validateMessageContent({}, {})).toEqual({ valido: false, motivo: SIN_CONTENIDO });
+    expect(validateMessageContent({}, {})).toEqual({ valid: false, reason: NO_CONTENT_MESSAGE });
   });
 });
 
@@ -63,60 +63,61 @@ describe("un medio sin fuente no basta por sí solo", () => {
     // El motivo es OTRO: aquí sí hay contenido puesto, lo que falta es el
     // archivo. Decirle «agrega contenido» a quien ya puso una imagen sería
     // mandarle a buscar algo que él ve delante.
-    expect(validar([medio(kind)])).toEqual({ valido: false, motivo: CONTENIDO_SIN_FUENTE });
+    expect(validar([medio(kind)])).toEqual({ valid: false, reason: MISSING_SOURCE_MESSAGE });
   });
 
   it.each(MEDIOS)("%s con enlace válido sí vale", (kind) => {
-    expect(validar([medio(kind, ENLACE)])).toEqual({ valido: true, motivo: null });
+    expect(validar([medio(kind, ENLACE)])).toEqual({ valid: true, reason: null });
   });
 
   it("un enlace que no es http(s) no cuenta como fuente", () => {
-    expect(validar([medio("image", "ftp://cdn.test/foto.png")]).valido).toBe(false);
-    expect(validar([medio("image", "no-es-una-url")]).valido).toBe(false);
-    expect(validar([medio("image", "   ")]).valido).toBe(false);
+    expect(validar([medio("image", "ftp://cdn.test/foto.png")]).valid).toBe(false);
+    expect(validar([medio("image", "no-es-una-url")]).valid).toBe(false);
+    expect(validar([medio("image", "   ")]).valid).toBe(false);
   });
 
-  it("basta con que UNO de los medios tenga fuente", () => {
+  it("TODOS los medios necesitan fuente: uno incompleto se enviaría a medias", () => {
     expect(validar([medio("image"), medio("video", ENLACE), medio("audio")])).toEqual({
-      valido: true,
-      motivo: null
+      valid: false,
+      reason: MISSING_SOURCE_MESSAGE
     });
+    expect(validar([texto(), medio("image")]).valid).toBe(false);
   });
 });
 
 describe("el contenido válido hace válido el mensaje", () => {
   it("solo texto", () => {
-    expect(validar([texto()])).toEqual({ valido: true, motivo: null });
+    expect(validar([texto()])).toEqual({ valid: true, reason: null });
   });
 
   it.each(MEDIOS)("solo %s con fuente", (kind) => {
-    expect(validar([medio(kind, ENLACE)]).valido).toBe(true);
+    expect(validar([medio(kind, ENLACE)]).valid).toBe(true);
   });
 
   it("texto y una pausa", () => {
-    expect(validar([texto(), pausa()]).valido).toBe(true);
+    expect(validar([texto(), pausa()]).valid).toBe(true);
   });
 
   it("imagen con fuente y una pausa", () => {
-    expect(validar([medio("image", ENLACE), pausa()]).valido).toBe(true);
+    expect(validar([medio("image", ENLACE), pausa()]).valid).toBe(true);
   });
 
   it("video, audio y una pausa", () => {
     expect(
-      validar([medio("video", ENLACE), medio("audio", ENLACE), pausa()]).valido
+      validar([medio("video", ENLACE), medio("audio", ENLACE), pausa()]).valid
     ).toBe(true);
   });
 
   it("los cinco tipos de contenido y una pausa", () => {
     expect(
-      validar([texto(), ...MEDIOS.map((k) => medio(k, ENLACE)), pausa()]).valido
+      validar([texto(), ...MEDIOS.map((k) => medio(k, ENLACE)), pausa()]).valid
     ).toBe(true);
   });
 
   it("la pausa nunca aporta validez, solo acompaña", () => {
     // Mismos bloques, quitando el contenido: deja de valer.
-    expect(validar([texto(), pausa()]).valido).toBe(true);
-    expect(validar([pausa()]).valido).toBe(false);
+    expect(validar([texto(), pausa()]).valid).toBe(true);
+    expect(validar([pausa()]).valid).toBe(false);
   });
 });
 
@@ -129,34 +130,34 @@ describe("el contenido válido hace válido el mensaje", () => {
 
 describe("para un medio basta con UNA fuente", () => {
   it.each(MEDIOS)("%s con ARCHIVO elegido es válido", (kind) => {
-    expect(validar([conArchivo(kind)])).toEqual({ valido: true, motivo: null });
+    expect(validar([conArchivo(kind)])).toEqual({ valid: true, reason: null });
   });
 
   it.each(MEDIOS)("%s con ENLACE es válido", (kind) => {
-    expect(validar([medio(kind, ENLACE)])).toEqual({ valido: true, motivo: null });
+    expect(validar([medio(kind, ENLACE)])).toEqual({ valid: true, reason: null });
   });
 
   it.each(MEDIOS)("%s SIN ninguna de las dos no es válido", (kind) => {
-    expect(validar([medio(kind)])).toEqual({ valido: false, motivo: CONTENIDO_SIN_FUENTE });
+    expect(validar([medio(kind)])).toEqual({ valid: false, reason: MISSING_SOURCE_MESSAGE });
   });
 
   it.each(MEDIOS)("%s con archivo y una pausa sigue siendo válido", (kind) => {
-    expect(validar([conArchivo(kind), pausa()]).valido).toBe(true);
+    expect(validar([conArchivo(kind), pausa()]).valid).toBe(true);
   });
 
   it("tener las dos fuentes también vale", () => {
-    expect(validar([{ ...conArchivo("image"), url: ENLACE }]).valido).toBe(true);
+    expect(validar([{ ...conArchivo("image"), url: ENLACE }]).valid).toBe(true);
   });
 
   it("un nombre de archivo en blanco no cuenta como fuente", () => {
-    expect(validar([conArchivo("image", "")]).valido).toBe(false);
-    expect(validar([conArchivo("image", "   ")]).valido).toBe(false);
+    expect(validar([conArchivo("image", "")]).valid).toBe(false);
+    expect(validar([conArchivo("image", "   ")]).valid).toBe(false);
   });
 
   it("la validez NO depende de que el archivo sobreviva a recargar", () => {
     // Validez y persistencia son dos preguntas distintas. El borrador está
     // bien configurado; que los bytes no sobrevivan es asunto de la Fase C.
-    expect(validar([conArchivo("video", "clip.mp4")]).valido).toBe(true);
+    expect(validar([conArchivo("video", "clip.mp4")]).valid).toBe(true);
   });
 });
 
@@ -164,22 +165,22 @@ describe("un bloque de texto vale por sí mismo, aunque esté en blanco", () => 
   it("es la regla acordada, y su consecuencia queda anotada", () => {
     // Poner un bloque de texto ya declara que ahí va un mensaje. La regla
     // enumera «Texto → VÁLIDO» sin condiciones y no se le añaden aquí.
-    expect(validar([texto("")]).valido).toBe(true);
-    expect(validar([texto("   ")]).valido).toBe(true);
+    expect(validar([texto("")]).valid).toBe(true);
+    expect(validar([texto("   ")]).valid).toBe(true);
   });
 });
 
 describe("la herramienta expone la decisión al cascarón del editor", () => {
-  it("Mensaje declara `validateContent`; las demás no exigen nada", () => {
-    expect(getTool("message")?.validateContent).toBeTypeOf("function");
-
-    for (const type of ["tags", "condition", "menu", "notification", "end"]) {
-      expect(getTool(type)?.validateContent, `'${type}' exige algo`).toBeUndefined();
+  it("toda herramienta con editor declara `validate`; el nodo de sistema no exige nada", () => {
+    for (const tool of listPaletteTools()) {
+      expect(tool.validate, `'${tool.type}' no valida`).toBeTypeOf("function");
     }
+
+    expect(getTool("end")?.validate).toBeUndefined();
   });
 
   it("lo que declara es exactamente esta función", () => {
-    const desdeElRegistry = getTool("message")!.validateContent!;
+    const desdeElRegistry = getTool("message")!.validate!;
 
     expect(desdeElRegistry({}, { items: [] })).toEqual(validar([]));
     expect(desdeElRegistry({}, { items: [texto()] })).toEqual(validar([texto()]));

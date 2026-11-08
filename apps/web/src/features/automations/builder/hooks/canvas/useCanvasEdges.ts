@@ -2,7 +2,15 @@ import { useCallback, useState } from "react";
 import { addEdge, applyEdgeChanges, type Connection, type OnEdgesChange } from "@xyflow/react";
 import { buildEdgePresentation } from "@features/automations/builder/services/buildEdgePresentation";
 import { ensureEdgeData } from "@features/automations/builder/services/ensureEdgeData";
-import type { CanvasEdge } from "@features/automations/builder/types/canvas";
+import { pruneCanvasEdges } from "@features/automations/builder/services/nodeOutputs";
+import { createLocalId } from "@features/automations/builder/tools/_kit/createLocalId";
+import type { CanvasEdge, CanvasNode } from "@features/automations/builder/types/canvas";
+
+/** Prioridad de una arista nueva: detrás de todas las existentes, con hueco de 10. */
+function nextPriority(edges: ReadonlyArray<CanvasEdge>): number {
+  const highest = edges.reduce((max, edge) => Math.max(max, edge.data?.priority ?? 0), 0);
+  return highest + 10;
+}
 
 /**
  * Gestiona el estado de los edges del canvas y todas las operaciones sobre ellos.
@@ -20,37 +28,30 @@ export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: strin
   function handleConnect(connection: Connection): void {
     if (!connection.source || !connection.target) return;
 
-    setEdges((current) =>
-      addEdge<CanvasEdge>(
+    setEdges((current) => {
+      const priority = nextPriority(current);
+      const data = {
+        priority,
+        isFallback: false,
+        label: `Priority ${priority}`,
+        condition: { operator: "always" as const }
+      };
+
+      return addEdge<CanvasEdge>(
         {
-          id: `edge-${connection.source}-${connection.target}-${current.length + 1}`,
+          // Id único: derivarlo de la longitud de la lista colisionaba tras borrar.
+          id: createLocalId("edge"),
           source: connection.source,
           target: connection.target,
-          // DE QUÉ SALIDA DEL NODO ARRANCA. React Flow ya lo entrega en la
-          // conexión y aquí se descartaba: con un nodo de una sola salida no se
-          // notaba, pero en cuanto una herramienta tiene varias —Esperar
-          // respuesta: respondió / se agotó el tiempo— sin este dato las dos
-          // aristas nacen indistinguibles y React Flow no sabe de qué punto
-          // dibujarlas. Se conserva tal cual llega, sin interpretarlo: qué
-          // significa cada salida es asunto de la herramienta.
+          // Salida con nombre de la que arranca (`fromOutput` al guardar).
           ...(connection.sourceHandle ? { sourceHandle: connection.sourceHandle } : {}),
           ...(connection.targetHandle ? { targetHandle: connection.targetHandle } : {}),
-          data: {
-            priority: current.length + 10,
-            isFallback: false,
-            label: `Priority ${current.length + 10}`,
-            condition: { operator: "always" }
-          },
-          ...buildEdgePresentation({
-            priority: current.length + 10,
-            isFallback: false,
-            label: `Priority ${current.length + 10}`,
-            condition: { operator: "always" }
-          })
+          data,
+          ...buildEdgePresentation(data)
         },
         current
-      )
-    );
+      );
+    });
   }
 
   /**
@@ -67,6 +68,14 @@ export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: strin
     setEdges((current) =>
       current.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
     );
+  }, []);
+
+  /**
+   * Descarta las aristas que el grafo ya no admite (nodo borrado o salida con
+   * nombre que la configuración retiró). No re-renderiza si no hay cambios.
+   */
+  const pruneEdges = useCallback((nodes: ReadonlyArray<CanvasNode>): void => {
+    setEdges((current) => pruneCanvasEdges(nodes, current));
   }, []);
 
   function updateSelectedEdge(
@@ -109,6 +118,7 @@ export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: strin
     handleEdgesChange,
     handleConnect,
     removeEdgesOfNode,
+    pruneEdges,
     updateSelectedEdge
   };
 }

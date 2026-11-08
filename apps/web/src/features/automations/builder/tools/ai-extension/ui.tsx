@@ -1,5 +1,8 @@
 import type { ToolUi } from "../ToolUi";
 import { AiExtensionIcon } from "./AiExtensionIcon";
+import { AiEditor } from "./AiEditor";
+import { createOutputsCompactBody } from "../_kit/OutputsCompactBody";
+import { summarizeAi } from "./summarizeAi";
 
 /**
  * Mitad React de la herramienta. Único punto donde declara cómo se ve.
@@ -15,5 +18,7 @@ import { AiExtensionIcon } from "./AiExtensionIcon";
 export const aiExtensionUi: ToolUi = {
   type: "ai",
   Icon: AiExtensionIcon,
-  frame: "card"
+  frame: "card",
+  CompactBody: createOutputsCompactBody(summarizeAi),
+  Editor: AiEditor
 };

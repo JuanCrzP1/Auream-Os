@@ -9,40 +9,20 @@ import { distributorTool } from "./distributor/definition";
 import { pixelTool } from "./pixel/definition";
 import { aiExtensionTool } from "./ai-extension/definition";
 import { intervalTool } from "./interval/definition";
-import { saleApprovedTool } from "./sale-approved/definition";
 import { integrationTool } from "./integration/definition";
 import { menuTool } from "./menu/definition";
 import { notificationTool } from "./notification/definition";
 import { endTool } from "./end/definition";
 
 // ---------------------------------------------------------------------------
-// Registry de herramientas del builder.
+// Registry de herramientas: ÚNICA frontera entre el núcleo del builder y las
+// herramientas. Puro (sin React): también lo carga el test de paridad del
+// backend. La mitad visual está en `ui-registry.tsx`.
 //
-// ÚNICA frontera entre el core del builder (paleta, canvas, editor) y las
-// herramientas. Ningún componente vuelve a declarar por su cuenta el color, el
-// icono, la etiqueta o el título de edición de un tipo de nodo.
+// Añadir una herramienta: ver docs/architecture/builder-tools.md.
 //
-// CÓMO SE AÑADE UNA HERRAMIENTA NUEVA
-//
-//   1. `contracts/FlowSnapshot.ts` → añadir el tipo a la unión `NodeType`.
-//   2. `flow-engine/nodes/<tipo>/` → handler de ejecución.
-//   3. `apps/api/composition/composeNodeRuntime.ts` → registrar el handler.
-//   4. `builder/tools/<herramienta>/definition.ts` → su `ToolDefinition`, y
-//      `ui.tsx` → su `ToolUi` (icono, forma y, más adelante, sus cuerpos).
-//   5. Añadir la definición a `TOOLS` aquí abajo, y su UI a `tools/ui-registry`.
-//
-// Este módulo es PURO: no importa React. El icono se registra aparte porque
-// `validateCanvasGraph` consulta este registry y también lo ejecuta el test de
-// paridad del backend, donde no hay runtime de React.
-//
-// Los pasos 1-3 son inevitables: un nodo es full-stack, y el contrato y el
-// motor son compartidos. Lo que esta arquitectura elimina es el paso que antes
-// se repetía cinco veces en el frontend y que nadie recordaba entero.
-//
-// Las 13 herramientas del catálogo oficial están registradas. Siete de ellas
-// (`executable: false`) todavía no tienen comportamiento de ejecución: el motor
-// reconoce el tipo y su handler falla explícitamente. Esa distinción se declara
-// en cada definición, no se esconde.
+// Qué herramientas ejecuta hoy el motor lo dice `executable` en cada
+// definición; este archivo no lo repite para no desactualizarse.
 // ---------------------------------------------------------------------------
 
 /**
@@ -60,7 +40,6 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   pixelTool,
   aiExtensionTool,
   intervalTool,
-  saleApprovedTool,
   integrationTool,
   menuTool,
   notificationTool,

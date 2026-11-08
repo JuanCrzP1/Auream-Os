@@ -93,14 +93,14 @@ Verificado contra el repositorio el 2026-09-01, no copiado de la revisión anter
 | Branding | 🟢 COMPLETADO | Identidad AUREAM OS, tema claro/oscuro |
 | **Automations — Builder base** | 🟢 COMPLETADO | Catalog + builder + validation + simulación funcionan de punta a punta |
 | **Automations — experiencia visual completa** | 🟡 EN PROGRESO | Es la FASE B. Toolbox, conexiones y modularidad cerradas; editor de configuración, paneles, estados y gestión, pendientes |
-| Toolbox (paleta de herramientas) | 🟢 COMPLETADO | Overlay flotante, cristal, plegado vertical, 13 herramientas, búsqueda, iconos propios |
+| Toolbox (paleta de herramientas) | 🟢 COMPLETADO | Overlay flotante, cristal, plegado vertical, 12 herramientas, búsqueda, iconos propios |
 | Arquitectura modular de herramientas | 🟢 COMPLETADO | `builder/tools/` con registry puro como única frontera; grafo de imports acíclico |
 | Conexiones del canvas | 🟢 COMPLETADO | Bézier flexible, identidad azul→violeta, sin rótulo de prioridad |
 | Topbar del builder | 🟢 COMPLETADO | Tarjeta flotante: volver, nombre editable en línea, pastilla de guardado. Sin publicar/versión/rollback |
 | Lienzo: encuadre y minimapa | 🟢 COMPLETADO | Encuadre inicial alejado; minimapa de cristal por las variables de React Flow, sin marco gris |
 | Autoguardado | 🟢 COMPLETADO | Debounce real, sin peticiones concurrentes, estado fiable, volcado al desmontar. Frontera lista para el bloqueo optimista de la FASE C |
 | Frontera de edición del builder | 🟢 COMPLETADO | `BuilderEditingContext`; sin singletons mutables y con un solo dueño del estado del grafo |
-| Editor de configuración de nodo | ⬜ POR HACER | El modal edita nombre y un textarea para las 13 herramientas; `config` nace y muere vacío |
+| Editor de configuración de nodo | 🟢 COMPLETADO (visual) | Las 12 herramientas tienen editor propio sobre el kit `tools/_kit/`; ejecución pendiente (Fase C) |
 | Paneles del builder | ⬜ POR HACER | `NodeInspector`, `EdgeInspector`, `ValidationPanel`, `SimulationPanel`, `ReleasePanel` y `CanvasHintBar`: **0 consumidores** |
 | Estados del builder | 🟡 EN PROGRESO | El guardado ya dice la verdad (B14). Falta el resto: publicar inválido no informa, y no hay estados de nodo no ejecutable ni de flujo sin publicar |
 | Gestión de automatizaciones | 🟡 EN PROGRESO | Listar, crear, abrir, renombrar, borrar y buscar funcionan; Duplicar, Archivar y Mover están en el menú sin implementación |
@@ -255,7 +255,7 @@ Paleta convertida en **overlay flotante** sobre el lienzo: dejó de ser una colu
 
 - Cristal translúcido con velo claro sobre fondo oscuro (comprobado renderizando: un velo oscuro sobre lienzo casi negro se ve macizo), `backdrop-filter: blur(20px) saturate(140%)`, borde y sombra tomados del lenguaje del sidebar.
 - Plegado vertical: la tarjeta se reduce a un **botón cuadrado de 48×48 con el icono**, sin texto, sin pie y sin flecha adicional. El propio icono es el control en ambos estados.
-- 13 herramientas con búsqueda por etiqueta y descripción, iconos propios y nombres sin truncar.
+- 12 herramientas con búsqueda por etiqueta y descripción, iconos propios y nombres sin truncar.
 - **Arranca recogida**: al entrar al builder lo primero es el lienzo, no la lista. Mismo estado local, mismo control; no se añadió ningún estado nuevo.
 - Densidad compactada en dos pasadas (icono 34px, fila ~46px) sin `transform: scale()`.
 - Verificado renderizando en abierto, plegado y fotogramas intermedios de la animación.
@@ -289,15 +289,14 @@ Tarea descubierta durante B11, numerada al final por orden de aparición.
 
 ### Lo que falta para cerrar la FASE B
 
-#### B5 — Editor de configuración por herramienta · ⬜ POR HACER — **la tarea central de esta fase**
+#### B5 — Editor de configuración por herramienta · 🟢 COMPLETADO (visual) — **la tarea central de esta fase**
 
-`NodeEditorModal` expone hoy **dos campos —nombre y un textarea— para los 13 tipos**. `useCanvasNodes.updateSelectedNode` solo acepta `"title" | "preview"`. Consecuencia verificada: `config` de todo nodo creado en la UI queda `{}` para siempre.
+Cada herramienta declara su editor, cuerpo compacto, validación y resumen en su propio módulo, descubiertos por el registry. Arquitectura y convenciones en [`builder-tools.md`](docs/architecture/builder-tools.md).
 
-Eso significa que hoy **no se puede**: escribir la condición de un Condicional, declarar el `targetKey` donde Esperar respuesta guarda la contestación (capacidad que sí existe ya en el motor), poner la URL de una Integración, la duración de un Intervalo, las opciones de un Menú ni las etiquetas de Etiquetas.
-
-- Editor por herramienta, declarado en su propio módulo (`tools/<herramienta>/`), descubierto por el registry como ya se descubren etiqueta, icono y color.
-- Decisión pendiente de aprobación: **editor por esquema declarativo** (más trabajo inicial, escala a N herramientas) frente a editores a medida por tipo. Recomendación: esquema.
-- `ToolDefinition.defaultConfig` ya existe y hoy solo declara forma en `tags` y `menu`; el resto es `{}` a propósito, sin inventar campos.
+- 🟢 Las 12 herramientas tienen editor propio (2026-11-08), con paridad funcional con los bloques equivalentes de Leona y el estilo de Auream: Mensaje, Esperar respuesta, Programador, Distribuidor, Condicional, Menú, Etiquetas, Integración, Notificación, Pixel, Extensión IA y Comprobante automático. «Venta aprobada» se retiró del catálogo (2026-11-08).
+- ⬜ Solo visual: ninguna de las nuevas se ejecuta todavía (`executable` lo declara). Conectarlas al motor es Fase C.
+- 🟢 Base para escalar (2026-11-08): contrato `outputs()` para salidas con nombre (con poda de aristas huérfanas en el núcleo), kit compartido `tools/_kit/` (Switch, OutputHandle, useAutoHeight, createLocalId), ids de arista únicos, código en inglés y comentarios concisos.
+- En la práctica las cuatro herramientas usan editores a medida sobre el kit compartido. Sigue abierta la decisión formal «esquema declarativo vs. a medida».
 
 #### B6 — Montar los paneles del builder · ⬜ POR HACER
 
@@ -318,7 +317,7 @@ Defectos verificados, todos de experiencia:
 
 #### B8 — Estados visuales del nodo · ⬜ POR HACER
 
-El CSS del nodo solo declara `--entry`, `--selected` y hover. No existen estados de **error**, **inválido**, **deshabilitado** ni **no ejecutable**. Este último importa: 9 de las 13 herramientas tienen `executable: false` y el dato ya está en el modelo (`isExecutableType()`), pero la interfaz no lo dice. Mostrarlo es aplicar la regla de no fingir funcionalidad.
+El CSS del nodo solo declara `--entry`, `--selected` y hover. No existen estados de **error**, **inválido**, **deshabilitado** ni **no ejecutable**. Este último importa: 8 de las 12 herramientas tienen `executable: false` y el dato ya está en el modelo (`isExecutableType()`), pero la interfaz no lo dice. Mostrarlo es aplicar la regla de no fingir funcionalidad.
 
 #### B9 — Designar el nodo de entrada · ⬜ POR HACER
 
@@ -366,7 +365,7 @@ Revisión completa con capturas de los dos temas, los tamaños de la lista de B1
 
 La fase pasa a 🟢 COMPLETADA **solo** cuando se cumplan todos estos puntos:
 
-1. Se puede configurar el comportamiento de las 13 herramientas desde la interfaz (B5).
+1. Se puede configurar el comportamiento de las 12 herramientas desde la interfaz (B5).
 2. No queda ningún componente construido sin consumidor ni estado producido y descartado (B6).
 3. Todo estado del sistema se comunica con la verdad: guardado, error, sin publicar, inválido, no ejecutable (B7, B8).
 4. Ningún control visible carece de comportamiento (B10, B14). — B14 ✅; **falta B10**: «Duplicar», «Archivar» y «Mover a…» en el menú de la lista de automatizaciones siguen sin comportamiento.
@@ -396,9 +395,10 @@ Objetivo: que un flow publicado se ejecute solo, sin depender del builder, sobre
 | C7 | Endpoint de recepción de eventos externos + implementar `flow-engine/triggers/TriggerResolver` (hoy es puerto sin cuerpo) + almacén de bindings + idempotencia por `messageId` (hoy una reentrega reejecuta) | ⬜ POR HACER — depende de C5 |
 | C8 | Nodo `integration` real: ejecutor de efectos externos (hoy falla explícitamente con `integration_executor_not_implemented`) | ⬜ POR HACER — depende de C5 |
 | C9 | Nodo `ai` conectado a un `AiProvider` real vía **OpenRouter**, detrás del puerto `flow-engine/ports/AiProvider.ts`. Es un tipo de nodo del grafo, **no** el AI Sales Engine | ⬜ POR HACER — depende de C5 |
-| C10 | Implementar el comportamiento de ejecución de las 7 herramientas que hoy declaran `executable: false`: Etiquetas, Comprobante automático, Distribuidor, Pixel, Venta aprobada, Menú, Notificación. Cada una necesita especificación de negocio antes de implementarse | ⬜ POR HACER — depende de C5 y de sus dominios |
+| C10 | Implementar el comportamiento de ejecución de las herramientas que hoy declaran `executable: false`: Etiquetas, Comprobante automático, Distribuidor, Pixel, Menú, Notificación, Integración y Extensión IA. Cada una necesita especificación de negocio antes de implementarse | ⬜ POR HACER — depende de C5 y de sus dominios |
 | C11 | Conectar `platform/security/rate-limiting` (implementado y probado) a `apps/api` | ⬜ POR HACER |
 | C12 | Persistir ejecuciones (`Execution`, `ExecutionStep`) y conectar la observabilidad que ya existe sin consumidor, para poder auditar qué pasó en un flow | ⬜ POR HACER — depende de C6 |
+| C13 | Enrutar por salida en el motor: `fromOutput` viaja al snapshot de ejecución, cada handler declara por qué salida sigue (respuesta/tiempo agotado, se cumple/no, turno del Distribuidor, opción del Menú…) y `EdgeEvaluator` elige esa arista. Modelo en [`flow-connections.md`](docs/architecture/flow-connections.md) | ⬜ POR HACER — depende de C5 |
 | C13 | Corregir el hueco de autorización: `POST /automations` explícito y retirar la escritura del `GET .../workspace`, que hoy permite a un `viewer` crear automatizaciones sin cuota | ⬜ POR HACER — coordinado con B10 |
 
 ---

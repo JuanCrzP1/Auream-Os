@@ -3,6 +3,7 @@ import type { BuilderFlowSnapshot } from "@contracts/FlowSnapshot";
 import { buildEdgePresentation } from "../services/buildEdgePresentation";
 import { summarizeNode } from "../services/summarizeNode";
 import { isTerminalType } from "../tools/registry";
+import { assignLegacyOutputs, pruneCanvasEdges } from "../services/nodeOutputs";
 
 export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
   nodes: CanvasNode[];
@@ -39,14 +40,13 @@ export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
     };
   });
 
-  const edges = Object.values(snapshot.edgesBySource)
+  const allEdges = Object.values(snapshot.edgesBySource)
     .flat()
     .map<CanvasEdge>((edge) => ({
       id: edge.id,
       source: edge.fromNodeId,
       target: edge.toNodeId,
-      // Devuelve la arista al punto exacto del que salió. Sin esto, un nodo con
-      // dos salidas recuperaba las dos como si arrancaran de la misma.
+      // Devuelve la arista a la salida con nombre de la que salió.
       ...(edge.fromOutput ? { sourceHandle: edge.fromOutput } : {}),
       data: {
         priority: edge.priority,
@@ -61,6 +61,10 @@ export function mapSnapshotToCanvas(snapshot: BuilderFlowSnapshot): {
         condition: edge.condition
       })
     }));
+
+  // Un flujo guardado antes de que existiera la poda puede traer aristas
+  // desde salidas retiradas: no se cargan, y el siguiente guardado las limpia.
+  const edges = assignLegacyOutputs(nodes, pruneCanvasEdges(nodes, allEdges));
 
   return { nodes, edges };
 }

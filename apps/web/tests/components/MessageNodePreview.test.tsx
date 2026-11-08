@@ -10,13 +10,13 @@ import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
 import { getItemIcon } from "@features/automations/builder/tools/message/editor/itemIcons";
 import { MESSAGE_ITEM_LABELS } from "@features/automations/builder/tools/message/messageItems";
 import {
-  adjuntarArchivo,
-  enlaceDeSesion,
-  soltarArchivo
+  attachFile,
+  sessionObjectUrl,
+  releaseFile
 } from "@features/automations/builder/tools/message/mediaSourceSession";
 import {
-  miniaturaYaObtenida,
-  olvidarMiniatura
+  cachedThumbnail,
+  forgetThumbnail
 } from "@features/automations/builder/tools/message/mediaThumbnails";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 
@@ -884,7 +884,7 @@ describe("las dos fuentes de un medio, en el preview", () => {
   });
 
   afterEach(() => {
-    for (const kind of MEDIOS) soltarArchivo(kind);
+    for (const kind of MEDIOS) releaseFile(kind);
   });
 
   it.each(MEDIOS)("%s con ARCHIVO se rotula por su tipo, no como bloque vacío", (kind) => {
@@ -899,12 +899,12 @@ describe("las dos fuentes de un medio, en el preview", () => {
 
   it("IMAGEN con archivo en sesión muestra la MINIATURA REAL, no el icono", () => {
     // Los bytes están: se pinta la foto de verdad. Era justo lo que faltaba.
-    adjuntarArchivo("image", new File(["x"], "playa.png", { type: "image/png" }));
+    attachFile("image", new File(["x"], "playa.png", { type: "image/png" }));
     const { container } = montar([conArchivo("image")]);
 
     const thumb = container.querySelector<HTMLImageElement>(".flow-node__block-thumb");
     expect(thumb).not.toBeNull();
-    expect(thumb?.getAttribute("src")).toBe(enlaceDeSesion("image"));
+    expect(thumb?.getAttribute("src")).toBe(sessionObjectUrl("image"));
     expect(container.querySelector(".flow-node__block-badge")).toBeNull();
   });
 
@@ -916,7 +916,7 @@ describe("las dos fuentes de un medio, en el preview", () => {
   });
 
   it("el ENLACE gana sobre el archivo cuando están los dos", () => {
-    adjuntarArchivo("image", new File(["x"], "local.png", { type: "image/png" }));
+    attachFile("image", new File(["x"], "local.png", { type: "image/png" }));
     const { container } = montar([{ ...conArchivo("image"), url: "https://cdn.test/remota.png" }]);
 
     expect(container.querySelector(".flow-node__block-thumb")?.getAttribute("src")).toBe(
@@ -927,7 +927,7 @@ describe("las dos fuentes de un medio, en el preview", () => {
   it.each(["video", "audio"] as const)(
     "%s con archivo en sesión NO monta el medio en el lienzo",
     (kind) => {
-      adjuntarArchivo(kind, new File(["x"], `m.${kind}`, { type: "application/octet-stream" }));
+      attachFile(kind, new File(["x"], `m.${kind}`, { type: "application/octet-stream" }));
       const { container } = montar([conArchivo(kind)]);
 
       // Ni reproductor, ni elemento multimedia, ni miniatura: icono y nombre.
@@ -940,7 +940,7 @@ describe("las dos fuentes de un medio, en el preview", () => {
   );
 
   it("una mezcla de fuentes y tipos se representa entera y en orden", () => {
-    adjuntarArchivo("image", new File(["x"], "foto.png", { type: "image/png" }));
+    attachFile("image", new File(["x"], "foto.png", { type: "image/png" }));
     const { container } = montar([
       texto("t", "Hola"),
       conArchivo("image"),
@@ -957,7 +957,7 @@ describe("las dos fuentes de un medio, en el preview", () => {
   });
 
   it("el preview no serializa ni retiene nada del archivo", () => {
-    adjuntarArchivo("image", new File(["x"], "foto.png", { type: "image/png" }));
+    attachFile("image", new File(["x"], "foto.png", { type: "image/png" }));
     const items = [conArchivo("image")];
     const copia = JSON.parse(JSON.stringify(items));
 
@@ -1006,14 +1006,14 @@ describe("miniatura de video", () => {
   });
 
   afterEach(() => {
-    soltarArchivo("v");
-    soltarArchivo("image");
-    olvidarMiniatura("blob:mock/1");
+    releaseFile("v");
+    releaseFile("image");
+    forgetThumbnail("blob:mock/1");
     vi.unstubAllGlobals();
   });
 
   it("mientras no hay fotograma se pinta el icono, sin bloquear el render", () => {
-    adjuntarArchivo("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
+    attachFile("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
     const { container } = montar([video()]);
 
     // El nodo se pinta ya, con su icono oficial. Nada queda esperando.
@@ -1036,11 +1036,11 @@ describe("miniatura de video", () => {
     // se devuelve tal cual. Es el mismo camino que recorrerá el video cuando
     // Chrome haya extraído su fotograma.
     const dataUrl = "data:image/jpeg;base64,AAAA";
-    expect(miniaturaYaObtenida(dataUrl, false)).toBe(dataUrl);
+    expect(cachedThumbnail(dataUrl, false)).toBe(dataUrl);
   });
 
   it("NUNCA monta un reproductor ni un elemento de medio en el lienzo", () => {
-    adjuntarArchivo("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
+    attachFile("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
     const { container } = montar([
       video(),
       { id: "a", kind: "audio", url: "", fileName: "voz.mp3", caption: "", sendOnce: false }
@@ -1055,47 +1055,47 @@ describe("miniatura de video", () => {
   });
 
   it("reemplazar el video olvida el fotograma anterior", () => {
-    const primero = adjuntarArchivo("v", new File(["a"], "uno.mp4", { type: "video/mp4" }));
+    const primero = attachFile("v", new File(["a"], "uno.mp4", { type: "video/mp4" }));
     // Se simula que ya había fotograma para esa fuente.
-    expect(miniaturaYaObtenida(primero, false)).toBe(primero);
+    expect(cachedThumbnail(primero, false)).toBe(primero);
 
-    const segundo = adjuntarArchivo("v", new File(["b"], "dos.mp4", { type: "video/mp4" }));
+    const segundo = attachFile("v", new File(["b"], "dos.mp4", { type: "video/mp4" }));
 
     // La fuente vieja se revocó y su enlace ya no es el del bloque.
     expect(segundo).not.toBe(primero);
     expect(revocados).toContain(primero);
-    expect(enlaceDeSesion("v")).toBe(segundo);
+    expect(sessionObjectUrl("v")).toBe(segundo);
   });
 
   it("quitar el video suelta el archivo y su fotograma", () => {
-    const enlace = adjuntarArchivo("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
+    const enlace = attachFile("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
 
-    soltarArchivo("v");
+    releaseFile("v");
 
-    expect(enlaceDeSesion("v")).toBeNull();
+    expect(sessionObjectUrl("v")).toBeNull();
     expect(revocados).toContain(enlace);
   });
 
   it("soltar dos veces no falla: la limpieza es idempotente", () => {
-    adjuntarArchivo("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
+    attachFile("v", new File(["x"], "clip.mp4", { type: "video/mp4" }));
 
-    soltarArchivo("v");
-    expect(() => soltarArchivo("v")).not.toThrow();
-    expect(enlaceDeSesion("v")).toBeNull();
+    releaseFile("v");
+    expect(() => releaseFile("v")).not.toThrow();
+    expect(sessionObjectUrl("v")).toBeNull();
   });
 
   it("varios medios no dejan recursos cruzados", () => {
-    const a = adjuntarArchivo("v", new File(["a"], "a.mp4", { type: "video/mp4" }));
-    const b = adjuntarArchivo("image", new File(["b"], "b.png", { type: "image/png" }));
+    const a = attachFile("v", new File(["a"], "a.mp4", { type: "video/mp4" }));
+    const b = attachFile("image", new File(["b"], "b.png", { type: "image/png" }));
 
-    soltarArchivo("v");
+    releaseFile("v");
 
     // Soltar uno no toca al otro.
-    expect(enlaceDeSesion("v")).toBeNull();
-    expect(enlaceDeSesion("image")).toBe(b);
+    expect(sessionObjectUrl("v")).toBeNull();
+    expect(sessionObjectUrl("image")).toBe(b);
     expect(revocados).toContain(a);
     expect(revocados).not.toContain(b);
-    soltarArchivo("image");
+    releaseFile("image");
   });
 });
 
@@ -1201,8 +1201,8 @@ describe("independencia entre herramientas", () => {
 
     // Clases REALES y exclusivas de Esperar respuesta: el cuerpo del nodo
     // cerrado (`wr-node`), una de sus salidas (`wr-out`), la raíz de su editor
-    // (`wait-response`) y uno de los controles de ese editor (`wr-switch`).
-    for (const clase of ["wr-node", "wr-out", "wait-response", "wr-switch"]) {
+    // (`wait-response`) y uno de los controles de ese editor (`wr-timeout`).
+    for (const clase of ["wr-node", "wr-out", "wait-response", "wr-timeout"]) {
       expect(container.querySelector(`.${clase}`), `Mensaje montó .${clase}`).toBeNull();
     }
   });

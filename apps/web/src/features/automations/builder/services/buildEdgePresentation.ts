@@ -1,4 +1,3 @@
-import { MarkerType } from "@xyflow/react";
 import type { FlowEdgeData } from "../types/canvas";
 
 /**
@@ -35,14 +34,8 @@ export function buildEdgePresentation(edge: FlowEdgeData) {
   return {
     animated: edge.isFallback,
     label: edge.isFallback ? edge.label : undefined,
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      width: 18,
-      height: 18,
-      // La punta toma el color final del degradado: un marcador SVG no puede
-      // pintarse con el gradiente del trazo.
-      color: edge.isFallback ? "#f59e0b" : EDGE_GRADIENT_END
-    },
+    // Sin punta de flecha: la dirección ya la dicen los puntos de salida
+    // (derecha) y entrada (izquierda) de cada bloque.
     style: {
       // Conexión normal: degradado azul eléctrico → violeta, definido una sola
       // vez en el lienzo (`EDGE_GRADIENT_ID`). El fallback conserva su ámbar

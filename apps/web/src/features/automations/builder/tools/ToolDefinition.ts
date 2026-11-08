@@ -1,157 +1,106 @@
 import type { NodeType } from "@contracts/FlowSnapshot";
 
 /**
- * Contrato de una herramienta del builder.
+ * Mitad PURA del contrato de una herramienta: todo lo que el builder necesita
+ * para ofrecer, resumir, validar y conectar un tipo de nodo.
  *
- * Una herramienta es TODO lo que el builder necesita saber para ofrecer, pintar
- * y editar un tipo de nodo. Antes esta información vivía repartida en cinco
- * mapas `Record<NodeType, …>` en archivos distintos (paleta, iconos, colores de
- * la tarjeta, textos por defecto, título del editor): añadir una herramienta
- * obligaba a tocar los cinco y olvidarse de uno no daba error hasta ejecutar.
+ * Sin React ni JSX: este módulo lo carga también el test de paridad del
+ * backend (`tests/contract/toolRegistryParity.test.ts`), que corre en Node.
+ * Lo visual vive en `ToolUi` (`tools/<herramienta>/ui.tsx`).
  *
- * Ahora cada herramienta declara esto una sola vez, en su propio módulo, y el
- * registry es la única frontera que el core del builder consulta.
+ * Fuera de alcance: la ejecución (`flow-engine/nodes/`) y la validación del
+ * grafo (`domains/automations/validation`).
  *
- * Lo que NO entra aquí: la ejecución del nodo (eso es `flow-engine/nodes/`), la
- * validación estructural del grafo (eso es `domains/automations/validation`) ni
- * el estado del canvas.
- *
- * **Este módulo es puro: sin React, sin JSX.** Todo lo visual de una herramienta
- * —icono, forma, cuerpos— vive aparte, en `tools/<herramienta>/ui.tsx`, y se
- * descubre por `tools/ui-registry`. La razón es que `validateCanvasGraph`
- * consulta este registry y lo ejecuta también el test de paridad del backend,
- * donde no hay runtime de React. Una regla de validación no puede depender de
- * un SVG.
- *
- * Las dos mitades se mantienen alineadas por test, no por memoria.
+ * Ver docs/architecture/builder-tools.md.
  */
+
+/** Configuración o contenido de un nodo, tal como llega de disco o del editor. */
+export type ToolData = Readonly<Record<string, unknown>>;
+
+/** Una salida con nombre de un nodo con varios caminos posibles. */
+export interface ToolOutput {
+  /** Identidad persistida como `fromOutput` en la arista. Nunca se reutiliza. */
+  readonly id: string;
+  /** Rótulo visible junto al punto de conexión. */
+  readonly label: string;
+}
+
+export interface ValidationResult {
+  readonly valid: boolean;
+  /** Mensaje para el usuario cuando `valid` es `false`. */
+  readonly reason: string | null;
+}
+
+export const VALID: ValidationResult = { valid: true, reason: null };
+
+export function invalid(reason: string): ValidationResult {
+  return { valid: false, reason };
+}
+
 export interface ToolDefinition {
-  /** Tipo canónico del contrato compartido. Es la clave del registry. */
+  /** Tipo canónico del contrato compartido. Clave del registry. */
   readonly type: NodeType;
 
-  /** Nombre visible en la paleta y título por defecto de un nodo nuevo. */
+  /** Nombre en la paleta y título por defecto de un nodo nuevo. */
   readonly label: string;
 
-  /** Subtítulo de la paleta: qué hace la herramienta, en una línea. */
+  /** Subtítulo de la paleta, en una línea. */
   readonly description: string;
 
-  /** Texto inicial del contenido de un nodo recién creado. */
+  /** Texto inicial de `content.text` cuando no se declara `defaultContent`. */
   readonly defaultContentText: string;
 
-  /**
-   * Contenido con el que nace un nodo de esta herramienta.
-   *
-   * Ausente: nace con `{ text: defaultContentText }`, que es la forma heredada
-   * y sirve para las herramientas cuyo contenido sigue siendo un texto suelto.
-   *
-   * Lo declara la herramienta cuyo contenido tiene otra forma —o ninguna—, para
-   * que no nazca con un campo que su modelo no usa y que quedaría ahí,
-   * duplicando información con su configuración real.
-   */
-  readonly defaultContent?: Readonly<Record<string, unknown>>;
+  /** Contenido con el que nace el nodo. Ausente: `{ text: defaultContentText }`. */
+  readonly defaultContent?: ToolData;
 
-  /** Título del modal de edición. */
+  /** Configuración mínima válida con la que nace el nodo. */
+  readonly defaultConfig: ToolData;
+
+  /** Título del editor del nodo. */
   readonly editorTitle: string;
 
-  /**
-   * `false` para nodos de sistema: existen en el modelo y se pintan si un flow
-   * ya los contiene, pero el usuario no puede añadirlos desde la paleta.
-   */
+  /** `false` para nodos de sistema, que existen en el modelo pero no se ofrecen. */
   readonly availableInPalette: boolean;
 
-  /** Cierra una rama del flujo: sin edges salientes obligatorios. */
+  /** Cierra una rama: no exige aristas salientes. */
   readonly terminal: boolean;
 
   /**
-   * `false` cuando el motor reconoce el tipo pero todavía no sabe ejecutarlo:
-   * su handler falla explícitamente con `*_not_implemented`.
-   *
-   * Se declara aquí para que la plataforma pueda decir la verdad sobre lo que
-   * una herramienta hace hoy. No se finge capacidad: si esto es `false`, un
-   * flow que alcance el nodo se detiene.
+   * `false` si el motor reconoce el tipo pero su handler falla con
+   * `*_not_implemented`. Declara la verdad sobre lo que la herramienta hace hoy.
    */
   readonly executable: boolean;
 
   /**
-   * Configuración con la que nace un nodo de esta herramienta.
+   * Salidas con nombre que la configuración ofrece.
    *
-   * Es la forma mínima válida, no una especificación de negocio: cuando una
-   * herramienta todavía no tiene comportamiento definido, aquí va `{}` en lugar
-   * de inventar campos que nadie ha acordado.
+   * Ausente: el nodo tiene UNA salida implícita y el cascarón pinta su punto.
+   * Presente: el nodo tiene exactamente estas salidas (cero incluido); la
+   * herramienta las pinta en su `CompactBody` con `OutputHandle`, y el núcleo
+   * del builder usa esta lista para descartar aristas que salgan de una salida
+   * que ya no existe.
    */
-  readonly defaultConfig: Readonly<Record<string, unknown>>;
+  readonly outputs?: (config: ToolData) => ReadonlyArray<ToolOutput>;
 
-  /**
-   * Resumen de un nodo para su tarjeta del lienzo.
-   *
-   * Puro: recibe datos y devuelve texto. Existe para que el resumen de una
-   * herramienta se calcule DONDE se conoce su forma, en lugar de que un
-   * servicio genérico tenga que saber que Mensaje guarda una secuencia o que
-   * Esperar respuesta guarda una clave de contexto.
-   *
-   * Ausente: el resumen genérico se apaña con `content.text`.
-   */
-  readonly summarize?: (
-    content: Readonly<Record<string, unknown>>,
-    config: Readonly<Record<string, unknown>>
-  ) => string;
+  /** Resumen de una línea para la tarjeta. Ausente: se usa `content.text`. */
+  readonly summarize?: (content: ToolData, config: ToolData) => string;
 
-  /**
-   * Comprueba si lo configurado puede guardarse.
-   *
-   * Puro: recibe datos y devuelve una decisión con su motivo. Existe por la
-   * misma razón que `summarize` — solo la herramienta sabe qué significa que su
-   * configuración esté completa—, y el cascarón del editor la CONSULTA sin
-   * saber de qué tipo de nodo se trata.
-   *
-   * Ausente: la herramienta no tiene nada que exigir y se guarda siempre, que
-   * es el caso de todas menos Mensaje hoy.
-   */
-  readonly validateContent?: (
-    content: Readonly<Record<string, unknown>>,
-    config: Readonly<Record<string, unknown>>
-  ) => { readonly valido: boolean; readonly motivo: string | null };
+  /** ¿Puede guardarse lo configurado? Ausente: siempre se puede. */
+  readonly validate?: (content: ToolData, config: ToolData) => ValidationResult;
 
-  /**
-   * Copia la configuración de un nodo para un duplicado.
-   *
-   * Puro: recibe la configuración y devuelve otra. Existe porque la copia
-   * profunda genérica reproduce los datos EXACTOS, y algunas herramientas
-   * guardan identidades internas —los bloques de un Mensaje, por ejemplo— que
-   * conviene renovar en la copia. Solo la herramienta sabe cuáles de sus campos
-   * son identidad y cuáles son contenido.
-   *
-   * Ausente: la copia profunda genérica basta, que es el caso de casi todas.
-   */
-  readonly duplicateConfig?: (
-    config: Readonly<Record<string, unknown>>
-  ) => Record<string, unknown>;
+  /** Copia de `config` para un duplicado, renovando identidades internas. */
+  readonly duplicateConfig?: (config: ToolData) => Record<string, unknown>;
 
-  /**
-   * Suelta lo que la herramienta tenga reservado fuera de la configuración.
-   *
-   * Se llama JUSTO ANTES de que el nodo desaparezca del lienzo. Existe porque
-   * una configuración puede apuntar a recursos que no viven en ella —los bytes
-   * de un archivo que el navegador guarda en memoria, por ejemplo—: al borrar
-   * el nodo, esos recursos se quedarían retenidos hasta recargar la página, sin
-   * que nadie pueda ya llegar a ellos.
-   *
-   * Simétrica a `duplicateConfig`: la una sabe qué copiar y la otra qué soltar,
-   * y las dos por la misma razón —solo la herramienta conoce lo que hay dentro
-   * de su `config`—. El lienzo pregunta sin saber de qué nodo se trata.
-   *
-   * Ausente: la herramienta no reserva nada fuera de su configuración, que es
-   * el caso de todas menos Mensaje hoy. Borrar el nodo ya lo suelta todo.
-   */
-  readonly releaseResources?: (config: Readonly<Record<string, unknown>>) => void;
+  /** Libera recursos externos a `config` justo antes de borrar el nodo. */
+  readonly releaseResources?: (config: ToolData) => void;
 
-  /** Paleta cromática de la herramienta en la tarjeta del canvas y la paleta. */
+  /** Colores de la tarjeta y la paleta. */
   readonly colors: {
     readonly header: string;
     readonly body: string;
     readonly gradient: string;
   };
 
-  /** Glifo compacto de la cabecera de la tarjeta en el canvas. */
+  /** Glifo compacto de respaldo. */
   readonly glyph: string;
 }

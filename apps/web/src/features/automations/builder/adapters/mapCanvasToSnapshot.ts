@@ -1,6 +1,7 @@
 import type { CanvasEdge, CanvasNode } from "../types/canvas";
 import type { BuilderFlowEdge, BuilderFlowSnapshot } from "@contracts/FlowSnapshot";
 import { ensureEdgeData } from "../services/ensureEdgeData";
+import { pruneCanvasEdges } from "../services/nodeOutputs";
 
 export function mapCanvasToSnapshot(baseSnapshot: BuilderFlowSnapshot, nodes: CanvasNode[], edges: CanvasEdge[]): BuilderFlowSnapshot {
   const mappedNodes = Object.fromEntries(
@@ -31,15 +32,9 @@ export function mapCanvasToSnapshot(baseSnapshot: BuilderFlowSnapshot, nodes: Ca
     ])
   );
 
-  const nodeIdSet = new Set(nodes.map((n) => n.id));
-
-  // Filtrar orphan edges — edges cuyo source o target no existen en el canvas.
-  // Esto es una segunda línea de defensa: el borrado seguro en FlowNodeCard
-  // ya elimina los edges al borrar un nodo, pero esta función garantiza que
-  // la serialización nunca produzca un snapshot corrupto.
-  const safeEdges = edges.filter(
-    (edge) => nodeIdSet.has(edge.source) && nodeIdSet.has(edge.target)
-  );
+  // Red de seguridad: el lienzo ya poda al cambiar los nodos, pero el
+  // snapshot nunca debe salir con aristas a nodos o salidas inexistentes.
+  const safeEdges = pruneCanvasEdges(nodes, edges);
 
   // Los contratos canónicos son readonly, así que se agrupa en arrays mutables
   // locales y el resultado se expone ya congelado por el tipo de retorno.
@@ -52,9 +47,7 @@ export function mapCanvasToSnapshot(baseSnapshot: BuilderFlowSnapshot, nodes: Ca
       id: edge.id,
       fromNodeId: edge.source,
       toNodeId: edge.target,
-      // La salida del nodo de la que arranca, cuando el nodo tiene más de una.
-      // Se omite si no la hay para no escribir `fromOutput: null` en cada
-      // arista de las otras doce herramientas.
+      // Solo en aristas que salen de una salida con nombre.
       ...(edge.sourceHandle ? { fromOutput: edge.sourceHandle } : {}),
       priority: edgeData.priority,
       isFallback: edgeData.isFallback,

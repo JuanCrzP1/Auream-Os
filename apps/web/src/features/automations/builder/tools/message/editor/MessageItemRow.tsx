@@ -21,23 +21,9 @@ interface MessageItemRowProps {
 }
 
 /**
- * Un bloque de la secuencia.
- *
- * La BARRA es común a todos —asa, icono, tipo, acciones— y el CUERPO lo pone
- * cada tipo: un texto no se edita como una imagen, y forzar los dos en el mismo
- * campo fue lo que hacía que la primera versión pareciera un formulario.
- *
- * El reparto por tipo es un `switch` sobre los bloques de Mensaje, dentro del
- * módulo de Mensaje. No es una fuga: lo que no puede existir es un reparto por
- * tipo de NODO fuera de la herramienta.
- *
- * Se reordena de dos formas, y las dos importan: ARRASTRANDO, que es lo que se
- * espera al ver una lista de bloques, y con SUBIR y BAJAR, que hacen lo mismo y
- * funcionan con teclado. El arrastre complementa la accesibilidad; no la
- * sustituye.
- *
- * Todo control lleva `nodrag`: sin esa clase, cualquier gesto aquí dentro
- * movería el nodo entero por el lienzo.
+ * Un bloque: barra común (asa, icono, tipo, acciones) y cuerpo por tipo.
+ * Reordenable arrastrando y con Subir/Bajar (teclado). Todo control lleva
+ * `nodrag` para no mover el nodo por el lienzo.
  */
 export function MessageItemRow({
   item,

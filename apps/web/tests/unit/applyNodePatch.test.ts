@@ -188,7 +188,7 @@ describe("applyNodePatch — presentación derivada", () => {
     // respuesta» sí declara el suyo: su preview lo decide ahora la herramienta
     // —ver el caso siguiente—, así que este comprueba el camino genérico con un
     // tipo que lo sigue usando.
-    const result = applyNodePatch(makeNode({ nodeType: "tags" }), {
+    const result = applyNodePatch(makeNode({ nodeType: "end" }), {
       content: { text: "¿Tu nombre?" }
     });
 

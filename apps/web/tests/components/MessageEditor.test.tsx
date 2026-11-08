@@ -29,8 +29,8 @@ function makeTransfer(type?: string, value?: string) {
   } as unknown as DataTransfer;
 }
 
-const KIND_MIME = "application/aureum-message-kind";
-const REORDER_MIME = "application/aureum-message-item";
+const KIND_MIME = "application/auream-message-kind";
+const REORDER_MIME = "application/auream-message-item";
 
 function renderEditor(config: Record<string, unknown> = {}, content: Record<string, unknown> = {}) {
   const onChange = vi.fn<(patch: NodePatch) => void>();

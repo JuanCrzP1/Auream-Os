@@ -76,3 +76,15 @@ describe("paridad catálogo de herramientas ↔ validación del backend", () => 
     }
   });
 });
+
+describe("reglas de conexión ↔ catálogo del builder", () => {
+  it("los bloques de salida única del contrato son las herramientas sin `outputs()` (menos el cierre)", async () => {
+    const { SINGLE_OUTPUT_NODE_TYPES } = await import("../../contracts/FlowConnectionRules.js");
+    const singleOutput = listAllTools()
+      .filter((tool) => tool.outputs === undefined && !tool.terminal)
+      .map((tool) => tool.type)
+      .sort();
+
+    expect([...SINGLE_OUTPUT_NODE_TYPES].sort()).toEqual(singleOutput);
+  });
+});

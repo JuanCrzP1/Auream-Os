@@ -1,67 +1,51 @@
-import { normalizarIdDeSalida, type DistributorOutput } from "./distributorOutputs";
-
-// ---------------------------------------------------------------------------
-// Lectura de las salidas desde un nodo.
-//
-// DESCONFIADO A PROPÓSITO, igual que `readMessageItems` y
-// `readWaitResponseConfig`. Lo que llega es JSON de disco o de red: pudo
-// escribirlo una versión anterior de la herramienta, una edición a mano o un
-// flujo importado. Un campo corrupto no puede tumbar el editor ni el lienzo; se
-// descarta lo ilegible y se sigue con lo que sí se entiende.
-//
-// NO INVENTA NADA. Un Distribuidor sin salidas legibles se lee como un
-// Distribuidor sin salidas —que es un estado válido: así nace—, nunca como uno
-// con una salida de cortesía que el usuario no creó.
-// ---------------------------------------------------------------------------
-
-/** Estrecha una salida suelta, o la descarta si no es representable. */
-function toSalida(raw: unknown, index: number): DistributorOutput | null {
-  if (typeof raw !== "object" || raw === null) return null;
-
-  const record = raw as Record<string, unknown>;
-
-  // SIN ID NO HAY SALIDA RECUPERABLE, y aquí sí se descarta —al contrario que
-  // en Mensaje, que le inventa uno por posición—. La diferencia es qué
-  // significa el id en cada sitio: en Mensaje ordena bloques dentro del nodo,
-  // aquí ES el punto de conexión al que apuntan las aristas guardadas.
-  // Fabricar uno por posición inventaría un destino que ninguna arista conoce y
-  // dejaría un punto colgando en el lienzo.
-  //
-  // Qué cuenta como identidad lo decide el dominio, no este archivo: la misma
-  // regla la aplica `validateDistributor` para decidir si puede guardarse.
-  const id = normalizarIdDeSalida(record.id);
-  if (id === null) return null;
-
-  // El rótulo sí es recuperable: es texto para leer, no identidad. Uno perdido
-  // se repone por posición antes que tirar una salida con conexiones vivas.
-  const label = typeof record.label === "string" ? record.label.trim() : "";
-
-  return { id, label: label.length > 0 ? label : `Salida ${index + 1}` };
-}
+import type { ToolData } from "../ToolDefinition";
+import { normalizeOutputId, type DistributorOutput } from "./distributorOutputs";
 
 /**
- * Salidas configuradas en un nodo Distribuidor.
+ * Salidas legibles de un nodo Distribuidor.
  *
- * IDS ÚNICOS GARANTIZADOS. Dos salidas con el mismo id producirían dos `Handle`
- * de React Flow con la misma identidad: una arista guardada contra ese id ya no
- * sabría a cuál de las dos vuelve. Se conserva la primera aparición y se
- * descarta la repetida, que es la única lectura que deja el lienzo coherente.
- * Que el dato llegara así lo señala aparte `validateDistributor`, que mira el
- * crudo y sí tiene voz para decirlo.
+ * Defensivo: `config` es JSON de disco. Se descarta lo ilegible sin inventar
+ * nada. Una salida sin id se descarta (su id ES el punto al que apuntan las
+ * aristas; fabricar uno dejaría un punto colgando); un rótulo perdido se
+ * repone por posición. Ids repetidos: se conserva el primero, para que dos
+ * `Handle` no compartan identidad. Que el dato llegue así lo señala
+ * `validateDistributor`.
  */
-export function readDistributorOutputs(
-  config: Readonly<Record<string, unknown>>
-): DistributorOutput[] {
+export function readDistributorOutputs(config: ToolData): DistributorOutput[] {
   const raw = config.outputs;
   if (!Array.isArray(raw)) return [];
 
-  const vistos = new Set<string>();
+  const seen = new Set<string>();
+  const outputs: DistributorOutput[] = [];
 
-  return raw
-    .map(toSalida)
-    .filter((salida): salida is DistributorOutput => {
-      if (salida === null || vistos.has(salida.id)) return false;
-      vistos.add(salida.id);
-      return true;
-    });
+  raw.forEach((entry, index) => {
+    if (typeof entry !== "object" || entry === null) return;
+
+    const record = entry as Record<string, unknown>;
+    const id = normalizeOutputId(record.id);
+    if (id === null || seen.has(id)) return;
+    seen.add(id);
+
+    const label = typeof record.label === "string" ? record.label.trim() : "";
+    outputs.push({ id, label: label.length > 0 ? label : `Salida ${index + 1}` });
+  });
+
+  return outputs;
+}
+
+/**
+ * Nombre guardado de cada salida, sin reponer el de cortesía. Lo usa el
+ * editor para que vaciar el campo y reescribirlo no devuelva «Salida n» bajo
+ * el cursor.
+ */
+export function readRawOutputLabels(config: ToolData): ReadonlyMap<string, string> {
+  const labels = new Map<string, string>();
+  if (!Array.isArray(config.outputs)) return labels;
+
+  for (const entry of config.outputs) {
+    if (typeof entry !== "object" || entry === null) continue;
+    const record = entry as Record<string, unknown>;
+    if (typeof record.id === "string") labels.set(record.id.trim(), typeof record.label === "string" ? record.label : "");
+  }
+  return labels;
 }

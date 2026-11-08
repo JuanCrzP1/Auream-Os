@@ -1,0 +1,87 @@
+# Herramientas del Builder
+
+`apps/web/src/features/automations/builder/tools/`
+
+## Qué es
+
+Cada tipo de nodo del lienzo (Mensaje, Esperar respuesta, Programador, Distribuidor…) es una **herramienta**: un módulo autocontenido que el núcleo del builder descubre por contrato. El núcleo (lienzo, paleta, marco del editor, adaptadores) **no conoce ninguna herramienta concreta**.
+
+## Estructura
+
+```
+tools/
+├── ToolDefinition.ts     contrato PURO (sin React)
+├── ToolUi.ts             contrato VISUAL (React)
+├── registry.ts           catálogo puro — única frontera para el núcleo
+├── ui-registry.tsx       catálogo visual
+├── _kit/                 primitivas compartidas por las herramientas
+│   ├── Switch.tsx        SwitchControl y SwitchField (role="switch")
+│   ├── OutputHandle.tsx  punto de salida con nombre
+│   ├── useAutoHeight.ts  textarea que crece con su contenido
+│   ├── createLocalId.ts  ids locales únicos
+│   ├── layout.tsx        ToolEditorLayout (cabecera), CardSection (paso numerado),
+│   │                     ChoiceCards, OutputsPreview, EmptyState, Joiner, ChatPreview
+│   ├── fields.tsx        campos, Select, ChipsField, ListCard, Add/RemoveButton, VariableHint
+│   ├── icons.tsx         iconos de las tarjetas de elección
+│   ├── OutputsCompactBody.tsx  nodo cerrado genérico con salidas con nombre
+│   ├── read.ts           lectores defensivos (string, enum, listas con id…)
+│   ├── catalogs.ts       monedas, prefijos de país, variables de contacto
+│   └── kit.css
+└── <herramienta>/
+    ├── definition.ts     su ToolDefinition
+    ├── ui.tsx            su ToolUi
+    ├── read*.ts          lector defensivo de la config
+    ├── validate*.ts      ¿puede guardarse?
+    ├── summarize*.ts     resumen de una línea
+    ├── *CompactBody.tsx  nodo cerrado
+    ├── *Editor.tsx       editor
+    └── editor/           piezas del editor
+```
+
+## Reglas de dependencia
+
+| Desde | Puede importar | No puede importar |
+|---|---|---|
+| Una herramienta | `_kit/`, `ToolDefinition`, `ToolUi`, `@contracts/*` | Otra herramienta, el núcleo del builder (salvo el tipo `NodePatch`) |
+| `_kit/` | React, React Flow | Ninguna herramienta |
+| El núcleo | `registry`, `ui-registry`, `ToolDefinition`, `ToolUi` | El interior de una herramienta |
+| `definition.ts` y su cadena | Módulos puros (`.ts`) | Cualquier `.tsx`: el test de paridad del backend corre en Node sin React |
+
+Lo vigilan los tests de arquitectura (`toolRegistry`, `toolUiRegistry`, `distributorArchitecture`, `intervalArchitecture`) y `tests/contract/toolRegistryParity.test.ts`.
+
+## Salidas con nombre
+
+Una herramienta con varios caminos declara `outputs(config) → [{ id, label }]` en su definición. A partir de ahí:
+
+- `FlowNodeCard` no pinta la salida única y le pasa las salidas al `CompactBody`, que pinta un `OutputHandle` por cada una.
+- `FlowNodeCard` avisa a React Flow (`updateNodeInternals`) cuando la lista cambia.
+- `useBuilderController` poda automáticamente las aristas cuya salida desapareció (`pruneCanvasEdges`), y los dos adaptadores aplican la misma regla al cargar y al guardar.
+- Al cargar, una arista heredada sin `fromOutput` se asigna a la primera salida en vez de perderse.
+
+El `id` de una salida es dato persistido (`fromOutput`): no se renumera ni se reutiliza.
+
+Las reglas para conectar salidas (una conexión por salida, inicio, ciclos…) y lo pendiente en el motor están en [flow-connections.md](flow-connections.md).
+
+## Configuración: dónde vive, cómo se lee, cómo evoluciona
+
+- **Contrato compartido.** Si el motor lee la config, su forma vive en `contracts/` (`WaitResponseConfig`, `IntervalConfig`). Si no, vive en la carpeta de la herramienta y sube sin cambios el día que el motor la necesite.
+- **Lector ≠ validador.** El lector responde «¿qué se puede pintar?»: nunca lanza, descarta lo ilegible y conserva lo incompleto. El validador responde «¿puede guardarse?» y mira el dato crudo.
+- **Evolución.** El lector es la capa de migración: debe aceptar toda forma que se haya persistido alguna vez (ej. `mode` → `trigger` en el Programador), y el editor reescribe la forma actual en el siguiente guardado. Si un cambio de forma no se puede deducir de los datos, se añade `schemaVersion` a esa config y el lector migra por versión. No se migra nada en lote.
+- **Ids locales** con `createLocalId` (bloques, salidas, aristas).
+
+## Convenciones
+
+- **Idioma.** Identificadores, archivos y clases CSS en **inglés**. Textos visibles y comentarios en **español**.
+- **Comentarios.** Solo el *por qué* que no se deduce del código, en 1–3 líneas. La historia va en git, y las decisiones grandes en estos documentos.
+- **Editores.** Estructura fija: `ToolEditorLayout` (icono, título y qué hace el bloque) → `CardSection` numeradas en el orden en que se decide → `OutputsPreview` al final. Las decisiones importantes van en `ChoiceCards`; las listas vacías, en `EmptyState`; lo que ve el cliente, en `ChatPreview`.
+- **Estilos.** Cada herramienta aporta su acento con variables (`--kit-switch-accent`, `--kit-switch-on-bg`…). Forma, tamaño, foco y movimiento son del kit.
+- **Resultado de validación:** `ValidationResult` (`{ valid, reason }`) con `VALID` / `invalid(reason)`.
+
+## Añadir una herramienta
+
+1. `contracts/FlowSnapshot.ts` → el tipo en `NodeType`.
+2. `flow-engine/nodes/<tipo>/` → handler (puede fallar con `*_not_implemented`).
+3. `apps/api/composition/composeNodeRuntime.ts` → registrar el handler.
+4. `tools/<herramienta>/definition.ts` + `ui.tsx`.
+5. Añadirlas a `registry.ts` y a `ui-registry.tsx`.
+6. Reutilizar `_kit/` antes de escribir una primitiva nueva. Si una primitiva aparece en una segunda herramienta, se sube al kit.

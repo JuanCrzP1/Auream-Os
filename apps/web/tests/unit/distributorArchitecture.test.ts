@@ -81,7 +81,7 @@ describe("la infraestructura genérica no sabe que existe el Distribuidor", () =
     // El cascarón trata a las catorce igual y pregunta por CAPACIDADES
     // —¿tiene cuerpo propio?, ¿monta sus salidas?—, nunca por el tipo de nodo.
     // Un `if` por Distribuidor aquí sería la frontera rota, y esta herramienta
-    // no necesitó ninguno: `ownsOutputs` ya existía.
+    // no necesitó ninguno: basta con declarar `outputs()`.
     const genericos = [
       "src/features/automations/builder/components/canvas/FlowNodeCard.tsx",
       "src/features/automations/builder/components/canvas/NodeExpandedFrame.tsx",
@@ -140,14 +140,14 @@ describe("la herramienta está bien declarada en el catálogo", () => {
 
     expect(ui.Editor).toBeDefined();
     expect(ui.CompactBody).toBeDefined();
-    expect(ui.ownsOutputs).toBe(true);
+    expect(resolveTool("distributor").outputs).toBeTypeOf("function");
   });
 
   it("declara resumen y validación en su definición", () => {
     const tool = resolveTool("distributor");
 
     expect(tool.summarize).toBeDefined();
-    expect(tool.validateContent).toBeDefined();
+    expect(tool.validate).toBeDefined();
     expect(tool.defaultConfig).toEqual({ outputs: [] });
   });
 
@@ -170,32 +170,23 @@ describe("la herramienta está bien declarada en el catálogo", () => {
 
 describe("dark y light", () => {
   const hoja = readFileSync(`${RAIZ}/distributor-editor.css`, "utf8");
+  const editor = readFileSync(`${RAIZ}/DistributorEditor.tsx`, "utf8");
+  const kit = readFileSync(`${RAIZ}/../_kit/kit.css`, "utf8");
 
   it("el editor se pinta con tokens del tema, no con colores de un solo modo", () => {
-    // Lo que hace que el editor funcione en los dos temas es apoyarse en la
-    // paleta: si el fondo o el texto fueran un hex fijo, uno de los dos temas
-    // quedaría ilegible.
+    // Fondo y texto salen de la paleta (vía el kit): un hex fijo dejaría
+    // ilegible uno de los dos temas.
     for (const token of ["--text", "--muted", "--border", "--surface-alt"]) {
-      expect(hoja, `el editor no usa ${token}`).toContain(`var(${token})`);
+      expect(kit, `el kit no usa ${token}`).toContain(`var(${token})`);
     }
+    expect(hoja).toContain("var(--kit-accent)");
   });
 
-  it("la identidad plateada se declara UNA vez y el resto la lee", () => {
-    const declaraciones = [...hoja.matchAll(/^\s*--ds-(silver|steel):/gm)];
-
-    expect(declaraciones).toHaveLength(2);
-    expect(hoja).toMatch(/var\(--ds-steel\)/);
-    expect(hoja).toMatch(/var\(--ds-silver\)/);
-  });
-
-  it("el plateado del editor es el mismo que publica la definición", () => {
-    // Una segunda fuente de verdad para el color se notaría el día que uno de
-    // los dos cambie: la cabecera del nodo y su editor dejarían de leerse como
-    // la misma herramienta.
-    const tool = resolveTool("distributor");
-
-    expect(hoja).toContain(`--ds-silver: ${tool.colors.header};`);
-    expect(hoja).toContain(`--ds-steel: ${tool.colors.body};`);
+  it("la identidad plateada se declara UNA vez: en la definición", () => {
+    // El editor no repite el hex: lo lee de la definición y el kit lo reparte
+    // como `--kit-accent`.
+    expect(editor).toMatch(/accent=\{distributorTool\.colors\.header\}/);
+    expect(hoja).not.toMatch(/#748199|#64748b/i);
   });
 
   it("los estilos están acotados al tool: ningún selector suelto", () => {

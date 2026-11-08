@@ -1321,7 +1321,7 @@ describe("el nodo cerrado en el lienzo", () => {
     const contenedor = pintarTarjeta(nodoIntervalo());
 
     expect(contenedor.querySelectorAll(".flow-node__handle--source")).toHaveLength(1);
-    expect(resolveToolUi("delay").ownsOutputs).toBeUndefined();
+    expect(resolveTool("delay").outputs).toBeUndefined();
   });
 
   it("publica el cyan aprobado al lienzo", () => {

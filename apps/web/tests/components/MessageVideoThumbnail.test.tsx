@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MessageCompactBody } from "@features/automations/builder/tools/message/MessageCompactBody";
 import {
-  adjuntarArchivo,
-  enlaceDeSesion,
-  soltarArchivo
+  attachFile,
+  sessionObjectUrl,
+  releaseFile
 } from "@features/automations/builder/tools/message/mediaSourceSession";
 import { FOTOGRAMA, instalarNavegadorDeVideo, instalarObjectUrls, type Guion, type Registro } from "../helpers/navegadorDeVideo";
-import { olvidarMiniatura } from "@features/automations/builder/tools/message/mediaThumbnails";
-import { useVistaPrevia } from "@features/automations/builder/tools/message/useVistaPrevia";
+import { forgetThumbnail } from "@features/automations/builder/tools/message/mediaThumbnails";
+import { usePreview } from "@features/automations/builder/tools/message/usePreview";
 
 // ---------------------------------------------------------------------------
 // EL VIDEO QUE EL USUARIO ELIGE TERMINA ENSEÑANDO SU FOTOGRAMA EN EL NODO.
@@ -39,7 +39,7 @@ let registro: Registro;
  * puerta por la que se pide un fotograma.
  */
 function PideVistaPrevia({ fuente }: { fuente: string }) {
-  useVistaPrevia(fuente, true);
+  usePreview(fuente, true);
   return null;
 }
 
@@ -61,7 +61,7 @@ const iconos = () => document.querySelectorAll(".flow-node__block-badge").length
 
 /** Adjunta un archivo al bloque, como haría el editor. */
 function elegirArchivo(itemId: string, tipo: string, nombre = "grabacion.mp4") {
-  return adjuntarArchivo(itemId, new File(["bytes"], nombre, { type: tipo }));
+  return attachFile(itemId, new File(["bytes"], nombre, { type: tipo }));
 }
 
 beforeEach(() => {
@@ -71,7 +71,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  for (const id of ["video", "image", "audio", "file", "a", "b"]) soltarArchivo(id);
+  for (const id of ["video", "image", "audio", "file", "a", "b"]) releaseFile(id);
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -192,7 +192,7 @@ describe("cuando no se puede sacar fotograma, el icono es la respuesta correcta"
     // vista previa de algo que ya no está.
     pintar([medio("video", { fileName: "grabacion.mp4" })]);
 
-    expect(enlaceDeSesion("video")).toBeNull();
+    expect(sessionObjectUrl("video")).toBeNull();
     expect(miniatura()).toBeNull();
     expect(iconos()).toBe(1);
   });
@@ -226,7 +226,7 @@ describe("el lienzo no monta medios ni retiene recursos", () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(registro.cargadas).toHaveLength(1);
 
-    olvidarMiniatura(enlace);
+    forgetThumbnail(enlace);
     Object.assign(guion, { responde: "loadeddata" });
     cleanup();
     pintar([medio("video", { fileName: "grabacion.mp4" })]);

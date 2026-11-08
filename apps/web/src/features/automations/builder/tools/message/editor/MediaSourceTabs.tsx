@@ -3,23 +3,13 @@ export type MediaSource = "file" | "url";
 interface MediaSourceTabsProps {
   readonly active: MediaSource;
   readonly onChange: (source: MediaSource) => void;
-  /** Para que las etiquetas accesibles digan de qué bloque son. */
+  /** Para etiquetas accesibles únicas por bloque. */
   readonly position: number;
 }
 
 /**
- * Elegir de dónde sale el archivo: del dispositivo o de un enlace.
- *
- * Control segmentado, no dos botones sueltos ni un desplegable: las dos
- * opciones son excluyentes y ambas deben verse a la vez para que el usuario
- * entienda que existe la otra sin tener que abrir nada.
- *
- * Lo usan los cuatro tipos multimedia con el mismo código. El color lo hereda
- * del bloque a través de `--mi-accent`, así que Imagen se ve índigo, Video
- * magenta, Audio cian y Archivo teal sin que este componente sepa de tipos.
- *
- * `role="tablist"` con `aria-selected`: para un lector es lo que es —dos
- * pestañas— y no dos botones cualesquiera.
+ * Origen del archivo: dispositivo o enlace. Pestañas (`role="tablist"`) con el
+ * acento heredado del bloque (`--mi-accent`).
  */
 export function MediaSourceTabs({ active, onChange, position }: MediaSourceTabsProps) {
   return (

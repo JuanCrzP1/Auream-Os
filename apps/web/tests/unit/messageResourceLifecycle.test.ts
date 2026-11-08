@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  adjuntarArchivo,
-  archivoDeSesion,
-  enlaceDeSesion,
-  soltarArchivo
+  attachFile,
+  sessionFile,
+  sessionObjectUrl,
+  releaseFile
 } from "@features/automations/builder/tools/message/mediaSourceSession";
 import { releaseMessageResources } from "@features/automations/builder/tools/message/releaseMessageResources";
 import { duplicateItem } from "@features/automations/builder/tools/message/messageItems";
@@ -52,7 +52,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  for (const id of ["a", "b", "c", "copia"]) soltarArchivo(id);
+  for (const id of ["a", "b", "c", "copia"]) releaseFile(id);
   vi.restoreAllMocks();
 });
 
@@ -60,15 +60,15 @@ describe("borrar el nodo suelta los archivos de sus bloques", () => {
   const config = (items: ReadonlyArray<Record<string, unknown>>) => ({ items });
 
   it("cada bloque con archivo queda liberado y su enlace revocado", () => {
-    const enlaceA = adjuntarArchivo("a", archivo("uno.mp4"));
-    const enlaceB = adjuntarArchivo("b", archivo("dos.mp4"));
+    const enlaceA = attachFile("a", archivo("uno.mp4"));
+    const enlaceB = attachFile("b", archivo("dos.mp4"));
 
     releaseMessageResources(config([medio("a"), medio("b")]));
 
     expect(revocados).toEqual(expect.arrayContaining([enlaceA, enlaceB]));
-    expect(enlaceDeSesion("a")).toBeNull();
-    expect(enlaceDeSesion("b")).toBeNull();
-    expect(archivoDeSesion("a")).toBeNull();
+    expect(sessionObjectUrl("a")).toBeNull();
+    expect(sessionObjectUrl("b")).toBeNull();
+    expect(sessionFile("a")).toBeNull();
   });
 
   it("los bloques sin archivo no molestan, y una config rara no rompe el borrado", () => {
@@ -97,13 +97,13 @@ describe("borrar el nodo suelta los archivos de sus bloques", () => {
     // `releaseNodeResources` recibe un nodo y pregunta a su herramienta. No hay
     // un solo `if` por tipo en el camino de borrado.
     const base = createNodeDraft("message", 0);
-    const enlace = adjuntarArchivo("a", archivo("uno.mp4"));
+    const enlace = attachFile("a", archivo("uno.mp4"));
     const nodo = { ...base, data: { ...base.data, config: config([medio("a")]) } };
 
     releaseNodeResources(nodo as Parameters<typeof releaseNodeResources>[0]);
 
     expect(revocados).toContain(enlace);
-    expect(enlaceDeSesion("a")).toBeNull();
+    expect(sessionObjectUrl("a")).toBeNull();
   });
 
   it("un nodo de una herramienta sin recursos no falla", () => {
@@ -114,7 +114,7 @@ describe("borrar el nodo suelta los archivos de sus bloques", () => {
 
 describe("duplicar no puede inventar un archivo que no existe", () => {
   it("la copia de un bloque pierde el nombre del archivo", () => {
-    adjuntarArchivo("a", archivo("uno.mp4"));
+    attachFile("a", archivo("uno.mp4"));
     const items = [medio("a", "video", { fileName: "uno.mp4" })] as unknown as MessageItem[];
 
     const [original, copia] = duplicateItem(items, "a");
@@ -123,7 +123,7 @@ describe("duplicar no puede inventar un archivo que no existe", () => {
     expect(copia.id).not.toBe("a");
     expect((copia as { fileName?: string }).fileName).toBe("");
     // Y no se le inventa un archivo en la sesión.
-    expect(enlaceDeSesion(copia.id)).toBeNull();
+    expect(sessionObjectUrl(copia.id)).toBeNull();
   });
 
   it("la copia NO pasa la validación: pide que se elija un archivo", () => {
@@ -132,8 +132,8 @@ describe("duplicar no puede inventar un archivo que no existe", () => {
     const items = [medio("a", "video", { fileName: "uno.mp4" })] as unknown as MessageItem[];
     const [, copia] = duplicateItem(items, "a");
 
-    expect(validateMessageContent({}, { items: [copia] }).valido).toBe(false);
-    expect(validateMessageContent({}, { items }).valido).toBe(true);
+    expect(validateMessageContent({}, { items: [copia] }).valid).toBe(false);
+    expect(validateMessageContent({}, { items }).valid).toBe(true);
   });
 
   it("el ENLACE sí se conserva: es un dato, no una referencia a memoria", () => {
@@ -144,7 +144,7 @@ describe("duplicar no puede inventar un archivo que no existe", () => {
     const [, copia] = duplicateItem(items, "a");
 
     expect((copia as { url: string }).url).toBe("https://cdn.test/f.png");
-    expect(validateMessageContent({}, { items: [copia] }).valido).toBe(true);
+    expect(validateMessageContent({}, { items: [copia] }).valid).toBe(true);
   });
 
   it("duplicar el NODO entero sigue la misma regla", () => {

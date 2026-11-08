@@ -28,6 +28,8 @@ export interface ScenarioEdge {
   readonly to: string;
   readonly priority?: number;
   readonly isFallback?: boolean;
+  /** Salida con nombre de la que arranca (solo en el lienzo). */
+  readonly fromOutput?: string;
 }
 
 export interface GraphScenario {
@@ -125,6 +127,7 @@ export function toCanvasGraph(scenario: GraphScenario) {
     id: edge.id,
     source: edge.from,
     target: edge.to,
+    ...(edge.fromOutput ? { sourceHandle: edge.fromOutput } : {}),
     data: {
       priority: edge.priority ?? 1,
       isFallback: edge.isFallback ?? false,

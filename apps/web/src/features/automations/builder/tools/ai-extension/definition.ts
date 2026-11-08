@@ -1,11 +1,14 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { AI_DEFAULT_CONFIG, aiOutputs } from "./aiConfig";
+import { summarizeAi } from "./summarizeAi";
+import { validateAi } from "./validateAi";
 
 /**
- * Extensión IA — nodo de procesamiento con un proveedor de IA.
+ * Extensión IA — llama a un modelo (GPT, Gemini u OpenRouter), guarda la
+ * respuesta en una variable y opcionalmente clasifica la intención (una salida
+ * por intención, más respaldo y error).
  *
- * NO es el AI Sales Engine ni un agente: es un tipo de nodo del grafo, y el
- * flujo sigue siendo determinístico. Hoy no existe implementación de
- * `AiProvider`, así que el nodo falla explícitamente en ejecución.
+ * No es un agente ni el AI Sales Engine. `executable: false`: falta `AiProvider`.
  */
 export const aiExtensionTool: ToolDefinition = {
   type: "ai",
@@ -16,11 +19,15 @@ export const aiExtensionTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: false,
-  defaultConfig: {},
+  defaultContent: {},
+  defaultConfig: { ...AI_DEFAULT_CONFIG },
+  outputs: aiOutputs,
+  summarize: summarizeAi,
+  validate: validateAi,
   colors: {
-    header: "#9333ea",
-    body: "#7e22ce",
-    gradient: "linear-gradient(135deg,#c084fc,#7e22ce)"
+    header: "#7c3aed",
+    body: "#6d28d9",
+    gradient: "linear-gradient(135deg,#a78bfa,#6d28d9)"
   },
   glyph: "✦"
 };

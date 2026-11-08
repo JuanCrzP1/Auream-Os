@@ -38,7 +38,9 @@ Estado de edición: workspace, drafts, autosave, y las operaciones que el editor
 
 ### validation
 
-Validación estructural previa a publicar. `GraphValidator` orquesta ocho reglas independientes, cada una en su archivo: ciclos, nodos inalcanzables, integridad de edges, prioridades de edges, flow vacío, nodo de entrada, fallbacks y grado de nodo.
+Validación estructural previa a publicar. `GraphValidator` orquesta nueve reglas independientes, cada una en su archivo: ciclos, nodos inalcanzables, integridad de edges, prioridades de edges, flow vacío, nodo de entrada, tipos conocidos, grado de nodo y límite de salidas.
+
+Las reglas de conexión entre bloques (una conexión por salida, inicio, ciclos a través de bloques que esperan) y dónde se aplica cada una están en [flow-connections.md](flow-connections.md).
 
 Es validación de **definición**, no de ejecución: se responde «¿este grafo es publicable?», no «¿este mensaje avanza?».
 

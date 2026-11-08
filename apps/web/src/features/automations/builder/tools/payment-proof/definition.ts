@@ -1,14 +1,13 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { PAYMENT_PROOF_DEFAULT_CONFIG, paymentProofOutputs } from "./paymentProofConfig";
+import { summarizePaymentProof } from "./summarizePaymentProof";
+import { validatePaymentProof } from "./validatePaymentProof";
 
 /**
- * Comprobante automático — procesa un comprobante de pago recibido.
+ * Comprobante automático — lee el comprobante de pago del cliente, extrae sus
+ * datos y verifica cuenta y titular. Una salida por resultado.
  *
- * `executable: false`. Requiere almacenamiento de media y un extractor de
- * datos del comprobante; no existe ninguno de los dos.
- *
- * `defaultConfig` queda vacío a propósito: los campos que necesita —qué se
- * extrae, contra qué se valida, qué se considera válido— son especificación de
- * negocio todavía no acordada, y no se inventan aquí.
+ * `executable: false`: faltan el almacenamiento de media y el extractor.
  */
 export const paymentProofTool: ToolDefinition = {
   type: "payment-proof",
@@ -19,11 +18,15 @@ export const paymentProofTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: false,
-  defaultConfig: {},
+  defaultContent: {},
+  defaultConfig: { ...PAYMENT_PROOF_DEFAULT_CONFIG },
+  outputs: paymentProofOutputs,
+  summarize: summarizePaymentProof,
+  validate: validatePaymentProof,
   colors: {
-    header: "#0d9488",
-    body: "#0f766e",
-    gradient: "linear-gradient(135deg,#2dd4bf,#0f766e)"
+    header: "#65a30d",
+    body: "#4d7c0f",
+    gradient: "linear-gradient(135deg,#a3e635,#4d7c0f)"
   },
   glyph: "🧾"
 };

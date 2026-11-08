@@ -19,9 +19,12 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
-  type Connection
+  type Connection,
+  type Edge,
+  type FinalConnectionState
 } from "@xyflow/react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { checkConnection } from "@features/automations/builder/services/connectionRules";
 import { nodeTypes } from "./nodeTypes";
 import { edgeTypes } from "./edgeTypes";
 import { ExpandedNodeOverlay } from "./ExpandedNodeOverlay";
@@ -49,8 +52,39 @@ interface BuilderCanvasProps {
   onPaneClick: () => void;
 }
 
+/** Cuánto se ve el aviso de una conexión rechazada. */
+const NOTICE_MS = 3600;
+
 function CanvasInner(props: BuilderCanvasProps) {
   const { screenToFlowPosition } = useReactFlow();
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (notice === null) return;
+    const timer = window.setTimeout(() => setNotice(null), NOTICE_MS);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  // Reglas de conexión (docs/architecture/flow-connections.md): React Flow
+  // marca el destino como no válido mientras se arrastra.
+  const isValidConnection = useCallback(
+    (connection: Connection | Edge) => checkConnection(props.nodes, props.edges, connection).ok,
+    [props.nodes, props.edges]
+  );
+
+  // Al soltar sobre un destino no permitido se explica por qué.
+  const onConnectEnd = useCallback(
+    (_event: MouseEvent | TouchEvent, state: FinalConnectionState) => {
+      if (state.isValid || !state.toNode || !state.fromNode) return;
+      const result = checkConnection(props.nodes, props.edges, {
+        source: state.fromNode.id,
+        target: state.toNode.id,
+        sourceHandle: state.fromHandle?.id ?? null
+      });
+      if (!result.ok) setNotice(result.message);
+    },
+    [props.nodes, props.edges]
+  );
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -86,6 +120,15 @@ function CanvasInner(props: BuilderCanvasProps) {
         </defs>
       </svg>
       <div className="builder-canvas-shell__surface">
+        {notice ? (
+          <div className="canvas-connection-notice" role="status">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.25" />
+              <path d="M8 4.75v3.75M8 11h.01" />
+            </svg>
+            {notice}
+          </div>
+        ) : null}
         <ReactFlow<CanvasNode, CanvasEdge>
           fitView
           /* Sin opciones, `fitView` encuadra al 100% y con un único nodo el
@@ -112,6 +155,8 @@ function CanvasInner(props: BuilderCanvasProps) {
           onNodesChange={props.onNodesChange}
           onEdgesChange={props.onEdgesChange}
           onConnect={props.onConnect}
+          isValidConnection={isValidConnection}
+          onConnectEnd={onConnectEnd}
           onNodeClick={(_event, node) => props.onSelectNode(node.id)}
           onNodeDoubleClick={(_event, node) => props.onEditNode(node.id)}
           onEdgeClick={(_event, edge) => props.onSelectEdge(edge.id)}

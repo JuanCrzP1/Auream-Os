@@ -20,7 +20,6 @@ const KNOWN_NODE_TYPES: ReadonlySet<string> = new Set<NodeType>([
   "pixel",
   "ai",
   "delay",
-  "sale-approved",
   "integration",
   "menu",
   "notification",

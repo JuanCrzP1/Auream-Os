@@ -1,5 +1,5 @@
 import type { MessageMediaKind } from "../types";
-import { esEnlaceUsable } from "../mediaSource";
+import { isUsableUrl } from "../mediaSource";
 
 interface UrlSourceProps {
   readonly kind: MessageMediaKind;
@@ -8,40 +8,23 @@ interface UrlSourceProps {
   readonly onChange: (url: string) => void;
 }
 
-/**
- * Vacío es un estado válido —todavía no se ha pegado nada—, no un error.
- *
- * Esa tolerancia es de ESTE campo mientras se escribe, y por eso vive aquí. Lo
- * que significa «un enlace que sirve» no es de este campo: lo decide
- * `mediaSource`, igual que para la validación y para el preview.
- */
-function esValida(url: string): boolean {
-  const limpia = url.trim();
-  return limpia.length === 0 || esEnlaceUsable(limpia);
+/** Mientras se escribe, vacío es válido; qué enlace sirve lo decide `mediaSource`. */
+function isAcceptable(url: string): boolean {
+  const trimmed = url.trim();
+  return trimmed.length === 0 || isUsableUrl(trimmed);
 }
 
 /** Última parte del enlace: lo que el usuario reconoce como «el archivo». */
-function nombreDeArchivo(url: string): string {
-  const limpio = url.split(/[?#]/)[0];
-  const ultimo = limpio.slice(limpio.lastIndexOf("/") + 1);
-  return ultimo.length > 0 ? decodeURIComponent(ultimo) : url;
+function fileNameFromUrl(url: string): string {
+  const path = url.split(/[?#]/)[0];
+  const last = path.slice(path.lastIndexOf("/") + 1);
+  return last.length > 0 ? decodeURIComponent(last) : url;
 }
 
-/**
- * Enlace a un archivo que ya está publicado en otro sitio.
- *
- * Es la vía que SÍ funciona de extremo a extremo hoy: un enlace es un dato
- * real, se guarda en la configuración del bloque y un adaptador de canal futuro
- * podrá usarlo sin migrar nada. Por eso es la única de las dos que escribe en el
- * mensaje.
- *
- * La validación es deliberadamente mínima —que sea una URL http(s)— porque el
- * motor todavía no comprueba nada más y avisar de reglas que nadie aplica sería
- * inventar rigor.
- */
+/** Enlace a un archivo ya publicado. Es un dato real que se guarda en el bloque. */
 export function UrlSource({ kind, position, url, onChange }: UrlSourceProps) {
-  const valida = esValida(url);
-  const tieneEnlace = url.trim().length > 0 && valida;
+  const acceptable = isAcceptable(url);
+  const hasUrl = url.trim().length > 0 && acceptable;
 
   return (
     <div className="media-url">
@@ -49,25 +32,21 @@ export function UrlSource({ kind, position, url, onChange }: UrlSourceProps) {
         <span className="media-url__label">URL del archivo</span>
         <input
           type="url"
-          className={`media-url__input nodrag${valida ? "" : " media-url__input--invalid"}`}
+          className={`media-url__input nodrag${acceptable ? "" : " media-url__input--invalid"}`}
           value={url}
           onChange={(event) => onChange(event.target.value)}
           placeholder="https://"
           aria-label={`URL del archivo del bloque ${position}`}
-          aria-invalid={!valida}
+          aria-invalid={!acceptable}
         />
       </label>
 
-      {valida ? null : (
-        <p className="media-url__error">Debe empezar por http:// o https://</p>
-      )}
+      {acceptable ? null : <p className="media-url__error">Debe empezar por http:// o https://</p>}
 
-      {tieneEnlace ? (
+      {hasUrl ? (
         <div className="media-url__preview">
-          {kind === "image" ? (
-            <img className="media-url__thumb" src={url} alt="" />
-          ) : null}
-          <span className="media-url__name">{nombreDeArchivo(url)}</span>
+          {kind === "image" ? <img className="media-url__thumb" src={url} alt="" /> : null}
+          <span className="media-url__name">{fileNameFromUrl(url)}</span>
         </div>
       ) : null}
     </div>

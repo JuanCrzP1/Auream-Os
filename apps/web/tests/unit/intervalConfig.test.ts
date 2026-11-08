@@ -4,27 +4,27 @@ import {
   INTERVAL_DEFAULT_CONFIG,
   INTERVAL_MAX_WAIT_MS,
   WEEKDAYS,
-  esFechaValida,
-  esHoraValida,
+  isValidDate,
+  isValidTime,
   intervalWaitMs,
   readIntervalConfig
 } from "@contracts/IntervalConfig";
 import {
-  CANTIDAD_INVALIDA,
-  DIA_SIN_FRANJAS,
-  ESPERA_DEMASIADO_LARGA,
-  FECHA_INCOMPLETA,
-  FECHA_INVALIDA,
-  FRANJA_INVERTIDA,
-  HORA_INVALIDA,
-  MODO_DESCONOCIDO,
-  SIN_DIAS_ACTIVOS,
-  UNIDAD_INVALIDA,
+  INVALID_AMOUNT_MESSAGE,
+  DAY_WITHOUT_RANGES_MESSAGE,
+  WAIT_TOO_LONG_MESSAGE,
+  INCOMPLETE_DATE_MESSAGE,
+  INVALID_DATE_MESSAGE,
+  INVERTED_RANGE_MESSAGE,
+  INVALID_TIME_MESSAGE,
+  UNKNOWN_TRIGGER_MESSAGE,
+  NO_ACTIVE_DAYS_MESSAGE,
+  INVALID_INTERVAL_UNIT_MESSAGE,
   validateInterval
 } from "@features/automations/builder/tools/interval/validateInterval";
 import {
-  describirIntervalo,
-  explicarIntervalo,
+  describeInterval,
+  explainInterval,
   summarizeInterval
 } from "@features/automations/builder/tools/interval/summarizeInterval";
 
@@ -71,8 +71,8 @@ describe("configuración por defecto", () => {
     expect(INTERVAL_DEFAULT_CONFIG.wait).toEqual({ amount: 5, unit: "minutes" });
     expect(INTERVAL_DEFAULT_CONFIG.scheduleEnabled).toBe(false);
     expect(validateInterval({}, { ...INTERVAL_DEFAULT_CONFIG })).toEqual({
-      valido: true,
-      motivo: null
+      valid: true,
+      reason: null
     });
   });
 
@@ -95,11 +95,11 @@ describe("configuración por defecto", () => {
 // ---------------------------------------------------------------------------
 describe("matriz de validez", () => {
   it("1 · solo «después» → VÁLIDO", () => {
-    expect(validateInterval({}, con("interval", { wait: { amount: 5, unit: "minutes" } })).valido).toBe(true);
+    expect(validateInterval({}, con("interval", { wait: { amount: 5, unit: "minutes" } })).valid).toBe(true);
   });
 
   it("2 · solo «fecha» → VÁLIDO", () => {
-    expect(validateInterval({}, con("date", { moment: { date: "2026-09-25", time: "14:30" } })).valido).toBe(true);
+    expect(validateInterval({}, con("date", { moment: { date: "2026-09-25", time: "14:30" } })).valid).toBe(true);
   });
 
   it("3 · solo «horario» → NO EXISTE: siempre hay un momento principal detrás", () => {
@@ -124,7 +124,7 @@ describe("matriz de validez", () => {
 
     expect(readIntervalConfig(config).trigger).toBe("interval");
     // Una fecha imposible guardada al lado no impide guardar: no gobierna.
-    expect(validateInterval({}, config).valido).toBe(true);
+    expect(validateInterval({}, config).valid).toBe(true);
     expect(intervalWaitMs(readIntervalConfig(config))).toBe(300_000);
   });
 
@@ -135,7 +135,7 @@ describe("matriz de validez", () => {
       schedule: LUNES_LABORAL
     }));
 
-    expect(validez).toEqual({ valido: true, motivo: null });
+    expect(validez).toEqual({ valid: true, reason: null });
   });
 
   it("6 · «fecha» + «horario» → VÁLIDO", () => {
@@ -145,7 +145,7 @@ describe("matriz de validez", () => {
       schedule: LUNES_LABORAL
     }));
 
-    expect(validez).toEqual({ valido: true, motivo: null });
+    expect(validez).toEqual({ valid: true, reason: null });
   });
 
   it("7 · los tres a la vez → NO EXISTE, por la misma razón que el 4", () => {
@@ -173,7 +173,7 @@ describe("el horario es OPCIONAL, y eso se nota en qué bloquea", () => {
       schedule: horario({ monday: { enabled: true, ranges: [] } })
     }));
 
-    expect(validez.valido).toBe(true);
+    expect(validez.valid).toBe(true);
   });
 
   it("encendido, el mismo horario roto SÍ lo impide", () => {
@@ -185,11 +185,11 @@ describe("el horario es OPCIONAL, y eso se nota en qué bloquea", () => {
       schedule: horario({ monday: { enabled: true, ranges: [] } })
     }));
 
-    expect(validez.motivo).toBe(DIA_SIN_FRANJAS);
+    expect(validez.reason).toBe(DAY_WITHOUT_RANGES_MESSAGE);
   });
 
   it("encendido y vacío tampoco vale: no dejaría continuar nunca", () => {
-    expect(validateInterval({}, con("interval", { scheduleEnabled: true })).motivo).toBe(SIN_DIAS_ACTIVOS);
+    expect(validateInterval({}, con("interval", { scheduleEnabled: true })).reason).toBe(NO_ACTIVE_DAYS_MESSAGE);
   });
 
   it("una fecha a medias bloquea aunque el horario esté perfecto", () => {
@@ -200,7 +200,7 @@ describe("el horario es OPCIONAL, y eso se nota en qué bloquea", () => {
       schedule: LUNES_LABORAL
     }));
 
-    expect(validez.motivo).toBe(FECHA_INCOMPLETA);
+    expect(validez.reason).toBe(INCOMPLETE_DATE_MESSAGE);
   });
 });
 
@@ -223,7 +223,7 @@ describe("nodos guardados con la versión anterior", () => {
   });
 
   it("un nodo heredado se puede guardar tal cual, sin tocarlo", () => {
-    expect(validateInterval({}, heredado("schedule", { schedule: LUNES_LABORAL })).valido).toBe(true);
+    expect(validateInterval({}, heredado("schedule", { schedule: LUNES_LABORAL })).valid).toBe(true);
   });
 
   it("el `trigger` nuevo manda sobre el `mode` viejo si están los dos", () => {
@@ -279,7 +279,7 @@ describe("lectura defensiva de lo guardado", () => {
       time: "14:30"
     });
     expect(
-      validateInterval({}, con("date", { moment: { date: "2026-02-31", time: "14:30" } })).valido
+      validateInterval({}, con("date", { moment: { date: "2026-02-31", time: "14:30" } })).valid
     ).toBe(false);
   });
 
@@ -350,9 +350,9 @@ describe("aritmética de la espera", () => {
   it("el tope son 31 días, se escriba en la unidad que se escriba", () => {
     expect(INTERVAL_MAX_WAIT_MS).toBe(31 * 86_400_000);
     // 31 días y 44.640 minutos son la misma espera: o caben las dos o ninguna.
-    expect(validateInterval({}, con("interval", { wait: { amount: 31, unit: "days" } })).valido).toBe(true);
-    expect(validateInterval({}, con("interval", { wait: { amount: 44_640, unit: "minutes" } })).valido).toBe(true);
-    expect(validateInterval({}, con("interval", { wait: { amount: 44_641, unit: "minutes" } })).motivo).toBe(ESPERA_DEMASIADO_LARGA);
+    expect(validateInterval({}, con("interval", { wait: { amount: 31, unit: "days" } })).valid).toBe(true);
+    expect(validateInterval({}, con("interval", { wait: { amount: 44_640, unit: "minutes" } })).valid).toBe(true);
+    expect(validateInterval({}, con("interval", { wait: { amount: 44_641, unit: "minutes" } })).reason).toBe(WAIT_TOO_LONG_MESSAGE);
   });
 });
 
@@ -360,35 +360,35 @@ describe("validación — la espera", () => {
   const espera = (wait: unknown) => validateInterval({}, con("interval", { wait }));
 
   it("acepta una espera entera y positiva", () => {
-    expect(espera({ amount: 3, unit: "minutes" }).valido).toBe(true);
+    expect(espera({ amount: 3, unit: "minutes" }).valid).toBe(true);
   });
 
   it("rechaza cero, negativos y decimales", () => {
-    expect(espera({ amount: 0, unit: "minutes" }).motivo).toBe(CANTIDAD_INVALIDA);
-    expect(espera({ amount: -5, unit: "minutes" }).motivo).toBe(CANTIDAD_INVALIDA);
-    expect(espera({ amount: 2.5, unit: "hours" }).motivo).toBe(CANTIDAD_INVALIDA);
+    expect(espera({ amount: 0, unit: "minutes" }).reason).toBe(INVALID_AMOUNT_MESSAGE);
+    expect(espera({ amount: -5, unit: "minutes" }).reason).toBe(INVALID_AMOUNT_MESSAGE);
+    expect(espera({ amount: 2.5, unit: "hours" }).reason).toBe(INVALID_AMOUNT_MESSAGE);
   });
 
   it("rechaza una cantidad que no es un número", () => {
-    expect(espera({ amount: "tres", unit: "minutes" }).motivo).toBe(CANTIDAD_INVALIDA);
-    expect(espera({ amount: Number.NaN, unit: "minutes" }).motivo).toBe(CANTIDAD_INVALIDA);
+    expect(espera({ amount: "tres", unit: "minutes" }).reason).toBe(INVALID_AMOUNT_MESSAGE);
+    expect(espera({ amount: Number.NaN, unit: "minutes" }).reason).toBe(INVALID_AMOUNT_MESSAGE);
   });
 
   it("rechaza una unidad que la herramienta no ofrece", () => {
-    expect(espera({ amount: 3, unit: "semanas" }).motivo).toBe(UNIDAD_INVALIDA);
+    expect(espera({ amount: 3, unit: "semanas" }).reason).toBe(INVALID_INTERVAL_UNIT_MESSAGE);
   });
 
   it("rechaza pasarse del tope", () => {
-    expect(espera({ amount: 32, unit: "days" }).motivo).toBe(ESPERA_DEMASIADO_LARGA);
+    expect(espera({ amount: 32, unit: "days" }).reason).toBe(WAIT_TOO_LONG_MESSAGE);
   });
 
   it("un momento principal presente pero desconocido no se guarda encima", () => {
-    expect(validateInterval({}, { trigger: "telepatia" }).motivo).toBe(MODO_DESCONOCIDO);
+    expect(validateInterval({}, { trigger: "telepatia" }).reason).toBe(UNKNOWN_TRIGGER_MESSAGE);
   });
 
   it("un `mode` heredado NO se rechaza: se traduce", () => {
     // Rechazarlo dejaría sin poder guardar a todo nodo creado antes.
-    expect(validateInterval({}, heredado("schedule", { schedule: LUNES_LABORAL })).valido).toBe(true);
+    expect(validateInterval({}, heredado("schedule", { schedule: LUNES_LABORAL })).valid).toBe(true);
   });
 });
 
@@ -396,40 +396,40 @@ describe("validación — la fecha", () => {
   const fecha = (moment: unknown) => validateInterval({}, con("date", { moment }));
 
   it("acepta una fecha y hora completas", () => {
-    expect(fecha({ date: "2026-09-25", time: "14:30" }).valido).toBe(true);
+    expect(fecha({ date: "2026-09-25", time: "14:30" }).valid).toBe(true);
   });
 
   it("rechaza no haber elegido nada", () => {
-    expect(fecha(undefined).motivo).toBe(FECHA_INCOMPLETA);
-    expect(fecha(null).motivo).toBe(FECHA_INCOMPLETA);
+    expect(fecha(undefined).reason).toBe(INCOMPLETE_DATE_MESSAGE);
+    expect(fecha(null).reason).toBe(INCOMPLETE_DATE_MESSAGE);
   });
 
   it("rechaza media configuración: día sin hora, u hora sin día", () => {
-    expect(fecha({ date: "2026-09-25", time: "" }).motivo).toBe(FECHA_INCOMPLETA);
-    expect(fecha({ date: "", time: "14:30" }).motivo).toBe(FECHA_INCOMPLETA);
+    expect(fecha({ date: "2026-09-25", time: "" }).reason).toBe(INCOMPLETE_DATE_MESSAGE);
+    expect(fecha({ date: "", time: "14:30" }).reason).toBe(INCOMPLETE_DATE_MESSAGE);
   });
 
   it("rechaza un día que no existe en el calendario", () => {
-    expect(fecha({ date: "2026-02-31", time: "14:30" }).motivo).toBe(FECHA_INVALIDA);
-    expect(fecha({ date: "2026-13-01", time: "14:30" }).motivo).toBe(FECHA_INVALIDA);
+    expect(fecha({ date: "2026-02-31", time: "14:30" }).reason).toBe(INVALID_DATE_MESSAGE);
+    expect(fecha({ date: "2026-13-01", time: "14:30" }).reason).toBe(INVALID_DATE_MESSAGE);
   });
 
   it("acepta el 29 de febrero solo en año bisiesto", () => {
-    expect(esFechaValida("2028-02-29")).toBe(true);
-    expect(esFechaValida("2026-02-29")).toBe(false);
+    expect(isValidDate("2028-02-29")).toBe(true);
+    expect(isValidDate("2026-02-29")).toBe(false);
   });
 
   it("rechaza una hora imposible", () => {
-    expect(fecha({ date: "2026-09-25", time: "25:00" }).motivo).toBe(HORA_INVALIDA);
-    expect(esHoraValida("23:59")).toBe(true);
-    expect(esHoraValida("24:00")).toBe(false);
+    expect(fecha({ date: "2026-09-25", time: "25:00" }).reason).toBe(INVALID_TIME_MESSAGE);
+    expect(isValidTime("23:59")).toBe(true);
+    expect(isValidTime("24:00")).toBe(false);
   });
 
   it("acepta cualquier hora del día, incluidas las dos puntas", () => {
     // El campo de hora del navegador produce las 24; ninguna se puede rechazar
     // aquí sin que el usuario escriba algo que la herramienta no acepta.
     for (const time of ["00:00", "01:05", "12:30", "14:45", "23:59"]) {
-      expect(fecha({ date: "2026-09-12", time }).valido).toBe(true);
+      expect(fecha({ date: "2026-09-12", time }).valid).toBe(true);
     }
   });
 });
@@ -439,25 +439,25 @@ describe("validación — el horario", () => {
     validateInterval({}, con("interval", { scheduleEnabled: true, schedule: horario(dias) }));
 
   it("acepta un día activo con una franja válida", () => {
-    expect(conHorario({ monday: { enabled: true, ranges: UNA_FRANJA } }).valido).toBe(true);
+    expect(conHorario({ monday: { enabled: true, ranges: UNA_FRANJA } }).valid).toBe(true);
   });
 
   it("rechaza no tener ningún día activo", () => {
-    expect(conHorario({}).motivo).toBe(SIN_DIAS_ACTIVOS);
+    expect(conHorario({}).reason).toBe(NO_ACTIVE_DAYS_MESSAGE);
   });
 
   it("rechaza un día activo sin franjas", () => {
-    expect(conHorario({ monday: { enabled: true, ranges: [] } }).motivo).toBe(DIA_SIN_FRANJAS);
+    expect(conHorario({ monday: { enabled: true, ranges: [] } }).reason).toBe(DAY_WITHOUT_RANGES_MESSAGE);
   });
 
   it("rechaza que el fin no vaya después del inicio", () => {
-    expect(conHorario({ monday: { enabled: true, ranges: [{ start: "18:00", end: "09:00" }] } }).motivo).toBe(FRANJA_INVERTIDA);
-    expect(conHorario({ monday: { enabled: true, ranges: [{ start: "09:00", end: "09:00" }] } }).motivo).toBe(FRANJA_INVERTIDA);
+    expect(conHorario({ monday: { enabled: true, ranges: [{ start: "18:00", end: "09:00" }] } }).reason).toBe(INVERTED_RANGE_MESSAGE);
+    expect(conHorario({ monday: { enabled: true, ranges: [{ start: "09:00", end: "09:00" }] } }).reason).toBe(INVERTED_RANGE_MESSAGE);
   });
 
   it("rechaza horas corruptas dentro de una franja", () => {
-    expect(conHorario({ monday: { enabled: true, ranges: [{ start: "9", end: "18" }] } }).motivo).toBe(HORA_INVALIDA);
-    expect(conHorario({ monday: { enabled: true, ranges: [null] } }).motivo).toBe(HORA_INVALIDA);
+    expect(conHorario({ monday: { enabled: true, ranges: [{ start: "9", end: "18" }] } }).reason).toBe(INVALID_TIME_MESSAGE);
+    expect(conHorario({ monday: { enabled: true, ranges: [null] } }).reason).toBe(INVALID_TIME_MESSAGE);
   });
 
   it("un día APAGADO con franjas rotas no impide guardar: no gobierna nada", () => {
@@ -465,7 +465,7 @@ describe("validación — el horario", () => {
       conHorario({
         monday: { enabled: true, ranges: UNA_FRANJA },
         sunday: { enabled: false, ranges: [{ start: "99:99", end: "00:00" }] }
-      }).valido
+      }).valid
     ).toBe(true);
   });
 });
@@ -540,10 +540,10 @@ describe("resumen", () => {
   it("la frase larga del editor sale de la misma configuración", () => {
     const config = readIntervalConfig(con("interval", { wait: { amount: 3, unit: "minutes" } }));
 
-    expect(explicarIntervalo(config)).toBe(
+    expect(explainInterval(config)).toBe(
       "La conversación continuará 3 minutos después de llegar a este bloque."
     );
-    expect(describirIntervalo(config)).toBe("Esperar 3 minutos");
+    expect(describeInterval(config)).toBe("Esperar 3 minutos");
   });
 
   it("la frase larga cuenta las dos cosas cuando hay dos", () => {
@@ -560,7 +560,7 @@ describe("resumen", () => {
       })
     }));
 
-    expect(explicarIntervalo(config)).toBe(
+    expect(explainInterval(config)).toBe(
       "La conversación continuará 3 minutos después de llegar a este bloque, " +
         "y solo de lunes a viernes, entre 09:00 a.m.–06:00 p.m."
     );
@@ -569,7 +569,7 @@ describe("resumen", () => {
   it("agrupa los días consecutivos y enumera los sueltos", () => {
     const franja = [{ start: "09:00", end: "18:00" }];
     const conDias = (dias: Parameters<typeof horario>[0]) =>
-      explicarIntervalo(readIntervalConfig(con("interval", {
+      explainInterval(readIntervalConfig(con("interval", {
         scheduleEnabled: true,
         schedule: horario(dias)
       })));
@@ -592,7 +592,7 @@ describe("resumen", () => {
       })
     }));
 
-    expect(explicarIntervalo(config)).toBe(
+    expect(explainInterval(config)).toBe(
       "La conversación continuará 5 minutos después de llegar a este bloque, " +
         "y solo dentro del horario configurado de lunes a martes."
     );
@@ -600,10 +600,10 @@ describe("resumen", () => {
 
   it("la frase larga calla cuando no hay nada que confirmar", () => {
     // Fecha a medias: no hay momento que anunciar.
-    expect(explicarIntervalo(readIntervalConfig(con("date")))).toBeNull();
+    expect(explainInterval(readIntervalConfig(con("date")))).toBeNull();
     // Horario encendido y vacío: no hay ventana que prometer.
     expect(
-      explicarIntervalo(readIntervalConfig(con("interval", { scheduleEnabled: true })))
+      explainInterval(readIntervalConfig(con("interval", { scheduleEnabled: true })))
     ).toBeNull();
   });
 
@@ -619,7 +619,7 @@ describe("resumen", () => {
       })
     }));
 
-    expect(explicarIntervalo(config)).toBe(
+    expect(explainInterval(config)).toBe(
       "La conversación continuará 3 minutos después de llegar a este bloque, " +
         "y solo de lunes, entre 09:00 a.m.–12:00 p.m. y 02:00 p.m.–06:00 p.m."
     );
@@ -666,6 +666,6 @@ describe("una franja A MEDIO ESCRIBIR se conserva, como media fecha", () => {
     };
 
     expect(readIntervalConfig(config).schedule.monday.ranges).toHaveLength(1);
-    expect(validateInterval({}, config).valido).toBe(false);
+    expect(validateInterval({}, config).valid).toBe(false);
   });
 });

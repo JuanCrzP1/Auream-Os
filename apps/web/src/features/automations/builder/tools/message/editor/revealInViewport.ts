@@ -1,66 +1,48 @@
 // ---------------------------------------------------------------------------
-// Llevar un bloque a la vista dentro del constructor.
+// Llevar un bloque a la vista dentro del área desplazable del constructor.
 //
-// Actúa sobre un contenedor EXPLÍCITO. No usa `scrollIntoView`, que sube por el
-// árbol y desplaza todos los ancestros desplazables que encuentre: con eso, el
-// marco del nodo se movía entero y la biblioteca y la zona de continuación se
-// salían de la ventana.
-//
-// Dos comportamientos, según dónde esté el bloque:
-//
-//   - Al FINAL: se va al fondo. Es lo único que garantiza que el bloque nuevo y
-//     la zona de continuación queden visibles A LA VEZ; llevar solo el bloque
-//     dejaría la zona justo debajo del borde y el usuario no vería dónde
-//     seguir.
-//   - En MEDIO: se desplaza lo mínimo. Si ya se ve, no se mueve nada — saltar
-//     cuando no hace falta es tan molesto como no saltar cuando hace falta.
+// Sobre un contenedor explícito, no `scrollIntoView` (que desplaza todos los
+// ancestros y movía el marco entero). Al final: ir al fondo, para que el bloque
+// y la zona de continuación se vean juntos. En medio: lo mínimo, y nada si ya
+// se ve.
 // ---------------------------------------------------------------------------
 
-/** Aire entre el bloque y el borde del área, para que no quede pegado. */
-const MARGEN = 12;
+const MARGIN = 12;
 
-function desplazar(viewport: HTMLElement, top: number, suave: boolean): void {
-  const destino = Math.max(0, top);
+function scrollTo(viewport: HTMLElement, top: number, smooth: boolean): void {
+  const target = Math.max(0, top);
 
-  // `scrollTo` con opciones no existe en todos los entornos —jsdom entre
-  // ellos—, así que la posición se fija siempre y la animación es un extra.
-  if (suave && typeof viewport.scrollTo === "function") {
-    viewport.scrollTo({ top: destino, behavior: "smooth" });
+  // `scrollTo` con opciones no existe en todos los entornos (jsdom).
+  if (smooth && typeof viewport.scrollTo === "function") {
+    viewport.scrollTo({ top: target, behavior: "smooth" });
     return;
   }
 
-  viewport.scrollTop = destino;
+  viewport.scrollTop = target;
 }
 
-/**
- * Deja visible el bloque indicado dentro del área desplazable del constructor.
- *
- * @param viewport Elemento con `overflow-y: auto`. El único que se desplaza.
- * @param bloque   Fila del bloque que hay que revelar.
- * @param alFinal  El bloque es el último de la secuencia.
- */
 export function revealInViewport(
   viewport: HTMLElement,
-  bloque: HTMLElement,
-  alFinal: boolean,
-  suave = true
+  row: HTMLElement,
+  isLast: boolean,
+  smooth = true
 ): void {
-  if (alFinal) {
-    desplazar(viewport, viewport.scrollHeight, suave);
+  if (isLast) {
+    scrollTo(viewport, viewport.scrollHeight, smooth);
     return;
   }
 
-  const arriba = bloque.offsetTop;
-  const abajo = arriba + bloque.offsetHeight;
-  const visibleDesde = viewport.scrollTop;
-  const visibleHasta = visibleDesde + viewport.clientHeight;
+  const top = row.offsetTop;
+  const bottom = top + row.offsetHeight;
+  const visibleFrom = viewport.scrollTop;
+  const visibleTo = visibleFrom + viewport.clientHeight;
 
-  if (arriba < visibleDesde) {
-    desplazar(viewport, arriba - MARGEN, suave);
+  if (top < visibleFrom) {
+    scrollTo(viewport, top - MARGIN, smooth);
     return;
   }
 
-  if (abajo > visibleHasta) {
-    desplazar(viewport, abajo - viewport.clientHeight + MARGEN, suave);
+  if (bottom > visibleTo) {
+    scrollTo(viewport, bottom - viewport.clientHeight + MARGIN, smooth);
   }
 }

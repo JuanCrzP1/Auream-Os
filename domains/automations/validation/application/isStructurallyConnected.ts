@@ -29,7 +29,7 @@ import { detectUnreachable } from "./rules/detectUnreachable";
 // TERMINADO o si el motor podrá ejecutarlo —no de si está conectado—:
 //
 //   validateNodeDegree      exige rama terminada en `end`
-//   validateFallbacks       exige salida por defecto en las preguntas
+//   validateOutgoingLimits  exige una conexión como mucho por salida
 //   validateEdgePriorities  exige desempate determinista entre flechas
 //   detectCycles            exige que el flujo pueda terminar
 //   validateKnownNodeTypes  exige que el motor sepa ejecutar cada tipo

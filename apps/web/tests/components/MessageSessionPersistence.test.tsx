@@ -6,7 +6,7 @@ import { createNodeDraft } from "@features/automations/builder/services/createNo
 import { resolveTool } from "@features/automations/builder/tools/registry";
 import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
 import { readMessageItems } from "@features/automations/builder/tools/message/readMessageConfig";
-import { soltarArchivo } from "@features/automations/builder/tools/message/mediaSourceSession";
+import { releaseFile } from "@features/automations/builder/tools/message/mediaSourceSession";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 
 // ---------------------------------------------------------------------------
@@ -233,7 +233,7 @@ describe.each(MEDIOS)("$kind configurado por ARCHIVO", ({ kind }) => {
     editor.unmount();
 
     // Se simula una recarga: la configuración sobrevive, los bytes no.
-    soltarArchivo("m1");
+    releaseFile("m1");
 
     const reabierto = abrir(guardado);
 

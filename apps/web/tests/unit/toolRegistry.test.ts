@@ -29,17 +29,16 @@ const OFFICIAL_PALETTE_TYPES = [
   "pixel",
   "ai",
   "delay",
-  "sale-approved",
   "integration",
   "menu",
   "notification"
 ] as const;
 
 /** Herramientas retiradas: no deben volver por ninguna vía. */
-const REMOVED_TYPES = ["capture", "action", "fallback"] as const;
+const REMOVED_TYPES = ["capture", "action", "fallback", "sale-approved"] as const;
 
 describe("registry de herramientas", () => {
-  it("registra las 13 herramientas del catálogo oficial", () => {
+  it("registra las 12 herramientas del catálogo oficial", () => {
     for (const type of OFFICIAL_PALETTE_TYPES) {
       expect(getTool(type), `falta la herramienta '${type}'`).not.toBeNull();
     }
@@ -47,7 +46,7 @@ describe("registry de herramientas", () => {
     expect(listPaletteTools()).toHaveLength(OFFICIAL_PALETTE_TYPES.length);
   });
 
-  it("ofrece las 13 en la paleta y en el orden acordado", () => {
+  it("ofrece las 12 en la paleta y en el orden acordado", () => {
     expect(listPaletteTools().map((tool) => tool.type)).toEqual([...OFFICIAL_PALETTE_TYPES]);
   });
 

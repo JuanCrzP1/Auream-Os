@@ -9,3 +9,26 @@ vi.stubEnv("VITE_NEON_AUTH_URL", "https://auth.test.local/neondb/auth");
 if (!globalThis.fetch) {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => null }));
 }
+
+// Node 25 expone un `localStorage` global propio (sin `--localstorage-file` es
+// un objeto vacío sin métodos) que tapa el de jsdom. Si el que hay no es un
+// Storage usable, se sustituye por uno en memoria con la misma API.
+function createMemoryStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => [...values.keys()][index] ?? null,
+    removeItem: (key) => void values.delete(key),
+    setItem: (key, value) => void values.set(key, String(value))
+  };
+}
+
+for (const name of ["localStorage", "sessionStorage"] as const) {
+  if (typeof globalThis[name]?.clear !== "function") {
+    vi.stubGlobal(name, createMemoryStorage());
+  }
+}

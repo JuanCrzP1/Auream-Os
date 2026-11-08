@@ -9,36 +9,14 @@ import { distributorUi } from "./distributor/ui";
 import { pixelUi } from "./pixel/ui";
 import { aiExtensionUi } from "./ai-extension/ui";
 import { intervalUi } from "./interval/ui";
-import { saleApprovedUi } from "./sale-approved/ui";
 import { integrationUi } from "./integration/ui";
 import { menuUi } from "./menu/ui";
 import { notificationUi } from "./notification/ui";
 import { endUi } from "./end/ui";
 
 // ---------------------------------------------------------------------------
-// Barril de UI de las herramientas.
-//
-// Mitad React del catálogo. La otra mitad es `registry.ts`, que es PURO y no
-// puede importar nada de aquí: lo ejecuta el test de paridad del backend en un
-// entorno Node donde un `.tsx` ni se resuelve.
-//
-// Sustituye a `tools/icons.tsx`, que era un `Record<NodeType, Icon>`: un mapa
-// POR ASPECTO. Con ese patrón, cada aspecto visual nuevo —forma, cuerpo
-// compacto, editor— habría añadido otro mapa que recordar actualizar, que es
-// exactamente la dispersión que la regla A4 prohíbe.
-//
-// Aquí hay UN registro POR HERRAMIENTA. Añadir un aspecto visual es añadir un
-// campo a `ToolUi`, no un mapa nuevo. Y el tipo viaja dentro del objeto, igual
-// que en `registry.ts`, así que una clave no puede desincronizarse de lo que
-// describe.
-//
-// CÓMO SE AÑADE UNA HERRAMIENTA
-//
-//   1. `tools/<herramienta>/ui.tsx` → su `ToolUi`.
-//   2. Añadirlo a `TOOL_UIS` aquí abajo.
-//
-// Olvidar el paso 2 no pasa desapercibido: `toolRegistry.test.ts` compara este
-// catálogo con el de `registry.ts` en ambos sentidos y falla si difieren.
+// Mitad React del catálogo: un `ToolUi` por herramienta. `toolUiRegistry.test`
+// comprueba que coincide con `registry.ts` en ambos sentidos.
 // ---------------------------------------------------------------------------
 
 /** Catálogo visual. El orden no importa: quien ordena la paleta es el registry. */
@@ -52,7 +30,6 @@ const TOOL_UIS: ReadonlyArray<ToolUi> = [
   pixelUi,
   aiExtensionUi,
   intervalUi,
-  saleApprovedUi,
   integrationUi,
   menuUi,
   notificationUi,

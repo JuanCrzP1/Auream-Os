@@ -1,5 +1,7 @@
 import type { CanvasEdge, CanvasNode } from "../types/canvas";
+import { PAUSING_NODE_TYPES } from "@contracts/FlowConnectionRules";
 import { findTool } from "../tools/registry";
+import { findOvercrowdedOutputs } from "./connectionRules";
 
 export interface BuilderValidationReport {
   errors: string[];
@@ -76,34 +78,48 @@ export function validateCanvasGraph(nodes: CanvasNode[], edges: CanvasEdge[]): B
       errors.push(`Camino muerto en "${node.data.title}" — no tiene edges salientes.`);
     }
 
-    if (node.data.nodeType === "question" && !outgoing.some((edge) => edge.data?.isFallback)) {
-      // Severidad: ERROR. Alineado con backend. Sin fallback el flujo falla en runtime.
-      errors.push(`La pregunta "${node.data.title}" no tiene un edge de fallback.`);
-    }
   }
 
-  // Detección de ciclos (warning: los ciclos condicionales son válidos en runtime)
+  // De cada salida sale como mucho una conexión (alineado con el backend,
+  // validateOutgoingLimits).
+  for (const sourceId of findOvercrowdedOutputs(edges)) {
+    const node = nodes.find((candidate) => candidate.id === sourceId);
+    if (node) errors.push(`"${node.data.title}" tiene más de una conexión saliendo de la misma salida.`);
+  }
+
+  // Ciclos: solo es un bucle infinito el que no pasa por ningún bloque que
+  // espere (Esperar respuesta, Menú, Programador); esos se detienen en cada vuelta.
+  const pauses = (nodeId: string): boolean => {
+    const type = nodes.find((node) => node.id === nodeId)?.data.nodeType;
+    return type !== undefined && PAUSING_NODE_TYPES.has(type);
+  };
+
   const cycleVisited = new Set<string>();
   const cycleStack = new Set<string>();
+  const path: string[] = [];
 
   const visit = (nodeId: string): boolean => {
-    if (cycleStack.has(nodeId)) return true;
+    if (cycleStack.has(nodeId)) return !path.slice(path.indexOf(nodeId)).some(pauses);
     if (cycleVisited.has(nodeId)) return false;
 
     cycleVisited.add(nodeId);
     cycleStack.add(nodeId);
+    path.push(nodeId);
 
     for (const target of adjacency.get(nodeId) ?? []) {
       if (visit(target)) return true;
     }
 
+    path.pop();
     cycleStack.delete(nodeId);
     return false;
   };
 
   for (const node of nodes) {
     if (visit(node.id)) {
-      warnings.push("Se detectó un loop potencial. Revisa condiciones de salida.");
+      warnings.push(
+        "Hay un ciclo que nunca se detiene: añade un bloque que espere (Esperar respuesta, Menú o Programador) o rompe el ciclo."
+      );
       break;
     }
   }

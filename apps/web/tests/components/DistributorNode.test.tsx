@@ -108,8 +108,9 @@ function conSalidas(n: number): CanvasNode {
 
 const anadir = () => fireEvent.click(screen.getByRole("button", { name: "Añadir salida" }));
 const guardar = () => fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+// Cada salida se edita en su propio campo: se leen sus nombres.
 const salidasEnElEditor = () =>
-  screen.queryAllByRole("listitem").map((fila) => fila.textContent?.trim() ?? "");
+  screen.queryAllByLabelText(/^Nombre de la salida /).map((campo) => (campo as HTMLInputElement).value);
 
 describe("estado inicial", () => {
   it("un Distribuidor nuevo llega al editor sin ninguna salida", () => {
@@ -401,7 +402,7 @@ describe("independencia entre herramientas", () => {
       "message-item",
       "send-once",
       "wait-response",
-      "wr-switch",
+      "wr-timeout",
       "wr-node",
       "wr-out"
     ]) {

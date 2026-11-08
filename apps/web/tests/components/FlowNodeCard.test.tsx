@@ -67,7 +67,7 @@ describe("FlowNodeCard — icono del nodo cerrado", () => {
   });
 
   it("el mecanismo es genérico: cada herramienta del catálogo pinta EXACTAMENTE su propio SVG, sin casos especiales", () => {
-    // Recorre las 13 herramientas de la paleta más el nodo de sistema `end`,
+    // Recorre las 12 herramientas de la paleta más el nodo de sistema `end`,
     // sin nombrar ninguna: si `FlowNodeCard` tuviera un `tool === "message" ?
     // ... : ...` esto lo dejaría en evidencia para cualquier tipo que no fuera
     // Mensaje, no solo para uno.

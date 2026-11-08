@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  aceptaHora,
-  aceptaMinuto,
-  horaPuedeCrecer,
-  esHoraCompleta,
-  esMinutoCompleto,
-  formatearEnDoce,
+  acceptsHour,
+  acceptsMinute,
+  canHourGrow,
+  isCompleteHour,
+  isCompleteMinute,
+  formatTime12,
   from24Hour,
-  normalizarHora,
-  normalizarMinuto,
+  normalizeHour,
+  normalizeMinute,
   to24Hour
 } from "@features/automations/builder/tools/interval/time12";
 import { validateInterval } from "@features/automations/builder/tools/interval/validateInterval";
@@ -24,131 +24,131 @@ import { intervalWaitMs, readIntervalConfig } from "@contracts/IntervalConfig";
 // pura y no dentro de un componente.
 // ---------------------------------------------------------------------------
 
-describe("aceptaHora — QUÉ SE PUEDE TECLEAR en el campo de hora", () => {
+describe("acceptsHour — QUÉ SE PUEDE TECLEAR en el campo de hora", () => {
   it("acepta el vacío: borrar para reescribir es un gesto normal", () => {
-    expect(aceptaHora("")).toBe(true);
+    expect(acceptsHour("")).toBe(true);
   });
 
   it("acepta las doce horas, con cero delante y sin él", () => {
     for (let h = 1; h <= 12; h += 1) {
-      expect(aceptaHora(String(h)), String(h)).toBe(true);
-      expect(aceptaHora(String(h).padStart(2, "0")), `0${h}`).toBe(true);
+      expect(acceptsHour(String(h)), String(h)).toBe(true);
+      expect(acceptsHour(String(h).padStart(2, "0")), `0${h}`).toBe(true);
     }
   });
 
   it("acepta «0» porque es el primer paso de «08»", () => {
-    expect(aceptaHora("0")).toBe(true);
+    expect(acceptsHour("0")).toBe(true);
   });
 
   it("pero NO «00»: en un reloj de doce no existe la hora cero", () => {
-    expect(aceptaHora("00")).toBe(false);
+    expect(acceptsHour("00")).toBe(false);
   });
 
   it("NO acepta letras — este es el caso que tenía que morir", () => {
     for (const basura of ["a", "x", "abc", "10a", "1x", "12x", "10ndjd", "ndjd"]) {
-      expect(aceptaHora(basura), basura).toBe(false);
+      expect(acceptsHour(basura), basura).toBe(false);
     }
   });
 
   it("NO acepta símbolos ni separadores", () => {
     for (const basura of ["-", ".", ":", " ", "1 ", " 1", "1.", "1:", "+1", "-1"]) {
-      expect(aceptaHora(basura), JSON.stringify(basura)).toBe(false);
+      expect(acceptsHour(basura), JSON.stringify(basura)).toBe(false);
     }
   });
 
   it("NO acepta ninguna hora por encima de doce", () => {
     for (let h = 13; h <= 99; h += 1) {
-      expect(aceptaHora(String(h)), String(h)).toBe(false);
+      expect(acceptsHour(String(h)), String(h)).toBe(false);
     }
   });
 
   it("en particular, el segundo dígito de «99» no entra", () => {
-    expect(aceptaHora("9")).toBe(true);
-    expect(aceptaHora("99")).toBe(false);
+    expect(acceptsHour("9")).toBe(true);
+    expect(acceptsHour("99")).toBe(false);
   });
 
   it("NO acepta tres cifras: ninguna hora las tiene", () => {
     for (const largo of ["000", "123", "100", "010"]) {
-      expect(aceptaHora(largo), largo).toBe(false);
+      expect(acceptsHour(largo), largo).toBe(false);
     }
   });
 });
 
-describe("aceptaMinuto — QUÉ SE PUEDE TECLEAR en el campo de minutos", () => {
+describe("acceptsMinute — QUÉ SE PUEDE TECLEAR en el campo de minutos", () => {
   it("acepta el vacío mientras se edita", () => {
-    expect(aceptaMinuto("")).toBe(true);
+    expect(acceptsMinute("")).toBe(true);
   });
 
   it("acepta los sesenta minutos, y también el cero suelto", () => {
     for (let m = 0; m <= 59; m += 1) {
-      expect(aceptaMinuto(String(m).padStart(2, "0")), String(m)).toBe(true);
+      expect(acceptsMinute(String(m).padStart(2, "0")), String(m)).toBe(true);
     }
     for (let m = 0; m <= 9; m += 1) {
-      expect(aceptaMinuto(String(m)), String(m)).toBe(true);
+      expect(acceptsMinute(String(m)), String(m)).toBe(true);
     }
   });
 
   it("NO acepta sesenta ni nada por encima", () => {
     for (let m = 60; m <= 99; m += 1) {
-      expect(aceptaMinuto(String(m)), String(m)).toBe(false);
+      expect(acceptsMinute(String(m)), String(m)).toBe(false);
     }
   });
 
   it("en particular, el «0» de «60» no entra", () => {
-    expect(aceptaMinuto("6")).toBe(true);
-    expect(aceptaMinuto("60")).toBe(false);
+    expect(acceptsMinute("6")).toBe(true);
+    expect(acceptsMinute("60")).toBe(false);
   });
 
   it("NO acepta letras ni símbolos", () => {
     for (const basura of ["a", "9a", "1x", "abc", "10ndjd", ":", "-", " ", "5 "]) {
-      expect(aceptaMinuto(basura), JSON.stringify(basura)).toBe(false);
+      expect(acceptsMinute(basura), JSON.stringify(basura)).toBe(false);
     }
   });
 
   it("NO acepta tres cifras", () => {
-    expect(aceptaMinuto("000")).toBe(false);
-    expect(aceptaMinuto("123")).toBe(false);
+    expect(acceptsMinute("000")).toBe(false);
+    expect(acceptsMinute("123")).toBe(false);
   });
 });
 
 describe("completo ≠ tecleable: son dos preguntas distintas", () => {
   it("el vacío se puede teclear pero no significa ninguna hora", () => {
-    expect(aceptaHora("")).toBe(true);
-    expect(esHoraCompleta("")).toBe(false);
+    expect(acceptsHour("")).toBe(true);
+    expect(isCompleteHour("")).toBe(false);
 
-    expect(aceptaMinuto("")).toBe(true);
-    expect(esMinutoCompleto("")).toBe(false);
+    expect(acceptsMinute("")).toBe(true);
+    expect(isCompleteMinute("")).toBe(false);
   });
 
   it("«0» se puede teclear —es el paso de «08»— pero tampoco es una hora", () => {
-    expect(aceptaHora("0")).toBe(true);
-    expect(esHoraCompleta("0")).toBe(false);
+    expect(acceptsHour("0")).toBe(true);
+    expect(isCompleteHour("0")).toBe(false);
   });
 
   it("pero «0» SÍ es un minuto de pleno derecho", () => {
-    expect(esMinutoCompleto("0")).toBe(true);
+    expect(isCompleteMinute("0")).toBe(true);
   });
 });
 
 describe("normalizar — la forma canónica al SALIR del campo", () => {
   it("«8» se lee «08»", () => {
-    expect(normalizarHora("8")).toBe("08");
-    expect(normalizarMinuto("5")).toBe("05");
-    expect(normalizarMinuto("0")).toBe("00");
+    expect(normalizeHour("8")).toBe("08");
+    expect(normalizeMinute("5")).toBe("05");
+    expect(normalizeMinute("0")).toBe("00");
   });
 
   it("lo que ya está en su forma no se toca", () => {
-    expect(normalizarHora("08")).toBe("08");
-    expect(normalizarHora("12")).toBe("12");
-    expect(normalizarMinuto("45")).toBe("45");
+    expect(normalizeHour("08")).toBe("08");
+    expect(normalizeHour("12")).toBe("12");
+    expect(normalizeMinute("45")).toBe("45");
   });
 
   it("NO INVENTA VALORES: lo incompleto se devuelve intacto", () => {
     // Rellenar con ceros lo que la persona no ha terminado de escribir sería
     // ponerle un dato que no puso — «0» pasaría a «00», que ni es una hora.
-    expect(normalizarHora("")).toBe("");
-    expect(normalizarHora("0")).toBe("0");
-    expect(normalizarMinuto("")).toBe("");
+    expect(normalizeHour("")).toBe("");
+    expect(normalizeHour("0")).toBe("0");
+    expect(normalizeMinute("")).toBe("");
   });
 });
 
@@ -244,47 +244,47 @@ describe("from24Hour — de lo guardado a lo que se pinta", () => {
   });
 });
 
-describe("formatearEnDoce — la hora en TEXTO CORRIDO, para los resúmenes", () => {
+describe("formatTime12 — la hora en TEXTO CORRIDO, para los resúmenes", () => {
   it("se lee como se dice", () => {
-    expect(formatearEnDoce("13:30")).toBe("01:30 p.m.");
-    expect(formatearEnDoce("14:45")).toBe("02:45 p.m.");
-    expect(formatearEnDoce("08:05")).toBe("08:05 a.m.");
-    expect(formatearEnDoce("00:00")).toBe("12:00 a.m.");
-    expect(formatearEnDoce("12:00")).toBe("12:00 p.m.");
-    expect(formatearEnDoce("23:59")).toBe("11:59 p.m.");
+    expect(formatTime12("13:30")).toBe("01:30 p.m.");
+    expect(formatTime12("14:45")).toBe("02:45 p.m.");
+    expect(formatTime12("08:05")).toBe("08:05 a.m.");
+    expect(formatTime12("00:00")).toBe("12:00 a.m.");
+    expect(formatTime12("12:00")).toBe("12:00 p.m.");
+    expect(formatTime12("23:59")).toBe("11:59 p.m.");
   });
 
   it("`null` si lo guardado no es una hora: no se le inventa un formato", () => {
     for (const basura of ["", "14", "25:00", "abc", "10ndjd"]) {
-      expect(formatearEnDoce(basura), basura).toBeNull();
+      expect(formatTime12(basura), basura).toBeNull();
     }
   });
 });
 
 
-describe("horaPuedeCrecer — la regla del AUTOAVANCE, preguntada al dominio", () => {
+describe("canHourGrow — la regla del AUTOAVANCE, preguntada al dominio", () => {
   it("espera la segunda cifra solo cuando existe alguna hora que empiece así", () => {
     // «0» y «1» pueden crecer: 01–09, y 10, 11, 12.
-    expect(horaPuedeCrecer("0")).toBe(true);
-    expect(horaPuedeCrecer("1")).toBe(true);
+    expect(canHourGrow("0")).toBe(true);
+    expect(canHourGrow("1")).toBe(true);
   });
 
   it("y NO la espera cuando ninguna hora podría continuar", () => {
     // De 20 a 99 no hay ninguna hora de doce, así que «2»…«9» ya están
     // terminadas: retener el cursor obligaría a teclear «02» donde «2» basta.
     for (let cifra = 2; cifra <= 9; cifra += 1) {
-      expect(horaPuedeCrecer(String(cifra)), String(cifra)).toBe(false);
+      expect(canHourGrow(String(cifra)), String(cifra)).toBe(false);
     }
   });
 
   it("con dos cifras nunca puede crecer", () => {
     for (const hora of ["01", "09", "10", "11", "12", "02"]) {
-      expect(horaPuedeCrecer(hora), hora).toBe(false);
+      expect(canHourGrow(hora), hora).toBe(false);
     }
   });
 
   it("el vacío puede crecer: todavía no se ha escrito nada", () => {
-    expect(horaPuedeCrecer("")).toBe(true);
+    expect(canHourGrow("")).toBe(true);
   });
 
   it("cada hora que espera cifra tiene continuación REAL, y las demás no", () => {
@@ -293,10 +293,10 @@ describe("horaPuedeCrecer — la regla del AUTOAVANCE, preguntada al dominio", (
     for (let cifra = 0; cifra <= 9; cifra += 1) {
       const prefijo = String(cifra);
       const hayContinuacion = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].some((d) =>
-        aceptaHora(`${prefijo}${d}`)
+        acceptsHour(`${prefijo}${d}`)
       );
 
-      expect(horaPuedeCrecer(prefijo), prefijo).toBe(hayContinuacion);
+      expect(canHourGrow(prefijo), prefijo).toBe(hayContinuacion);
     }
   });
 });
@@ -314,14 +314,14 @@ describe("D · DOMINIO — qué combinaciones existen y cuáles no", () => {
     });
 
     // 21 · Después → válido
-    expect(validateInterval({}, config({})).valido).toBe(true);
+    expect(validateInterval({}, config({})).valid).toBe(true);
 
     // 20 · Fecha → válido
     expect(
       validateInterval(
         {},
         config({ trigger: "date", moment: { date: "2026-09-15", time: "12:45" } })
-      ).valido
+      ).valid
     ).toBe(true);
 
     // 22 · Fecha + Horario → válido
@@ -334,7 +334,7 @@ describe("D · DOMINIO — qué combinaciones existen y cuáles no", () => {
           scheduleEnabled: true,
           schedule: { monday: { enabled: true, ranges: [{ start: "09:00", end: "18:00" }] } }
         })
-      ).valido
+      ).valid
     ).toBe(true);
 
     // 23 · Después + Horario → válido
@@ -345,12 +345,12 @@ describe("D · DOMINIO — qué combinaciones existen y cuáles no", () => {
           scheduleEnabled: true,
           schedule: { monday: { enabled: true, ranges: [{ start: "09:00", end: "18:00" }] } }
         })
-      ).valido
+      ).valid
     ).toBe(true);
 
     // 19 · Horario ACTIVO pero sin ningún día → inválido
     expect(
-      validateInterval({}, config({ scheduleEnabled: true, schedule: {} })).valido
+      validateInterval({}, config({ scheduleEnabled: true, schedule: {} })).valid
     ).toBe(false);
   });
 

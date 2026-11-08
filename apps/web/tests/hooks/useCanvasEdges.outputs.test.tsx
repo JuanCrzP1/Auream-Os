@@ -27,7 +27,7 @@ function snapshotBase(): BuilderFlowSnapshot {
       flowId: "f",
       versionNumber: 1,
       status: "draft",
-      entryNodeId: "espera"
+      entryNodeId: "contesto"
     },
     nodes: {
       espera: {

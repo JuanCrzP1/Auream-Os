@@ -249,7 +249,9 @@ async function main() {
     sesion?.cerrar();
     chrome.kill();
     await banco.cerrar();
-    await rm(perfil, { recursive: true, force: true });
+    // Chrome sigue escribiendo en su perfil unos milisegundos tras `kill`:
+    // reintentar evita un ENOTEMPTY que tumbaba el proceso con todo en verde.
+    await rm(perfil, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 
   informar("Chrome");

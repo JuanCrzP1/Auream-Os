@@ -1,7 +1,7 @@
 import "./node-expanded.css";
 import "../toolbar-button.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ToolDefinition } from "@features/automations/builder/tools/ToolDefinition";
+import { VALID, type ToolDefinition } from "@features/automations/builder/tools/ToolDefinition";
 import type { ToolDraft, ToolUi } from "@features/automations/builder/tools/ToolUi";
 import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
@@ -46,43 +46,39 @@ export function NodeExpandedFrame({
   const Editor = ui.Editor;
 
   // Lo que hay guardado en el nodo, ahora mismo.
-  const enElNodo = useMemo<ToolDraft>(
+  const saved = useMemo<ToolDraft>(
     () => ({ name: data.title, content: data.content, config: data.config }),
     [data.title, data.content, data.config]
   );
-  const firmaDelNodo = useMemo(() => JSON.stringify(enElNodo), [enElNodo]);
+  const savedSignature = useMemo(() => JSON.stringify(saved), [saved]);
 
   // Lo que el usuario lleva editado y todavía no ha confirmado.
-  const [borrador, setBorrador] = useState<ToolDraft>(enElNodo);
+  const [draft, setDraft] = useState<ToolDraft>(saved);
 
   // Se resincroniza cuando el nodo cambia DE VERDAD, comparando por valor y no
   // por identidad: el lienzo reconstruye objetos al seleccionar o mover, y con
   // una comparación por referencia esos gestos borrarían lo que el usuario
   // lleva escrito sin haber tocado su configuración.
   useEffect(() => {
-    setBorrador(JSON.parse(firmaDelNodo) as ToolDraft);
-  }, [firmaDelNodo]);
+    setDraft(JSON.parse(savedSignature) as ToolDraft);
+  }, [savedSignature]);
 
-  const hayCambios = JSON.stringify(borrador) !== firmaDelNodo;
+  const isDirty = JSON.stringify(draft) !== savedSignature;
 
   /**
    * ¿Puede guardarse lo que hay?
    *
    * La respuesta la da la HERRAMIENTA, no este marco: aquí no se sabe qué es un
    * bloque de contenido ni qué hace válida una imagen. Se pregunta igual que ya
-   * se pregunta por el icono o por el editor, y una herramienta que no declare
-   * nada se guarda siempre — que es el caso de las trece restantes.
+   * se pregunta por el icono o por el editor; sin `validate`, se guarda siempre.
    */
-  const validez = tool.validateContent?.(borrador.content, borrador.config) ?? {
-    valido: true,
-    motivo: null
-  };
+  const validation = tool.validate?.(draft.content, draft.config) ?? VALID;
 
   // El aviso aparece cuando el usuario INTENTA guardar, no mientras construye:
   // señalar un mensaje incompleto desde el primer clic sería regañarle por no
   // haber terminado todavía. Se retira solo en cuanto lo que hay ya vale.
-  const [intentoRechazado, setIntentoRechazado] = useState(false);
-  const avisoDeValidez = intentoRechazado && !validez.valido ? validez.motivo : null;
+  const [rejectedAttempt, setRejectedAttempt] = useState(false);
+  const validationNotice = rejectedAttempt && !validation.valid ? validation.reason : null;
 
   // Salir con cambios pendientes se pregunta; salir sin ellos, no.
   //
@@ -90,8 +86,8 @@ export function NodeExpandedFrame({
   // el marco es el único que sabe si queda algo sin confirmar. Cualquier
   // herramienta que declare editor hereda esta protección sin escribir nada,
   // igual que hereda la barra de «Cancelar» y «Guardar».
-  const [confirmandoSalida, setConfirmandoSalida] = useState(false);
-  const cerrar = useRef<HTMLButtonElement>(null);
+  const [confirmingExit, setConfirmingExit] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   /**
    * INTENTO de salir: la X y Escape.
@@ -101,24 +97,24 @@ export function NodeExpandedFrame({
    * «quiero salir», y con trabajo sin guardar por medio esas dos cosas no
    * pueden resolverse igual.
    */
-  const intentarCerrar = useCallback(() => {
+  const requestClose = useCallback(() => {
     // Red de seguridad: con la confirmación ya abierta, un segundo intento no
     // puede cerrar el editor por detrás de ella.
-    if (confirmandoSalida) return;
-    if (hayCambios) {
-      setConfirmandoSalida(true);
+    if (confirmingExit) return;
+    if (isDirty) {
+      setConfirmingExit(true);
       return;
     }
 
     onClose();
-  }, [confirmandoSalida, hayCambios, onClose]);
+  }, [confirmingExit, isDirty, onClose]);
 
   /** Volver al editor. El borrador no se toca: sigue exactamente donde estaba. */
-  const seguirEditando = useCallback(() => {
-    setConfirmandoSalida(false);
+  const keepEditing = useCallback(() => {
+    setConfirmingExit(false);
     // El foco vuelve de donde salió. Sin esto quedaría en el cuerpo del
     // documento y quien navegue con teclado tendría que rehacer el camino.
-    cerrar.current?.focus();
+    closeButtonRef.current?.focus();
   }, []);
 
   // Escape cierra. Es la salida que se espera de cualquier cosa que se abre, y
@@ -130,12 +126,12 @@ export function NodeExpandedFrame({
   // llegara, `intentarCerrar` ya no haría nada.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") intentarCerrar();
+      if (event.key === "Escape") requestClose();
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [intentarCerrar]);
+  }, [requestClose]);
 
   return (
     <article className="node-expanded" style={{ borderColor: tool.colors.header }}>
@@ -145,10 +141,10 @@ export function NodeExpandedFrame({
         </span>
         <span className="node-expanded__title">{data.title}</span>
         <button
-          ref={cerrar}
+          ref={closeButtonRef}
           type="button"
           className="node-expanded__close nodrag"
-          onClick={intentarCerrar}
+          onClick={requestClose}
           title="Cerrar"
           aria-label={`Cerrar ${data.title}`}
         >
@@ -165,8 +161,8 @@ export function NodeExpandedFrame({
       <div className="node-expanded__body nodrag nowheel">
         {Editor ? (
           <Editor
-            draft={borrador}
-            onChange={(patch) => setBorrador((previo) => ({ ...previo, ...patch }))}
+            draft={draft}
+            onChange={(patch) => setDraft((previous) => ({ ...previous, ...patch }))}
           />
         ) : (
           <p className="node-expanded__empty">
@@ -185,9 +181,9 @@ export function NodeExpandedFrame({
           barra sin escribir una línea. */}
       {Editor ? (
         <footer className="node-expanded__actions">
-          {avisoDeValidez ? (
+          {validationNotice ? (
             <p className="node-expanded__aviso" role="alert">
-              {avisoDeValidez}
+              {validationNotice}
             </p>
           ) : null}
           <button
@@ -202,18 +198,18 @@ export function NodeExpandedFrame({
             className="toolbar-button toolbar-button--primary nodrag"
             onClick={() => {
               // Inválido: ni se confirma, ni se cierra. Solo se dice por qué.
-              if (!validez.valido) {
-                setIntentoRechazado(true);
+              if (!validation.valid) {
+                setRejectedAttempt(true);
                 return;
               }
 
-              setIntentoRechazado(false);
-              onCommit(borrador);
+              setRejectedAttempt(false);
+              onCommit(draft);
               onClose();
             }}
             // Sin cambios no hay nada que confirmar. Dejarlo pulsable sugeriría
             // que hace algo, y escribiría el nodo con lo mismo que ya tiene.
-            disabled={!hayCambios}
+            disabled={!isDirty}
           >
             Guardar
           </button>
@@ -223,8 +219,8 @@ export function NodeExpandedFrame({
       {/* Dentro del marco a propósito: el editor sigue viéndose detrás, así que
           la decisión se toma con lo que está en juego a la vista. Un modal de
           pantalla completa habría tapado justo aquello por lo que se pregunta. */}
-      {confirmandoSalida ? (
-        <UnsavedChangesDialog onKeepEditing={seguirEditando} onDiscard={onClose} />
+      {confirmingExit ? (
+        <UnsavedChangesDialog onKeepEditing={keepEditing} onDiscard={onClose} />
       ) : null}
     </article>
   );

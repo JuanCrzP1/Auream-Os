@@ -1,9 +1,12 @@
 import type { ToolUi } from "../ToolUi";
+import { PixelCompactBody } from "./PixelCompactBody";
 import { PixelIcon } from "./PixelIcon";
+import { PixelEditor } from "./PixelEditor";
 
-/** Mitad React de la herramienta. Único punto donde declara cómo se ve. */
 export const pixelUi: ToolUi = {
   type: "pixel",
   Icon: PixelIcon,
-  frame: "circle"
+  frame: "circle",
+  CompactBody: PixelCompactBody,
+  Editor: PixelEditor
 };

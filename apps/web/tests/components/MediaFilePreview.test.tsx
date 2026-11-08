@@ -320,13 +320,13 @@ describe("reproductor de audio", () => {
 
     const barras = container.querySelectorAll(".media-audio__bar");
     expect(barras.length).toBeGreaterThan(10);
-    expect(container.querySelectorAll(".media-audio__bar--sonada")).toHaveLength(0);
+    expect(container.querySelectorAll(".media-audio__bar--played")).toHaveLength(0);
 
     definir(el, "currentTime", 41.5);
     fireEvent(el, new Event("timeupdate"));
 
     // A mitad del audio, la mitad de las barras están marcadas.
-    const sonadas = container.querySelectorAll(".media-audio__bar--sonada").length;
+    const sonadas = container.querySelectorAll(".media-audio__bar--played").length;
     expect(sonadas).toBeGreaterThan(barras.length * 0.4);
     expect(sonadas).toBeLessThan(barras.length * 0.6);
   });
@@ -403,7 +403,7 @@ describe("reproductor de audio", () => {
     expect(screen.getByRole("button", { name: /^Reproducir/ })).toBeTruthy();
     expect(el.currentTime).toBe(0);
     expect(container.querySelector(".media-audio__time")?.textContent).toContain("0:00");
-    expect(container.querySelectorAll(".media-audio__bar--sonada")).toHaveLength(0);
+    expect(container.querySelectorAll(".media-audio__bar--played")).toHaveLength(0);
   });
 
   it("pulsar la onda busca esa posición en el audio", () => {
@@ -512,8 +512,8 @@ describe("el reproductor queda encapsulado", () => {
   });
 
   it("el reproductor no se exporta: no es una segunda entrada de preview", () => {
-    expect(codigo).toMatch(/function ReproductorAudio/);
-    expect(codigo).not.toMatch(/export\s+(function|const)\s+ReproductorAudio/);
+    expect(codigo).toMatch(/function AudioPlayer/);
+    expect(codigo).not.toMatch(/export\s+(function|const)\s+AudioPlayer/);
     expect(codigo.match(/^export /gm) ?? []).toHaveLength(1);
   });
 

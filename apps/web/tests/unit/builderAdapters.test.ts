@@ -51,7 +51,11 @@ function makeSnapshot(): BuilderFlowSnapshot {
         type: "question",
         name: "Esperar respuesta",
         content: { text: "¿Cómo te llamas?" },
-        config: { targetKey: "context.nombre" },
+        config: {
+          targetKey: "context.nombre",
+          waitIndefinitely: false,
+          timeout: { amount: 30, unit: "minutes" }
+        },
         metadata: { ui: { x: 480, y: 240 } }
       },
       "n-fin": {
@@ -81,6 +85,7 @@ function makeSnapshot(): BuilderFlowSnapshot {
           id: "e-2",
           fromNodeId: "n-pregunta",
           toNodeId: "n-fin",
+          fromOutput: "respuesta",
           priority: 20,
           isFallback: false,
           condition: { operator: "equals", fact: "context.nombre", value: "Ana" }
@@ -89,6 +94,7 @@ function makeSnapshot(): BuilderFlowSnapshot {
           id: "e-3",
           fromNodeId: "n-pregunta",
           toNodeId: "n-fin",
+          fromOutput: "tiempo-agotado",
           priority: 99,
           isFallback: true,
           condition: { operator: "always" }
@@ -109,7 +115,7 @@ describe("adapters — ida y vuelta snapshot → canvas → snapshot", () => {
     expect(result.nodes["n-inicio"].name).toBe("Inicio");
     expect(result.nodes["n-inicio"].content.text).toBe("Hola");
     expect(result.nodes["n-inicio"].config).toEqual({ canal: "whatsapp" });
-    expect(result.nodes["n-pregunta"].config).toEqual({ targetKey: "context.nombre" });
+    expect(result.nodes["n-pregunta"].config).toEqual(original.nodes["n-pregunta"].config);
   });
 
   it("conserva las posiciones del lienzo", () => {
@@ -252,22 +258,52 @@ describe("adapters — de qué salida arranca cada conexión", () => {
     expect(devuelto.edges.find((edge) => edge.id === "e-3")?.sourceHandle).toBe("tiempo-agotado");
   });
 
-  it("una conexión sin salida declarada no gana el campo: los flujos viejos no cambian", () => {
-    // Las otras doce herramientas tienen una sola salida y sus aristas no
-    // llevan `fromOutput`. Escribirlo como `null` en cada una ensuciaría todos
-    // los flujos ya guardados sin aportar nada.
+  it("una conexión de un nodo de salida única no gana el campo", () => {
     const original = makeSnapshot();
     const canvas = mapSnapshotToCanvas(original);
     const snapshot = mapCanvasToSnapshot(original, canvas.nodes, canvas.edges);
 
-    for (const edge of Object.values(snapshot.edgesBySource).flat()) {
+    for (const edge of snapshot.edgesBySource["n-inicio"]) {
       expect(edge).not.toHaveProperty("fromOutput");
     }
-
-    // Y al recuperarlas tampoco se inventa un handle.
-    for (const edge of mapSnapshotToCanvas(snapshot).edges) {
+    for (const edge of mapSnapshotToCanvas(snapshot).edges.filter((e) => e.source === "n-inicio")) {
       expect(edge.sourceHandle).toBeUndefined();
     }
+  });
+
+  it("una conexión heredada sin salida, de un nodo con salidas, se fija a la primera", () => {
+    // Flujos guardados antes de `fromOutput`: React Flow la dibujaba desde la
+    // primera salida. Se conserva ahí en vez de perderla.
+    const original = makeSnapshot();
+    const legacy = {
+      ...original,
+      edgesBySource: {
+        ...original.edgesBySource,
+        "n-pregunta": original.edgesBySource["n-pregunta"].map(({ fromOutput: _f, ...edge }) => edge)
+      }
+    } as BuilderFlowSnapshot;
+
+    const canvas = mapSnapshotToCanvas(legacy);
+
+    expect(canvas.edges.filter((e) => e.source === "n-pregunta").map((e) => e.sourceHandle)).toEqual([
+      "respuesta",
+      "respuesta"
+    ]);
+  });
+
+  it("descarta la conexión que sale de una salida que la configuración ya no ofrece", () => {
+    // «Sin límite» retira la salida de timeout: su arista no puede sobrevivir.
+    const original = makeSnapshot();
+    const canvas = mapSnapshotToCanvas(original);
+    const nodes = canvas.nodes.map((node) =>
+      node.id === "n-pregunta"
+        ? { ...node, data: { ...node.data, config: { waitIndefinitely: true } } }
+        : node
+    );
+
+    const snapshot = mapCanvasToSnapshot(original, nodes, canvas.edges);
+
+    expect(snapshot.edgesBySource["n-pregunta"].map((edge) => edge.id)).toEqual(["e-2"]);
   });
 });
 

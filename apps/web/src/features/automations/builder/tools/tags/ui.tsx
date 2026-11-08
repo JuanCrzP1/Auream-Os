@@ -1,9 +1,12 @@
 import type { ToolUi } from "../ToolUi";
+import { TagsCompactBody } from "./TagsCompactBody";
 import { TagsIcon } from "./TagsIcon";
+import { TagsEditor } from "./TagsEditor";
 
-/** Mitad React de la herramienta. Único punto donde declara cómo se ve. */
 export const tagsUi: ToolUi = {
   type: "tags",
   Icon: TagsIcon,
-  frame: "circle"
+  frame: "circle",
+  CompactBody: TagsCompactBody,
+  Editor: TagsEditor
 };

@@ -1,6 +1,14 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { CONDITION_DEFAULT_CONFIG, conditionOutputs } from "./conditionConfig";
+import { summarizeCondition } from "./summarizeCondition";
+import { validateCondition } from "./validateCondition";
 
-/** Condicional — bifurca el flujo evaluando el contexto de la sesión. */
+/**
+ * Condicional — evalúa reglas (etiquetas, día, hora, fecha, ventana de 24 h,
+ * atención, asesor, campos y variables) y sigue por «Se cumple» o «No se cumple».
+ *
+ * `executable: true` heredado: el handler existe pero aún no evalúa estas reglas.
+ */
 export const conditionalTool: ToolDefinition = {
   type: "condition",
   label: "Condicional",
@@ -10,11 +18,15 @@ export const conditionalTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: true,
-  defaultConfig: {},
+  defaultContent: {},
+  defaultConfig: { ...CONDITION_DEFAULT_CONFIG },
+  outputs: conditionOutputs,
+  summarize: summarizeCondition,
+  validate: validateCondition,
   colors: {
-    header: "#7c3aed",
-    body: "#6d28d9",
-    gradient: "linear-gradient(135deg,#a855f7,#6d28d9)"
+    header: "#a21caf",
+    body: "#86198f",
+    gradient: "linear-gradient(135deg,#e879f9,#86198f)"
   },
   glyph: "⬡"
 };

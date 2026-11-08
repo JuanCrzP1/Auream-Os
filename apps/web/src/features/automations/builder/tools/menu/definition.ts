@@ -1,15 +1,13 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { MENU_DEFAULT_CONFIG, menuOutputs } from "./menuConfig";
+import { summarizeMenu } from "./summarizeMenu";
+import { validateMenu } from "./validateMenu";
 
 /**
- * Menú — ofrece un conjunto de opciones y espera la elección del usuario.
+ * Menú — lista o botones interactivos de WhatsApp. Una salida por opción, más
+ * «Otra respuesta» y, con límite, «Tiempo agotado».
  *
- * `executable: false`. Falta acordar la pieza clave: cómo se enruta cada opción
- * hacia un edge concreto. Hoy el recorrido lo decide `EdgeEvaluator` por
- * condición y prioridad, y un menú necesita una correspondencia opción → salida
- * que ese modelo todavía no expresa.
- *
- * `defaultConfig.options` nace como lista vacía: que un menú tiene opciones es
- * lo único que su nombre determina sin ambigüedad.
+ * `executable: false`: el editor está completo; falta enrutar por opción.
  */
 export const menuTool: ToolDefinition = {
   type: "menu",
@@ -20,11 +18,15 @@ export const menuTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: false,
-  defaultConfig: { options: [] },
+  defaultContent: {},
+  defaultConfig: { ...MENU_DEFAULT_CONFIG },
+  outputs: menuOutputs,
+  summarize: summarizeMenu,
+  validate: validateMenu,
   colors: {
-    header: "#4f46e5",
-    body: "#4338ca",
-    gradient: "linear-gradient(135deg,#818cf8,#4338ca)"
+    header: "#854d0e",
+    body: "#713f12",
+    gradient: "linear-gradient(135deg,#ca8a04,#713f12)"
   },
   glyph: "☰"
 };

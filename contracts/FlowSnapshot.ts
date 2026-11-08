@@ -27,7 +27,8 @@
  * Retirados: `capture` — su escritura de contexto vive ahora en el nodo
  * `question` vía `config.targetKey`; `fallback` — el rescate de una rama es
  * una propiedad del edge (`isFallback`), no un tipo de nodo; `action` — pasó a
- * llamarse `integration`, que es el mismo concepto con el nombre del producto.
+ * llamarse `integration`, que es el mismo concepto con el nombre del producto;
+ * `sale-approved` — retirado del catálogo por decisión de producto (2026-11-08).
  */
 export type NodeType =
   | "message"
@@ -39,7 +40,6 @@ export type NodeType =
   | "pixel"
   | "ai"
   | "delay"
-  | "sale-approved"
   | "integration"
   | "menu"
   | "notification"
@@ -153,20 +153,13 @@ export interface BuilderFlowEdge {
   readonly fromNodeId: string;
   readonly toNodeId: string;
   /**
-   * De qué SALIDA del nodo de origen arranca la conexión.
+   * Salida con nombre del nodo de origen de la que arranca la conexión. Solo
+   * en herramientas que declaran `outputs()`; ausente = salida única.
+   * Opcional: sin migración.
    *
-   * Solo lo traen las aristas que salen de una herramienta con varios
-   * resultados posibles —hoy únicamente Esperar respuesta, con «respondió» y
-   * «se agotó el tiempo»—. Ausente significa «la salida única del nodo», que es
-   * el caso de las otras doce herramientas y de todos los flujos guardados
-   * antes de que este campo existiera: por eso es opcional y no hay migración.
-   *
-   * ES REPRESENTACIÓN, NO EJECUCIÓN. Qué camino toma el motor lo sigue
-   * decidiendo `EdgeEvaluator` con la prioridad, la condición y el fallback de
-   * cada arista, exactamente como antes; este campo no entra en esa decisión.
-   * Existe para que el lienzo pueda volver a dibujar cada conexión en el punto
-   * del que el usuario la sacó: sin él, guardar y recargar mezclaba las dos
-   * salidas en una.
+   * HOY ES SOLO REPRESENTACIÓN: `EdgeEvaluator` no lo usa todavía, así que el
+   * motor no distingue una salida de otra. Enrutar por salida es trabajo de la
+   * Fase C (ver docs/architecture/builder-tools.md).
    */
   readonly fromOutput?: string;
   readonly priority: number;

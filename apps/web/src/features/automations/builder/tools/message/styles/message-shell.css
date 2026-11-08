@@ -38,3 +38,31 @@
   width: 100%;
   height: 100%;
 }
+
+/* Cabecera compacta del kit sobre el constructor de dos columnas. */
+.message-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 12px 0;
+  box-sizing: border-box;
+}
+
+.message-shell > .message-editor {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+/* Con la cabecera arriba, la biblioteca puede quedarse sin alto: desplaza en
+   vez de montar la nota del pie sobre los bloques. */
+.message-shell .message-library {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.message-shell .message-library__list {
+  flex-shrink: 0;
+}

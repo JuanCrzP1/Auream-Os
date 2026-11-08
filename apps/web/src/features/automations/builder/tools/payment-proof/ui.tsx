@@ -1,9 +1,13 @@
 import type { ToolUi } from "../ToolUi";
 import { PaymentProofIcon } from "./PaymentProofIcon";
+import { PaymentProofEditor } from "./PaymentProofEditor";
+import { createOutputsCompactBody } from "../_kit/OutputsCompactBody";
+import { summarizePaymentProof } from "./summarizePaymentProof";
 
-/** Mitad React de la herramienta. Único punto donde declara cómo se ve. */
 export const paymentProofUi: ToolUi = {
   type: "payment-proof",
   Icon: PaymentProofIcon,
-  frame: "card"
+  frame: "card",
+  CompactBody: createOutputsCompactBody(summarizePaymentProof),
+  Editor: PaymentProofEditor
 };

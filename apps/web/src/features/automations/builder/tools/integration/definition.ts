@@ -1,11 +1,13 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { INTEGRATION_DEFAULT_CONFIG, integrationOutputs } from "./integrationConfig";
+import { summarizeIntegration } from "./summarizeIntegration";
+import { validateIntegration } from "./validateIntegration";
 
 /**
- * Integración — invoca un efecto externo: webhook, API de dominio, CRM.
+ * Integración — petición HTTP a un servicio externo, con mapeo de la respuesta
+ * a campos del contacto. Salidas: Éxito y Error.
  *
- * Se llamó «Acción» (tipo `action`). Es la misma herramienta con el nombre del
- * producto. El ejecutor de efectos externos todavía no existe: el nodo falla
- * explícitamente en ejecución en lugar de simular un resultado.
+ * `executable: false`: el editor está completo; falta el ejecutor HTTP.
  */
 export const integrationTool: ToolDefinition = {
   type: "integration",
@@ -16,11 +18,15 @@ export const integrationTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: false,
-  defaultConfig: {},
+  defaultContent: {},
+  defaultConfig: { ...INTEGRATION_DEFAULT_CONFIG },
+  outputs: integrationOutputs,
+  summarize: summarizeIntegration,
+  validate: validateIntegration,
   colors: {
-    header: "#dc2626",
-    body: "#b91c1c",
-    gradient: "linear-gradient(135deg,#ef4444,#b91c1c)"
+    header: "#ea580c",
+    body: "#c2410c",
+    gradient: "linear-gradient(135deg,#fb923c,#c2410c)"
   },
   glyph: "⚡"
 };

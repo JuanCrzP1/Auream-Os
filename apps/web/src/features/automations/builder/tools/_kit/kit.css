@@ -1,0 +1,1223 @@
+/* ==========================================================================
+   Kit de editores de herramientas.
+
+   Primitivas visuales compartidas por todas las herramientas. Cada
+   herramienta solo aporta su acento con variables; la forma, el tamaño, el
+   foco y el movimiento son de aquí.
+   ========================================================================== */
+
+/* ----- Interruptor ----- */
+
+.kit-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--kit-switch-off-bg, var(--chip-neutral-bg));
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out),
+    border-color var(--speed-fast) var(--ease-out);
+}
+
+.kit-switch--on {
+  background: var(--kit-switch-on-bg, var(--kit-switch-accent, var(--primary)));
+  border-color: var(--kit-switch-on-border, var(--kit-switch-accent, var(--primary)));
+}
+
+.kit-switch:focus-visible {
+  outline: 2px solid var(--kit-switch-accent, var(--primary));
+  outline-offset: 2px;
+}
+
+.kit-switch__knob {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transform: translateY(-50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: left var(--speed-fast) var(--ease-out);
+}
+
+.kit-switch--on .kit-switch__knob {
+  left: 18px;
+}
+
+/* ----- Fila de interruptor con rótulo ----- */
+
+.kit-switch-field {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kit-switch-field__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kit-switch-field__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.kit-switch-field__hint {
+  font-size: 0.71rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kit-switch,
+  .kit-switch__knob {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Formularios de los editores. Acento: `--kit-accent` (lo pone EditorShell).
+   ========================================================================== */
+
+.kit-editor {
+  --kit-accent-soft: color-mix(in srgb, var(--kit-accent, var(--primary)) 18%, transparent);
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
+
+
+
+.kit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kit-label {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.kit-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.kit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kit-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kit-input,
+.kit-textarea,
+.kit-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  transition: border-color var(--speed-fast) var(--ease-out),
+    box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.kit-textarea {
+  resize: vertical;
+  min-height: 62px;
+  max-height: 220px;
+  field-sizing: content;
+}
+
+.kit-input--mono {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.78rem;
+}
+
+.kit-input::placeholder,
+.kit-textarea::placeholder {
+  color: var(--muted);
+}
+
+.kit-input:focus-visible,
+.kit-textarea:focus-visible,
+.kit-select:focus-visible {
+  outline: none;
+  border-color: var(--kit-accent, var(--primary));
+  box-shadow: 0 0 0 3px var(--kit-accent-soft);
+}
+
+.kit-input--invalid {
+  border-color: var(--danger, #ef4444);
+}
+
+.kit-select {
+  cursor: pointer;
+}
+
+
+
+
+
+
+/* ----- Listas de tarjetas ----- */
+
+.kit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kit-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--kit-accent, var(--primary));
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+}
+
+.kit-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px 6px 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kit-card__title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.kit-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 11px 11px;
+}
+
+.kit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kit-row > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.kit-row > .kit-remove {
+  flex: 0 0 auto;
+}
+
+.kit-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 7px 12px;
+  border: 1px dashed color-mix(in srgb, var(--kit-accent, var(--primary)) 55%, var(--border));
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--kit-accent, var(--primary));
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out);
+}
+
+.kit-add svg {
+  width: 14px;
+  height: 14px;
+}
+
+.kit-add:hover:not(:disabled) {
+  background: var(--kit-accent-soft);
+}
+
+.kit-add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.kit-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.kit-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+.kit-remove:hover {
+  background: color-mix(in srgb, var(--danger, #ef4444) 14%, transparent);
+  color: var(--danger, #ef4444);
+}
+
+/* ----- Chips ----- */
+
+.kit-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+}
+
+.kit-chips:focus-within {
+  border-color: var(--kit-accent, var(--primary));
+  box-shadow: 0 0 0 3px var(--kit-accent-soft);
+}
+
+.kit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 9px;
+  border-radius: 999px;
+  background: var(--kit-accent-soft);
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.kit-chip__remove {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kit-chip__remove:hover {
+  color: var(--text);
+}
+
+.kit-chips__input {
+  flex: 1 1 120px;
+  min-width: 80px;
+  padding: 3px 2px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+}
+
+/* ----- Variables y avisos ----- */
+
+.kit-variables {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.kit-variable {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--chip-neutral-bg);
+  color: var(--text);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.68rem;
+}
+
+.kit-notice {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--kit-accent-soft);
+  color: var(--text);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   Nodo cerrado con salidas con nombre (createOutputsCompactBody).
+   ========================================================================== */
+
+.kit-node {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kit-node__summary {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.76rem;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.kit-node__empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+/* Se estira hasta el canto derecho (el cuerpo mete 12 px) para anclar el punto. */
+.kit-node__outputs {
+  margin: 0 -12px 0 0;
+  padding: 0 12px 0 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kit-out {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 36px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-sizing: border-box;
+}
+
+.kit-out__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.kit-out__handle.react-flow__handle-right {
+  right: -12px;
+}
+
+.kit-row > .kit-fixed {
+  flex: 0 0 120px;
+}
+
+/* ==========================================================================
+   Editores en tarjetas (ToolEditorLayout). Mismo lenguaje que el panel del
+   Programador: superficies de 16 px, campos un escalón por encima.
+   ========================================================================== */
+
+.kit-editor--cards {
+  --kit-field: color-mix(in srgb, var(--text) 5%, var(--surface-alt));
+  --kit-field-hover: color-mix(in srgb, var(--text) 8%, var(--surface-alt));
+  gap: 12px;
+  padding: 14px 14px 20px;
+  background: var(--surface);
+}
+
+.kit-editor--cards .kit-input,
+.kit-editor--cards .kit-textarea,
+.kit-editor--cards .kit-select,
+.kit-editor--cards .kit-chips {
+  background: var(--kit-field);
+  border-radius: 10px;
+}
+
+.kit-editor--cards .kit-input:hover,
+.kit-editor--cards .kit-textarea:hover,
+.kit-editor--cards .kit-select:hover {
+  background: var(--kit-field-hover);
+}
+
+.kit-editor--cards .kit-label {
+  font-size: 0.74rem;
+  color: color-mix(in srgb, var(--text) 82%, var(--muted));
+}
+
+/* ----- Cabecera ----- */
+
+.kit-intro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--kit-accent) 28%, var(--border));
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--kit-accent) 16%, transparent), transparent 60%),
+    var(--surface-alt);
+}
+
+.kit-intro__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--kit-accent) 78%, #fff), var(--kit-accent));
+  box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--kit-accent) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.kit-intro__icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.kit-intro__text {
+  min-width: 0;
+}
+
+.kit-intro__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.kit-intro__description {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ----- Sección en tarjeta ----- */
+
+.kit-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-alt);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.kit-panel__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 16px 0;
+}
+
+.kit-panel__step,
+.kit-panel__glyph {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--kit-accent) 16%, transparent);
+  color: var(--kit-accent);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.kit-panel__glyph svg {
+  width: 14px;
+  height: 14px;
+}
+
+.kit-panel__heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kit-panel__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.kit-panel__description {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.kit-panel__aside {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.kit-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+
+.kit-counter {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--chip-neutral-bg);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----- Tarjetas de elección ----- */
+
+.kit-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.kit-choice {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 32px 11px 11px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--kit-field);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out), background var(--speed-fast) var(--ease-out),
+    box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.kit-choice:hover {
+  border-color: color-mix(in srgb, var(--kit-accent) 40%, var(--border));
+}
+
+.kit-choice:focus-visible {
+  outline: 2px solid var(--kit-accent);
+  outline-offset: 2px;
+}
+
+.kit-choice--on,
+.kit-choice--on:hover {
+  border-color: var(--kit-accent);
+  background: color-mix(in srgb, var(--kit-accent) 10%, var(--kit-field));
+  box-shadow: 0 0 0 3px var(--kit-accent-soft);
+}
+
+.kit-choice__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--chip-neutral-bg);
+  color: var(--muted);
+  transition: background var(--speed-fast) var(--ease-out), color var(--speed-fast) var(--ease-out);
+}
+
+.kit-choice__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.kit-choice--on .kit-choice__icon {
+  background: var(--kit-accent);
+  color: #fff;
+}
+
+.kit-choice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kit-choice__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.kit-choice__description {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.kit-choice__check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  color: transparent;
+  transition: all var(--speed-fast) var(--ease-out);
+}
+
+.kit-choice__check svg {
+  width: 10px;
+  height: 10px;
+}
+
+.kit-choice--on .kit-choice__check {
+  border-color: var(--kit-accent);
+  background: var(--kit-accent);
+  color: #fff;
+}
+
+/* ----- Listas: tarjetas numeradas, conectores y vacío ----- */
+
+.kit-editor--cards .kit-card {
+  border: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--kit-field);
+}
+
+.kit-editor--cards .kit-card__head {
+  padding: 8px 8px 8px 12px;
+  border-bottom: 0;
+}
+
+.kit-editor--cards .kit-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.04em;
+}
+
+.kit-editor--cards .kit-card__title::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kit-accent);
+  box-shadow: 0 0 0 3px var(--kit-accent-soft);
+}
+
+.kit-editor--cards .kit-card__body {
+  padding: 2px 12px 12px;
+}
+
+.kit-joiner {
+  display: flex;
+  justify-content: center;
+  margin: -2px 0;
+}
+
+.kit-joiner span {
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--kit-accent) 35%, var(--border));
+  background: var(--surface-alt);
+  color: var(--kit-accent);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.kit-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 18px 16px;
+  border: 1px dashed color-mix(in srgb, var(--kit-accent) 35%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--kit-accent) 4%, transparent);
+  text-align: center;
+}
+
+.kit-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+  border-radius: 11px;
+  background: var(--kit-accent-soft);
+  color: var(--kit-accent);
+}
+
+.kit-empty__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.kit-empty__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.kit-empty__description {
+  margin: 0 0 6px;
+  max-width: 340px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.kit-empty .kit-add {
+  align-self: center;
+}
+
+/* ----- Caminos de salida ----- */
+
+.kit-panel--outputs {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+}
+
+.kit-paths {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 16px 14px;
+  list-style: none;
+}
+
+.kit-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--kit-accent) 30%, var(--border));
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.kit-path__dot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--kit-accent);
+  border-radius: 50%;
+}
+
+/* ----- Vista previa de chat ----- */
+
+.kit-chat {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kit-chat__caption {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.kit-chat__wall {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.03) 0 2px, transparent 3px) 0 0 / 18px 18px,
+    color-mix(in srgb, #0b141a 70%, var(--surface-alt));
+}
+
+:root[data-theme="light"] .kit-chat__wall {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.04) 0 2px, transparent 3px) 0 0 / 18px 18px,
+    #efeae2;
+}
+
+.kit-chat__bubble,
+.kit-chat__action {
+  width: min(78%, 320px);
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: #202c33;
+  color: #e9edef;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="light"] .kit-chat__bubble,
+:root[data-theme="light"] .kit-chat__action {
+  background: #fff;
+  color: #111b21;
+}
+
+.kit-chat__bubble {
+  position: relative;
+  padding: 8px 10px 18px;
+  border-top-left-radius: 2px;
+}
+
+.kit-chat__title {
+  margin: 0 0 3px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.kit-chat__message {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.kit-chat__footer {
+  margin: 4px 0 0;
+  font-size: 0.68rem;
+  opacity: 0.6;
+}
+
+.kit-chat__time {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  font-size: 0.6rem;
+  opacity: 0.55;
+}
+
+.kit-chat__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  color: #53bdeb;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+:root[data-theme="light"] .kit-chat__action {
+  color: #027eb5;
+}
+
+.kit-chat__action svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Interruptores dentro de tarjetas: fila con separación sutil. */
+.kit-panel__body > .kit-switch-field + .kit-switch-field {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kit-choice,
+  .kit-choice__icon,
+  .kit-choice__check {
+    transition: none;
+  }
+}
+
+/* ----- Barra de petición (Integración) ----- */
+
+.kit-request {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.kit-request__method {
+  flex: 0 0 104px;
+}
+
+.kit-request__method .kit-select {
+  height: 100%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 0;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-weight: 800;
+  color: var(--kit-method, var(--kit-accent));
+}
+
+.kit-request__method--get { --kit-method: #16a34a; }
+.kit-request__method--post { --kit-method: #d97706; }
+.kit-request__method--put { --kit-method: #2563eb; }
+.kit-request__method--patch { --kit-method: #7c3aed; }
+.kit-request__method--delete { --kit-method: #dc2626; }
+
+.kit-request > .kit-input {
+  flex: 1 1 auto;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.kit-row > .kit-arrow {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   Detalle profesional: chip de salidas, tarjeta activa, tonos de salida y
+   contador de caracteres.
+   ========================================================================== */
+
+.kit-intro__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-left: auto;
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--kit-accent) 35%, var(--border));
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--kit-accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.kit-intro__chip svg {
+  width: 13px;
+  height: 13px;
+}
+
+.kit-intro--compact {
+  padding: 10px 14px;
+  border-radius: 14px;
+}
+
+.kit-intro--compact .kit-intro__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.kit-intro--compact .kit-intro__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.kit-intro--compact .kit-intro__title {
+  font-size: 0.84rem;
+}
+
+.kit-intro--compact .kit-intro__description {
+  font-size: 0.7rem;
+}
+
+/* La tarjeta que se está editando se distingue de las demás. */
+.kit-panel {
+  transition: border-color var(--speed-fast) var(--ease-out), box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.kit-panel:not(.kit-panel--outputs):focus-within {
+  border-color: color-mix(in srgb, var(--kit-accent) 45%, var(--border));
+  box-shadow: 0 0 0 3px var(--kit-accent-soft), 0 6px 18px -10px color-mix(in srgb, var(--kit-accent) 60%, transparent);
+}
+
+.kit-panel:focus-within .kit-panel__step {
+  background: var(--kit-accent);
+  color: #fff;
+}
+
+/* Tonos de salida (editor y lienzo). */
+.kit-path--success { --kit-tone: #16a34a; }
+.kit-path--danger { --kit-tone: #dc2626; }
+.kit-path--warning { --kit-tone: #d97706; }
+.kit-path--neutral { --kit-tone: var(--kit-accent); }
+
+.kit-path__dot {
+  border-color: var(--kit-tone, var(--kit-accent));
+  background: color-mix(in srgb, var(--kit-tone, var(--kit-accent)) 25%, transparent);
+}
+
+.kit-out--success { --kit-tone: #4ade80; }
+.kit-out--danger { --kit-tone: #f87171; }
+.kit-out--warning { --kit-tone: #fbbf24; }
+.kit-out--neutral { --kit-tone: rgba(255, 255, 255, 0.85); }
+
+.kit-out__dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--kit-tone);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kit-tone) 22%, transparent);
+}
+
+/* Contador de caracteres dentro del campo. */
+.kit-input-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.kit-input-wrap > .kit-input {
+  padding-right: 52px;
+}
+
+.kit-counter-chars {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.kit-counter-chars--near {
+  color: #d97706;
+}
+
+.kit-counter-chars--full {
+  color: var(--danger, #dc2626);
+  font-weight: 700;
+}
+
+/* ----- Nodo cerrado de herramientas de salida única ----- */
+
+.kit-node__eyebrow {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kit-node__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kit-node__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.kit-node__chip span {
+  opacity: 0.7;
+  font-weight: 800;
+}
+
+.kit-node__chip--more {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.kit-node__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kit-node__badge {
+  padding: 3px 10px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.kit-node__meta {
+  color: rgba(255, 255, 255, 0.82);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.7rem;
+}
+
+.kit-node__quote {
+  margin: 2px 0 0;
+  padding: 6px 9px;
+  border-left: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0 8px 8px 0;
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

@@ -1,4 +1,5 @@
 import type { FlowSnapshot } from "../../../../../contracts/FlowSnapshot";
+import { PAUSING_NODE_TYPES } from "../../../../../contracts/FlowConnectionRules";
 import type { ValidationIssue } from "../ValidationReport";
 
 /**
@@ -26,7 +27,14 @@ export function detectCycles(
       const cycleStart = path.indexOf(nodeId);
       const cycle = path.slice(cycleStart);
 
-      const allAlways = cycle.every((id) => {
+      // Un ciclo que pasa por un bloque que espera (respuesta o tiempo) no es
+      // infinito: cada vuelta se detiene. Ej.: «Otra respuesta» → mismo Menú.
+      const pauses = cycle.some((id) => {
+        const type = snapshot.nodes[id]?.type;
+        return type !== undefined && PAUSING_NODE_TYPES.has(type);
+      });
+
+      const allAlways = !pauses && cycle.every((id) => {
         const edges = snapshot.edgesBySource[id] ?? [];
         return edges.length > 0 && edges.every((e) => e.condition.operator === "always");
       });

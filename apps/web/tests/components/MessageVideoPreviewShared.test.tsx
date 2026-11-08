@@ -5,12 +5,12 @@ import { MessageEditor } from "@features/automations/builder/tools/message/Messa
 import { FileSource } from "@features/automations/builder/tools/message/editor/FileSource";
 import { MessageCompactBody } from "@features/automations/builder/tools/message/MessageCompactBody";
 import {
-  archivoDeSesion,
-  enlaceDeSesion,
-  soltarArchivo
+  sessionFile,
+  sessionObjectUrl,
+  releaseFile
 } from "@features/automations/builder/tools/message/mediaSourceSession";
 import { FOTOGRAMA, instalarNavegadorDeVideo, instalarObjectUrls, type Guion, type Registro } from "../helpers/navegadorDeVideo";
-import { miniaturaYaObtenida } from "@features/automations/builder/tools/message/mediaThumbnails";
+import { cachedThumbnail } from "@features/automations/builder/tools/message/mediaThumbnails";
 
 // ---------------------------------------------------------------------------
 // UNA SOLA FUENTE DE VERDAD PARA LA IMAGEN DE UN MEDIO.
@@ -49,7 +49,7 @@ const bloque = (extra: Record<string, unknown> = {}) => ({
 function EditorDeVideo({ inicial = "" }: { inicial?: string }) {
   const [nombre, setNombre] = useState(inicial);
   return (
-    <FileSource kind="video" position={1} itemId="v1" nombreGuardado={nombre} onPick={setNombre} />
+    <FileSource kind="video" position={1} itemId="v1" savedFileName={nombre} onPick={setNombre} />
   );
 }
 
@@ -89,7 +89,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  soltarArchivo("v1");
+  releaseFile("v1");
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -170,7 +170,7 @@ describe("el nodo del lienzo se entera aunque el archivo llegue después", () =>
 
     fireEvent.click(screen.getByRole("button", { name: "Quitar" }));
 
-    expect(enlaceDeSesion("v1")).toBeNull();
+    expect(sessionObjectUrl("v1")).toBeNull();
     expect(miniaturaDelNodo()).toBeNull();
     expect(iconosDelNodo()).toBe(1);
   });
@@ -181,7 +181,7 @@ describe("cambiar de video no deja rastro del anterior", () => {
     render(<EditorDeVideo />);
     elegirEnElEditor("A.mp4");
     await dejarQueTermine();
-    const enlaceA = enlaceDeSesion("v1")!;
+    const enlaceA = sessionObjectUrl("v1")!;
     expect(videoDelEditor()?.getAttribute("poster")).toBe(FOTOGRAMA);
 
     // El segundo video no da fotograma: si quedara el de A, se vería el de A.
@@ -190,7 +190,7 @@ describe("cambiar de video no deja rastro del anterior", () => {
     await dejarQueTermine();
     await dejarQueTermine();
 
-    const enlaceB = enlaceDeSesion("v1")!;
+    const enlaceB = sessionObjectUrl("v1")!;
     expect(enlaceB).not.toBe(enlaceA);
     expect(videoDelEditor()?.getAttribute("poster")).toBeNull();
     // Y lo que se ve es B, no A: el nombre viaja en la etiqueta accesible
@@ -201,18 +201,18 @@ describe("cambiar de video no deja rastro del anterior", () => {
   it("el Object URL del anterior se revoca al reemplazarlo", async () => {
     render(<EditorDeVideo />);
     elegirEnElEditor("A.mp4");
-    const enlaceA = enlaceDeSesion("v1")!;
+    const enlaceA = sessionObjectUrl("v1")!;
 
     elegirEnElEditor("B.mp4");
 
     expect(revocados).toContain(enlaceA);
-    expect(revocados).not.toContain(enlaceDeSesion("v1"));
+    expect(revocados).not.toContain(sessionObjectUrl("v1"));
   });
 
   it("quitar el video revoca su Object URL", () => {
     render(<EditorDeVideo />);
     elegirEnElEditor("clip.mp4");
-    const enlace = enlaceDeSesion("v1")!;
+    const enlace = sessionObjectUrl("v1")!;
 
     fireEvent.click(screen.getByRole("button", { name: "Quitar" }));
 
@@ -226,7 +226,7 @@ describe("lo que no cambia", () => {
     elegirEnElEditor("clip.mp4");
     await dejarQueTermine();
 
-    const guardado = archivoDeSesion("v1")!;
+    const guardado = sessionFile("v1")!;
     expect(guardado.name).toBe("clip.mp4");
     expect(guardado.type).toBe("video/mp4");
     expect(guardado.size).toBe(5);
@@ -253,7 +253,7 @@ describe("lo que no cambia", () => {
 
     expect(registro.cargadas).toEqual(["https://cdn.test/clip.mp4"]);
     expect(miniaturaDelNodo()?.src).toBe(FOTOGRAMA);
-    expect(enlaceDeSesion("v1")).toBeNull();
+    expect(sessionObjectUrl("v1")).toBeNull();
   });
 
   it("imagen, audio, archivo e intervalo se comportan como antes", async () => {
@@ -286,21 +286,21 @@ describe("un resultado que llega tarde no deja rastro", () => {
   it("el fotograma de A no se guarda si A ya fue reemplazado por B", async () => {
     render(<EditorDeVideo />);
     elegirEnElEditor("A.mp4");
-    const enlaceA = enlaceDeSesion("v1")!;
+    const enlaceA = sessionObjectUrl("v1")!;
 
     // B entra ANTES de que la captura de A haya podido terminar: elegir es
     // síncrono, la captura no.
     elegirEnElEditor("B.mp4");
-    const enlaceB = enlaceDeSesion("v1")!;
+    const enlaceB = sessionObjectUrl("v1")!;
 
     await dejarQueTermineTodo();
 
     // A ya no existe: su Object URL está revocado y su fotograma no puede
     // haberse quedado en la caché esperando a nadie.
     expect(revocados).toContain(enlaceA);
-    expect(miniaturaYaObtenida(enlaceA, true)).toBeNull();
+    expect(cachedThumbnail(enlaceA, true)).toBeNull();
     // B, en cambio, sí tiene el suyo.
-    expect(miniaturaYaObtenida(enlaceB, true)).toBe(FOTOGRAMA);
+    expect(cachedThumbnail(enlaceB, true)).toBe(FOTOGRAMA);
     expect(videoDelEditor()?.getAttribute("poster")).toBe(FOTOGRAMA);
   });
 
@@ -308,14 +308,14 @@ describe("un resultado que llega tarde no deja rastro", () => {
     render(<EditorDeVideo />);
     elegirEnElEditor("A.mp4");
     await dejarQueTermine();
-    const primeraA = enlaceDeSesion("v1")!;
+    const primeraA = sessionObjectUrl("v1")!;
 
     elegirEnElEditor("B.mp4");
     await dejarQueTermine();
 
     elegirEnElEditor("A.mp4");
     await dejarQueTermine();
-    const segundaA = enlaceDeSesion("v1")!;
+    const segundaA = sessionObjectUrl("v1")!;
 
     // Es otro Object URL: el de la primera vez se revocó y no se reutiliza.
     expect(segundaA).not.toBe(primeraA);
@@ -329,15 +329,15 @@ describe("un resultado que llega tarde no deja rastro", () => {
     render(<EditorDeVideo />);
     elegirEnElEditor("clip.mp4");
     await dejarQueTermine();
-    const enlace = enlaceDeSesion("v1")!;
-    expect(miniaturaYaObtenida(enlace, true)).toBe(FOTOGRAMA);
+    const enlace = sessionObjectUrl("v1")!;
+    expect(cachedThumbnail(enlace, true)).toBe(FOTOGRAMA);
 
     fireEvent.click(screen.getByRole("button", { name: "Quitar" }));
 
     expect(revocados).toContain(enlace);
-    expect(miniaturaYaObtenida(enlace, true)).toBeNull();
-    expect(enlaceDeSesion("v1")).toBeNull();
-    expect(archivoDeSesion("v1")).toBeNull();
+    expect(cachedThumbnail(enlace, true)).toBeNull();
+    expect(sessionObjectUrl("v1")).toBeNull();
+    expect(sessionFile("v1")).toBeNull();
   });
 });
 
@@ -358,14 +358,14 @@ describe("borrar el bloque entero suelta su archivo", () => {
 
     elegirEnElEditor("clip.mp4");
     await dejarQueTermine();
-    const enlace = enlaceDeSesion("v1")!;
+    const enlace = sessionObjectUrl("v1")!;
     expect(enlace).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /^Eliminar / }));
 
     expect(revocados).toContain(enlace);
-    expect(enlaceDeSesion("v1")).toBeNull();
-    expect(archivoDeSesion("v1")).toBeNull();
+    expect(sessionObjectUrl("v1")).toBeNull();
+    expect(sessionFile("v1")).toBeNull();
     expect((config.items as unknown[])).toHaveLength(0);
     editor.unmount();
   });

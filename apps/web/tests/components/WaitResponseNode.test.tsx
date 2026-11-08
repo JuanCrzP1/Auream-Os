@@ -10,11 +10,9 @@ import { applyNodePatch } from "@features/automations/builder/services/applyNode
 import { createNodeDraft } from "@features/automations/builder/services/createNodeDraft";
 import { resolveTool } from "@features/automations/builder/tools/registry";
 import { resolveToolUi } from "@features/automations/builder/tools/ui-registry";
-import { readWaitResponseConfig } from "@contracts/WaitResponseConfig";
+import { WAIT_RESPONSE_OUTPUT, readWaitResponseConfig } from "@contracts/WaitResponseConfig";
 import {
-  SALIDA_RESPUESTA,
-  SALIDA_TIEMPO_AGOTADO,
-  SIN_MENSAJE_PREVIO
+  NO_PROMPT_TEXT
 } from "@features/automations/builder/tools/wait-response/WaitResponseCompactBody";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 import type { NodeType } from "@contracts/FlowSnapshot";
@@ -151,7 +149,7 @@ describe("el marco genérico, no uno propio", () => {
 
     // Mismo valor que declara `definition.ts`, en RGB tal y como lo normaliza el
     // navegador. Es la identidad dorada, no el naranja que tenía antes.
-    expect(cabecera?.style.background).toBe("rgb(212, 167, 44)");
+    expect(cabecera?.style.background).toBe("rgb(182, 143, 37)");
   });
 
   it("Guardar nace deshabilitado: sin cambios no hay nada que confirmar", () => {
@@ -191,7 +189,7 @@ describe("Guardar", () => {
 
   it("no guarda una configuración contradictoria: avisa y no cierra", () => {
     // «Sin límite» encendido con un tiempo máximo guardado. El marco pregunta a
-    // `validateContent` de la herramienta, sin saber de qué herramienta se trata.
+    // `validate` de la herramienta, sin saber de qué herramienta se trata.
     const nodo = applyNodePatch(nodoEspera(), {
       config: { waitIndefinitely: true, timeout: { amount: 30, unit: "minutes" } }
     });
@@ -279,7 +277,7 @@ describe("el nodo cerrado en el lienzo", () => {
   it("sin mensaje propio dice qué está haciendo, no se queda mudo", () => {
     const { container } = pintarTarjeta(nodoEspera());
 
-    expect(within(container).getByText(SIN_MENSAJE_PREVIO)).toBeInTheDocument();
+    expect(within(container).getByText(NO_PROMPT_TEXT)).toBeInTheDocument();
     // El default del nodo recién creado es 30 minutos, no «Sin límite».
     expect(within(container).getByText("Máximo: 30 minutos")).toBeInTheDocument();
   });
@@ -340,7 +338,7 @@ describe("el nodo cerrado en el lienzo", () => {
 
     expect(within(container).getByText("Respuesta")).toBeInTheDocument();
     expect(within(container).getByText("Tiempo agotado")).toBeInTheDocument();
-    expect(salidas(container)).toEqual([SALIDA_RESPUESTA, SALIDA_TIEMPO_AGOTADO]);
+    expect(salidas(container)).toEqual([WAIT_RESPONSE_OUTPUT.answer, WAIT_RESPONSE_OUTPUT.timeout]);
   });
 
   it("con «sin límite» solo ofrece Respuesta: no se pinta un camino imposible", () => {
@@ -354,7 +352,7 @@ describe("el nodo cerrado en el lienzo", () => {
 
     expect(within(container).getByText("Respuesta")).toBeInTheDocument();
     expect(within(container).queryByText("Tiempo agotado")).not.toBeInTheDocument();
-    expect(salidas(container)).toEqual([SALIDA_RESPUESTA]);
+    expect(salidas(container)).toEqual([WAIT_RESPONSE_OUTPUT.answer]);
   });
 
   it("las dos salidas son handles de ORIGEN, conectables y en filas distintas", () => {
@@ -522,7 +520,7 @@ describe("el nodo cerrado en el lienzo", () => {
     const { container } = pintarTarjeta(nodoEspera());
     const tarjeta = container.querySelector<HTMLElement>(".flow-node");
 
-    expect(tarjeta?.style.getPropertyValue("--flow-node-accent")).toBe("#d4a72c");
+    expect(tarjeta?.style.getPropertyValue("--flow-node-accent")).toBe("#b68f25");
     expect(tarjeta?.style.getPropertyValue("--flow-node-surface")).toBe("#8a6418");
   });
 
@@ -1022,15 +1020,15 @@ describe("independencia entre herramientas", () => {
     // Llevaba el mismo contorno de bocadillo que `MessageIcon`, carácter por
     // carácter, y solo cambiaba lo de dentro: a 18px eran la misma cosa justo
     // donde el usuario elige entre las dos. Ahora es un reloj de arena.
-    const { Icon: IconoEspera } = resolveToolUi("question");
+    const { Icon: WaitIcon } = resolveToolUi("question");
     const { Icon: IconoMensaje } = resolveToolUi("message");
 
-    const espera = render(<IconoEspera />).container.innerHTML;
+    const espera = render(<WaitIcon />).container.innerHTML;
     const mensaje = render(<IconoMensaje />).container.innerHTML;
 
     expect(espera).not.toBe(mensaje);
     // Y tampoco el círculo con agujas de Intervalo, que ya ocupa esa silueta.
-    expect(render(<IconoEspera />).container.querySelector("circle")).toBeNull();
+    expect(render(<WaitIcon />).container.querySelector("circle")).toBeNull();
   });
 
   it("Mensaje conserva sus ganchos y Esperar respuesta declara solo los suyos", () => {
@@ -1046,6 +1044,6 @@ describe("independencia entre herramientas", () => {
     expect(espera.duplicateConfig).toBeUndefined();
     expect(espera.releaseResources).toBeUndefined();
     expect(espera.summarize).toBeDefined();
-    expect(espera.validateContent).toBeDefined();
+    expect(espera.validate).toBeDefined();
   });
 });

@@ -13,7 +13,7 @@ import type { ToolDefinition } from "../ToolDefinition";
  * y el canvas debe seguir pintándolo correctamente.
  *
  * Deja de ser nodo de sistema el día que una herramienta del producto asuma la
- * terminación del flujo (candidatas: Venta aprobada, Notificación).
+ * terminación del flujo (candidata: Notificación).
  */
 export const endTool: ToolDefinition = {
   type: "end",
@@ -26,9 +26,9 @@ export const endTool: ToolDefinition = {
   executable: true,
   defaultConfig: {},
   colors: {
-    header: "#16a34a",
-    body: "#15803d",
-    gradient: "linear-gradient(135deg,#4ade80,#15803d)"
+    header: "#3f6212",
+    body: "#365314",
+    gradient: "linear-gradient(135deg,#65a30d,#365314)"
   },
   glyph: "✓"
 };

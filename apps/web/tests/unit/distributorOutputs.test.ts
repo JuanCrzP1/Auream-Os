@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   DISTRIBUTOR_DEFAULT_CONFIG,
-  anadirSalida,
-  normalizarIdDeSalida,
-  quitarSalida,
-  siguienteRotulo
+  addOutput,
+  normalizeOutputId,
+  removeOutput,
+  nextOutputLabel
 } from "@features/automations/builder/tools/distributor/distributorOutputs";
 import { readDistributorOutputs } from "@features/automations/builder/tools/distributor/readDistributorConfig";
 import {
-  SALIDAS_DUPLICADAS,
-  SALIDA_ILEGIBLE,
+  DUPLICATE_OUTPUTS_MESSAGE,
+  UNREADABLE_OUTPUT_MESSAGE,
   validateDistributor
 } from "@features/automations/builder/tools/distributor/validateDistributor";
 import { summarizeDistributor } from "@features/automations/builder/tools/distributor/summarizeDistributor";
@@ -35,7 +35,7 @@ describe("estado inicial", () => {
 
 describe("añadir salidas", () => {
   it("la primera salida se llama «Salida 1»", () => {
-    const [primera, ...resto] = anadirSalida([]);
+    const [primera, ...resto] = addOutput([]);
 
     expect(primera.label).toBe("Salida 1");
     expect(primera.id.length).toBeGreaterThan(0);
@@ -47,7 +47,7 @@ describe("añadir salidas", () => {
     // muchas y todas entran. Si algún día el producto decide un tope, esta
     // prueba es la que tendrá que cambiar, y a propósito.
     let salidas = DISTRIBUTOR_DEFAULT_CONFIG.outputs;
-    for (let i = 0; i < 12; i += 1) salidas = anadirSalida(salidas);
+    for (let i = 0; i < 12; i += 1) salidas = addOutput(salidas);
 
     expect(salidas).toHaveLength(12);
     expect(salidas.map((salida) => salida.label)).toEqual([
@@ -57,17 +57,17 @@ describe("añadir salidas", () => {
   });
 
   it("cada salida nace con una identidad propia, también en la misma llamada", () => {
-    const salidas = anadirSalida(anadirSalida(anadirSalida([])));
+    const salidas = addOutput(addOutput(addOutput([])));
     const ids = salidas.map((salida) => salida.id);
 
     expect(new Set(ids).size).toBe(3);
   });
 
   it("no muta la lista que recibe", () => {
-    const original = anadirSalida([]);
+    const original = addOutput([]);
     const copia = [...original];
 
-    anadirSalida(original);
+    addOutput(original);
 
     expect(original).toEqual(copia);
   });
@@ -75,9 +75,9 @@ describe("añadir salidas", () => {
 
 describe("eliminar salidas", () => {
   it("quita la señalada y deja intactas las demás, con su identidad", () => {
-    const [uno, dos, tres] = anadirSalida(anadirSalida(anadirSalida([])));
+    const [uno, dos, tres] = addOutput(addOutput(addOutput([])));
 
-    const quedan = quitarSalida([uno, dos, tres], dos.id);
+    const quedan = removeOutput([uno, dos, tres], dos.id);
 
     expect(quedan).toEqual([uno, tres]);
   });
@@ -86,19 +86,19 @@ describe("eliminar salidas", () => {
     // Lo que protege esta prueba es una conexión ya hecha: si al borrar la
     // primera se renumeraran las siguientes, el punto al que alguien conectó
     // «Salida 3» pasaría a llamarse «Salida 2» sin haberse movido.
-    const [uno, dos, tres] = anadirSalida(anadirSalida(anadirSalida([])));
+    const [uno, dos, tres] = addOutput(addOutput(addOutput([])));
 
-    const quedan = quitarSalida([uno, dos, tres], uno.id);
+    const quedan = removeOutput([uno, dos, tres], uno.id);
 
     expect(quedan.map((salida) => salida.label)).toEqual(["Salida 2", "Salida 3"]);
     expect(quedan.map((salida) => salida.id)).toEqual([dos.id, tres.id]);
   });
 
   it("la salida creada después de borrar no repite el nombre de una viva", () => {
-    const [uno, dos, tres] = anadirSalida(anadirSalida(anadirSalida([])));
-    const quedan = quitarSalida([uno, dos, tres], uno.id);
+    const [uno, dos, tres] = addOutput(addOutput(addOutput([])));
+    const quedan = removeOutput([uno, dos, tres], uno.id);
 
-    const conNueva = anadirSalida(quedan);
+    const conNueva = addOutput(quedan);
 
     expect(conNueva.map((salida) => salida.label)).toEqual([
       "Salida 2",
@@ -109,28 +109,28 @@ describe("eliminar salidas", () => {
   });
 
   it("borrar algo que ya no está deja la lista igual, sin fallar", () => {
-    const salidas = anadirSalida([]);
+    const salidas = addOutput([]);
 
-    expect(quitarSalida(salidas, "ds-que-no-existe")).toEqual(salidas);
+    expect(removeOutput(salidas, "ds-que-no-existe")).toEqual(salidas);
   });
 
   it("vaciar todas devuelve al estado inicial", () => {
-    const [unica] = anadirSalida([]);
+    const [unica] = addOutput([]);
 
-    expect(quitarSalida([unica], unica.id)).toEqual([]);
+    expect(removeOutput([unica], unica.id)).toEqual([]);
   });
 });
 
 describe("rótulo de la siguiente salida", () => {
   it("cuenta desde el mayor existente, no desde el total", () => {
-    expect(siguienteRotulo([])).toBe("Salida 1");
-    expect(siguienteRotulo([{ id: "a", label: "Salida 7" }])).toBe("Salida 8");
+    expect(nextOutputLabel([])).toBe("Salida 1");
+    expect(nextOutputLabel([{ id: "a", label: "Salida 7" }])).toBe("Salida 8");
   });
 
   it("ignora los rótulos que no siguen la forma «Salida n»", () => {
-    expect(siguienteRotulo([{ id: "a", label: "Ventas" }])).toBe("Salida 1");
+    expect(nextOutputLabel([{ id: "a", label: "Ventas" }])).toBe("Salida 1");
     expect(
-      siguienteRotulo([
+      nextOutputLabel([
         { id: "a", label: "Ventas" },
         { id: "b", label: "Salida 2" }
       ])
@@ -141,7 +141,7 @@ describe("rótulo de la siguiente salida", () => {
     // Se comprueba por el camino público. La fábrica interna no se exporta a
     // propósito: probarla aparte sería fijar el cómo en vez del qué, y dejaría
     // una segunda manera de crear salidas al alcance de quien pase por aquí.
-    const [, nueva] = anadirSalida([{ id: "a", label: "Salida 4" }]);
+    const [, nueva] = addOutput([{ id: "a", label: "Salida 4" }]);
 
     expect(nueva.label).toBe("Salida 5");
   });
@@ -153,13 +153,13 @@ describe("qué cuenta como identidad de una salida", () => {
   // Estaba escrita en los dos sitios y esto es lo que evita que diverjan.
 
   it("acepta texto con contenido y lo devuelve limpio", () => {
-    expect(normalizarIdDeSalida("ds-1")).toBe("ds-1");
-    expect(normalizarIdDeSalida("  ds-1  ")).toBe("ds-1");
+    expect(normalizeOutputId("ds-1")).toBe("ds-1");
+    expect(normalizeOutputId("  ds-1  ")).toBe("ds-1");
   });
 
   it("rechaza lo que no puede ser un punto de conexión", () => {
     for (const basura of ["", "   ", null, undefined, 7, {}, []]) {
-      expect(normalizarIdDeSalida(basura), `aceptó ${JSON.stringify(basura)}`).toBeNull();
+      expect(normalizeOutputId(basura), `aceptó ${JSON.stringify(basura)}`).toBeNull();
     }
   });
 
@@ -171,7 +171,7 @@ describe("qué cuenta como identidad de una salida", () => {
       const config = { outputs: [{ id, label: "Salida 1" }] };
 
       expect(readDistributorOutputs(config), `leyó ${JSON.stringify(id)}`).toEqual([]);
-      expect(validateDistributor({}, config).valido, `guardó ${JSON.stringify(id)}`).toBe(false);
+      expect(validateDistributor({}, config).valid, `guardó ${JSON.stringify(id)}`).toBe(false);
     }
   });
 });
@@ -219,16 +219,16 @@ describe("lectura defensiva de lo guardado", () => {
 
 describe("qué puede guardarse", () => {
   it("un Distribuidor sin salidas se guarda: es el estado con el que nace", () => {
-    expect(validateDistributor({}, {})).toEqual({ valido: true, motivo: null });
-    expect(validateDistributor({}, { outputs: [] })).toEqual({ valido: true, motivo: null });
+    expect(validateDistributor({}, {})).toEqual({ valid: true, reason: null });
+    expect(validateDistributor({}, { outputs: [] })).toEqual({ valid: true, reason: null });
   });
 
   it("con salidas bien formadas, se guarda", () => {
-    const salidas = anadirSalida(anadirSalida([]));
+    const salidas = addOutput(addOutput([]));
 
     expect(validateDistributor({}, { outputs: salidas })).toEqual({
-      valido: true,
-      motivo: null
+      valid: true,
+      reason: null
     });
   });
 
@@ -240,14 +240,14 @@ describe("qué puede guardarse", () => {
       ]
     });
 
-    expect(validez.valido).toBe(false);
-    expect(validez.motivo).toBe(SALIDAS_DUPLICADAS);
+    expect(validez.valid).toBe(false);
+    expect(validez.reason).toBe(DUPLICATE_OUTPUTS_MESSAGE);
   });
 
   it("rechaza una salida sin identidad legible", () => {
-    expect(validateDistributor({}, { outputs: [{ label: "Salida 1" }] }).motivo)
-      .toBe(SALIDA_ILEGIBLE);
-    expect(validateDistributor({}, { outputs: [null] }).motivo).toBe(SALIDA_ILEGIBLE);
+    expect(validateDistributor({}, { outputs: [{ label: "Salida 1" }] }).reason)
+      .toBe(UNREADABLE_OUTPUT_MESSAGE);
+    expect(validateDistributor({}, { outputs: [null] }).reason).toBe(UNREADABLE_OUTPUT_MESSAGE);
   });
 
   it("VALIDA EL CRUDO, no lo que el lector sanea", () => {
@@ -262,15 +262,15 @@ describe("qué puede guardarse", () => {
     };
 
     expect(readDistributorOutputs(corrupto)).toHaveLength(1);
-    expect(validateDistributor({}, corrupto).valido).toBe(false);
+    expect(validateDistributor({}, corrupto).valid).toBe(false);
   });
 });
 
 describe("resumen para la tarjeta", () => {
   it("cuenta las salidas, en singular y plural", () => {
     expect(summarizeDistributor({}, {})).toBe("Sin salidas");
-    expect(summarizeDistributor({}, { outputs: anadirSalida([]) })).toBe("1 salida");
-    expect(summarizeDistributor({}, { outputs: anadirSalida(anadirSalida([])) })).toBe(
+    expect(summarizeDistributor({}, { outputs: addOutput([]) })).toBe("1 salida");
+    expect(summarizeDistributor({}, { outputs: addOutput(addOutput([])) })).toBe(
       "2 salidas"
     );
   });

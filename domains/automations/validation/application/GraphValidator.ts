@@ -5,7 +5,7 @@ import { validateEntryNode } from "./rules/validateEntryNode";
 import { validateEdgeIntegrity } from "./rules/validateEdgeIntegrity";
 import { validateEdgePriorities } from "./rules/validateEdgePriorities";
 import { validateNodeDegree } from "./rules/validateNodeDegree";
-import { validateFallbacks } from "./rules/validateFallbacks";
+import { validateOutgoingLimits } from "./rules/validateOutgoingLimits";
 import { validateKnownNodeTypes } from "./rules/validateKnownNodeTypes";
 import { detectCycles } from "./rules/detectCycles";
 import { detectUnreachable } from "./rules/detectUnreachable";
@@ -32,7 +32,7 @@ export class GraphValidator {
       ...validateEdgeIntegrity(snapshot, nodeIds),
       ...validateEdgePriorities(snapshot),
       ...validateNodeDegree(snapshot),
-      ...validateFallbacks(snapshot),
+      ...validateOutgoingLimits(snapshot),
       ...(entryIsReachable ? detectCycles(snapshot, entryNodeId, nodeIds) : [])
     ];
 

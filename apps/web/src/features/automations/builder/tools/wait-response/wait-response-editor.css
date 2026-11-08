@@ -13,6 +13,7 @@
  * `definition.ts`, que es donde el proyecto guarda el color de cada una—. */
 
 .wait-response {
+  --kit-switch-accent: var(--wr-amber);
   /* DORADO PREMIUM, la identidad de la herramienta.
    *
    * El tono vivo para lo encendido —interruptores, unidad activa, filos de
@@ -20,152 +21,21 @@
    *
    * Es el mismo valor que `definition.ts` publica al lienzo: el nodo, su
    * cabecera y este editor se leen como una sola pieza. */
-  --wr-amber: #d4a72c;
+  --wr-amber: #b68f25;
   --wr-amber-soft: color-mix(in srgb, var(--wr-amber) 18%, transparent);
 
-  height: 100%;
-  overflow-y: auto;
-  padding: 14px 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-sizing: border-box;
 }
 
 /* El editor es quien desplaza, no el marco: `node-expanded__body` no lo hace a
    propósito, para que cada herramienta decida qué parte suya queda quieta. */
 
-.wait-response__section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 
-.wait-response__rule {
-  height: 1px;
-  margin: 0;
-  border: 0;
-  background: var(--border);
-}
 
-.wait-response__label {
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text);
-}
 
-.wait-response__hint {
-  margin: 0;
-  font-size: 0.72rem;
-  line-height: 1.4;
-  color: var(--muted);
-}
 
-.wait-response__textarea,
-.wait-response__input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 9px 11px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-alt);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 0.82rem;
-  line-height: 1.45;
-  transition: border-color var(--speed-fast) var(--ease-out),
-    box-shadow var(--speed-fast) var(--ease-out);
-}
 
-.wait-response__textarea {
-  resize: vertical;
-  min-height: 62px;
-}
 
-.wait-response__textarea::placeholder,
-.wait-response__input::placeholder {
-  color: var(--muted);
-}
 
-.wait-response__textarea:focus-visible,
-.wait-response__input:focus-visible {
-  outline: none;
-  border-color: var(--wr-amber);
-  box-shadow: 0 0 0 3px var(--wr-amber-soft);
-}
-
-/* ----- Interruptor ----- */
-
-.wr-switch {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.wr-switch__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.wr-switch__label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.wr-switch__hint {
-  font-size: 0.71rem;
-  line-height: 1.4;
-  color: var(--muted);
-}
-
-/* Raíl y pulsador. Apagado es neutro; encendido es ámbar: el color solo aparece
-   cuando la opción hace algo. */
-.wr-switch__control {
-  position: relative;
-  flex: 0 0 auto;
-  width: 36px;
-  height: 20px;
-  margin-top: 1px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--chip-neutral-bg);
-  cursor: pointer;
-  transition: background var(--speed-fast) var(--ease-out),
-    border-color var(--speed-fast) var(--ease-out);
-}
-
-.wr-switch__control--on {
-  background: var(--wr-amber);
-  border-color: var(--wr-amber);
-}
-
-.wr-switch__control:focus-visible {
-  outline: 2px solid var(--wr-amber);
-  outline-offset: 2px;
-}
-
-.wr-switch__knob {
-  position: absolute;
-  top: 50%;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  transform: translateY(-50%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-  transition: left var(--speed-fast) var(--ease-out);
-}
-
-.wr-switch__control--on .wr-switch__knob {
-  left: 18px;
-}
 
 /* ----- Tiempo máximo ----- */
 

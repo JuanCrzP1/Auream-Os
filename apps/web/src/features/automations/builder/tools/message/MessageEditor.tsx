@@ -1,6 +1,10 @@
 import "./message-editor.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ToolEditorProps } from "../ToolUi";
+import { editorAccent } from "../_kit/fields";
+import { EditorIntro } from "../_kit/layout";
+import { messageTool } from "./definition";
+import { MessageIcon } from "./MessageIcon";
 import type { MessageItem, MessageItemKind } from "./types";
 import {
   MESSAGE_ITEM_KINDS,
@@ -9,9 +13,9 @@ import {
   insertItem,
   moveItem,
   removeItem,
-  updateItem
+  updateItem,
 } from "./messageItems";
-import { soltarArchivo } from "./mediaSourceSession";
+import { releaseFile } from "./mediaSourceSession";
 import { readMessageItems } from "./readMessageConfig";
 import { readKindPayload, readReorderPayload } from "./editor/dragPayload";
 import { revealInViewport } from "./editor/revealInViewport";
@@ -21,20 +25,9 @@ import { MessageEmptyState } from "./editor/MessageEmptyState";
 import { MessageDropZone } from "./editor/MessageDropZone";
 
 /**
- * Constructor de la secuencia de bloques de un Mensaje.
- *
- * Recibe la configuración y una devolución de llamada; no conoce el nodo, ni el
- * lienzo, ni React Flow, ni el snapshot. Todo lo que puede hacer es proponer
- * una secuencia nueva.
- *
- * La secuencia se lee en cada render desde `config` en vez de guardarse en un
- * estado local. Con estado local habría dos verdades sobre lo mismo —la del
- * editor y la del nodo— y bastaría con deshacer, recargar o cerrar y reabrir
- * para que divergieran.
- *
- * Lo único que sí es estado local es lo que dura menos que un gesto: dónde está
- * el cursor mientras se arrastra y qué bloque acaba de nacer. Nada de eso es
- * configuración y nada de eso debe llegar al snapshot.
+ * Constructor de la secuencia de un Mensaje. La secuencia se lee de `config`
+ * en cada render; solo es estado local lo que dura menos que un gesto (posición
+ * del arrastre, bloque recién creado), que nunca llega al snapshot.
  */
 export function MessageEditor({ draft, onChange }: ToolEditorProps) {
   const items = readMessageItems(draft.config, draft.content);
@@ -43,177 +36,166 @@ export function MessageEditor({ draft, onChange }: ToolEditorProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Publica una secuencia nueva y, si aparece un bloque, lo señala para
-   * revelarlo.
-   *
-   * El bloque nuevo se detecta comparando identidades, no mirando qué operación
-   * se ha hecho. Así añadir, soltar y duplicar revelan solos, mientras editar,
-   * eliminar y reordenar no lo hacen nunca — porque no introducen identidades
-   * nuevas. La regla «no desplazar al escribir» se cumple por construcción y no
-   * porque alguien se acuerde de respetarla.
-   *
-   * Retira de paso el `content.text` heredado. Un nodo guardado antes de la
-   * secuencia se lee como un bloque de texto, y si al editarlo dejáramos ahí el
-   * campo viejo, la misma información quedaría en dos sitios para siempre: el
-   * lector prefiere `items`, así que `text` se volvería un rastro muerto que
-   * nadie actualiza y que contradice lo que el usuario ve. Se limpia en la
-   * primera escritura, sin migración masiva y sin perder nada.
+   * Publica la secuencia. Un id nuevo se revela (añadir, soltar, duplicar);
+   * editar, borrar y reordenar no introducen ids y no desplazan, por
+   * construcción. Retira el `content.text` heredado en la primera escritura
+   * para que la información no quede en dos sitios.
    */
   const commit = useCallback(
     (next: ReadonlyArray<MessageItem>) => {
-      const previos = new Set(items.map((item) => item.id));
-      const aparecido = next.find((item) => !previos.has(item.id));
-      if (aparecido) setRevealId(aparecido.id);
+      const previous = new Set(items.map((item) => item.id));
+      const created = next.find((item) => !previous.has(item.id));
+      if (created) setRevealId(created.id);
 
-      const { text: _heredado, ...restoDelContenido } = draft.content;
+      const { text: _legacy, ...restContent } = draft.content;
 
       onChange({
-        content: restoDelContenido,
-        config: { ...draft.config, items: next }
+        content: restContent,
+        config: { ...draft.config, items: next },
       });
     },
-    [items, draft.content, draft.config, onChange]
+    [items, draft.content, draft.config, onChange],
   );
 
   /**
-   * Lleva a la vista el bloque recién nacido.
-   *
-   * Se ejecuta en un efecto y no al añadirlo porque el elemento todavía no
-   * existe en ese momento: la escritura sube al nodo, el nodo vuelve a bajar la
-   * configuración y solo entonces hay algo a lo que desplazarse. Nada de
-   * temporizadores — el disparador es que el bloque ya esté en el DOM.
+   * Lleva a la vista el bloque recién creado cuando ya está en el DOM (la
+   * escritura sube al nodo y la configuración vuelve a bajar). Si aún no está,
+   * queda pendiente y este efecto lo resuelve en el siguiente render.
    */
   useEffect(() => {
     if (!revealId) return;
 
     const viewport = scrollRef.current;
-    const fila = viewport?.querySelector<HTMLElement>(`[data-item-id="${revealId}"]`);
+    const row = viewport?.querySelector<HTMLElement>(
+      `[data-item-id="${revealId}"]`,
+    );
+    if (!viewport || !row) return;
 
-    // Todavía no está en el DOM: la escritura acaba de subir al nodo y la
-    // configuración aún no ha bajado. Se deja pendiente en lugar de darlo por
-    // hecho, y este mismo efecto lo resuelve cuando el bloque exista — si se
-    // limpiara aquí, el desplazamiento no llegaría a ocurrir nunca.
-    if (!viewport || !fila) return;
+    const isLast = items[items.length - 1]?.id === revealId;
+    const smooth = !window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      .matches;
 
-    // El efecto corre cuando el DOM ya está actualizado, así que las medidas
-    // del contenedor —su alto y el del contenido— son las definitivas.
-    const alFinal = items[items.length - 1]?.id === revealId;
-    const suave = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
-    revealInViewport(viewport, fila, alFinal, suave);
+    revealInViewport(viewport, row, isLast, smooth);
     setRevealId(null);
   }, [revealId, items]);
 
   const handleAdd = useCallback(
     (kind: MessageItemKind) => commit(appendItem(items, kind)),
-    [commit, items]
+    [commit, items],
   );
 
-  /** Un bloque soltado sobre la secuencia: o llega nuevo, o se está moviendo. */
+  /** Un bloque soltado: o llega nuevo desde la biblioteca, o se está moviendo. */
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
-      // El lienzo también escucha `drop` para crear nodos. Se corta aquí para
-      // que construir un mensaje no deje además un nodo suelto en el flujo.
+      // El lienzo también escucha `drop` para crear nodos.
       event.preventDefault();
       event.stopPropagation();
 
-      const destino = dropIndex ?? items.length;
+      const target = dropIndex ?? items.length;
       setDropIndex(null);
 
-      const nuevo = readKindPayload(event.dataTransfer);
-      if (nuevo) {
-        commit(insertItem(items, nuevo, destino));
+      const created = readKindPayload(event.dataTransfer);
+      if (created) {
+        commit(insertItem(items, created, target));
         return;
       }
 
-      const movido = readReorderPayload(event.dataTransfer);
-      if (movido) {
-        // Al mover, el hueco que deja el propio bloque desplaza el destino.
-        const origen = items.findIndex((item) => item.id === movido);
-        commit(moveItem(items, movido, origen < destino ? destino - 1 : destino));
+      const movedId = readReorderPayload(event.dataTransfer);
+      if (movedId) {
+        // El hueco que deja el propio bloque desplaza el destino.
+        const from = items.findIndex((item) => item.id === movedId);
+        commit(moveItem(items, movedId, from < target ? target - 1 : target));
       }
     },
-    [commit, dropIndex, items]
+    [commit, dropIndex, items],
   );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
-    // Sin esto el navegador rechaza el soltar y el gesto no llega nunca.
     event.preventDefault();
     event.stopPropagation();
   }, []);
 
-  const arrastrando = dropIndex !== null;
+  const dragging = dropIndex !== null;
 
   return (
-    <div className="message-editor">
-      <MessageLibrary kinds={MESSAGE_ITEM_KINDS} onAdd={handleAdd} />
+    <div
+      className="message-shell"
+      style={editorAccent(messageTool.colors.header)}
+    >
+      <EditorIntro
+        compact
+        Icon={MessageIcon}
+        title="Mensaje"
+        description="Construye lo que recibe el cliente: textos, imágenes, videos, audios, archivos y pausas, en orden."
+        outputs={null}
+      />
+      <div className="message-editor">
+        <MessageLibrary kinds={MESSAGE_ITEM_KINDS} onAdd={handleAdd} />
 
-      <section
-        className={`message-builder${arrastrando ? " message-builder--receiving" : ""}`}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onDragLeave={(event) => {
-          // Solo al salir del área entera: cruzar de un bloque a otro dispara
-          // `dragleave` en el que se abandona y apagaría el indicador a mitad
-          // del gesto.
-          if (!event.currentTarget.contains(event.relatedTarget as Node)) setDropIndex(null);
-        }}
-      >
-        <p className="message-builder__heading">
-          Contenido del mensaje
-          <span className="message-builder__count">
-            {items.length === 0
-              ? "vacío"
-              : `${items.length} ${items.length === 1 ? "bloque" : "bloques"}`}
-          </span>
-        </p>
+        <section
+          className={`message-builder${dragging ? " message-builder--receiving" : ""}`}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragLeave={(event) => {
+            // Solo al salir del área entera, no al cruzar entre bloques.
+            if (!event.currentTarget.contains(event.relatedTarget as Node))
+              setDropIndex(null);
+          }}
+        >
+          <p className="message-builder__heading">
+            Contenido del mensaje
+            <span className="message-builder__count">
+              {items.length === 0
+                ? "vacío"
+                : `${items.length} ${items.length === 1 ? "bloque" : "bloques"}`}
+            </span>
+          </p>
 
-        {/* Área desplazable. La cabecera del nodo y la biblioteca quedan fuera,
-            así que permanecen fijas por muchos bloques que haya. */}
-        <div className="message-builder__scroll nowheel" ref={scrollRef}>
-          {items.length === 0 ? (
-            <MessageEmptyState receiving={arrastrando} onDragOver={() => setDropIndex(0)} />
-          ) : (
-            <ol className="message-builder__list" aria-label="Contenidos del mensaje">
-              {items.map((item, index) => (
-                <MessageItemRow
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  total={items.length}
-                  dropBefore={dropIndex === index}
-                  onDragOverAt={setDropIndex}
-                  onEdit={(change) => commit(updateItem(items, item.id, change))}
-                  // Borrar el bloque suelta también su archivo. Sin esto, el
-                  // `File` y su Object URL se quedaban retenidos hasta recargar
-                  // la página: `FileSource` solo suelta al reemplazar o al
-                  // pulsar «Quitar», y aquí el bloque entero desaparece sin
-                  // pasar por ninguno de los dos.
-                  //
-                  // Va aquí y no en un efecto de desmontaje porque desmontarse
-                  // NO significa que el archivo sobre: cerrar el editor también
-                  // desmonta, y ahí el archivo tiene que sobrevivir. La señal
-                  // correcta es esta: el bloque deja de existir.
-                  onRemove={() => {
-                    soltarArchivo(item.id);
-                    commit(removeItem(items, item.id));
-                  }}
-                  onDuplicate={() => commit(duplicateItem(items, item.id))}
-                  onMove={(toIndex) => commit(moveItem(items, item.id, toIndex))}
-                />
-              ))}
-
-              {/* ÚNICA zona de continuación, y solo al final. Entre bloques no
-                  hay nada: los controles intermedios competían con el contenido
-                  y convertían la secuencia en una lista de botones. */}
-              <MessageDropZone
-                receiving={dropIndex === items.length}
-                onDragOver={() => setDropIndex(items.length)}
+          <div className="message-builder__scroll nowheel" ref={scrollRef}>
+            {items.length === 0 ? (
+              <MessageEmptyState
+                receiving={dragging}
+                onDragOver={() => setDropIndex(0)}
               />
-            </ol>
-          )}
-        </div>
-      </section>
+            ) : (
+              <ol
+                className="message-builder__list"
+                aria-label="Contenidos del mensaje"
+              >
+                {items.map((item, index) => (
+                  <MessageItemRow
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    total={items.length}
+                    dropBefore={dropIndex === index}
+                    onDragOverAt={setDropIndex}
+                    onEdit={(change) =>
+                      commit(updateItem(items, item.id, change))
+                    }
+                    // Borrar el bloque libera su archivo. No en un efecto de
+                    // desmontaje: cerrar el editor también desmonta y ahí el
+                    // archivo debe sobrevivir.
+                    onRemove={() => {
+                      releaseFile(item.id);
+                      commit(removeItem(items, item.id));
+                    }}
+                    onDuplicate={() => commit(duplicateItem(items, item.id))}
+                    onMove={(toIndex) =>
+                      commit(moveItem(items, item.id, toIndex))
+                    }
+                  />
+                ))}
+
+                <MessageDropZone
+                  receiving={dropIndex === items.length}
+                  onDragOver={() => setDropIndex(items.length)}
+                />
+              </ol>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

@@ -107,3 +107,47 @@
   outline: 2px solid rgba(255, 255, 255, 0.9);
   outline-offset: 1px;
 }
+
+/* Aviso de conexión no permitida (reglas: docs/architecture/flow-connections.md). */
+.canvas-connection-notice {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(520px, calc(100% - 32px));
+  padding: 9px 14px;
+  transform: translateX(-50%);
+  border: 1px solid color-mix(in srgb, #f59e0b 45%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, #f59e0b 12%, var(--surface));
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.45);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  pointer-events: none;
+  animation: canvas-notice-in 180ms var(--ease-out);
+}
+
+.canvas-connection-notice svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: #f59e0b;
+}
+
+@keyframes canvas-notice-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-connection-notice {
+    animation: none;
+  }
+}

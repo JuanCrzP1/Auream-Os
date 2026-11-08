@@ -48,8 +48,8 @@ describe("paridad de validación de grafo backend ↔ frontend", () => {
     });
   }
 
-  it("cubre los nueve escenarios acordados", () => {
-    expect(GRAPH_SCENARIOS).toHaveLength(9);
+  it("cubre los escenarios acordados", () => {
+    expect(GRAPH_SCENARIOS).toHaveLength(12);
   });
 
   it("documenta explícitamente cada regla que sólo cubre el backend", () => {

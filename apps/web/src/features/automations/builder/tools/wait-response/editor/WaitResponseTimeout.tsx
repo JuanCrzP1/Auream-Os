@@ -7,73 +7,51 @@ interface WaitResponseTimeoutProps {
   readonly onChange: (amount: number, unit: WaitResponseTimeUnit) => void;
 }
 
-/**
- * Las dos unidades que la herramienta ofrece, con su nombre visible.
- *
- * Se declaran aquí y no en el contrato porque son PRESENTACIÓN: el contrato
- * decide qué unidades existen (`WaitResponseTimeUnit`), esta lista decide cómo
- * se llaman en pantalla. Si mañana el producto habla en otro idioma, cambia
- * esto y no el contrato.
- */
-const UNIDADES: ReadonlyArray<{ readonly value: WaitResponseTimeUnit; readonly label: string }> = [
+/** Nombres visibles de las unidades que define el contrato. */
+const UNITS: ReadonlyArray<{ readonly value: WaitResponseTimeUnit; readonly label: string }> = [
   { value: "minutes", label: "Minutos" },
   { value: "hours", label: "Horas" }
 ];
 
 /**
- * Cuánto se espera como máximo: una cantidad y su unidad.
- *
- * Solo se monta cuando «Esperar sin límite» está apagado — `WaitResponseEditor`
- * decide eso; aquí no se sabe nada de esa opción.
- *
- * DOS BOTONES Y NO UN `<select>`: el menú desplegado de un `select` lo pinta el
- * sistema operativo y no hay CSS que lo alcance, así que en tema oscuro se abre
- * como un agujero blanco. Con dos unidades, un grupo de opciones visibles es
- * además menos clics que un desplegable. `role="radiogroup"` para que un lector
- * de pantalla las anuncie como lo que son: una elección entre dos.
- *
- * La cantidad se acota en la ENTRADA —entera y mayor que cero— porque una
- * espera de cero o negativa no significa nada. La validación vuelve a
- * comprobarlo sobre el dato guardado: este control impide escribirlo, aquella
- * impide guardarlo si llegó por otro camino.
+ * Tiempo máximo de espera. Botones en vez de `<select>`: el desplegable
+ * nativo no admite tema oscuro. La cantidad se acota a enteros > 0 en la
+ * entrada; la validación lo vuelve a comprobar sobre el dato guardado.
  */
 export function WaitResponseTimeout({ amount, unit, onChange }: WaitResponseTimeoutProps) {
-  const idCantidad = useId();
+  const amountId = useId();
 
   return (
     <div className="wr-timeout">
-      <label className="wr-timeout__label" htmlFor={idCantidad}>
+      <label className="wr-timeout__label" htmlFor={amountId}>
         Tiempo máximo
       </label>
 
       <div className="wr-timeout__controls">
         <input
-          id={idCantidad}
+          id={amountId}
           type="number"
           min={1}
           step={1}
           className="wr-timeout__amount nodrag"
           value={amount}
-          onChange={(evento) => {
-            const valor = Number(evento.target.value);
-            const entero = Math.floor(valor);
-            onChange(Number.isFinite(entero) && entero > 0 ? entero : 1, unit);
+          onChange={(event) => {
+            const whole = Math.floor(Number(event.target.value));
+            onChange(Number.isFinite(whole) && whole > 0 ? whole : 1, unit);
           }}
         />
 
         <div className="wr-timeout__units" role="radiogroup" aria-label="Unidad del tiempo máximo">
-          {UNIDADES.map((unidad) => (
+          {UNITS.map((option) => (
             <button
-              key={unidad.value}
+              key={option.value}
               type="button"
               role="radio"
-              aria-checked={unidad.value === unit}
-              className={`wr-timeout__unit nodrag${
-                unidad.value === unit ? " wr-timeout__unit--active" : ""
-              }`}
-              onClick={() => onChange(amount, unidad.value)}
+              aria-checked={option.value === unit}
+              className={`wr-timeout__unit nodrag${option.value === unit ? " wr-timeout__unit--active" : ""}`}
+              onClick={() => onChange(amount, option.value)}
             >
-              {unidad.label}
+              {option.label}
             </button>
           ))}
         </div>

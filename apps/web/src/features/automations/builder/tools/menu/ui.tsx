@@ -1,9 +1,13 @@
 import type { ToolUi } from "../ToolUi";
 import { MenuIcon } from "./MenuIcon";
+import { MenuEditor } from "./MenuEditor";
+import { createOutputsCompactBody } from "../_kit/OutputsCompactBody";
+import { summarizeMenu } from "./summarizeMenu";
 
-/** Mitad React de la herramienta. Único punto donde declara cómo se ve. */
 export const menuUi: ToolUi = {
   type: "menu",
   Icon: MenuIcon,
-  frame: "card"
+  frame: "card",
+  CompactBody: createOutputsCompactBody(summarizeMenu),
+  Editor: MenuEditor
 };

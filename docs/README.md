@@ -11,6 +11,8 @@
 | [`architecture/frontend.md`](architecture/frontend.md) | `apps/web`: app, features y shared |
 | [`architecture/backend.md`](architecture/backend.md) | `apps/api`, `apps/worker`, dominios, platform e infraestructura |
 | [`architecture/automations.md`](architecture/automations.md) | El producto: catalog, builder, validation |
+| [`architecture/builder-tools.md`](architecture/builder-tools.md) | Herramientas del Builder: contrato, kit, salidas, convenciones |
+| [`architecture/flow-connections.md`](architecture/flow-connections.md) | Reglas de conexión entre bloques: salidas, límites, ciclos, dónde se aplican |
 | [`architecture/flow-engine.md`](architecture/flow-engine.md) | El motor de automatizaciones: ejecución, nodos, edges, registry y sus fronteras |
 | [`architecture/ai-sales-engine.md`](architecture/ai-sales-engine.md) | El motor de ventas con IA: por qué es independiente y cómo se integrará |
 | [`architecture/auth.md`](architecture/auth.md) | Identidad, sesión, tenant, membership, roles y autorización |

@@ -1,8 +1,10 @@
 import { useCallback, useDeferredValue, useEffect, useMemo } from "react";
+import type { Connection } from "@xyflow/react";
 import { mapSnapshotToCanvas } from "../adapters/mapSnapshotToCanvas";
 import { buildStats } from "../services/buildStats";
 import { releaseNodeResources } from "../services/releaseNodeResources";
 import { validateCanvasGraph } from "../services/validateCanvasGraph";
+import { checkConnection } from "../services/connectionRules";
 import type { NodeType, BuilderFlowSnapshot } from "@contracts/FlowSnapshot";
 import { useCanvasEdges } from "./canvas/useCanvasEdges";
 import { useCanvasNodes } from "./canvas/useCanvasNodes";
@@ -33,6 +35,13 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
     // Depende sólo de la versión: setNodes, setEdges y clearSelection son refs
     // estables y añadirlas reinicializaría el canvas en cada render.
   }, [snapshot?.version.id]);
+
+  // Cada cambio de nodos (guardar una config que retira una salida, borrar un
+  // nodo con Suprimir...) puede dejar aristas sin origen válido. Un único punto
+  // las limpia, para todas las herramientas.
+  useEffect(() => {
+    edgesCtx.pruneEdges(nodesCtx.nodes);
+  }, [nodesCtx.nodes, edgesCtx.pruneEdges]);
 
   const deferredNodes = useDeferredValue(nodesCtx.nodes);
   const deferredEdges = useDeferredValue(edgesCtx.edges);
@@ -92,7 +101,11 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
     selectedEdge: edgesCtx.selectedEdge,
     handleNodesChange: nodesCtx.handleNodesChange,
     handleEdgesChange: edgesCtx.handleEdgesChange,
-    handleConnect: edgesCtx.handleConnect,
+    // Segunda barrera de las reglas de conexión: el lienzo ya las aplica al
+    // arrastrar, pero ninguna conexión entra al grafo sin pasar por aquí.
+    handleConnect: (connection: Connection) => {
+      if (checkConnection(nodesCtx.nodes, edgesCtx.edges, connection).ok) edgesCtx.handleConnect(connection);
+    },
     handleSelectNode: selection.selectNode,
     handleSelectEdge: selection.selectEdge,
     handleAddNode: (nodeType: NodeType) => {

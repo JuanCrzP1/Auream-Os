@@ -1,17 +1,11 @@
+import type { ToolData } from "../ToolDefinition";
 import type { MessageIntervalUnit, MessageItem, MessageItemKind } from "./types";
 import { MESSAGE_INTERVAL_UNITS, MESSAGE_ITEM_KINDS, isMediaKind } from "./messageItems";
 
 // ---------------------------------------------------------------------------
-// Lectura de la secuencia desde un nodo.
-//
-// `config` y `content` son `Record<string, unknown>`: vienen de un JSON
-// persistido y NO están garantizados por el compilador. Un flujo guardado hace
-// meses, editado a mano o escrito por una versión anterior puede traer
-// cualquier cosa, así que aquí se estrecha con desconfianza en vez de asumir.
-//
-// Es también el punto de compatibilidad hacia atrás: un nodo anterior a la
-// secuencia trae `content.text` y ningún `items`. Se lee como un único bloque
-// de texto, sin migrar nada y sin romperlo.
+// Lectura defensiva de la secuencia (JSON de disco). También es el punto de
+// compatibilidad: un nodo sin `items` y con `content.text` se lee como un
+// único bloque de texto.
 // ---------------------------------------------------------------------------
 
 function isKind(value: unknown): value is MessageItemKind {
@@ -19,23 +13,20 @@ function isKind(value: unknown): value is MessageItemKind {
 }
 
 function toUnit(value: unknown): MessageIntervalUnit {
-  const conocida = MESSAGE_INTERVAL_UNITS.find((unidad) => unidad.value === value);
-  return conocida?.value ?? "seconds";
+  return MESSAGE_INTERVAL_UNITS.find((unit) => unit.value === value)?.value ?? "seconds";
 }
 
 function toText(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-/** Estrecha un elemento suelto, o lo descarta si no es representable. */
 function toItem(raw: unknown, index: number): MessageItem | null {
   if (typeof raw !== "object" || raw === null) return null;
 
   const record = raw as Record<string, unknown>;
   if (!isKind(record.kind)) return null;
 
-  // Un bloque sin id es recuperable: se le da uno estable por su posición.
-  // Descartarlo perdería trabajo del usuario por un detalle que sabemos suplir.
+  // Sin id es recuperable (ordena bloques dentro del nodo, no conecta aristas).
   const id = typeof record.id === "string" && record.id.length > 0 ? record.id : `mi-legacy-${index}`;
 
   if (record.kind === "text") {
@@ -43,10 +34,7 @@ function toItem(raw: unknown, index: number): MessageItem | null {
   }
 
   if (record.kind === "interval") {
-    const amount = typeof record.amount === "number" && Number.isFinite(record.amount)
-      ? record.amount
-      : 5;
-
+    const amount = typeof record.amount === "number" && Number.isFinite(record.amount) ? record.amount : 5;
     return { id, kind: "interval", amount, unit: toUnit(record.unit) };
   }
 
@@ -55,8 +43,6 @@ function toItem(raw: unknown, index: number): MessageItem | null {
       id,
       kind: record.kind,
       url: toText(record.url),
-      // La segunda fuente posible de un medio. Se estrecha como el resto: lo
-      // que no sea texto no entra.
       fileName: toText(record.fileName),
       caption: toText(record.caption),
       sendOnce: record.sendOnce === true
@@ -66,24 +52,14 @@ function toItem(raw: unknown, index: number): MessageItem | null {
   return null;
 }
 
-/**
- * Secuencia de bloques de un nodo Mensaje.
- *
- * Devuelve lista vacía cuando no hay nada legible: un Mensaje sin bloques es un
- * estado válido —recién creado, o vaciado por el usuario— y la validación es
- * quien decide si eso puede publicarse, no el lector.
- */
-export function readMessageItems(
-  config: Readonly<Record<string, unknown>>,
-  content: Readonly<Record<string, unknown>>
-): MessageItem[] {
+/** Bloques legibles. Lista vacía es válida (nodo recién creado o vaciado). */
+export function readMessageItems(config: ToolData, content: ToolData): MessageItem[] {
   const raw = config.items;
 
   if (Array.isArray(raw)) {
     return raw.map(toItem).filter((item): item is MessageItem => item !== null);
   }
 
-  // Compatibilidad: nodo anterior a la secuencia.
   const legacy = content.text;
   if (typeof legacy === "string" && legacy.length > 0) {
     return [{ id: "mi-legacy-0", kind: "text", text: legacy }];

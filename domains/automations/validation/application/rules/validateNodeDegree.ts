@@ -7,7 +7,7 @@ import type { ValidationIssue } from "../ValidationReport";
  */
 const EXPECTED_OUTGOING_TYPES: ReadonlySet<NodeType> = new Set([
   "message", "question", "tags", "payment-proof", "condition", "distributor",
-  "pixel", "ai", "delay", "sale-approved", "integration", "menu", "notification"
+  "pixel", "ai", "delay", "integration", "menu", "notification"
 ]);
 
 /**

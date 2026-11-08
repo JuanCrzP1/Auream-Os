@@ -11,7 +11,6 @@ import { NotificationNodeHandler } from "../../../flow-engine/nodes/notification
 import { PaymentProofNodeHandler } from "../../../flow-engine/nodes/payment-proof/PaymentProofNodeHandler";
 import { PixelNodeHandler } from "../../../flow-engine/nodes/pixel/PixelNodeHandler";
 import { QuestionNodeHandler } from "../../../flow-engine/nodes/question/QuestionNodeHandler";
-import { SaleApprovedNodeHandler } from "../../../flow-engine/nodes/sale-approved/SaleApprovedNodeHandler";
 import { TagsNodeHandler } from "../../../flow-engine/nodes/tags/TagsNodeHandler";
 
 // ---------------------------------------------------------------------------
@@ -37,7 +36,6 @@ export function composeNodeRuntime(): NodeRuntime {
     new PixelNodeHandler(),
     new AiNodeHandler(),
     new DelayNodeHandler(),
-    new SaleApprovedNodeHandler(),
     new IntegrationNodeHandler(),
     new MenuNodeHandler(),
     new NotificationNodeHandler(),

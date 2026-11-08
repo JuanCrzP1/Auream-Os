@@ -245,9 +245,9 @@ describe("editar y confirmar", () => {
       <NodeExpandedFrame
         data={data}
         // Una herramienta que no exige nada para guardarse, como las trece que
-        // no declaran `validateContent`. Con la de Mensaje, su validación se
+        // no declaran `validate`. Con la de Mensaje, su validación se
         // aplicaría a una configuración que no es la suya.
-        tool={{ ...resolveTool("message"), validateContent: undefined }}
+        tool={{ ...resolveTool("message"), validate: undefined }}
         ui={{ ...resolveToolUi("message"), Editor: EditorAjeno as never }}
         onCommit={onCommit}
         onClose={vi.fn()}
@@ -562,7 +562,7 @@ describe("protección contra pérdida de cambios", () => {
 // ---------------------------------------------------------------------------
 // Guardar exige que haya algo que enviar.
 //
-// La decisión NO se toma aquí: la declara la herramienta (`validateContent`) y
+// La decisión NO se toma aquí: la declara la herramienta (`validate`) y
 // este marco solo la consulta y la hace cumplir. Por eso las trece
 // herramientas que no declaran nada siguen guardándose siempre.
 // ---------------------------------------------------------------------------

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   WAIT_RESPONSE_DEFAULT_CONFIG,
   WAIT_RESPONSE_DEFAULT_TIMEOUT,
-  esCantidadValida,
-  esUnidadValida,
+  isWaitResponseAmount,
+  isWaitResponseTimeUnit,
   readWaitResponseConfig,
   resolveContextKey,
   waitResponseTimeoutMs
@@ -172,18 +172,18 @@ describe("waitResponseTimeoutMs", () => {
 
 describe("guardas de unidad y cantidad", () => {
   it("acepta minutos y horas y nada más", () => {
-    expect(esUnidadValida("minutes")).toBe(true);
-    expect(esUnidadValida("hours")).toBe(true);
+    expect(isWaitResponseTimeUnit("minutes")).toBe(true);
+    expect(isWaitResponseTimeUnit("hours")).toBe(true);
     for (const otra of ["seconds", "days", "", null, undefined, 3]) {
-      expect(esUnidadValida(otra)).toBe(false);
+      expect(isWaitResponseTimeUnit(otra)).toBe(false);
     }
   });
 
   it("acepta enteros positivos y nada más", () => {
-    expect(esCantidadValida(1)).toBe(true);
-    expect(esCantidadValida(120)).toBe(true);
+    expect(isWaitResponseAmount(1)).toBe(true);
+    expect(isWaitResponseAmount(120)).toBe(true);
     for (const otra of [0, -1, 1.5, "3", NaN, Infinity, null, undefined]) {
-      expect(esCantidadValida(otra)).toBe(false);
+      expect(isWaitResponseAmount(otra)).toBe(false);
     }
   });
 });

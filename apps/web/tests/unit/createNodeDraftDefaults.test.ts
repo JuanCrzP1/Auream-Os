@@ -69,12 +69,12 @@ describe("createNodeDraft — defaults independientes entre nodos", () => {
   });
 
   it("editar el contenido de un nodo no altera al otro", () => {
-    const primero = createNodeDraft("tags", 1);
-    const segundo = createNodeDraft("tags", 2);
+    const primero = createNodeDraft("end", 1);
+    const segundo = createNodeDraft("end", 2);
 
     primero.data.content.text = "Hola de nuevo";
 
-    expect(segundo.data.content.text).toBe(getTool("tags")?.defaultContentText);
+    expect(segundo.data.content.text).toBe(getTool("end")?.defaultContentText);
   });
 });
 

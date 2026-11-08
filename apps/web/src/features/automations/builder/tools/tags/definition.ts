@@ -1,14 +1,13 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { TAGS_DEFAULT_CONFIG } from "./tagsConfig";
+import { summarizeTags } from "./summarizeTags";
+import { validateTags } from "./validateTags";
 
 /**
- * Etiquetas — clasifica el contacto de la conversación.
+ * Etiquetas — agrega o quita etiquetas del contacto (todas en un mismo bloque).
  *
- * `executable: false`. El motor reconoce el tipo pero no sabe ejecutarlo: no
- * existe todavía el dominio `contacts` sobre el que una etiqueta se aplica.
- *
- * `defaultConfig.tags` nace como lista vacía porque la forma —un conjunto de
- * etiquetas— es lo único que el nombre de la herramienta determina sin
- * ambigüedad. Qué se hace con ellas es especificación pendiente.
+ * `executable: false`: el editor está completo; falta el dominio `contacts`
+ * en el motor.
  */
 export const tagsTool: ToolDefinition = {
   type: "tags",
@@ -19,7 +18,10 @@ export const tagsTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: false,
-  defaultConfig: { tags: [] },
+  defaultContent: {},
+  defaultConfig: { ...TAGS_DEFAULT_CONFIG },
+  summarize: summarizeTags,
+  validate: validateTags,
   colors: {
     header: "#059669",
     body: "#047857",

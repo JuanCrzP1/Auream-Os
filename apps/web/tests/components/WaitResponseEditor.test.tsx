@@ -334,7 +334,7 @@ describe("reaccionar al mensaje recibido", () => {
   });
 
   it("su interruptor es el compartido, con la misma accesibilidad que los demás", () => {
-    // Reutiliza `WaitResponseSwitch` en lugar de repetir su marcado. Se
+    // Usa el `SwitchField` del kit en lugar de repetir su marcado. Se
     // comprueba por lo observable: los cuatro interruptores del editor tienen
     // la misma estructura, el mismo rol y el mismo nombre accesible ligado a su
     // rótulo. Si alguien volviera a escribir un switch a mano aquí, esta
@@ -345,15 +345,15 @@ describe("reaccionar al mensaje recibido", () => {
     expect(interruptores).toHaveLength(4);
 
     for (const interruptor of interruptores) {
-      expect(interruptor).toHaveClass("wr-switch__control");
-      expect(interruptor.closest(".wr-switch")).not.toBeNull();
+      expect(interruptor).toHaveClass("kit-switch");
+      expect(interruptor.closest(".kit-switch-field")).not.toBeNull();
       expect(interruptor.getAttribute("aria-labelledby")).toBeTruthy();
       expect(interruptor.getAttribute("aria-describedby")).toBeTruthy();
-      expect(interruptor.querySelector(".wr-switch__knob")).not.toBeNull();
+      expect(interruptor.querySelector(".kit-switch__knob")).not.toBeNull();
     }
 
     // Y el de la reacción no trae un contenedor duplicado propio.
-    expect(document.querySelectorAll(".wr-reaction .wr-switch")).toHaveLength(1);
+    expect(document.querySelectorAll(".wr-reaction .kit-switch-field")).toHaveLength(1);
   });
 });
 

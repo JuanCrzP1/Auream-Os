@@ -132,7 +132,7 @@ describe("la lógica pura se mantiene pura", () => {
     for (const nombre of COMPONENTES) {
       const fuente = modulo(nombre);
 
-      expect(fuente, `${nombre} valida por su cuenta`).not.toMatch(/minutosDelDia|esHoraValida|esFechaValida/);
+      expect(fuente, `${nombre} valida por su cuenta`).not.toMatch(/minutesOfDay|isValidTime|isValidDate/);
       expect(fuente, `${nombre} construye franjas a mano`).not.toMatch(/09:00|18:00/);
     }
   });
@@ -163,7 +163,7 @@ describe("la hora NO depende del control nativo del navegador", () => {
     expect(fuente).toMatch(/aria-label="Hora"/);
     expect(fuente).toMatch(/aria-label="Minutos"/);
     // El a.m./p.m. se PULSA, no se escribe.
-    expect(fuente).toMatch(/aria-pressed=\{meridiem === valor\}/);
+    expect(fuente).toMatch(/aria-pressed=\{meridiem === option\.value\}/);
     // Y los dos puntos no son de ningún campo: son un elemento aparte.
     expect(fuente).toMatch(/iv-time__colon/);
 
@@ -199,8 +199,8 @@ describe("la hora NO depende del control nativo del navegador", () => {
     // primera experiencia.
     const fuente = modulo("editor/IntervalTimeControl.tsx");
 
-    expect(fuente).toMatch(/if \(!aceptaHora\(texto\)\) return rechazar\(\)/);
-    expect(fuente).toMatch(/if \(!aceptaMinuto\(texto\)\) return rechazar\(\)/);
+    expect(fuente).toMatch(/if \(!acceptsHour\(text\)\) return reject\(\)/);
+    expect(fuente).toMatch(/if \(!acceptsMinute\(text\)\) return reject\(\)/);
   });
 
   it("el calendario PASÓ A SER CONTROLADO: ahí estaba el fallo de Guardar", () => {
@@ -223,7 +223,7 @@ describe("la hora NO depende del control nativo del navegador", () => {
     // que acaba de quitarse del calendario.
     const fuente = modulo("editor/IntervalTimeControl.tsx");
 
-    expect(fuente).toMatch(/borrador\.base === value/);
+    expect(fuente).toMatch(/draft\.base === value/);
   });
 
   it("cada campo conserva al otro: escribir uno no borra el que ya estaba", () => {
@@ -231,7 +231,7 @@ describe("la hora NO depende del control nativo del navegador", () => {
     // un campo no puede destruir el valor del otro.
     const fuente = modulo("editor/IntervalDateFields.tsx");
 
-    expect(fuente).toMatch(/date:\s*evento\.target\.value,\s*time:\s*moment\?\.time/);
+    expect(fuente).toMatch(/date:\s*event\.target\.value,\s*time:\s*moment\?\.time/);
     expect(fuente).toMatch(/date:\s*moment\?\.date\s*\?\?\s*"",\s*time/);
   });
 });
@@ -291,11 +291,11 @@ describe("la herramienta está bien declarada en el catálogo", () => {
     expect(ui.Editor).toBeDefined();
     expect(ui.CompactBody).toBeDefined();
     expect(tool.summarize).toBeDefined();
-    expect(tool.validateContent).toBeDefined();
+    expect(tool.validate).toBeDefined();
   });
 
   it("NO declara salidas propias: el Programador tiene un solo camino", () => {
-    expect(resolveToolUi("delay").ownsOutputs).toBeUndefined();
+    expect(resolveTool("delay").outputs).toBeUndefined();
   });
 
   it("se llama «Programador» en pantalla, pero su tipo sigue siendo `delay`", () => {

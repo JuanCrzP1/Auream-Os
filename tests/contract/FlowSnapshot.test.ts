@@ -38,10 +38,9 @@ describe("Contrato FlowSnapshot — casos de corrupción real", () => {
     expect(report.errors.some((e) => e.code === "INFINITE_CYCLE")).toBe(true);
   });
 
-  it("question sin fallback es rechazado", () => {
+  it("question con una sola salida (espera sin límite) es válida: el fallback ya no es obligatorio", () => {
     const report = validator.validate(questionWithoutFallbackFlow);
-    expect(report.isValid).toBe(false);
-    expect(report.errors.some((e) => e.code === "QUESTION_NO_FALLBACK")).toBe(true);
+    expect(report.isValid).toBe(true);
   });
 
   it("prioridades duplicadas son error (no warning)", () => {

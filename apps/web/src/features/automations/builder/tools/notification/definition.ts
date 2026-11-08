@@ -1,14 +1,12 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { NOTIFICATION_DEFAULT_CONFIG } from "./notificationConfig";
+import { summarizeNotification } from "./summarizeNotification";
+import { validateNotification } from "./validateNotification";
 
 /**
- * Notificación — envía un aviso a un destinatario interno.
+ * Notificación — aviso por WhatsApp a un número del equipo, no al cliente.
  *
- * `executable: false`. El canal por el que se avisa —correo, WhatsApp del
- * equipo, aviso en la plataforma— no está decidido, y sin canal no hay nada que
- * ejecutar.
- *
- * No confundir con Mensaje: Mensaje habla con el usuario de la conversación;
- * Notificación avisa a alguien del equipo.
+ * `executable: false`: el editor está completo; falta el adaptador de canal.
  */
 export const notificationTool: ToolDefinition = {
   type: "notification",
@@ -19,7 +17,10 @@ export const notificationTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: false,
-  defaultConfig: {},
+  defaultContent: {},
+  defaultConfig: { ...NOTIFICATION_DEFAULT_CONFIG },
+  summarize: summarizeNotification,
+  validate: validateNotification,
   colors: {
     header: "#e11d48",
     body: "#be123c",

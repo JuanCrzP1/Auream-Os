@@ -1,7 +1,8 @@
 import type { GraphScenario } from "./graphScenarios.js";
 
 /**
- * Los nueve escenarios acordados. Una sola declaración para ambos validadores.
+ * Escenarios acordados. Una sola declaración para ambos validadores.
+ * Reglas de conexión: docs/architecture/flow-connections.md.
  */
 export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
@@ -13,8 +14,8 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
     ],
     edges: [
       { id: "e1", from: "entry", to: "ask", priority: 1 },
-      { id: "e2", from: "ask", to: "done", priority: 1 },
-      { id: "e3", from: "ask", to: "done", priority: 2, isFallback: true }
+      { id: "e2", from: "ask", to: "done", priority: 1, fromOutput: "respuesta" },
+      { id: "e3", from: "ask", to: "done", priority: 2, fromOutput: "tiempo-agotado" }
     ],
     entryNodeId: "entry",
     backendRejects: false,
@@ -78,14 +79,70 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
     frontendWarns: true
   },
   {
-    name: "question without fallback",
+    name: "wait with a single exit (no limit) is valid",
     nodes: [
-      { id: "entry", type: "question" },
+      { id: "entry", type: "message" },
+      { id: "ask", type: "question" },
       { id: "done", type: "end" }
     ],
-    edges: [{ id: "e1", from: "entry", to: "done", priority: 1 }],
+    edges: [
+      { id: "e1", from: "entry", to: "ask", priority: 1 },
+      { id: "e2", from: "ask", to: "done", priority: 1, fromOutput: "respuesta" }
+    ],
+    entryNodeId: "entry",
+    backendRejects: false,
+    frontendWarns: false
+  },
+  {
+    name: "cycle through a waiting block is allowed",
+    nodes: [
+      { id: "entry", type: "message" },
+      { id: "ask", type: "question" },
+      { id: "again", type: "message" },
+      { id: "done", type: "end" }
+    ],
+    edges: [
+      { id: "e1", from: "entry", to: "ask", priority: 1 },
+      { id: "e2", from: "ask", to: "done", priority: 1, fromOutput: "respuesta" },
+      { id: "e3", from: "ask", to: "again", priority: 2, fromOutput: "tiempo-agotado" },
+      { id: "e4", from: "again", to: "ask", priority: 1 }
+    ],
+    entryNodeId: "entry",
+    backendRejects: false,
+    frontendWarns: false
+  },
+  {
+    name: "two connections from a single-output block",
+    nodes: [
+      { id: "entry", type: "message" },
+      { id: "step", type: "tags" },
+      { id: "a", type: "end" },
+      { id: "b", type: "end" }
+    ],
+    edges: [
+      { id: "e1", from: "entry", to: "step", priority: 1 },
+      { id: "e2", from: "step", to: "a", priority: 1 },
+      { id: "e3", from: "step", to: "b", priority: 2 }
+    ],
     entryNodeId: "entry",
     backendRejects: true,
+    frontendWarns: true
+  },
+  {
+    name: "two connections from the same named output",
+    nodes: [
+      { id: "entry", type: "message" },
+      { id: "ask", type: "question" },
+      { id: "a", type: "end" },
+      { id: "b", type: "end" }
+    ],
+    edges: [
+      { id: "e1", from: "entry", to: "ask", priority: 1 },
+      { id: "e2", from: "ask", to: "a", priority: 1, fromOutput: "respuesta" },
+      { id: "e3", from: "ask", to: "b", priority: 2, fromOutput: "respuesta" }
+    ],
+    entryNodeId: "entry",
+    backendRejects: false,
     frontendWarns: true
   },
   {
@@ -115,7 +172,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
     ],
     entryNodeId: "entry",
     backendRejects: true,
-    frontendWarns: false,
-    backendOnly: "validateEdgePriorities — el canvas no comprueba prioridades duplicadas"
+    // El builder lo señala por otra regla: dos conexiones desde la salida única.
+    frontendWarns: true
   }
 ];

@@ -1,8 +1,7 @@
 import { useId } from "react";
 import type { IntervalUnit, IntervalWait } from "@contracts/IntervalConfig";
 
-/** Las cuatro unidades, con su rótulo. El valor es dato; el rótulo, pantalla. */
-const UNIDADES: ReadonlyArray<{ readonly value: IntervalUnit; readonly label: string }> = [
+const UNITS: ReadonlyArray<{ readonly value: IntervalUnit; readonly label: string }> = [
   { value: "seconds", label: "Segundos" },
   { value: "minutes", label: "Minutos" },
   { value: "hours", label: "Horas" },
@@ -15,40 +14,31 @@ interface IntervalWaitFieldsProps {
 }
 
 /**
- * Modo «después de un intervalo»: cuánto y en qué unidad.
- *
- * NO VALIDA NADA. Si el usuario borra el campo o escribe algo que no es un
- * número, se emite tal cual y quien decide si eso puede guardarse es
- * `validateInterval` — una sola fuente de reglas. Bloquear aquí la escritura
- * obligaría a repetir las mismas comprobaciones en dos sitios y, peor, dejaría
- * al usuario sin poder borrar para reescribir.
- *
- * SOLO PRESENTACIÓN: recibe la espera y una devolución de llamada.
+ * Cantidad y unidad de la espera. No valida: emite lo escrito (también vacío,
+ * para poder borrar y reescribir) y decide `validateInterval`.
  */
 export function IntervalWaitFields({ wait, onChange }: IntervalWaitFieldsProps) {
-  const idCantidad = useId();
+  const amountId = useId();
 
   return (
     <div className="iv-wait">
-      <label className="iv-field__label" htmlFor={idCantidad}>
+      <label className="iv-field__label" htmlFor={amountId}>
         Esperar durante
       </label>
 
       <div className="iv-wait__controls">
         <input
-          id={idCantidad}
+          id={amountId}
           type="number"
           inputMode="numeric"
           min={1}
           className="iv-wait__amount nodrag"
           value={Number.isFinite(wait.amount) ? wait.amount : ""}
-          onChange={(evento) =>
-            onChange({ ...wait, amount: evento.target.valueAsNumber })
-          }
+          onChange={(event) => onChange({ ...wait, amount: event.target.valueAsNumber })}
         />
 
         <div className="iv-wait__units" role="radiogroup" aria-label="Unidad de tiempo">
-          {UNIDADES.map(({ value, label }) => (
+          {UNITS.map(({ value, label }) => (
             <button
               key={value}
               type="button"

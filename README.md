@@ -361,6 +361,8 @@ La persistencia de producción es **SQL sobre Neon**. Neon no aparece en ningún
 | [`backend.md`](docs/architecture/backend.md) | API y composición |
 | [`frontend.md`](docs/architecture/frontend.md) | Aplicación web |
 | [`automations.md`](docs/architecture/automations.md) | Dominio de automatizaciones |
+| [`builder-tools.md`](docs/architecture/builder-tools.md) | Herramientas del Builder |
+| [`flow-connections.md`](docs/architecture/flow-connections.md) | Reglas de conexión entre bloques |
 | [`flow-engine.md`](docs/architecture/flow-engine.md) | Motor de ejecución |
 | [`ai-sales-engine.md`](docs/architecture/ai-sales-engine.md) | Motor de ventas con IA |
 | [`ai-agents.md`](docs/architecture/ai-agents.md) | Dominio de agentes |

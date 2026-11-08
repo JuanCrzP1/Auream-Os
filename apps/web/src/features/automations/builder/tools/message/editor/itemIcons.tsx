@@ -1,25 +1,9 @@
 import type { ComponentType } from "react";
 import type { MessageItemKind } from "../types";
 
-// ---------------------------------------------------------------------------
-// Iconografía de los bloques de un Mensaje.
-//
-// Frontera propia del módulo, separada de la lógica del constructor: el editor
-// pide un icono por tipo y no sabe cómo está dibujado.
-//
-// Comparten el lenguaje visual de los iconos de la Toolbox del Builder —caja de
-// 20, trazo de 1.7, remates y uniones redondos, sin relleno— para que el
-// constructor no parezca de otra aplicación. Lo que cambia entre uno y otro es
-// la FORMA, no el tratamiento: cada bloque tiene que reconocerse de un vistazo.
-//
-// NO se reutiliza `ToolUi.Icon`, que es el icono de una HERRAMIENTA del
-// catálogo. Un bloque de un mensaje no es una herramienta: `interval` como
-// bloque y el nodo Intervalo del lienzo son cosas distintas, y darles el mismo
-// icono por venir del mismo registro las confundiría en la interfaz.
-//
-// `currentColor` en todo: el color lo decide el contexto, que es lo que permite
-// que cada tipo tenga su acento sin que el icono lo sepa.
-// ---------------------------------------------------------------------------
+// Iconos de los bloques de un Mensaje: mismo lenguaje que la Toolbox (caja 20,
+// trazo 1.7, sin relleno) y `currentColor`. No reutiliza `ToolUi.Icon`: un
+// bloque no es una herramienta.
 
 function Svg({ children }: { children: React.ReactNode }) {
   return (

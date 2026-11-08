@@ -1,9 +1,12 @@
 import type { ToolUi } from "../ToolUi";
+import { NotificationCompactBody } from "./NotificationCompactBody";
 import { NotificationIcon } from "./NotificationIcon";
+import { NotificationEditor } from "./NotificationEditor";
 
-/** Mitad React de la herramienta. Único punto donde declara cómo se ve. */
 export const notificationUi: ToolUi = {
   type: "notification",
   Icon: NotificationIcon,
-  frame: "card"
+  frame: "card",
+  CompactBody: NotificationCompactBody,
+  Editor: NotificationEditor
 };

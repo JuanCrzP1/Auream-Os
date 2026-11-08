@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildEdgePresentation,
-  EDGE_GRADIENT_ID,
-  EDGE_GRADIENT_END
+  EDGE_GRADIENT_ID
 } from "@features/automations/builder/services/buildEdgePresentation";
 import { ensureEdgeData } from "@features/automations/builder/services/ensureEdgeData";
 import { mapSnapshotToCanvas } from "@features/automations/builder/adapters/mapSnapshotToCanvas";
@@ -58,12 +57,14 @@ describe("presentación del edge", () => {
     expect(presentation.label).toBe("Fallback");
   });
 
-  it("conserva el resto de la presentación: trazo, marcador y animación", () => {
+  it("conserva el resto de la presentación: trazo y animación, sin punta de flecha", () => {
     const normal = buildEdgePresentation(ensureEdgeData({ priority: 3 }));
 
     expect(normal.style.stroke).toBeTruthy();
     expect(normal.style.strokeWidth).toBeGreaterThan(0);
-    expect(normal.markerEnd.type).toBeTruthy();
+    // Decisión de producto: las conexiones no llevan flecha; la dirección la
+    // dan los puntos de salida y de entrada de cada bloque.
+    expect(normal).not.toHaveProperty("markerEnd");
     expect(normal.animated).toBe(false);
   });
 
@@ -71,14 +72,13 @@ describe("presentación del edge", () => {
     const normal = buildEdgePresentation(ensureEdgeData({ priority: 1 }));
 
     expect(normal.style.stroke).toBe(`url(#${EDGE_GRADIENT_ID})`);
-    expect(normal.markerEnd.color).toBe(EDGE_GRADIENT_END);
   });
 
   it("el fallback conserva su ámbar sólido: es semántica, no decoración", () => {
     const fallback = buildEdgePresentation(ensureEdgeData({ isFallback: true }));
 
     expect(fallback.style.stroke).toBe("#f59e0b");
-    expect(fallback.markerEnd.color).toBe("#f59e0b");
+    expect(fallback).not.toHaveProperty("markerEnd");
     expect(fallback.animated).toBe(true);
   });
 

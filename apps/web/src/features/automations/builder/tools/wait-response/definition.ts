@@ -1,52 +1,41 @@
-import { WAIT_RESPONSE_DEFAULT_CONFIG } from "@contracts/WaitResponseConfig";
+import {
+  WAIT_RESPONSE_DEFAULT_CONFIG,
+  WAIT_RESPONSE_OUTPUT,
+  hasWaitResponseTimeout,
+  readWaitResponseConfig
+} from "@contracts/WaitResponseConfig";
 import type { ToolDefinition } from "../ToolDefinition";
 import { summarizeWaitResponse } from "./summarizeWaitResponse";
 import { validateWaitResponse } from "./validateWaitResponse";
 
 /**
- * Esperar respuesta — suspende el flujo hasta que el cliente contesta.
+ * Esperar respuesta — suspende el flujo hasta que el cliente contesta y, con
+ * `config.targetKey`, guarda la respuesta en el contexto.
  *
- * Guarda además la respuesta en el contexto de la sesión si el nodo declara
- * `config.targetKey`. Esa capacidad venía del retirado nodo `capture`: una
- * pregunta que no recuerda lo que le contestaron no sirve aguas abajo.
- *
- * Exige un edge de fallback (`isFallback`), que valida `validateFallbacks` en
- * el backend. El fallback es una propiedad del edge, no una herramienta.
- *
- * NO DECLARA `duplicateConfig` NI `releaseResources`, y no por olvido: su
- * configuración son datos planos sin identidades internas —la copia profunda
- * genérica la reproduce bien— y no reserva nada fuera de ella. Los dos ganchos
- * existen para herramientas que sí lo necesitan, como Mensaje con sus archivos.
+ * Dos salidas: «Respuesta» y, si la espera tiene límite, «Tiempo agotado».
  */
 export const waitResponseTool: ToolDefinition = {
-  summarize: summarizeWaitResponse,
-  validateContent: validateWaitResponse,
   type: "question",
   label: "Esperar respuesta",
   description: "Aguarda input del usuario",
   defaultContentText: "Pregunta esperando input",
-  // Nace SIN mensaje previo: el texto es opcional —puede haberlo preguntado un
-  // nodo anterior— y un contenido inventado obligaría a borrarlo para conseguir
-  // el caso más común. `defaultContentText` sigue sirviendo de rótulo del nodo.
+  // Sin mensaje previo: suele preguntarlo un Mensaje anterior.
   defaultContent: {},
   editorTitle: "Editar espera",
   availableInPalette: true,
   terminal: false,
   executable: true,
-  // La forma mínima válida la declara el contrato compartido, que es el mismo
-  // que lee el motor: así el nodo nace con exactamente lo que el handler sabe
-  // ejecutar, sin una segunda declaración que pueda divergir.
   defaultConfig: { ...WAIT_RESPONSE_DEFAULT_CONFIG },
-  // DORADO PREMIUM. Identidad propia de la herramienta, en el mismo formato en
-  // que las otras trece declaran la suya: color de cabecera, cuerpo y
-  // degradado de la paleta. El editor repite estos tonos en `--wr-amber`.
-  //
-  // Antes era el mismo ámbar/naranja que ya usa Distribuidor —dos herramientas
-  // leyéndose como una—; este dorado profundo es un tono propio: ni el
-  // naranja de aviso de Distribuidor ni el amarillo puro, sino un oro
-  // sofisticado con buen contraste sobre el lienzo oscuro.
+  outputs: (config) => [
+    { id: WAIT_RESPONSE_OUTPUT.answer, label: "Respuesta" },
+    ...(hasWaitResponseTimeout(readWaitResponseConfig(config))
+      ? [{ id: WAIT_RESPONSE_OUTPUT.timeout, label: "Tiempo agotado" }]
+      : [])
+  ],
+  summarize: summarizeWaitResponse,
+  validate: validateWaitResponse,
   colors: {
-    header: "#d4a72c",
+    header: "#b68f25",
     body: "#8a6418",
     gradient: "linear-gradient(135deg,#e0b83f,#8a6418)"
   },

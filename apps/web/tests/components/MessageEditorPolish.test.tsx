@@ -31,8 +31,8 @@ function makeTransfer(type?: string, value?: string) {
   } as unknown as DataTransfer;
 }
 
-const KIND_MIME = "application/aureum-message-kind";
-const REORDER_MIME = "application/aureum-message-item";
+const KIND_MIME = "application/auream-message-kind";
+const REORDER_MIME = "application/auream-message-item";
 
 /** Monta el editor cerrando el bucle configuración → editor → configuración. */
 function ConectadoAlNodo({ inicial }: { inicial: Record<string, unknown> }) {

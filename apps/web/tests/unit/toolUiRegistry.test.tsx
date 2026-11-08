@@ -93,35 +93,22 @@ describe("contrato ToolUi", () => {
     expect(findToolUi("message")?.Editor).toBeTypeOf("function");
   });
 
-  it("quien declara salidas propias tiene que poder dibujarlas", () => {
-    // `ownsOutputs` hace que `FlowNodeCard` no ponga su salida única. Si una
-    // herramienta lo declarara sin montar ningún `Handle`, ese nodo se quedaría
-    // SIN salida y no habría forma de conectarlo.
-    //
-    // LA REGLA, NO LA LISTA: los `Handle` propios se montan dentro del cuerpo
-    // compacto —es el único sitio de la herramienta que el lienzo pinta—, así
-    // que declarar salidas propias sin cuerpo propio es la contradicción que
-    // deja el nodo mudo. Se comprueba sobre TODAS, y así la regla sigue
-    // valiendo para la siguiente herramienta que gane salidas sin que nadie
-    // tenga que acordarse de volver aquí.
-    const conSalidasPropias = listUiTypes().filter((type) => findToolUi(type)?.ownsOutputs);
+  it("quien declara salidas con nombre tiene cuerpo propio para dibujarlas", () => {
+    // Con `outputs()` el cascarón no pinta su salida única: los `OutputHandle`
+    // los monta el `CompactBody`. Sin cuerpo propio el nodo quedaría sin salida.
+    const withOutputs = listAllTools()
+      .filter((tool) => tool.outputs !== undefined)
+      .map((tool) => tool.type);
 
-    expect(conSalidasPropias.length).toBeGreaterThan(0);
-    for (const type of conSalidasPropias) {
+    for (const type of withOutputs) {
       expect(findToolUi(type)?.CompactBody, `${type} declara salidas sin cuerpo`).toBeTypeOf(
         "function"
       );
     }
 
-    // Y SIGUE SIENDO LA EXCEPCIÓN. Lo normal es la salida única del cascarón:
-    // si algún día lo declararan todas, la bandera habría dejado de significar
-    // algo y esto avisaría.
-    expect(conSalidasPropias.length).toBeLessThan(listUiTypes().length);
-
-    // Las dos que hoy la declaran, y por qué: Esperar respuesta tiene DOS
-    // resultados —respondió o se agotó el tiempo— y Distribuidor tantos como
-    // salidas haya configurado el usuario, incluido ninguno.
-    expect(conSalidasPropias).toEqual(["question", "distributor"]);
+    expect(withOutputs.sort()).toEqual(
+      ["ai", "condition", "distributor", "integration", "menu", "payment-proof", "question"].sort()
+    );
   });
 
   it("el cuerpo compacto es opcional: solo lo declara quien lo necesita", () => {
@@ -143,8 +130,11 @@ describe("contrato ToolUi", () => {
     expect(findToolUi("distributor")?.CompactBody).toBeTypeOf("function");
     expect(findToolUi("delay")?.CompactBody).toBeTypeOf("function");
 
+    // Las herramientas con salidas con nombre también lo declaran (las pinta su cuerpo).
     const conCompacto = listUiTypes().filter((type) => findToolUi(type)?.CompactBody);
-    expect(conCompacto).toEqual(["message", "question", "distributor", "delay"]);
+    expect(conCompacto.sort()).toEqual(
+      ["message", "question", "distributor", "delay", "condition", "menu", "integration", "ai", "payment-proof", "tags", "notification", "pixel"].sort()
+    );
     expect(conCompacto.length).toBeLessThan(listUiTypes().length);
   });
 });

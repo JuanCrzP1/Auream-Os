@@ -1,13 +1,13 @@
 import type { ToolDefinition } from "../ToolDefinition";
+import { PIXEL_DEFAULT_CONFIG } from "./pixelConfig";
+import { summarizePixel } from "./summarizePixel";
+import { validatePixel } from "./validatePixel";
 
 /**
- * Pixel — registra un evento de conversión en una plataforma de anuncios.
+ * Pixel — envía un evento (Lead o Compra) a la API de Conversiones de Meta.
  *
- * `executable: false`. Emitir el evento exige el dominio `integrations` y
- * credenciales por tenant; no existe ninguno de los dos.
- *
- * `defaultConfig` vacío: el nombre del evento y su mapeo de valores dependen de
- * la plataforma destino, que todavía no se ha elegido.
+ * `executable: false`: el editor está completo; faltan el dominio
+ * `integrations` y las credenciales por tenant.
  */
 export const pixelTool: ToolDefinition = {
   type: "pixel",
@@ -18,11 +18,14 @@ export const pixelTool: ToolDefinition = {
   availableInPalette: true,
   terminal: false,
   executable: false,
-  defaultConfig: {},
+  defaultContent: {},
+  defaultConfig: { ...PIXEL_DEFAULT_CONFIG },
+  summarize: summarizePixel,
+  validate: validatePixel,
   colors: {
-    header: "#db2777",
-    body: "#be185d",
-    gradient: "linear-gradient(135deg,#f472b6,#be185d)"
+    header: "#9d174d",
+    body: "#831843",
+    gradient: "linear-gradient(135deg,#ec4899,#831843)"
   },
   glyph: "🎯"
 };

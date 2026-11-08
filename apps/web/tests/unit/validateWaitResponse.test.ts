@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  DESTINO_INVALIDO,
-  ESPERA_CONTRADICTORIA,
-  TIEMPO_INCOMPLETO,
-  TIEMPO_INVALIDO,
-  UNIDAD_INVALIDA,
+  INVALID_TARGET_MESSAGE,
+  CONTRADICTORY_WAIT_MESSAGE,
+  MISSING_TIMEOUT_MESSAGE,
+  INVALID_TIMEOUT_MESSAGE,
+  INVALID_UNIT_MESSAGE,
   validateWaitResponse
 } from "@features/automations/builder/tools/wait-response/validateWaitResponse";
 import { getTool } from "@features/automations/builder/tools/registry";
@@ -26,14 +26,14 @@ const sinContenido = {};
 describe("configuraciones válidas", () => {
   it("la configuración por defecto se puede guardar", () => {
     expect(validateWaitResponse(sinContenido, { ...WAIT_RESPONSE_DEFAULT_CONFIG })).toEqual({
-      valido: true,
-      motivo: null
+      valid: true,
+      reason: null
     });
   });
 
   it("un nodo sin nada configurado se puede guardar", () => {
     // Espera sin límite es el estado por defecto y es ejecutable tal cual.
-    expect(validateWaitResponse(sinContenido, {}).valido).toBe(true);
+    expect(validateWaitResponse(sinContenido, {}).valid).toBe(true);
   });
 
   it("acepta un tiempo máximo en minutos", () => {
@@ -41,7 +41,7 @@ describe("configuraciones válidas", () => {
       validateWaitResponse(sinContenido, {
         waitIndefinitely: false,
         timeout: { amount: 30, unit: "minutes" }
-      }).valido
+      }).valid
     ).toBe(true);
   });
 
@@ -50,12 +50,12 @@ describe("configuraciones válidas", () => {
       validateWaitResponse(sinContenido, {
         waitIndefinitely: false,
         timeout: { amount: 2, unit: "hours" }
-      }).valido
+      }).valid
     ).toBe(true);
   });
 
   it("el mensaje previo es opcional: sin texto también se guarda", () => {
-    expect(validateWaitResponse({}, { waitIndefinitely: true }).valido).toBe(true);
+    expect(validateWaitResponse({}, { waitIndefinitely: true }).valid).toBe(true);
   });
 
   it("acepta los interruptores y la reacción en cualquier combinación", () => {
@@ -65,16 +65,16 @@ describe("configuraciones válidas", () => {
         groupMessages: true,
         replyToInbound: true,
         reaction: "👍"
-      }).valido
+      }).valid
     ).toBe(true);
   });
 
   it("acepta un destino con guion bajo y dígitos", () => {
-    expect(validateWaitResponse(sinContenido, { targetKey: "ciudad_2" }).valido).toBe(true);
+    expect(validateWaitResponse(sinContenido, { targetKey: "ciudad_2" }).valid).toBe(true);
   });
 
   it("acepta el destino escrito con prefijo context.", () => {
-    expect(validateWaitResponse(sinContenido, { targetKey: "context.ciudad" }).valido).toBe(true);
+    expect(validateWaitResponse(sinContenido, { targetKey: "context.ciudad" }).valid).toBe(true);
   });
 });
 
@@ -85,13 +85,13 @@ describe("coherencia entre «sin límite» y tiempo máximo", () => {
         waitIndefinitely: true,
         timeout: { amount: 30, unit: "minutes" }
       })
-    ).toEqual({ valido: false, motivo: ESPERA_CONTRADICTORIA });
+    ).toEqual({ valid: false, reason: CONTRADICTORY_WAIT_MESSAGE });
   });
 
   it("rechaza quitar el «sin límite» sin decir cuánto se espera", () => {
     expect(validateWaitResponse(sinContenido, { waitIndefinitely: false })).toEqual({
-      valido: false,
-      motivo: TIEMPO_INCOMPLETO
+      valid: false,
+      reason: MISSING_TIMEOUT_MESSAGE
     });
   });
 });
@@ -102,28 +102,28 @@ describe("tiempo máximo inválido", () => {
   it("rechaza cero y negativos", () => {
     for (const amount of [0, -1, -60]) {
       expect(validateWaitResponse(sinContenido, conLimite({ amount, unit: "minutes" }))).toEqual({
-        valido: false,
-        motivo: TIEMPO_INVALIDO
+        valid: false,
+        reason: INVALID_TIMEOUT_MESSAGE
       });
     }
   });
 
   it("rechaza decimales", () => {
     expect(
-      validateWaitResponse(sinContenido, conLimite({ amount: 2.5, unit: "hours" })).motivo
-    ).toBe(TIEMPO_INVALIDO);
+      validateWaitResponse(sinContenido, conLimite({ amount: 2.5, unit: "hours" })).reason
+    ).toBe(INVALID_TIMEOUT_MESSAGE);
   });
 
   it("rechaza una cantidad que no es número", () => {
     expect(
-      validateWaitResponse(sinContenido, conLimite({ amount: "30", unit: "minutes" })).motivo
-    ).toBe(TIEMPO_INVALIDO);
+      validateWaitResponse(sinContenido, conLimite({ amount: "30", unit: "minutes" })).reason
+    ).toBe(INVALID_TIMEOUT_MESSAGE);
   });
 
   it("rechaza una unidad que la herramienta no ofrece", () => {
     for (const unit of ["seconds", "days", "weeks", "", null]) {
-      expect(validateWaitResponse(sinContenido, conLimite({ amount: 30, unit })).motivo).toBe(
-        UNIDAD_INVALIDA
+      expect(validateWaitResponse(sinContenido, conLimite({ amount: 30, unit })).reason).toBe(
+        INVALID_UNIT_MESSAGE
       );
     }
   });
@@ -135,31 +135,31 @@ describe("destino donde guardar la respuesta", () => {
     // con espacios o puntos se escribiría bien y sería ilegible después.
     for (const targetKey of ["mi ciudad", "ciudad.principal", "ciudad-1", "2ciudad", "ciudad[0]"]) {
       expect(validateWaitResponse(sinContenido, { targetKey })).toEqual({
-        valido: false,
-        motivo: DESTINO_INVALIDO
+        valid: false,
+        reason: INVALID_TARGET_MESSAGE
       });
     }
   });
 
   it("un destino vacío es ausencia, no error", () => {
-    expect(validateWaitResponse(sinContenido, { targetKey: "   " }).valido).toBe(true);
+    expect(validateWaitResponse(sinContenido, { targetKey: "   " }).valid).toBe(true);
   });
 });
 
 describe("la herramienta declara esta validación", () => {
-  it("el registry expone validateContent para Esperar respuesta", () => {
+  it("el registry expone validate para Esperar respuesta", () => {
     const tool = getTool("question");
 
-    expect(tool?.validateContent).toBeDefined();
-    expect(tool?.validateContent?.({}, { waitIndefinitely: false })).toEqual({
-      valido: false,
-      motivo: TIEMPO_INCOMPLETO
+    expect(tool?.validate).toBeDefined();
+    expect(tool?.validate?.({}, { waitIndefinitely: false })).toEqual({
+      valid: false,
+      reason: MISSING_TIMEOUT_MESSAGE
     });
   });
 
   it("lo que la herramienta declara por defecto es válido", () => {
     const tool = getTool("question");
 
-    expect(tool?.validateContent?.({}, tool.defaultConfig).valido).toBe(true);
+    expect(tool?.validate?.({}, tool.defaultConfig).valid).toBe(true);
   });
 });
