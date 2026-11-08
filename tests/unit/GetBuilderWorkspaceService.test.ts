@@ -67,32 +67,24 @@ describe("GetBuilderWorkspaceService", () => {
     expect(workspaceRepo.saved()).toHaveLength(1); // no duplicado
   });
 
-  it("crea workspace nuevo si no existe", async () => {
+  it("abrir NO crea nada: un id desconocido devuelve null", async () => {
+    // Antes creaba la automatización desde un GET (y con permiso de lectura).
     const result = await sut.execute("tenant-1", "flow-nuevo");
-    expect(result.flowKey).toBe("flow-nuevo");
-    expect(workspaceRepo.saved()).toHaveLength(1);
+    expect(result).toBeNull();
+    expect(workspaceRepo.saved()).toHaveLength(0);
+    expect(automationRepo.all()).toHaveLength(0);
   });
 
-  it("auto-registra el flow en AutomationRepository al crear workspace nuevo", async () => {
-    await sut.execute("tenant-1", "flow-nuevo");
-    expect(automationRepo.all()).toHaveLength(1);
-    expect(automationRepo.all()[0]?.id).toBe("flow-nuevo");
-    expect(automationRepo.all()[0]?.status).toBe("draft");
-  });
+  it("si el catálogo la tiene pero no hay borrador, sirve el inicial SIN guardarlo", async () => {
+    await automationRepo.save({
+      id: "flow-sin-borrador", tenantId: "tenant-abc", key: "flow-sin-borrador", name: "Recién creada",
+      status: "draft", metadata: { createdAt: "2024-01-01", updatedAt: "2024-01-01" }
+    });
+    const result = await sut.execute("tenant-abc", "flow-sin-borrador");
 
-  it("NO duplica el registro en AutomationRepository si ya existe", async () => {
-    const existingFlow: AutomationFlow = {
-      id: "flow-nuevo",
-      tenantId: "tenant-1",
-      key: "flow-nuevo",
-      name: "Ya existe",
-      status: "active",
-      metadata: { createdAt: "2024-01-01", updatedAt: "2024-01-01" }
-    };
-    await automationRepo.save(existingFlow);
-    await sut.execute("tenant-1", "flow-nuevo");
-    expect(automationRepo.all()).toHaveLength(1);
-    expect(automationRepo.all()[0]?.name).toBe("Ya existe"); // nombre original preservado
+    expect(result?.tenantId).toBe("tenant-abc");
+    expect(result?.draft.flow.name).toBe("Recién creada");
+    expect(workspaceRepo.saved()).toHaveLength(0);
   });
 
   it("NO crea entrada en AutomationRepository si el workspace ya existía", async () => {
@@ -102,8 +94,4 @@ describe("GetBuilderWorkspaceService", () => {
     expect(automationRepo.all()).toHaveLength(0);
   });
 
-  it("el workspace creado tiene el tenantId correcto", async () => {
-    const result = await sut.execute("tenant-abc", "flow-x");
-    expect(result.tenantId).toBe("tenant-abc");
-  });
 });

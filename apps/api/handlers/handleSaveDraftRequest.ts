@@ -15,6 +15,10 @@ export async function handleSaveDraftRequest(
 ): Promise<void> {
   const body = await parseJsonBody<{ draft: BuilderFlowSnapshot }>(request);
   const workspace = await getWorkspaceService.execute(tenantId, flowKey);
+  if (!workspace) {
+    sendJson(response, 404, { message: "Automatización no encontrada" });
+    return;
+  }
   const nextWorkspace = await saveDraftService.execute(workspace, body.draft);
   sendJson(response, 200, nextWorkspace);
 }

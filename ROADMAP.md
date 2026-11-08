@@ -104,7 +104,7 @@ Verificado contra el repositorio el 2026-09-01, no copiado de la revisión anter
 | Paneles del builder | 🟢 COMPLETADO | Revisión del flujo en el lienzo (`reviewFlow` + `FlowReviewPanel`); retirados los paneles obsoletos y todo el circuito de publicación (B6). El simulador pasa a C15 |
 | Bloque de inicio | 🟢 COMPLETADO | Tipo de sistema `start` como en Leona, con migración de los flujos antiguos al leer (B9) |
 | Estados del builder | 🟢 COMPLETADO | Guardado fiable (B14), aviso y estado «Sin conexión» con «Reintentar», problemas del flujo visibles (B7). Los estados visuales de cada nodo son B8 |
-| Gestión de automatizaciones | 🟡 EN PROGRESO | Listar, crear, abrir, renombrar, borrar y buscar funcionan; Duplicar, Archivar y Mover están en el menú sin implementación |
+| Gestión de automatizaciones | 🟢 COMPLETADO | Listar, crear (explícito, sin hueco de permisos), abrir, renombrar, duplicar, mover, archivar/restaurar, borrar y buscar (B10) |
 | Automations SQL | ⬜ POR HACER | Persistencia actual: JSON en disco, solo desarrollo local |
 | Runtime real (disparo externo) | ⬜ POR HACER | El flow-engine solo se ejecuta desde la simulación del builder |
 | Connections (canales) | ⬜ POR HACER | Frontera vacía, sin código |
@@ -346,13 +346,17 @@ El riesgo descrito originalmente (borrar el inicio) ya lo cerraba `entryNodeProt
 - `mapCanvasToSnapshot` deriva `entryNodeId` del nodo marcado en el lienzo.
 - Retirado el modal genérico `NodeEditorModal`: los nodos sin editor (Inicio, Finalizar) ya no se abren ni ofrecen el lápiz.
 
-#### B10 — Gestión de automatizaciones · 🟡 EN PROGRESO
+#### B10 — Gestión de automatizaciones · 🟢 COMPLETADO (2026-11-08)
 
-Funcionan: listar, crear, abrir, renombrar, borrar (con confirmación), buscar, estado vacío.
+Ningún control del menú queda sin comportamiento:
 
-Pendientes, verificados en el menú contextual: **Duplicar** y **Archivar** aparecen en el menú pero `AutomationFlowCard` solo pasa `onRename` y `onDelete` → pulsarlos no hace nada. **Mover a…** está explícitamente `disabled`. Tres controles visibles sin comportamiento, contra la regla de no fingir funcionalidad.
+- **Duplicar** (`POST /automations/:id/duplicate`, `DuplicateAutomationService`): copia completa del borrador con id y nombre nuevos («(copia)»), en la misma carpeta; nace como borrador.
+- **Archivar / Restaurar** (`PATCH /automations/:id/archive`, `SetAutomationArchivedService`): la archivada sale de la vista normal y de los conteos y queda en una sección «Archivadas» plegada; restaurar la devuelve como borrador.
+- **Mover a…**: diálogo para elegir carpeta o «Sin carpeta», accesible con teclado; usa el mismo caso de uso que el arrastre.
+- **Creación explícita** (`POST /automations`, `CreateAutomationService`, `flows.write`): el id lo decide el servidor y, dentro de una carpeta, nace en ella. **Cerrado el hueco de autorización de A3/C13**: abrir el builder (`GET` del workspace) ya no escribe nada; un id desconocido es 404.
+- Errores de dominio 404 con `NotFoundError`. Tests: casos de uso, autorización por ruta (solo lectura → 403) y recorrido completo del hub con una API falsa que persiste.
 
-Falta también: creación explícita (`POST /automations`) para retirar la escritura del `GET` del workspace y cerrar el hueco de autorización del `viewer` descrito en A3; carpetas más allá del listado; estados de la automatización (activa/pausada/archivada) en la tarjeta.
+Queda fuera, para más adelante: carpetas anidadas y estado activo/pausado en la tarjeta (llega con las conexiones, FASE D).
 
 #### B12 — Responsive · 🟡 EN PROGRESO
 
@@ -391,7 +395,7 @@ La fase pasa a 🟢 COMPLETADA **solo** cuando se cumplan todos estos puntos:
 1. Se puede configurar el comportamiento de las 12 herramientas desde la interfaz (B5).
 2. No queda ningún componente construido sin consumidor ni estado producido y descartado (B6). — ✅ **cumplido**; `SimulationPanel` queda reservado a C15 de forma explícita.
 3. Todo estado del sistema se comunica con la verdad: guardado, error, sin conexión, inválido, no ejecutable (B7, B8). — ✅ **cumplido**.
-4. Ningún control visible carece de comportamiento (B10, B14). — B14 ✅; **falta B10**: «Duplicar», «Archivar» y «Mover a…» en el menú de la lista de automatizaciones siguen sin comportamiento.
+4. Ningún control visible carece de comportamiento (B10, B14). — ✅ **cumplido**.
 5. La estructura frontend es estable: una responsabilidad por módulo, sin mapas globales, sin singletons mutables, sin dos dueños del mismo estado (B14). — ✅ **cumplido**; queda solo el color fuera de tema de dos superficies, que depende de B5/B8.
 6. Responsive validado en los tamaños acordados (B12) y accesibilidad revisada (B13).
 7. `npm run check`, `npm --prefix apps/web run check`, `npm test`, `npm --prefix apps/web run test`, `npm run build`, `npm run build:web` y `git diff --check` en verde.
@@ -421,7 +425,7 @@ Objetivo: que un flow activo se ejecute solo (lo último guardado; no hay public
 | C10 | Implementar el comportamiento de ejecución de las herramientas que hoy declaran `executable: false`: Etiquetas, Comprobante automático, Distribuidor, Pixel, Menú, Notificación, Integración y Extensión IA. Cada una necesita especificación de negocio antes de implementarse | ⬜ POR HACER — depende de C5 y de sus dominios |
 | C11 | Conectar `platform/security/rate-limiting` (implementado y probado) a `apps/api` | ⬜ POR HACER |
 | C12 | Persistir ejecuciones (`Execution`, `ExecutionStep`) y conectar la observabilidad que ya existe sin consumidor, para poder auditar qué pasó en un flow | ⬜ POR HACER — depende de C6 |
-| C13 | Corregir el hueco de autorización: `POST /automations` explícito y retirar la escritura del `GET .../workspace`, que hoy permite a un `viewer` crear automatizaciones sin cuota | ⬜ POR HACER — coordinado con B10 |
+| C13 | ~~Corregir el hueco de autorización: `POST /automations` explícito y retirar la escritura del `GET .../workspace`~~ | 🟢 COMPLETADO en B10 (2026-11-08) |
 | C14 | Enrutar por salida en el motor: `fromOutput` viaja al snapshot de ejecución, cada handler declara por qué salida sigue (respuesta/tiempo agotado, se cumple/no, turno del Distribuidor, opción del Menú…) y `EdgeEvaluator` elige esa arista. Modelo en [`flow-connections.md`](docs/architecture/flow-connections.md) | ⬜ POR HACER — depende de C5 |
 | C15 | Simulador en el builder: montar `SimulationPanel` (ya implementado de punta a punta) cuando el motor enrute por salida y ejecute las herramientas | ⬜ POR HACER — depende de C10 y C14 |
 
@@ -542,3 +546,4 @@ Cada vez que se cierra una tarea:
 | 2026-11-08 | **Modelo de activación de flujos.** Un flujo corre cuando una conexión de WhatsApp lo tiene asignado (`TriggerBinding` conexión → flujo), como en Leona: se crea la conexión, se elige el flujo y se escanea el QR (WhatsApp Web) o se configura la API oficial. D1 pasa a cubrir los dos modos. |
 | 2026-11-08 | **B6 y B7 cerrados.** Revisión del flujo estructurada (`reviewFlow`) y visible en el lienzo con navegación al bloque; retirado todo el circuito de publicación (frontend y backend) y los paneles obsoletos; aviso y estado «Sin conexión» con reintento seguro. |
 | 2026-11-08 | **B8 cerrado.** Estado de cada bloque en el lienzo: anillo y marca por gravedad con los motivos, y pestaña «Próximamente» en las herramientas que el motor aún no ejecuta. |
+| 2026-11-08 | **B10 cerrado.** Duplicar, archivar/restaurar, «Mover a…» y creación explícita por `POST /automations`; abrir el builder deja de crear (cierra C13). |

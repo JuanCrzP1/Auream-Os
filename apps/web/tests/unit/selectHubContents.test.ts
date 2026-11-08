@@ -121,3 +121,26 @@ describe("la búsqueda actúa dentro de la ubicación, no sobre todo", () => {
     expect(nombres(vista.flows)).toEqual(["Otro de ventas"]);
   });
 });
+
+describe("selectHubContents — archivadas", () => {
+  const archivada = (id: string, name: string, folderId?: string): AutomationSummary => ({ ...flujo(id, name, folderId), status: "archived" });
+  const CON_ARCHIVADAS = [...FLUJOS, archivada("a1", "Vieja suelta"), archivada("a2", "Vieja de ventas", "c1")];
+
+  it("no aparecen en la vista normal ni cuentan en su carpeta", () => {
+    const raiz = selectHubContents(CON_ARCHIVADAS, CARPETAS, { folderId: null }, "");
+    const ventas = selectHubContents(CON_ARCHIVADAS, CARPETAS, { folderId: "c1" }, "");
+
+    expect(nombres(raiz.flows)).not.toContain("Vieja suelta");
+    expect(nombres(ventas.flows)).not.toContain("Vieja de ventas");
+    expect(raiz.countByFolder.get("c1")).toBe(2);
+  });
+
+  it("se listan aparte en la raíz, todas juntas, y respetan la búsqueda", () => {
+    expect(nombres(selectHubContents(CON_ARCHIVADAS, CARPETAS, { folderId: null }, "").archived)).toEqual(["Vieja suelta", "Vieja de ventas"]);
+    expect(nombres(selectHubContents(CON_ARCHIVADAS, CARPETAS, { folderId: null }, "ventas").archived)).toEqual(["Vieja de ventas"]);
+  });
+
+  it("dentro de una carpeta no se listan", () => {
+    expect(selectHubContents(CON_ARCHIVADAS, CARPETAS, { folderId: "c1" }, "").archived).toEqual([]);
+  });
+});

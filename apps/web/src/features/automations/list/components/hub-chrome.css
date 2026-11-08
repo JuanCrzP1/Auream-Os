@@ -161,3 +161,33 @@
 }
 
 /* Sections */
+
+/* Archivadas: plegadas al final del hub. */
+.hub-archived__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hub-archived__toggle:hover {
+  color: var(--text);
+}
+
+.hub-archived__toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.hub-archived__chevron {
+  width: 10px;
+}

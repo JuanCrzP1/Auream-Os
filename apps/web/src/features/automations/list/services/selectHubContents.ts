@@ -18,6 +18,10 @@ import type { AutomationFolderSummary, AutomationSummary } from "@contracts/Auto
 // —una copia para la raíz y otra para dentro— con dos sitios donde podría
 // dejar de coincidir. Aquí se lee una vez y no necesita React para probarse.
 //
+// ARCHIVADAS: no están en ninguna vista normal ni cuentan en las carpetas. Se
+// listan aparte (`archived`), todas juntas y solo en la raíz, estén en la
+// carpeta que estén.
+//
 // NO INVENTA PERTENENCIA. No agrupa, no indexa y no guarda nada: recibe la
 // lista del servidor tal cual llega y devuelve una vista de ella.
 // ---------------------------------------------------------------------------
@@ -36,7 +40,11 @@ export interface HubContents {
   readonly countByFolder: ReadonlyMap<string, number>;
   /** `true` si no hay nada que enseñar en esta ubicación. */
   readonly isEmpty: boolean;
+  /** Archivadas que coinciden con la búsqueda. Solo en la raíz; vacío dentro de una carpeta. */
+  readonly archived: ReadonlyArray<AutomationSummary>;
 }
+
+const isArchived = (flow: AutomationSummary) => flow.status === "archived";
 
 /** `true` si la automatización vive en esta ubicación. */
 function perteneceA(flow: AutomationSummary, folderId: string | null): boolean {
@@ -55,16 +63,14 @@ export function selectHubContents(
   // filtradas: una búsqueda no cambia cuántas contiene una carpeta.
   const countByFolder = new Map<string, number>();
   for (const flow of flows) {
-    if (flow.folderId === undefined) continue;
+    if (flow.folderId === undefined || isArchived(flow)) continue;
     countByFolder.set(flow.folderId, (countByFolder.get(flow.folderId) ?? 0) + 1);
   }
 
   const termino = search.trim().toLowerCase();
-  const visibles = flows.filter(
-    (flow) =>
-      perteneceA(flow, folderId) &&
-      (termino.length === 0 || flow.name.toLowerCase().includes(termino))
-  );
+  const coincide = (flow: AutomationSummary) => termino.length === 0 || flow.name.toLowerCase().includes(termino);
+  const visibles = flows.filter((flow) => !isArchived(flow) && perteneceA(flow, folderId) && coincide(flow));
+  const archived = folderId === null ? flows.filter((flow) => isArchived(flow) && coincide(flow)) : [];
 
   const currentFolder = folderId === null ? null : folders.find((f) => f.id === folderId) ?? null;
 
@@ -75,6 +81,7 @@ export function selectHubContents(
     folders: folderId === null ? folders : folders.filter((f) => f.id !== folderId),
     currentFolder,
     countByFolder,
-    isEmpty: visibles.length === 0
+    isEmpty: visibles.length === 0,
+    archived
   };
 }

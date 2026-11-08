@@ -1,0 +1,63 @@
+.move-flow__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: min(50vh, 360px);
+  margin: 12px 0 4px;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.move-flow__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move-flow__option:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.move-flow__option:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.move-flow__option--current {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.move-flow__icon {
+  width: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.move-flow__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.move-flow__here {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.move-flow__hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}

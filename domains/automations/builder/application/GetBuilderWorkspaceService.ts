@@ -9,34 +9,24 @@ export class GetBuilderWorkspaceService {
     private readonly automationRepository: AutomationRepository
   ) {}
 
-  public async execute(tenantId: string, flowKey: string): Promise<PersistedBuilderWorkspace> {
+  /**
+   * El borrador de una automatización, o `null` si no existe en este tenant.
+   *
+   * SIN EFECTOS: abrir no escribe nada. Antes, abrir un id desconocido creaba
+   * la automatización (un `GET` que escribía y que permitía crear con permiso
+   * de solo lectura). Crear es ahora `CreateAutomationService`.
+   *
+   * Si el catálogo la tiene pero aún no hay borrador guardado, se sirve el
+   * inicial EN MEMORIA; el primer autoguardado lo escribe.
+   */
+  public async execute(tenantId: string, flowKey: string): Promise<PersistedBuilderWorkspace | null> {
     const existing = await this.repository.getWorkspace(tenantId, flowKey);
+    if (existing) return this.withCatalogName(existing);
 
-    if (existing) {
-      return this.withCatalogName(existing);
-    }
+    const flow = await this.automationRepository.findById(tenantId, flowKey);
+    if (!flow) return null;
 
-    const seeded = this.workspaceFactory(tenantId, flowKey);
-    await this.repository.saveWorkspace(seeded);
-
-    // Auto-registrar el flow en el catálogo de automatizaciones si no existe aún.
-    // Garantiza que todo workspace del builder tenga una entrada visible en el hub.
-    const existingFlow = await this.automationRepository.findById(tenantId, flowKey);
-    if (!existingFlow) {
-      await this.automationRepository.save({
-        id: flowKey,
-        tenantId,
-        key: flowKey,
-        name: seeded.draft.flow.name,
-        status: "draft",
-        metadata: {
-          createdAt: seeded.updatedAt,
-          updatedAt: seeded.updatedAt
-        }
-      });
-    }
-
-    return seeded;
+    return this.withCatalogName(this.workspaceFactory(tenantId, flowKey));
   }
 
   /**

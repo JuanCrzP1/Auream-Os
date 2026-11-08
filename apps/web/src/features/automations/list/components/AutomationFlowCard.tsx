@@ -12,9 +12,22 @@ interface AutomationFlowCardProps {
   flow: AutomationSummary;
   onDelete?: (flow: AutomationSummary) => void;
   onRename?: (flow: AutomationSummary) => void;
+  onDuplicate?: (flow: AutomationSummary) => void;
+  onMove?: (flow: AutomationSummary) => void;
+  onArchive?: (flow: AutomationSummary) => void;
+  onRestore?: (flow: AutomationSummary) => void;
 }
 
-export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowCardProps) {
+export function AutomationFlowCard({
+  flow,
+  onDelete,
+  onRename,
+  onDuplicate,
+  onMove,
+  onArchive,
+  onRestore
+}: AutomationFlowCardProps) {
+  const archived = flow.status === "archived";
   const navigate = useNavigate();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -46,7 +59,7 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
 
   return (
     <article
-      className={`hub-card${arrastrando ? " hub-card--dragging" : ""}`}
+      className={`hub-card${arrastrando ? " hub-card--dragging" : ""}${archived ? " hub-card--archived" : ""}`}
       role="button"
       tabIndex={0}
       onClick={handleClick}
@@ -66,6 +79,7 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
           que no informaba de nada y le quitaba ancho al nombre. */}
       <div className="hub-card__header">
         <span className="hub-card__name">{flow.name}</span>
+        {archived ? <span className="hub-card__archived-badge">Archivada</span> : null}
       </div>
       {flow.tags && flow.tags.length > 0 && (
         <div className="hub-card__tags">
@@ -97,6 +111,10 @@ export function AutomationFlowCard({ flow, onDelete, onRename }: AutomationFlowC
           flow={flow}
           onOpen={(f) => navigate(`/builder/${f.key}`)}
           onRename={onRename}
+          onDuplicate={onDuplicate}
+          onMove={onMove}
+          onArchive={onArchive}
+          onRestore={onRestore}
           onDelete={onDelete}
         />
       </footer>

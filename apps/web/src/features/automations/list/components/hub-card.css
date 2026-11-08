@@ -218,3 +218,25 @@
 }
 
 /* Context menu */
+
+/* Archivada: se ve apagada y lo dice. Sigue siendo abrible y restaurable. */
+.hub-card--archived {
+  opacity: 0.72;
+}
+
+.hub-card--archived:hover,
+.hub-card--archived:focus-visible {
+  opacity: 1;
+}
+
+.hub-card__archived-badge {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}

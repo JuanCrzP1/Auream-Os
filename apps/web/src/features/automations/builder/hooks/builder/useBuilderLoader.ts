@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchBuilderWorkspace } from "@features/automations/builder/services/fetchBuilderWorkspace";
 import { useActiveTenant } from "@shared/auth/tenant/ActiveTenantContext";
+import { RequestError } from "@shared/http/RequestError";
 import type { PersistedBuilderWorkspace } from "@contracts/BuilderContracts";
 
 export interface BuilderLoaderState {
@@ -71,7 +72,14 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
       })
       .catch((loadError: unknown) => {
         if (mountedRef.current) {
-          setError(loadError instanceof Error ? loadError.message : "No se pudo cargar el workspace.");
+          // Abrir ya no crea: un id que no existe en esta cuenta es un 404.
+          setError(
+            loadError instanceof RequestError && loadError.status === 404
+              ? "Esta automatización no existe o fue eliminada."
+              : loadError instanceof Error
+                ? loadError.message
+                : "No se pudo cargar el workspace."
+          );
           setLoading(false);
         }
       });

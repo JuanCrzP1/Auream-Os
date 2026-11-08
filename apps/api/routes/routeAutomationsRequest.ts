@@ -1,5 +1,10 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { handleCreateFolderRequest } from "../handlers/handleCreateFolderRequest";
+import {
+  handleCreateAutomationRequest,
+  handleDuplicateAutomationRequest,
+  handleSetAutomationArchivedRequest
+} from "../handlers/handleAutomationLifecycleRequests";
 import { handleDeleteAutomationRequest } from "../handlers/handleDeleteAutomationRequest";
 import { handleRenameFolderRequest } from "../handlers/handleRenameFolderRequest";
 import { handleMoveAutomationRequest } from "../handlers/handleMoveAutomationRequest";
@@ -14,19 +19,22 @@ import { FlowPermissions } from "../../../platform/authorization/permissions/Flo
 // ---------------------------------------------------------------------------
 // routeAutomationsRequest
 //
-// Responsabilidad única: enrutar `/automations`, `/automations/folders` y
-// `/automations/:id`.
+// Responsabilidad única: enrutar `/automations`, `/automations/folders`,
+// `/automations/:id` y sus acciones (`folder`, `duplicate`, `archive`).
 //
 // Devuelve `true` si consumió la petición, `false` si la ruta no le pertenece.
 // El tenant llega siempre del contexto autenticado, nunca de la URL. Cada
 // acción exige el scope correspondiente sobre ese tenant (mismo mecanismo que
-// routeBuilderApiRequest): listar/leer exige flows.read, crear carpeta, borrar
-// y renombrar exigen flows.write.
+// routeBuilderApiRequest): listar/leer exige flows.read; crear, duplicar,
+// archivar, mover, borrar y renombrar exigen flows.write.
 // ---------------------------------------------------------------------------
 
 const AUTOMATION_ID_PATTERN = /^\/automations\/([^/]+)$/;
 /** Mover una automatización de carpeta es un recurso propio, no un campo suelto. */
 const AUTOMATION_FOLDER_PATTERN = /^\/automations\/([^/]+)\/folder$/;
+/** Duplicar y archivar: acciones sobre una automatización concreta. */
+const AUTOMATION_DUPLICATE_PATTERN = /^\/automations\/([^/]+)\/duplicate$/;
+const AUTOMATION_ARCHIVE_PATTERN = /^\/automations\/([^/]+)\/archive$/;
 /** Renombrar una carpeta: el mismo recurso que crearlas, con su id detrás. */
 const FOLDER_ID_PATTERN = /^\/automations\/folders\/([^/]+)$/;
 
@@ -43,6 +51,28 @@ export async function routeAutomationsRequest(
     requireScope(requestContext, FlowPermissions.read, tenantId);
     const result = await services.listAutomationsService.execute(tenantId);
     sendJson(response, 200, toAutomationListResponse(result));
+    return true;
+  }
+
+  // Crear es la ÚNICA forma de dar de alta una automatización: abrir el
+  // builder (GET del workspace) ya no crea nada.
+  if (url.pathname === "/automations" && request.method === "POST") {
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    await handleCreateAutomationRequest(request, response, services.createAutomationService, tenantId);
+    return true;
+  }
+
+  const duplicado = AUTOMATION_DUPLICATE_PATTERN.exec(url.pathname);
+  if (duplicado && request.method === "POST") {
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    await handleDuplicateAutomationRequest(response, services.duplicateAutomationService, tenantId, duplicado[1]!);
+    return true;
+  }
+
+  const archivo = AUTOMATION_ARCHIVE_PATTERN.exec(url.pathname);
+  if (archivo && request.method === "PATCH") {
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    await handleSetAutomationArchivedRequest(request, response, services.setAutomationArchivedService, tenantId, archivo[1]!);
     return true;
   }
 

@@ -14,6 +14,10 @@ export async function handleSimulateDraftRequest(
   flowKey: string
 ): Promise<void> {
   const workspace = await getWorkspaceService.execute(tenantId, flowKey);
+  if (!workspace) {
+    sendJson(response, 404, { message: "Automatización no encontrada" });
+    return;
+  }
   const body = await parseJsonBody<BuilderSimulationRequest>(request);
   const result = simulateDraftService.simulate(workspace, body);
   sendJson(response, 200, result);

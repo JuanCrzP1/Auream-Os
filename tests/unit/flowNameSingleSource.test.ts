@@ -96,13 +96,16 @@ describe("el nombre del flujo tiene una sola fuente de verdad", () => {
     catalogo = new RepoCatalogo();
     leer = new GetBuilderWorkspaceService(workspaces, nuevoWorkspace, catalogo);
     guardar = new SaveDraftService(workspaces, catalogo);
-    // Primera entrada al editor: crea el workspace y su entrada en el catálogo.
-    await leer.execute(TENANT, CLAVE);
+    // La automatización ya creada (lo hace CreateAutomationService): entrada
+    // en el catálogo y borrador inicial con el mismo nombre.
+    const ahora = new Date().toISOString();
+    await catalogo.save({ id: CLAVE, tenantId: TENANT, key: CLAVE, name: "Nueva automatización", status: "draft", metadata: { createdAt: ahora, updatedAt: ahora } });
+    await workspaces.saveWorkspace(nuevoWorkspace(TENANT, CLAVE));
     catalogo.escrituras = 0;
   });
 
   it("al crear el flujo, hub y editor arrancan con el mismo nombre", async () => {
-    const ws = await leer.execute(TENANT, CLAVE);
+    const ws = (await leer.execute(TENANT, CLAVE))!;
     const flow = await catalogo.findById(TENANT, CLAVE);
 
     expect(ws.draft.flow.name).toBe("Nueva automatización");
@@ -110,7 +113,7 @@ describe("el nombre del flujo tiene una sola fuente de verdad", () => {
   });
 
   it("RENOMBRAR EN EL EDITOR llega al catálogo que lee el hub", async () => {
-    const ws = await leer.execute(TENANT, CLAVE);
+    const ws = (await leer.execute(TENANT, CLAVE))!;
 
     await guardar.execute(ws, conNombre(ws, "Bienvenida a clientes"));
 
@@ -119,10 +122,10 @@ describe("el nombre del flujo tiene una sola fuente de verdad", () => {
   });
 
   it("y sigue ahí al volver a abrir el editor", async () => {
-    const ws = await leer.execute(TENANT, CLAVE);
+    const ws = (await leer.execute(TENANT, CLAVE))!;
     await guardar.execute(ws, conNombre(ws, "Bienvenida a clientes"));
 
-    const reabierto = await leer.execute(TENANT, CLAVE);
+    const reabierto = (await leer.execute(TENANT, CLAVE))!;
     expect(reabierto.draft.flow.name).toBe("Bienvenida a clientes");
   });
 
@@ -131,18 +134,18 @@ describe("el nombre del flujo tiene una sola fuente de verdad", () => {
     const flow = (await catalogo.findById(TENANT, CLAVE))!;
     await catalogo.save({ ...flow, name: "Renombrado desde el hub" });
 
-    const ws = await leer.execute(TENANT, CLAVE);
+    const ws = (await leer.execute(TENANT, CLAVE))!;
     expect(ws.draft.flow.name).toBe("Renombrado desde el hub");
   });
 
   it("el catálogo manda aunque el workspace guardado tenga otra cosa", async () => {
-    const ws = await leer.execute(TENANT, CLAVE);
+    const ws = (await leer.execute(TENANT, CLAVE))!;
     await guardar.execute(ws, conNombre(ws, "Nombre del editor"));
 
     const flow = (await catalogo.findById(TENANT, CLAVE))!;
     await catalogo.save({ ...flow, name: "Nombre del hub" });
 
-    const servido = await leer.execute(TENANT, CLAVE);
+    const servido = (await leer.execute(TENANT, CLAVE))!;
     expect(servido.draft.flow.name).toBe("Nombre del hub");
     // El workspace en disco conserva su copia; deja de ser la que manda.
     expect(workspaces.crudo(TENANT, CLAVE)?.draft.flow.name).toBe("Nombre del editor");
@@ -150,7 +153,7 @@ describe("el nombre del flujo tiene una sola fuente de verdad", () => {
 
   it("guardar sin tocar el nombre no reescribe la entrada del hub", async () => {
     // El autoguardado corre con cada gesto del lienzo. Ninguno toca el nombre.
-    const ws = await leer.execute(TENANT, CLAVE);
+    const ws = (await leer.execute(TENANT, CLAVE))!;
 
     await guardar.execute(ws, ws.draft);
     await guardar.execute(ws, ws.draft);

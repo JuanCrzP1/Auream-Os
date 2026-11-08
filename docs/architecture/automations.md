@@ -21,7 +21,9 @@ domains/automations/
 
 Listado, creación, borrado, renombrado, metadata y organización en carpetas.
 
-`AutomationRepository` y `FolderRepository` son puertos; `ListAutomationsService`, `CreateFolderService` y `DeleteAutomationService` son los casos de uso. Las entidades `AutomationFlow`, `AutomationFolder`, `AutomationMetadata` y `AutomationStatus` viven en `domain/`.
+`AutomationRepository` y `FolderRepository` son puertos; `ListAutomationsService`, `CreateFolderService`, `RenameFolderService`, `MoveAutomationToFolderService` y `SetAutomationArchivedService` (archivar/restaurar) son los casos de uso. Crear, duplicar y borrar tocan también el borrador, así que viven en `builder/` (`CreateAutomationService`, `DuplicateAutomationService`, `DeleteAutomationService`).
+
+**Crear es la única puerta de alta** (`POST /automations`, `flows.write`). Abrir el builder (`GET` del workspace) no escribe nada: un id desconocido es 404. Las entidades `AutomationFlow`, `AutomationFolder`, `AutomationMetadata` y `AutomationStatus` viven en `domain/`.
 
 **No contiene:** el contenido del grafo (eso es el snapshot), ni nada de ejecución.
 

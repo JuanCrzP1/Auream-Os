@@ -55,6 +55,9 @@ export function makeServices(repo: AutomationRepository): ApiServices {
         createdAt: "2026-01-01T00:00:00.000Z"
       }))
     },
+    createAutomationService: { execute: vi.fn(async (tenantId: string) => ({ ...SAMPLE_FLOW, tenantId, id: "nuevo", key: "nuevo" })) },
+    duplicateAutomationService: { execute: vi.fn(async (tenantId: string) => ({ ...SAMPLE_FLOW, tenantId, id: "copia", key: "copia" })) },
+    setAutomationArchivedService: { execute: vi.fn(async (tenantId: string) => ({ ...SAMPLE_FLOW, tenantId, status: "archived" })) },
     automationRepository: repo,
     workspaceRepository: { getWorkspace: vi.fn(async () => null) }
   } as unknown as ApiServices;

@@ -2,6 +2,9 @@ import { GetBuilderWorkspaceService } from "../../../domains/automations/builder
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
 import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
 import { UpgradingBuilderWorkspaceRepository } from "../../../domains/automations/builder/application/UpgradingBuilderWorkspaceRepository";
+import { CreateAutomationService } from "../../../domains/automations/builder/application/CreateAutomationService";
+import { DuplicateAutomationService } from "../../../domains/automations/builder/application/DuplicateAutomationService";
+import { SetAutomationArchivedService } from "../../../domains/automations/catalog/application/SetAutomationArchivedService";
 import { DeleteAutomationService } from "../../../domains/automations/builder/application/DeleteAutomationService";
 import { RenameFolderService } from "../../../domains/automations/catalog/application/RenameFolderService";
 import { MoveAutomationToFolderService } from "../../../domains/automations/catalog/application/MoveAutomationToFolderService";
@@ -33,6 +36,9 @@ export interface ApiServices {
   readonly saveDraftService: SaveDraftService;
   readonly simulateDraftService: SimulateDraftService;
   readonly deleteAutomationService: DeleteAutomationService;
+  readonly createAutomationService: CreateAutomationService;
+  readonly duplicateAutomationService: DuplicateAutomationService;
+  readonly setAutomationArchivedService: SetAutomationArchivedService;
   readonly listAutomationsService: ListAutomationsService;
   readonly moveAutomationToFolderService: MoveAutomationToFolderService;
   readonly renameFolderService: RenameFolderService;
@@ -60,6 +66,18 @@ export function composeBuilderServices(config: ApiConfig): ApiServices {
       new BuilderSimulationRuntimeFactory(composeNodeRuntime())
     ),
     deleteAutomationService: new DeleteAutomationService(automationRepository, workspaceRepository),
+    createAutomationService: new CreateAutomationService(
+      automationRepository,
+      folderRepository,
+      workspaceRepository,
+      buildInitialBuilderWorkspace
+    ),
+    duplicateAutomationService: new DuplicateAutomationService(
+      automationRepository,
+      workspaceRepository,
+      buildInitialBuilderWorkspace
+    ),
+    setAutomationArchivedService: new SetAutomationArchivedService(automationRepository),
     listAutomationsService: new ListAutomationsService(
       automationRepository,
       folderRepository,

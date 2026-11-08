@@ -7,6 +7,7 @@ import { useCreateFolder } from "../hooks/useCreateFolder";
 import { useHubLocation } from "../hooks/useHubLocation";
 import { useRenameFolder } from "../hooks/useRenameFolder";
 import { useMoveFlowToFolder } from "../hooks/useMoveFlowToFolder";
+import { useAutomationLifecycle } from "../hooks/useAutomationLifecycle";
 import { useActiveTenant } from "@shared/auth/tenant/ActiveTenantContext";
 import { AutomationEmptyState } from "../components/AutomationEmptyState";
 import { AutomationFlowCard } from "../components/AutomationFlowCard";
@@ -16,11 +17,13 @@ import { AutomationsToolbar } from "../components/AutomationsToolbar";
 import { CreateFolderModal } from "../components/CreateFolderModal";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { RenameFlowModal } from "../components/RenameFlowModal";
+import { MoveFlowModal } from "../components/MoveFlowModal";
+import { ArchivedSection } from "../components/ArchivedSection";
 import { FolderCard } from "../components/FolderCard";
 import { FolderEmptyState } from "../components/FolderEmptyState";
 import { HubBreadcrumb } from "../components/HubBreadcrumb";
 import { selectHubContents } from "../services/selectHubContents";
-import { createAutomationDraft } from "../services/createAutomationDraft";
+import type { AutomationSummary } from "@contracts/AutomationContracts";
 
 export function AutomationsHubPage() {
   const navigate = useNavigate();
@@ -47,9 +50,15 @@ export function AutomationsHubPage() {
   // Renombrar una carpeta: mismo patrón que el resto de acciones del hub —el
   // hook llama al servicio y la lista del servidor vuelve a ser la verdad—.
   const folderRename = useRenameFolder({ onFolderRenamed: state.refresh });
+  // Crear, duplicar, archivar y restaurar: mismo patrón, recargar al terminar.
+  const lifecycle = useAutomationLifecycle({ onChanged: state.refresh });
+  // A qué automatización se le está eligiendo carpeta («Mover a…»).
+  const [moving, setMoving] = useState<AutomationSummary | null>(null);
 
+  // Crear la pide al servidor (que decide el id) y abre el builder. Dentro de
+  // una carpeta, nace en ella.
   const handleCreateFlow = () => {
-    navigate(`/builder/${createAutomationDraft()}`);
+    void lifecycle.create(location.folderId);
   };
 
   // Plantillas aún no existen como funcionalidad: la acción sólo lleva a la
@@ -104,6 +113,11 @@ export function AutomationsHubPage() {
             onDropFlowToRoot={(flowId) => void flowMove.moveToFolder(flowId, null)}
           />
         )}
+        {lifecycle.error && (
+          <p className="hub-refresh-error" role="status">
+            {lifecycle.error}
+          </p>
+        )}
         {flowMove.error && (
           <p className="hub-refresh-error" role="status">
             {flowMove.error}
@@ -154,9 +168,27 @@ export function AutomationsHubPage() {
                   flow={flow}
                   onDelete={actions.requestDelete}
                   onRename={actions.requestRename}
+                  onDuplicate={(f) => void lifecycle.duplicate(f)}
+                  onMove={setMoving}
+                  onArchive={(f) => void lifecycle.archive(f)}
                 />
               ))}
             </AutomationSection>
+            {contents.archived.length > 0 && (
+              <ArchivedSection count={contents.archived.length}>
+                {contents.archived.map((flow) => (
+                  <AutomationFlowCard
+                    key={flow.id}
+                    flow={flow}
+                    onDelete={actions.requestDelete}
+                    onRename={actions.requestRename}
+                    onDuplicate={(f) => void lifecycle.duplicate(f)}
+                    onMove={setMoving}
+                    onRestore={(f) => void lifecycle.restore(f)}
+                  />
+                ))}
+              </ArchivedSection>
+            )}
           </>
         )}
       </div>
@@ -164,6 +196,18 @@ export function AutomationsHubPage() {
       {/* Se reutiliza el mismo diálogo de renombrar que usan las
           automatizaciones: la pregunta es idéntica —un nombre nuevo para algo
           que ya existe— y no hay motivo para tener dos. */}
+      {moving && (
+        <MoveFlowModal
+          flow={moving}
+          folders={folders}
+          onConfirm={(folderId) => {
+            setMoving(null);
+            void flowMove.moveToFolder(moving.id, folderId);
+          }}
+          onCancel={() => setMoving(null)}
+        />
+      )}
+
       {folderRename.target && (
         <RenameFlowModal
           currentName={folderRename.target.name}

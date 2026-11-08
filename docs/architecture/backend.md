@@ -26,8 +26,13 @@ apps/api/
 | `GET` | `/me/tenants` | identidad de usuario, sin tenant |
 | `POST` | `/me/onboarding` | identidad de usuario, sin tenant |
 | `GET` | `/automations` | `flows.read` |
+| `POST` | `/automations` (crear; el id lo decide el servidor) | `flows.write` |
 | `PATCH` `DELETE` | `/automations/:id` | `flows.write` |
-| `GET` | `/api/builder/flows/:flowKey/workspace` | `flows.read` |
+| `POST` | `/automations/:id/duplicate` | `flows.write` |
+| `PATCH` | `/automations/:id/archive` | `flows.write` |
+| `PATCH` | `/automations/:id/folder` | `flows.write` |
+| `POST` | `/automations/folders` · `PATCH` `/automations/folders/:id` | `flows.write` |
+| `GET` | `/api/builder/flows/:flowKey/workspace` (sin efectos: un id desconocido es 404, no se crea) | `flows.read` |
 | `PUT` | `/api/builder/flows/:flowKey/draft` | `flows.write` |
 | `POST` | `/api/builder/flows/:flowKey/simulate` | `runtime.execute` |
 

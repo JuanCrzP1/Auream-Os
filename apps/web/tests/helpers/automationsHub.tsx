@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useParams } from "react-router-dom";
 import { AuthProvider } from "../../src/shared/auth/context/AuthContext";
 import { ActiveTenantProvider } from "../../src/shared/auth/tenant/ActiveTenantContext";
 import { AutomationsHubPage } from "../../src/features/automations/list/pages/AutomationsHubPage";
@@ -50,6 +50,38 @@ export function stubApi(seed: { flows?: AutomationSummary[]; folders?: Automatio
       return { ok: true, status: 201, json: async () => created } as unknown as Response;
     }
 
+    // Crear una automatización: el id lo decide el SERVIDOR.
+    if (method === "POST" && /\/automations$/.test(String(url))) {
+      const body = init?.body ? (JSON.parse(String(init.body)) as { name?: string; folderId?: string }) : {};
+      const id = `nuevo-${flows.length + 1}`;
+      const created: AutomationSummary = {
+        id, key: id, name: body.name ?? "Nueva automatización", status: "draft",
+        ...(body.folderId ? { folderId: body.folderId } : {}),
+        updatedAt: "2026-01-01", nodeCount: 1, connectionStatus: "connected"
+      };
+      flows.push(created);
+      return { ok: true, status: 201, json: async () => ({ id, key: id, name: created.name }) } as unknown as Response;
+    }
+
+    // Duplicar: copia con id nuevo y «(copia)», en la misma carpeta.
+    const duplicada = /\/automations\/([^/]+)\/duplicate$/.exec(String(url));
+    if (method === "POST" && duplicada) {
+      const source = flows.find((f) => f.id === duplicada[1]);
+      if (!source) return { ok: false, status: 404, text: async () => "no existe", json: async () => ({}) } as unknown as Response;
+      const id = `copia-${flows.length + 1}`;
+      flows.push({ ...source, id, key: id, name: `${source.name} (copia)`, status: "draft" });
+      return { ok: true, status: 201, json: async () => ({ id, key: id, name: `${source.name} (copia)` }) } as unknown as Response;
+    }
+
+    // Archivar / restaurar.
+    const archivo = /\/automations\/([^/]+)\/archive$/.exec(String(url));
+    if (method === "PATCH" && archivo) {
+      const { archived } = JSON.parse(String(init?.body)) as { archived: boolean };
+      const i = flows.findIndex((f) => f.id === archivo[1]);
+      if (i >= 0) flows[i] = { ...flows[i]!, status: archived ? "archived" : "draft" };
+      return { ok: true, status: 200, json: async () => ({ id: archivo[1], key: archivo[1], name: flows[i]?.name }) } as unknown as Response;
+    }
+
     // Renombrar una carpeta. La API falsa persiste de verdad, así que el
     // nombre que el hub muestra después sale de aquí.
     const renombrada = /\/automations\/folders\/([^/]+)$/.exec(String(url));
@@ -89,6 +121,17 @@ export function folderPostCalls(fetchMock: ReturnType<typeof vi.fn>) {
   });
 }
 
+/** El builder, reducido a decir qué automatización abrió. */
+function BuilderStub() {
+  const { flowKey } = useParams();
+  return (
+    <>
+      <div>Builder page</div>
+      <output data-testid="builder-key">{flowKey}</output>
+    </>
+  );
+}
+
 export function renderHub(entrada = "/automations") {
   return render(
     <MemoryRouter initialEntries={[entrada]}>
@@ -100,7 +143,7 @@ export function renderHub(entrada = "/automations") {
                 aplicación: sin esta ruta las pruebas medirían otra cosa. */}
             <Route path="/automations/folders/:folderId" element={<AutomationsHubPage />} />
             <Route path="/automations/templates" element={<div>Plantillas page</div>} />
-            <Route path="/builder/:flowKey" element={<div>Builder page</div>} />
+            <Route path="/builder/:flowKey" element={<BuilderStub />} />
           </Routes>
         </ActiveTenantProvider>
       </AuthProvider>

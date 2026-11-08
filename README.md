@@ -273,7 +273,7 @@ apps/api/
 └── http/          serialización y mapeo de errores
 ```
 
-Endpoints: `GET /health`, `GET /me/tenants`, `POST /me/onboarding`, `GET /automations`, `PATCH|DELETE /automations/:id`, y bajo `/api/builder/flows/:flowKey` → `workspace`, `draft`, `simulate`. Los flujos no se publican: se autoguardan.
+Endpoints: `GET /health`, `GET /me/tenants`, `POST /me/onboarding`, `GET /automations`, `PATCH|DELETE /automations/:id`, y bajo `/api/builder/flows/:flowKey` → `workspace`, `draft`, `simulate`. Los flujos no se publican: se autoguardan. Crear, duplicar, archivar y mover: `POST /automations`, `POST /automations/:id/duplicate`, `PATCH /automations/:id/archive|folder`.
 
 `NO IMPLEMENTADO` `apps/worker` no procesa nada todavía: no existe cola, así que las sesiones en estado `delayed` no se reanudan y no hay reintentos.
 

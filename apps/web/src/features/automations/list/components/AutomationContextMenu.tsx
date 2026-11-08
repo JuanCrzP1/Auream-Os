@@ -2,22 +2,30 @@ import "./hub-card.css";
 import { useState, useCallback, useRef } from "react";
 import { ContextMenu } from "./context-menu/ContextMenu";
 import type { AutomationSummary } from "@contracts/AutomationContracts";
+import type { ContextMenuItemDef } from "./context-menu/ContextMenu";
 
-const FLOW_MENU_ITEMS = [
-  { id: "open",     label: "Abrir",     icon: "↗" },
-  { id: "rename",   label: "Renombrar", icon: "✎" },
-  { id: "duplicate",label: "Duplicar",  icon: "⊕" },
-  { id: "move",     label: "Mover a...", icon: "→", disabled: true },
-  { id: "archive",  label: "Archivar",  icon: "⊟" },
-  { id: "delete",   label: "Eliminar",  icon: "✕", variant: "danger" as const }
-];
+/** Una archivada ofrece «Restaurar» en lugar de «Archivar». */
+function menuItems(archived: boolean): ContextMenuItemDef[] {
+  return [
+    { id: "open", label: "Abrir", icon: "↗" },
+    { id: "rename", label: "Renombrar", icon: "✎" },
+    { id: "duplicate", label: "Duplicar", icon: "⊕" },
+    { id: "move", label: "Mover a…", icon: "→" },
+    archived
+      ? { id: "restore", label: "Restaurar", icon: "↺" }
+      : { id: "archive", label: "Archivar", icon: "⊟" },
+    { id: "delete", label: "Eliminar", icon: "✕", variant: "danger" }
+  ];
+}
 
 interface AutomationContextMenuProps {
   flow: AutomationSummary;
   onOpen: (flow: AutomationSummary) => void;
   onRename?: (flow: AutomationSummary) => void;
   onDuplicate?: (flow: AutomationSummary) => void;
+  onMove?: (flow: AutomationSummary) => void;
   onArchive?: (flow: AutomationSummary) => void;
+  onRestore?: (flow: AutomationSummary) => void;
   onDelete?: (flow: AutomationSummary) => void;
 }
 
@@ -32,7 +40,9 @@ export function AutomationContextMenu({
   onOpen,
   onRename,
   onDuplicate,
+  onMove,
   onArchive,
+  onRestore,
   onDelete
 }: AutomationContextMenuProps) {
   const [open, setOpen] = useState(false);
@@ -48,10 +58,12 @@ export function AutomationContextMenu({
       case "open":      onOpen(flow);             break;
       case "rename":    onRename?.(flow);         break;
       case "duplicate": onDuplicate?.(flow);      break;
+      case "move":      onMove?.(flow);           break;
       case "archive":   onArchive?.(flow);        break;
+      case "restore":   onRestore?.(flow);        break;
       case "delete":    onDelete?.(flow);         break;
     }
-  }, [flow, onOpen, onRename, onDuplicate, onArchive, onDelete]);
+  }, [flow, onOpen, onRename, onDuplicate, onMove, onArchive, onRestore, onDelete]);
 
   return (
     <>
@@ -73,7 +85,7 @@ export function AutomationContextMenu({
 
       {open && (
         <ContextMenu
-          items={FLOW_MENU_ITEMS}
+          items={menuItems(flow.status === "archived")}
           onSelect={handleSelect}
           onClose={() => setOpen(false)}
           triggerRef={btnRef}

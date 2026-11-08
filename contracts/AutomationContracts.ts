@@ -74,3 +74,33 @@ export interface AutomationListResponse {
 export interface CreateFolderRequest {
   readonly name: string;
 }
+
+// ---------------------------------------------------------------------------
+// CreateAutomationRequest — cuerpo de `POST /automations`
+//
+// Todo opcional: sin nombre se usa el de por defecto; con `folderId` nace
+// dentro de esa carpeta. El id lo decide el servidor.
+// ---------------------------------------------------------------------------
+
+export interface CreateAutomationRequest {
+  readonly name?: string;
+  readonly folderId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// AutomationRef — respuesta de crear y duplicar: lo justo para abrirla.
+// ---------------------------------------------------------------------------
+
+export interface AutomationRef {
+  readonly id: string;
+  readonly key: string;
+  readonly name: string;
+}
+
+// ---------------------------------------------------------------------------
+// SetAutomationArchivedRequest — cuerpo de `PATCH /automations/:id/archive`
+// ---------------------------------------------------------------------------
+
+export interface SetAutomationArchivedRequest {
+  readonly archived: boolean;
+}
