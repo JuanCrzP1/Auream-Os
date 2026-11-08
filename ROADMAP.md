@@ -101,8 +101,9 @@ Verificado contra el repositorio el 2026-09-01, no copiado de la revisión anter
 | Autoguardado | 🟢 COMPLETADO | Debounce real, sin peticiones concurrentes, estado fiable, volcado al desmontar. Frontera lista para el bloqueo optimista de la FASE C |
 | Frontera de edición del builder | 🟢 COMPLETADO | `BuilderEditingContext`; sin singletons mutables y con un solo dueño del estado del grafo |
 | Editor de configuración de nodo | 🟢 COMPLETADO (visual) | Las 12 herramientas tienen editor propio sobre el kit `tools/_kit/`; ejecución pendiente (Fase C) |
-| Paneles del builder | ⬜ POR HACER | `NodeInspector`, `EdgeInspector`, `ValidationPanel`, `SimulationPanel`, `ReleasePanel` y `CanvasHintBar`: **0 consumidores** |
-| Estados del builder | 🟡 EN PROGRESO | El guardado ya dice la verdad (B14). Falta el resto: publicar inválido no informa, y no hay estados de nodo no ejecutable ni de flujo sin publicar |
+| Paneles del builder | 🟢 COMPLETADO | Revisión del flujo en el lienzo (`reviewFlow` + `FlowReviewPanel`); retirados los paneles obsoletos y todo el circuito de publicación (B6). El simulador pasa a C15 |
+| Bloque de inicio | 🟢 COMPLETADO | Tipo de sistema `start` como en Leona, con migración de los flujos antiguos al leer (B9) |
+| Estados del builder | 🟢 COMPLETADO | Guardado fiable (B14), aviso y estado «Sin conexión» con «Reintentar», problemas del flujo visibles (B7). Los estados visuales de cada nodo son B8 |
 | Gestión de automatizaciones | 🟡 EN PROGRESO | Listar, crear, abrir, renombrar, borrar y buscar funcionan; Duplicar, Archivar y Mover están en el menú sin implementación |
 | Automations SQL | ⬜ POR HACER | Persistencia actual: JSON en disco, solo desarrollo local |
 | Runtime real (disparo externo) | ⬜ POR HACER | El flow-engine solo se ejecuta desde la simulación del builder |
@@ -215,7 +216,7 @@ Queda explícitamente **prohibido**, en cualquier fase futura:
 - Archivos con responsabilidades mezcladas — el criterio es "¿tiene un único motivo para cambiar?", no el conteo de líneas por sí solo.
 - Lógica duplicada entre `apps/api` y `apps/worker`, o entre cualquier par de módulos — si ambos la necesitan, vive una vez en `domains/`.
 - **Mapas globales por tipo de herramienta.** La identidad de una herramienta se declara una vez en su módulo y el registry es la única frontera de descubrimiento. Existieron cinco `Record<NodeType, …>` repartidos (paleta, iconos, colores, textos, título de editor) y se eliminaron.
-- **Un módulo puro no puede depender de React.** `tools/registry.ts` y `validateCanvasGraph` los ejecuta también el test de paridad del backend: un icono en esa cadena rompe la ejecución.
+- **Un módulo puro no puede depender de React.** `tools/registry.ts` y `services/reviewFlow.ts` los ejecuta también el test de paridad del backend: un icono en esa cadena rompe la ejecución.
 - Legacy sin uso — código muerto no se conserva "por si acaso". El caso de `JWT_SECRET` detectado en A1 (scripts/tests que lo referencian sin que nada lo lea) queda registrado como deuda a limpiar en la primera tarea de código que toque esos archivos por otra razón — no se abre una tarea exclusiva solo para eso, para no violar la regla siguiente.
 - Modificar un módulo estable (`automations`, `flow-engine`, `platform/identity`, `platform/authorization`, el login) sin una razón demostrable y documentada en este roadmap.
 
@@ -298,30 +299,48 @@ Cada herramienta declara su editor, cuerpo compacto, validación y resumen en su
 - 🟢 Base para escalar (2026-11-08): contrato `outputs()` para salidas con nombre (con poda de aristas huérfanas en el núcleo), kit compartido `tools/_kit/` (Switch, OutputHandle, useAutoHeight, createLocalId), ids de arista únicos, código en inglés y comentarios concisos.
 - En la práctica las cuatro herramientas usan editores a medida sobre el kit compartido. Sigue abierta la decisión formal «esquema declarativo vs. a medida».
 
-#### B6 — Montar los paneles del builder · ⬜ POR HACER
+#### B6 — Paneles del builder · 🟢 COMPLETADO (2026-11-08)
 
-Verificado por grep: `NodeInspector`, `EdgeInspector`, `ValidationPanel`, `SimulationPanel`, `ReleasePanel` y `CanvasHintBar` tienen **0 consumidores**. Existen, compilan y están completos.
+Verificado por grep: `NodeInspector`, `EdgeInspector`, `ValidationPanel`, `SimulationPanel`, `ReleasePanel` y `CanvasHintBar` tienen **0 consumidores**. Y lo que producen tampoco se consume: `builder.validation`, `builder.stats`, `builder.selectedNode`, `builder.selectedEdge`, `builder.simulationLog` y `handleSimulate` tienen **0 usos en TSX**.
 
-Y lo que producen tampoco se consume: `builder.validation`, `builder.stats`, `builder.selectedNode`, `builder.selectedEdge`, `builder.simulationLog` y `handleSimulate` tienen **0 usos en TSX**. La validación se recalcula en cada render y se tira; **la simulación es inalcanzable desde la interfaz** pese a estar implementada de punta a punta en el backend.
+**Auditoría (2026-11-08): no se montan todos.** Con los 12 editores en el lienzo y las conexiones por salida, la mitad quedó obsoleta:
 
-Es trabajo de decisión de layout, no de arquitectura: el hook ya entrega todo lo necesario.
+| Pieza | Decisión | Motivo |
+|---|---|---|
+| `NodeInspector` | Retirar | Edita nombre y un textarea: lo sustituyen los editores de cada herramienta. |
+| `EdgeInspector` | Retirar | Prioridad, condición y fallback por arista es el modelo anterior; se enruta por salidas ([flow-connections.md](docs/architecture/flow-connections.md)). |
+| `CanvasHintBar` | Retirar | Tres frases fijas, sin función. |
+| `ValidationPanel` | Rediseñar y montar | `validateCanvasGraph` debe devolver problemas estructurados (`code`, `severity`, `nodeId`), sumar la validación de cada herramienta (`validate()`) y llevar al bloque al hacer clic. |
+| `ReleasePanel` | Retirar, junto con todo el circuito de publicación | **Decisión de producto (2026-11-08): los flujos no se publican.** Se autoguardan y lo guardado es lo que corre; el estado es activo/archivado, como en Leona. |
+| `SimulationPanel` | Pasa a la FASE C (C15) | El motor aún no enruta por salida (C14) y 8 herramientas no se ejecutan: hoy un simulador mostraría un recorrido falso. |
 
-#### B7 — Estados del builder y de guardado · ⬜ POR HACER
+**Hecho:**
+
+- **Revisión del flujo.** `services/reviewFlow.ts` sustituye a `validateCanvasGraph`: devuelve problemas estructurados (`code`, `severity`, `nodeId`, id estable), con las reglas del grafo en paridad con `GraphValidator` (12 + 3 escenarios), la configuración de cada bloque (`validate()` de la herramienta) y las salidas sin conectar. `FlowReviewPanel` la muestra en la esquina superior derecha del lienzo: resumen siempre visible, lista desplegable y clic para encuadrar y seleccionar el bloque. Solo informa.
+- **Retirados:** `NodeInspector`, `EdgeInspector`, `CanvasHintBar`, `ValidationPanel`, `ReleasePanel`, `buildStats` y su CSS; `useBuilderPublishing` y los servicios de publicar/rollback; en el backend `PublishDraftService`, `RollbackDraftService`, sus handlers y rutas, y `publishedSnapshots` del contrato (se descarta al leer). El scope `flows.publish` queda reservado para asignar un flujo a una conexión (D1).
+
+#### B7 — Estados del builder y de guardado · 🟢 COMPLETADO (2026-11-08)
 
 Defectos verificados, todos de experiencia:
 
 - ~~Un guardado fallido se muestra como «Guardado».~~ **Corregido en B14**: `SaveStatusPill` distingue los cuatro estados y `useDraftSync` solo marca guardado tras una respuesta correcta.
-- **Si la API no responde**, el builder carga un workspace local no persistido y el usuario edita creyendo que guarda. Ya no se suma un estado que miente, pero el aviso de «esto no está persistido» sigue sin existir.
-- **Publicar un grafo inválido no informa de nada**: el error viaja como 500 con el mensaje oculto y el frontend descarta la promesa.
-- Faltan además: cambios sin publicar, resultado de validación visible, estado de herramienta no soportada en el lienzo (la regla `UNKNOWN_NODE_TYPE` ya existe en backend y ya avisa en `validateCanvasGraph`, pero nada lo muestra).
+- ~~Si la API no responde, el usuario edita creyendo que guarda.~~ **Corregido**: la carga dice si viene del servidor (`persisted`); si no, la cápsula muestra «Sin conexión», un aviso fijo explica que nada se guardará, el autoguardado no se intenta y «Reintentar» vuelve a montar el builder desde cero (lo editado sin conexión nunca se guarda encima del flujo real).
+- ~~Publicar un grafo inválido no informa de nada.~~ **Ya no aplica**: los flujos no se publican (ver B6). La validación informa en el panel de revisión, no bloquea.
+- ~~Resultado de validación visible y herramienta no soportada.~~ **Corregido en B6**: la revisión del flujo lo muestra, con `unknown-tool` para tipos retirados.
 
 #### B8 — Estados visuales del nodo · ⬜ POR HACER
 
 El CSS del nodo solo declara `--entry`, `--selected` y hover. No existen estados de **error**, **inválido**, **deshabilitado** ni **no ejecutable**. Este último importa: 8 de las 12 herramientas tienen `executable: false` y el dato ya está en el modelo (`isExecutableType()`), pero la interfaz no lo dice. Mostrarlo es aplicar la regla de no fingir funcionalidad.
 
-#### B9 — Designar el nodo de entrada · ⬜ POR HACER
+#### B9 — Bloque de inicio · 🟢 COMPLETADO (2026-11-08)
 
-`mapCanvasToSnapshot` devuelve `version` sin tocar `entryNodeId`: **no hay forma de cambiar el nodo de entrada desde la UI**. El workspace se siembra con `start_message`; si el usuario borra ese nodo, el entry queda colgando y la publicación falla para siempre, sin camino de salida.
+El riesgo descrito originalmente (borrar el inicio) ya lo cerraba `entryNodeProtection`. La auditoría encontró el defecto real: el inicio era un nodo `message` con el texto «Inicio del flujo», que el motor **habría enviado a cada cliente**. Se corrigió con el mismo modelo que Leona:
+
+- Tipo de sistema `start` (`contracts/FlowEntry.ts`): uno por flujo, fuera de la paleta, no se borra, duplica ni edita, una sola salida. `StartNodeHandler` pasa al siguiente bloque sin enviar nada.
+- Migración al leer (`ensureStartEntry`) aplicada por el decorador `UpgradingBuilderWorkspaceRepository`: toda lectura sale migrada, sea cual sea la base de datos. Repara también flujos con la entrada colgando (había 1 en los datos locales).
+- Validación: `validateStartBlock` (`ENTRY_NODE_NOT_START`, `START_NODE_NOT_ENTRY`, `ENTRY_HAS_INCOMING`), con paridad en el builder (3 escenarios nuevos).
+- `mapCanvasToSnapshot` deriva `entryNodeId` del nodo marcado en el lienzo.
+- Retirado el modal genérico `NodeEditorModal`: los nodos sin editor (Inicio, Finalizar) ya no se abren ni ofrecen el lápiz.
 
 #### B10 — Gestión de automatizaciones · 🟡 EN PROGRESO
 
@@ -366,8 +385,8 @@ Revisión completa con capturas de los dos temas, los tamaños de la lista de B1
 La fase pasa a 🟢 COMPLETADA **solo** cuando se cumplan todos estos puntos:
 
 1. Se puede configurar el comportamiento de las 12 herramientas desde la interfaz (B5).
-2. No queda ningún componente construido sin consumidor ni estado producido y descartado (B6).
-3. Todo estado del sistema se comunica con la verdad: guardado, error, sin publicar, inválido, no ejecutable (B7, B8).
+2. No queda ningún componente construido sin consumidor ni estado producido y descartado (B6). — ✅ **cumplido**; `SimulationPanel` queda reservado a C15 de forma explícita.
+3. Todo estado del sistema se comunica con la verdad: guardado, error, sin conexión, inválido, no ejecutable (B7, B8). — B7 ✅; **falta B8** (estados visuales del nodo).
 4. Ningún control visible carece de comportamiento (B10, B14). — B14 ✅; **falta B10**: «Duplicar», «Archivar» y «Mover a…» en el menú de la lista de automatizaciones siguen sin comportamiento.
 5. La estructura frontend es estable: una responsabilidad por módulo, sin mapas globales, sin singletons mutables, sin dos dueños del mismo estado (B14). — ✅ **cumplido**; queda solo el color fuera de tema de dos superficies, que depende de B5/B8.
 6. Responsive validado en los tamaños acordados (B12) y accesibilidad revisada (B13).
@@ -382,13 +401,13 @@ La fase pasa a 🟢 COMPLETADA **solo** cuando se cumplan todos estos puntos:
 
 **Estado: ⬜ POR HACER** — bloqueada por el cierre de la FASE B.
 
-Objetivo: que un flow publicado se ejecute solo, sin depender del builder, sobre una persistencia que soporte más de un proceso y más de un desarrollador.
+Objetivo: que un flow activo se ejecute solo (lo último guardado; no hay publicación, ver B6), sin depender del builder, sobre una persistencia que soporte más de un proceso y más de un desarrollador.
 
 | Tarea | Descripción | Estado |
 |---|---|---|
-| C1 | Modelo de datos de automatizaciones en PostgreSQL/Neon: `Automation`, `AutomationDraft` (con `revision`), `AutomationVersion` inmutable, nodos y edges, carpetas. Decisión pendiente: nodos/edges como tablas propias o `jsonb` por versión | ⬜ POR HACER |
+| C1 | Modelo de datos de automatizaciones en PostgreSQL/Neon: `Automation`, `AutomationDraft` (con `revision`), nodos y edges, carpetas. Decisión pendiente: nodos/edges como tablas propias o `jsonb` por versión | ⬜ POR HACER |
 | C2 | Migrar `automations`/builder a `infrastructure/persistence/sql` — los puertos ya existen; no toca `domain/` ni `application/`. Retirar `persistence/json` de la ruta de producción | ⬜ POR HACER — depende de C1 |
-| C3 | Transaccionalidad y aislamiento: publicar + actualizar catálogo en una transacción, borrado atómico (hoy `DeleteAutomationService` usa `Promise.all` sobre dos repositorios y su comentario promete una atomicidad que no tiene), `tenant_id` obligatorio e indexado en cada tabla | ⬜ POR HACER — depende de C2 |
+| C3 | Transaccionalidad y aislamiento: guardar el borrador + actualizar el catálogo en una transacción, borrado atómico (hoy `DeleteAutomationService` usa `Promise.all` sobre dos repositorios y su comentario promete una atomicidad que no tiene), `tenant_id` obligatorio e indexado en cada tabla | ⬜ POR HACER — depende de C2 |
 | C4 | Lock optimista real usando `revision`, y validación de entrada en la API del builder: forma del body, forma del `flowKey`, límite de tamaño | ⬜ POR HACER — depende de C2 |
 | C5 | Convertir en asíncrona la cadena de ejecución del motor (`ExecutionLoop`, `NodeRuntime`, `SessionStore`, `ContextWriter`). **Prerrequisito de todo lo demás de esta fase**: hoy el motor es síncrono de punta a punta y eso bloquea a la vez el nodo `ai`, cualquier nodo con I/O y las sesiones en SQL | ⬜ POR HACER |
 | C6 | `infrastructure/queue` + contenido real en `apps/worker`: reanudar sesiones `delayed`, reintentos con política explícita, timeouts | ⬜ POR HACER — depende de C5 |
@@ -398,8 +417,9 @@ Objetivo: que un flow publicado se ejecute solo, sin depender del builder, sobre
 | C10 | Implementar el comportamiento de ejecución de las herramientas que hoy declaran `executable: false`: Etiquetas, Comprobante automático, Distribuidor, Pixel, Menú, Notificación, Integración y Extensión IA. Cada una necesita especificación de negocio antes de implementarse | ⬜ POR HACER — depende de C5 y de sus dominios |
 | C11 | Conectar `platform/security/rate-limiting` (implementado y probado) a `apps/api` | ⬜ POR HACER |
 | C12 | Persistir ejecuciones (`Execution`, `ExecutionStep`) y conectar la observabilidad que ya existe sin consumidor, para poder auditar qué pasó en un flow | ⬜ POR HACER — depende de C6 |
-| C13 | Enrutar por salida en el motor: `fromOutput` viaja al snapshot de ejecución, cada handler declara por qué salida sigue (respuesta/tiempo agotado, se cumple/no, turno del Distribuidor, opción del Menú…) y `EdgeEvaluator` elige esa arista. Modelo en [`flow-connections.md`](docs/architecture/flow-connections.md) | ⬜ POR HACER — depende de C5 |
 | C13 | Corregir el hueco de autorización: `POST /automations` explícito y retirar la escritura del `GET .../workspace`, que hoy permite a un `viewer` crear automatizaciones sin cuota | ⬜ POR HACER — coordinado con B10 |
+| C14 | Enrutar por salida en el motor: `fromOutput` viaja al snapshot de ejecución, cada handler declara por qué salida sigue (respuesta/tiempo agotado, se cumple/no, turno del Distribuidor, opción del Menú…) y `EdgeEvaluator` elige esa arista. Modelo en [`flow-connections.md`](docs/architecture/flow-connections.md) | ⬜ POR HACER — depende de C5 |
+| C15 | Simulador en el builder: montar `SimulationPanel` (ya implementado de punta a punta) cuando el motor enrute por salida y ejecute las herramientas | ⬜ POR HACER — depende de C10 y C14 |
 
 ---
 
@@ -411,7 +431,7 @@ Objetivo: que un mensaje real de un canal real dispare un flow real y quede visi
 
 | Tarea | Descripción | Estado |
 |---|---|---|
-| D1 | `domains/connections` — adaptador WhatsApp, Meta Cloud API primero (más estable que QR/WhatsApp Web) | ⬜ POR HACER — depende de C7 |
+| D1 | `domains/connections` — conexiones WhatsApp con dos modos: **QR (WhatsApp Web)** y **API oficial (Meta Cloud API)**. Cada conexión tiene **el flujo que atiende** (`TriggerBinding` conexión → flujo): crear conexión, elegir flujo, escanear QR o poner credenciales de la API, y queda funcionando. Modelo de Leona como referencia funcional, con diseño propio | ⬜ POR HACER — depende de C7 |
 | D2 | `domains/connections` — adaptador Telegram | ⬜ POR HACER |
 | D3 | `domains/conversations` — inbox mínimo: lista, hilo, estado, contacto asociado | ⬜ POR HACER |
 | D4 | Cierre del ciclo: canal → `ExternalEvent` → `TriggerResolver` → flow-engine → sesión visible en Conversations | ⬜ POR HACER — depende de D1 y D3 |
@@ -513,3 +533,7 @@ Cada vez que se cierra una tarea:
 | 2026-09-01 | **Auditoría y reorganización del roadmap.** Se auditó de nuevo este documento contra el repositorio real, no contra lo que decía de sí mismo. Se corrigió el orden de fases a la secuencia oficial A–H: Automatizaciones visual pasa a ser la **FASE B**, y Persistencia + Runtime se desplaza a la **FASE C**; canales a D, AI a E, billing a F, producto visual restante a G, producción a H. Se separó explícitamente «Builder base» (🟢) de «Automatizaciones — experiencia visual completa» (🟡), que antes se confundían en una sola fila y hacían parecer terminado un módulo que no puede configurar sus nodos. Se desglosó la FASE B en 15 tareas derivadas de verificación en código —no inventadas— con criterio de cierre explícito. Se registraron en A3 los hallazgos de la auditoría del módulo. Se mantiene el AI Sales Engine reservado a su fase propia (E) con auditoría previa obligatoria y sin decidir aún su estrategia de incorporación. Se conservó íntegro el detalle técnico previo. Sin cambios de código — solo `ROADMAP.md`. |
 | 2026-09-01 | **B11 — Topbar del builder cerrada.** Tarjeta flotante de cristal con volver, nombre editable en línea (`FlowNameEditor`) y pastilla de estado (`SaveStatusPill`). Se retiraron `Publicar`, `v1` y `Rollback`: el modelo es editar → autoguardar, y esas capacidades siguen intactas fuera de la topbar hasta que B6 monte los paneles. Toolbox compactada en dos pasadas y arrancando recogida. Registrado también **B16**: encuadre inicial del lienzo y rediseño del minimapa. |
 | 2026-09-01 | **B14 — Saneamiento arquitectónico del builder.** Eliminado el singleton mutable `editCallbackStore` en favor de `BuilderEditingContext`; `FlowNodeCard` deja de ser un segundo dueño del estado del grafo y pide `removeNode` por la frontera; autoguardado reconstruido en `useDebouncedValue` + `useDraftSync` con estado que no miente, sin peticiones concurrentes y con volcado al desmontar; retirados los tres controles visibles sin comportamiento; `react-flow-overrides.css` dividido por superficie con sus reglas muertas y colores fuera de tema eliminados; `buildStats` y `validateCanvasGraph` memoizados. Cobertura nueva donde no había ninguna: 17 tests de ida y vuelta de los adaptadores —la frontera que protege el trabajo del usuario—, 11 del autoguardado, 4 de la frontera de edición y 3 de paridad catálogo ↔ iconografía. Validado con typecheck, 264 tests de backend, 238 de frontend y ambos builds. |
+| 2026-11-08 | **B9 — Bloque de inicio cerrado** y auditoría de la continuación de la FASE B. Inicio pasa a ser un tipo de sistema `start` (antes un `message` que se habría enviado al cliente), con migración al leer en un decorador del repositorio, reglas `validateStartBlock` con paridad y `StartNodeHandler`. Se retira `NodeEditorModal`. B6 se redefine tras auditar los paneles (3 se retiran, Validación y Publicar se montan, Simulador pasa a C15). Corregida la numeración duplicada de C13 (enrutar por salida pasa a C14). |
+| 2026-11-08 | **Decisión de producto: sin publicación.** Los flujos se autoguardan y lo guardado es lo que corre; estado activo/archivado, como en Leona. Se retirarán el botón y el circuito de publicar/rollback (`PublishDraftService`, `RollbackDraftService`, `publishedSnapshots`, `useBuilderPublishing`, `ReleasePanel`). En la FASE C el motor ejecuta el borrador guardado. |
+| 2026-11-08 | **Modelo de activación de flujos.** Un flujo corre cuando una conexión de WhatsApp lo tiene asignado (`TriggerBinding` conexión → flujo), como en Leona: se crea la conexión, se elige el flujo y se escanea el QR (WhatsApp Web) o se configura la API oficial. D1 pasa a cubrir los dos modos. |
+| 2026-11-08 | **B6 y B7 cerrados.** Revisión del flujo estructurada (`reviewFlow`) y visible en el lienzo con navegación al bloque; retirado todo el circuito de publicación (frontend y backend) y los paneles obsoletos; aviso y estado «Sin conexión» con reintento seguro. |

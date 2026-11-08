@@ -8,11 +8,7 @@ import { EndIcon } from "./EndIcon";
  * cierran el grafo por un extremo y ninguno se ofrece en la paleta. Que
  * compartan silueta es la información, no una coincidencia.
  *
- * `pill` queda así estrenado por `end`. Inicio lo adoptará cuando deje de ser
- * un nodo `message` disfrazado y tenga tipo propio.
- *
- * Esta asignación no venía en el reparto aprobado: se decide aquí y se señala
- * para revisión.
+ * Inicio (`start`) comparte el mismo marco.
  */
 export const endUi: ToolUi = {
   type: "end",

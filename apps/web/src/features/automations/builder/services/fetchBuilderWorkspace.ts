@@ -3,6 +3,16 @@ import { requestBuilderApi } from "./requestBuilderApi";
 import { createLocalBuilderWorkspace } from "./createLocalBuilderWorkspace";
 
 /**
+ * Resultado de cargar un workspace. `persisted: false` = respaldo EN MEMORIA:
+ * no viene del servidor y lo que se edite no se guardará. La interfaz debe
+ * decirlo y el autoguardado no debe intentarlo.
+ */
+export interface BuilderWorkspaceLoad {
+  readonly workspace: PersistedBuilderWorkspace;
+  readonly persisted: boolean;
+}
+
+/**
  * Carga el workspace del builder.
  *
  * EL RESPALDO LOCAL EXISTE, PERO NO PUEDE PASAR POR PERSISTENCIA.
@@ -19,8 +29,8 @@ import { createLocalBuilderWorkspace } from "./createLocalBuilderWorkspace";
  *
  *   SOLO EN DESARROLLO. En producción, un transporte roto se propaga: quien
  *   despliega tiene que enterarse, no seguir editando sobre nada.
- *   SIEMPRE SE ANUNCIA. Se deja constancia de que ese workspace NO está
- *   persistido y de cuál es la causa probable, con el detalle del error.
+ *   SIEMPRE SE ANUNCIA. Se deja constancia en consola de la causa probable, y
+ *   `persisted: false` hace que la interfaz avise de que no se está guardando.
  *
  * Lo que NO cambia: sigue sin haber una segunda fuente de verdad. El respaldo
  * es un workspace vacío en memoria para poder abrir el editor sin API, no un
@@ -29,9 +39,10 @@ import { createLocalBuilderWorkspace } from "./createLocalBuilderWorkspace";
 export async function fetchBuilderWorkspace(
   flowKey: string,
   tenantId: string
-): Promise<PersistedBuilderWorkspace> {
+): Promise<BuilderWorkspaceLoad> {
   try {
-    return await requestBuilderApi<PersistedBuilderWorkspace>(`/api/builder/flows/${flowKey}/workspace`);
+    const workspace = await requestBuilderApi<PersistedBuilderWorkspace>(`/api/builder/flows/${flowKey}/workspace`);
+    return { workspace, persisted: true };
   } catch (error) {
     if (!(error instanceof TypeError) || !import.meta.env.DEV) throw error;
 
@@ -42,6 +53,6 @@ export async function fetchBuilderWorkspace(
       error
     );
 
-    return createLocalBuilderWorkspace(flowKey, tenantId);
+    return { workspace: createLocalBuilderWorkspace(flowKey, tenantId), persisted: false };
   }
 }

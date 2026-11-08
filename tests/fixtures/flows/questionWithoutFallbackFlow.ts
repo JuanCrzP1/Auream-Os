@@ -17,9 +17,19 @@ export const questionWithoutFallbackFlow: FlowSnapshot = {
     flowId: "flow-no-fallback",
     versionNumber: 1,
     status: "draft",
-    entryNodeId: "node-question"
+    entryNodeId: "node-start"
   },
   nodes: {
+    "node-start": {
+      id: "node-start",
+      tenantId: "tenant-test",
+      flowVersionId: "v1",
+      type: "start",
+      name: "Inicio",
+      content: {},
+      config: {},
+      metadata: {}
+    },
     "node-question": {
       id: "node-question",
       tenantId: "tenant-test",
@@ -42,6 +52,18 @@ export const questionWithoutFallbackFlow: FlowSnapshot = {
     }
   },
   edgesBySource: {
+    "node-start": [
+      {
+        id: "edge-start",
+        tenantId: "tenant-test",
+        flowVersionId: "v1",
+        fromNodeId: "node-start",
+        toNodeId: "node-question",
+        priority: 0,
+        isFallback: false,
+        condition: { operator: "always" }
+      }
+    ],
     "node-question": [
       {
         id: "edge-q-end",

@@ -15,6 +15,7 @@ import type { NodeType } from "./FlowSnapshot";
  * builder (lo vigila `tests/contract/toolRegistryParity.test.ts`).
  */
 export const SINGLE_OUTPUT_NODE_TYPES: ReadonlySet<NodeType> = new Set<NodeType>([
+  "start",
   "message",
   "delay",
   "tags",

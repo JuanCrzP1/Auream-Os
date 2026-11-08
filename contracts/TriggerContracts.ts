@@ -2,9 +2,10 @@
  * Contratos de disparo de automatizaciones.
  *
  * Modelan la frontera por la que un evento externo entra en la plataforma y
- * termina ejecutando un flow publicado:
+ * termina ejecutando el flujo asignado a esa conexión (lo último guardado: los
+ * flujos no se publican):
  *
- *   EVENTO EXTERNO → TRIGGER → FLOW PUBLICADO → FLOW ENGINE → EJECUCIÓN
+ *   EVENTO EXTERNO → TRIGGER (conexión → flujo) → FLOW ENGINE → EJECUCIÓN
  *
  * Estos contratos son deliberadamente agnósticos del canal: no mencionan
  * WhatsApp, Meta ni QR. Connections traducirá cada canal concreto a un
@@ -46,8 +47,8 @@ export interface ExternalEvent {
 // ---------------------------------------------------------------------------
 // TriggerBinding
 //
-// La regla que une un evento con el flow que debe ejecutarse. Es lo que
-// Automations configurará cuando el usuario defina el trigger de un flow.
+// La regla que une un evento con el flow que debe ejecutarse: el flujo que el
+// usuario asigna a cada conexión en la pantalla de Conexiones.
 // ---------------------------------------------------------------------------
 
 export interface TriggerBinding {

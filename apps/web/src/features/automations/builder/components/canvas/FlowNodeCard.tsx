@@ -33,7 +33,7 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
   // Mismo catálogo visual que ya consumen la paleta y el nodo expandido: el
   // icono del nodo cerrado no puede ser un tercer mapa `tool === "message" ? …`
   // sino el mismo SVG oficial, resuelto por tipo igual que en todas partes.
-  const { Icon, CompactBody } = resolveToolUi(data.nodeType);
+  const { Icon, CompactBody, Editor } = resolveToolUi(data.nodeType);
 
   // Salidas con nombre (`null` = salida única implícita). React Flow mide los
   // handles una vez; cuando la lista cambia hay que pedirle que vuelva a medir
@@ -110,15 +110,18 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
         </span>
         <span className="flow-node__name">{data.title}</span>
         <div className="flow-node__actions">
-          <button
-            type="button"
-            className="flow-node__action-btn"
-            title="Editar"
-            aria-label={`Editar ${data.title}`}
-            onClick={(e) => { e.stopPropagation(); requestEdit(id); }}
-          >
-            ✏
-          </button>
+          {/* Sin editor (Finalizar) no hay nada que editar: no se ofrece el lápiz. */}
+          {Editor ? (
+            <button
+              type="button"
+              className="flow-node__action-btn"
+              title="Editar"
+              aria-label={`Editar ${data.title}`}
+              onClick={(e) => { e.stopPropagation(); requestEdit(id); }}
+            >
+              ✏
+            </button>
+          ) : null}
           {/* Duplicar copia el nodo entero con su configuración. No aparece en
               el nodo de entrada: es único por definición —solo uno puede ser
               `entryNodeId`— y una copia sería un nodo que lo parece sin serlo.

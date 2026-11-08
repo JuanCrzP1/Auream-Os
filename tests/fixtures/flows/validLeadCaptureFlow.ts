@@ -4,7 +4,7 @@ import type { FlowSnapshot } from "../../../contracts/FlowSnapshot.js";
  * Fixture: flujo válido de captura de leads.
  *
  * Estructura:
- *   entry (message) → question-name (question) → capture-name (capture) → end
+ *   start → entry (message) → question-name (question) → capture-name (capture) → end
  *
  * Todos los nodos existen, todos los edges son válidos, question tiene fallback.
  */
@@ -22,9 +22,19 @@ export const validLeadCaptureFlow: FlowSnapshot = {
     flowId: "flow-lead-capture",
     versionNumber: 1,
     status: "published",
-    entryNodeId: "node-entry"
+    entryNodeId: "node-start"
   },
   nodes: {
+    "node-start": {
+      id: "node-start",
+      tenantId: "tenant-test",
+      flowVersionId: "v1",
+      type: "start",
+      name: "Inicio",
+      content: {},
+      config: {},
+      metadata: {}
+    },
     "node-entry": {
       id: "node-entry",
       tenantId: "tenant-test",
@@ -69,6 +79,18 @@ export const validLeadCaptureFlow: FlowSnapshot = {
     }
   },
   edgesBySource: {
+    "node-start": [
+      {
+        id: "edge-start",
+        tenantId: "tenant-test",
+        flowVersionId: "v1",
+        fromNodeId: "node-start",
+        toNodeId: "node-entry",
+        priority: 0,
+        isFallback: false,
+        condition: { operator: "always" }
+      }
+    ],
     "node-entry": [
       {
         id: "edge-entry-question",

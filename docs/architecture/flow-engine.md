@@ -29,8 +29,8 @@ Es un motor técnico, no un dominio de negocio. No tiene entidades con reglas co
 
 - **No administra automatizaciones.** Listar, crear, renombrar, organizar en carpetas o archivar es `automations`.
 - **No construye flows.** Drafts, autosave y workspace del editor son `automations/builder`.
-- **No valida grafos.** La validación estructural previa a publicar es `automations/validation`.
-- **No versiona ni publica.** Eso es `automations/builder` (`PublishDraftService`); el motor solo *lee* lo publicado.
+- **No valida grafos.** La validación estructural es `automations/validation`.
+- **No guarda flujos.** Eso es `automations/builder`; el motor solo *lee* el flujo guardado (no hay publicación).
 - **No deriva a un asesor humano.** El handoff pertenece **exclusivamente** al AI Sales Engine. El motor no tiene nodo `handoff` ni estado `handed_off`.
 - **No posee el estado de sesión.** Lo consume por puerto; el dueño es `sessions`.
 - **No conoce el frontend.** Ni React, ni canvas, ni componentes visuales.

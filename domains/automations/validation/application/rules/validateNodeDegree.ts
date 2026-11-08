@@ -6,7 +6,7 @@ import type { ValidationIssue } from "../ValidationReport";
  * El nodo terminal (end) no está incluido porque por definición no tiene salida.
  */
 const EXPECTED_OUTGOING_TYPES: ReadonlySet<NodeType> = new Set([
-  "message", "question", "tags", "payment-proof", "condition", "distributor",
+  "start", "message", "question", "tags", "payment-proof", "condition", "distributor",
   "pixel", "ai", "delay", "integration", "menu", "notification"
 ]);
 

@@ -1,5 +1,6 @@
 import type { NodeType } from "@contracts/FlowSnapshot";
 import type { ToolUi } from "./ToolUi";
+import { startUi } from "./start/ui";
 import { messageUi } from "./message/ui";
 import { waitResponseUi } from "./wait-response/ui";
 import { tagsUi } from "./tags/ui";
@@ -21,6 +22,7 @@ import { endUi } from "./end/ui";
 
 /** Catálogo visual. El orden no importa: quien ordena la paleta es el registry. */
 const TOOL_UIS: ReadonlyArray<ToolUi> = [
+  startUi,
   messageUi,
   waitResponseUi,
   tagsUi,

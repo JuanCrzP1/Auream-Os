@@ -10,9 +10,9 @@ import { BuilderPage } from "../../src/features/automations/builder/pages/Builde
 // hook del workspace— para que el test hable sólo de qué controles ve el
 // usuario en la topbar. No valida markup ni clases.
 //
-// El modelo del builder es editar → autoguardar. La topbar no lleva publicar,
-// ni versión, ni rollback: el versionado se construirá con la persistencia
-// real. Estos tests fijan esa composición.
+// El modelo del builder es editar → autoguardar: los flujos no se publican ni
+// se versionan, lo guardado es lo que corre (ROADMAP, B6). La topbar no lleva
+// publicar, ni versión, ni rollback. Estos tests fijan esa composición.
 // ---------------------------------------------------------------------------
 
 vi.mock("../../src/features/automations/builder/components/builder-shell/BuilderShell", () => ({
@@ -28,20 +28,19 @@ vi.mock("../../src/features/automations/builder/components/panels/PalettePanel",
 }));
 
 const handleRenameFlow = vi.fn();
-const handleRollback = vi.fn();
+const workspaceState = { offline: false };
 
 vi.mock("../../src/features/automations/builder/hooks/useBuilderWorkspace", () => ({
   useBuilderWorkspace: () => ({
     loading: false,
     error: null,
+    offline: workspaceState.offline,
     flowName: "Nueva automatización",
-    versionLabel: "v1",
     autosaveStatus: "saved",
     nodes: [],
     edges: [],
+    review: { issues: [], errorCount: 0, warningCount: 0 },
     handleRenameFlow,
-    handleRollback,
-    handlePublish: vi.fn(),
     handleNodesChange: vi.fn(),
     handleEdgesChange: vi.fn(),
     handleConnect: vi.fn(),
@@ -53,11 +52,7 @@ vi.mock("../../src/features/automations/builder/hooks/useBuilderWorkspace", () =
     simulationLog: [],
     simulationStatus: "idle",
     handleSimulate: vi.fn(),
-    resetSimulation: vi.fn(),
-    stats: {},
-    validation: { errors: [], warnings: [] },
-    selectedNode: null,
-    selectedEdge: null
+    resetSimulation: vi.fn()
   })
 }));
 
@@ -82,7 +77,7 @@ describe("topbar del builder", () => {
     expect(screen.queryByText(/publicar/i)).not.toBeInTheDocument();
   });
 
-  it("NO ofrece rollback: el historial llegará con la persistencia real", () => {
+  it("NO ofrece rollback: no hay versiones", () => {
     renderTopbar();
     expect(screen.queryByRole("button", { name: /rollback/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/rollback/i)).not.toBeInTheDocument();
@@ -116,5 +111,22 @@ describe("topbar del builder", () => {
     expect(
       screen.getByRole("button", { name: /editar nombre de automatización/i })
     ).toBeInTheDocument();
+  });
+
+  it("sin servidor: lo dice en la cápsula y avisa de que no se guarda, con opción de reintentar", () => {
+    workspaceState.offline = true;
+    try {
+      renderTopbar();
+      expect(screen.getByRole("status")).toHaveTextContent(/sin conexión/i);
+      expect(screen.getByRole("alert")).toHaveTextContent(/no se guardará/i);
+      expect(screen.getByRole("button", { name: /reintentar/i })).toBeInTheDocument();
+    } finally {
+      workspaceState.offline = false;
+    }
+  });
+
+  it("con servidor no hay aviso de conexión", () => {
+    renderTopbar();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

@@ -2,8 +2,9 @@ import type { Actor } from "../contracts/Actor";
 import type { AccessDecision } from "../contracts/AccessDecision";
 import { TenantAccessPolicy } from "./TenantAccessPolicy";
 
-// Regla de negocio: publicar un flow requiere pertenecer al tenant
-// y tener el scope flows.publish.
+// Regla de negocio: poner un flow a atender clientes requiere pertenecer al
+// tenant y tener el scope flows.publish. Los flujos ya no se publican: se
+// aplicará al asignar un flujo a una conexión (FASE D, D1).
 // Punto de extensión: aquí irán reglas futuras (aprobaciones, estado del draft, etc.).
 export class PublishFlowPolicy {
   private readonly tenantPolicy = new TenantAccessPolicy();

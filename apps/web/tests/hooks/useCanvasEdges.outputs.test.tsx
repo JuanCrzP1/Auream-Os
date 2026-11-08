@@ -67,7 +67,7 @@ function snapshotBase(): BuilderFlowSnapshot {
 
 describe("conectar desde cada salida de un nodo", () => {
   it("cada camino nace con la salida de la que se tiró", () => {
-    const { result } = renderHook(() => useCanvasEdges([], null));
+    const { result } = renderHook(() => useCanvasEdges([]));
 
     act(() => {
       result.current.handleConnect({
@@ -98,7 +98,7 @@ describe("conectar desde cada salida de un nodo", () => {
   it("una conexión de un nodo de salida única sigue naciendo sin handle", () => {
     // No regresión para las otras doce herramientas: React Flow entrega `null`
     // y la arista no gana un campo vacío.
-    const { result } = renderHook(() => useCanvasEdges([], null));
+    const { result } = renderHook(() => useCanvasEdges([]));
 
     act(() => {
       result.current.handleConnect({
@@ -114,7 +114,7 @@ describe("conectar desde cada salida de un nodo", () => {
 
   it("las dos salidas sobreviven a guardar y recargar el flujo", () => {
     const base = snapshotBase();
-    const { result } = renderHook(() => useCanvasEdges([], null));
+    const { result } = renderHook(() => useCanvasEdges([]));
 
     act(() => {
       result.current.handleConnect({

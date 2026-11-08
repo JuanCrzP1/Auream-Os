@@ -1,14 +1,12 @@
 import { GetBuilderWorkspaceService } from "../../../domains/automations/builder/application/GetBuilderWorkspaceService";
-import { PublishDraftService } from "../../../domains/automations/builder/application/PublishDraftService";
-import { RollbackDraftService } from "../../../domains/automations/builder/application/RollbackDraftService";
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
 import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
+import { UpgradingBuilderWorkspaceRepository } from "../../../domains/automations/builder/application/UpgradingBuilderWorkspaceRepository";
 import { DeleteAutomationService } from "../../../domains/automations/builder/application/DeleteAutomationService";
 import { RenameFolderService } from "../../../domains/automations/catalog/application/RenameFolderService";
 import { MoveAutomationToFolderService } from "../../../domains/automations/catalog/application/MoveAutomationToFolderService";
 import { ListAutomationsService } from "../../../domains/automations/catalog/application/ListAutomationsService";
 import { CreateFolderService } from "../../../domains/automations/catalog/application/CreateFolderService";
-import { GraphValidator } from "../../../domains/automations/validation/application/GraphValidator";
 import type { AutomationRepository } from "../../../domains/automations/catalog/application/AutomationRepository";
 import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
 import { JsonAutomationRepository } from "../../../infrastructure/persistence/json/JsonAutomationRepository";
@@ -33,8 +31,6 @@ import type { ApiConfig } from "../config/loadApiConfig";
 export interface ApiServices {
   readonly getWorkspaceService: GetBuilderWorkspaceService;
   readonly saveDraftService: SaveDraftService;
-  readonly publishDraftService: PublishDraftService;
-  readonly rollbackDraftService: RollbackDraftService;
   readonly simulateDraftService: SimulateDraftService;
   readonly deleteAutomationService: DeleteAutomationService;
   readonly listAutomationsService: ListAutomationsService;
@@ -46,7 +42,10 @@ export interface ApiServices {
 }
 
 export function composeBuilderServices(config: ApiConfig): ApiServices {
-  const workspaceRepository = new JsonBuilderWorkspaceRepository(config.dataDirectory);
+  // Toda lectura sale migrada al formato vigente (ver el decorador).
+  const workspaceRepository = new UpgradingBuilderWorkspaceRepository(
+    new JsonBuilderWorkspaceRepository(config.dataDirectory)
+  );
   const automationRepository = new JsonAutomationRepository(config.dataDirectory);
   const folderRepository = new JsonFolderRepository(config.dataDirectory);
 
@@ -57,8 +56,6 @@ export function composeBuilderServices(config: ApiConfig): ApiServices {
       automationRepository
     ),
     saveDraftService: new SaveDraftService(workspaceRepository, automationRepository),
-    publishDraftService: new PublishDraftService(workspaceRepository, new GraphValidator()),
-    rollbackDraftService: new RollbackDraftService(workspaceRepository),
     simulateDraftService: new SimulateDraftService(
       new BuilderSimulationRuntimeFactory(composeNodeRuntime())
     ),

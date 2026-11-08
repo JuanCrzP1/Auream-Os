@@ -75,7 +75,6 @@ const nuevoWorkspace = (tenantId: string, flowKey: string): PersistedBuilderWork
     nodes: {},
     edgesBySource: {}
   },
-  publishedSnapshots: [],
   updatedAt: new Date().toISOString(),
   autosaveRevision: 0
 });

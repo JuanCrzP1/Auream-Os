@@ -8,7 +8,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "valid flow",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "ask", type: "question" },
       { id: "done", type: "end" }
     ],
@@ -43,7 +43,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "invalid edge",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "done", type: "end" }
     ],
     edges: [{ id: "e1", from: "entry", to: "fantasma", priority: 1 }],
@@ -54,7 +54,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "unreachable node",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "done", type: "end" },
       { id: "isla", type: "message" },
       { id: "isla-end", type: "end" }
@@ -70,7 +70,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "dead end",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "colgado", type: "message" }
     ],
     edges: [{ id: "e1", from: "entry", to: "colgado", priority: 1 }],
@@ -81,7 +81,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "wait with a single exit (no limit) is valid",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "ask", type: "question" },
       { id: "done", type: "end" }
     ],
@@ -96,7 +96,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "cycle through a waiting block is allowed",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "ask", type: "question" },
       { id: "again", type: "message" },
       { id: "done", type: "end" }
@@ -114,7 +114,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "two connections from a single-output block",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "step", type: "tags" },
       { id: "a", type: "end" },
       { id: "b", type: "end" }
@@ -131,7 +131,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "two connections from the same named output",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "ask", type: "question" },
       { id: "a", type: "end" },
       { id: "b", type: "end" }
@@ -148,12 +148,14 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "cycle",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
+      { id: "ida", type: "message" },
       { id: "vuelta", type: "message" }
     ],
     edges: [
-      { id: "e1", from: "entry", to: "vuelta", priority: 1 },
-      { id: "e2", from: "vuelta", to: "entry", priority: 1 }
+      { id: "e1", from: "entry", to: "ida", priority: 1 },
+      { id: "e2", from: "ida", to: "vuelta", priority: 1 },
+      { id: "e3", from: "vuelta", to: "ida", priority: 1 }
     ],
     entryNodeId: "entry",
     backendRejects: true,
@@ -162,7 +164,7 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
   {
     name: "duplicate edge priority",
     nodes: [
-      { id: "entry", type: "message" },
+      { id: "entry", type: "start" },
       { id: "a", type: "end" },
       { id: "b", type: "end" }
     ],
@@ -173,6 +175,48 @@ export const GRAPH_SCENARIOS: ReadonlyArray<GraphScenario> = [
     entryNodeId: "entry",
     backendRejects: true,
     // El builder lo señala por otra regla: dos conexiones desde la salida única.
+    frontendWarns: true
+  },
+  {
+    name: "entry is not the start block",
+    nodes: [
+      { id: "entry", type: "message" },
+      { id: "done", type: "end" }
+    ],
+    edges: [{ id: "e1", from: "entry", to: "done", priority: 1 }],
+    entryNodeId: "entry",
+    backendRejects: true,
+    frontendWarns: true
+  },
+  {
+    name: "connection into the start block",
+    nodes: [
+      { id: "entry", type: "start" },
+      { id: "ask", type: "question" },
+      { id: "done", type: "end" }
+    ],
+    edges: [
+      { id: "e1", from: "entry", to: "ask", priority: 1 },
+      { id: "e2", from: "ask", to: "done", priority: 1, fromOutput: "respuesta" },
+      { id: "e3", from: "ask", to: "entry", priority: 2, fromOutput: "tiempo-agotado" }
+    ],
+    entryNodeId: "entry",
+    backendRejects: true,
+    frontendWarns: true
+  },
+  {
+    name: "a second start block",
+    nodes: [
+      { id: "entry", type: "start" },
+      { id: "otro", type: "start" },
+      { id: "done", type: "end" }
+    ],
+    edges: [
+      { id: "e1", from: "entry", to: "done", priority: 1 },
+      { id: "e2", from: "otro", to: "done", priority: 1 }
+    ],
+    entryNodeId: "entry",
+    backendRejects: true,
     frontendWarns: true
   }
 ];

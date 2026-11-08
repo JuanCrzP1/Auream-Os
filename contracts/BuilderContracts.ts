@@ -12,15 +12,15 @@ import type { BuilderFlowSnapshot } from "./FlowSnapshot";
 // ---------------------------------------------------------------------------
 // PersistedBuilderWorkspace
 //
-// Estado completo de un workspace del builder tal como se persiste en disco.
-// Contiene el draft activo y el historial de snapshots publicados.
+// Estado completo de un workspace del builder tal como se persiste. Solo hay
+// un borrador: los flujos no se publican ni se versionan, lo guardado es lo
+// que corre (ver ROADMAP, B6).
 // ---------------------------------------------------------------------------
 
 export interface PersistedBuilderWorkspace {
   readonly tenantId: string;
   readonly flowKey: string;
   readonly draft: BuilderFlowSnapshot;
-  readonly publishedSnapshots: ReadonlyArray<BuilderFlowSnapshot>;
   readonly updatedAt: string;
   readonly autosaveRevision: number;
 }

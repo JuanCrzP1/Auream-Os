@@ -28,6 +28,8 @@ import { checkConnection } from "@features/automations/builder/services/connecti
 import { nodeTypes } from "./nodeTypes";
 import { edgeTypes } from "./edgeTypes";
 import { ExpandedNodeOverlay } from "./ExpandedNodeOverlay";
+import { FlowReviewPanel } from "../review/FlowReviewPanel";
+import type { FlowReview } from "@features/automations/builder/services/reviewFlow";
 import type { CanvasEdge, CanvasNode } from "@features/automations/builder/types/canvas";
 import type { NodeType } from "@contracts/FlowSnapshot";
 import {
@@ -50,13 +52,18 @@ interface BuilderCanvasProps {
   /** Clic en el lienzo vacío: el gesto que ya deselecciona, cierra también el
    *  nodo que estuviera abierto. */
   onPaneClick: () => void;
+  /** Revisión del flujo que se muestra en la esquina del lienzo. */
+  review: FlowReview;
 }
+
+/** Encuadre al ir a un bloque desde la revisión. */
+const FOCUS_VIEW = { duration: 420, maxZoom: 1.1, padding: 0.8 } as const;
 
 /** Cuánto se ve el aviso de una conexión rechazada. */
 const NOTICE_MS = 3600;
 
 function CanvasInner(props: BuilderCanvasProps) {
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +91,18 @@ function CanvasInner(props: BuilderCanvasProps) {
       if (!result.ok) setNotice(result.message);
     },
     [props.nodes, props.edges]
+  );
+
+  // Ir a un bloque desde la revisión: se encuadra y se selecciona. La
+  // selección viaja como cambio de React Flow para que el estado siga teniendo
+  // un único dueño (`useCanvasNodes`).
+  const { nodes, onNodesChange } = props;
+  const focusNode = useCallback(
+    (nodeId: string) => {
+      onNodesChange(nodes.map((node) => ({ type: "select" as const, id: node.id, selected: node.id === nodeId })));
+      void fitView({ ...FOCUS_VIEW, nodes: [{ id: nodeId }] });
+    },
+    [nodes, onNodesChange, fitView]
   );
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
@@ -129,6 +148,7 @@ function CanvasInner(props: BuilderCanvasProps) {
             {notice}
           </div>
         ) : null}
+        <FlowReviewPanel review={props.review} onFocusNode={focusNode} />
         <ReactFlow<CanvasNode, CanvasEdge>
           fitView
           /* Sin opciones, `fitView` encuadra al 100% y con un único nodo el

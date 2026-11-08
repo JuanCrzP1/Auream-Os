@@ -10,6 +10,7 @@ import { MessageNodeHandler } from "../../../flow-engine/nodes/message/MessageNo
 import { NotificationNodeHandler } from "../../../flow-engine/nodes/notification/NotificationNodeHandler";
 import { PaymentProofNodeHandler } from "../../../flow-engine/nodes/payment-proof/PaymentProofNodeHandler";
 import { PixelNodeHandler } from "../../../flow-engine/nodes/pixel/PixelNodeHandler";
+import { StartNodeHandler } from "../../../flow-engine/nodes/start/StartNodeHandler";
 import { QuestionNodeHandler } from "../../../flow-engine/nodes/question/QuestionNodeHandler";
 import { TagsNodeHandler } from "../../../flow-engine/nodes/tags/TagsNodeHandler";
 
@@ -27,6 +28,7 @@ import { TagsNodeHandler } from "../../../flow-engine/nodes/tags/TagsNodeHandler
 
 export function composeNodeRuntime(): NodeRuntime {
   return new NodeRuntime([
+    new StartNodeHandler(),
     new MessageNodeHandler(),
     new QuestionNodeHandler(),
     new TagsNodeHandler(),

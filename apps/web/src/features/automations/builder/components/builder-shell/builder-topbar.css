@@ -255,8 +255,9 @@
   animation: builder-save-spin 0.9s linear infinite;
 }
 
-/* Error: es la única variante que sí debe llamar la atención. */
-.builder-topbar__save-pill--error {
+/* Error y sin conexión: las únicas variantes que sí deben llamar la atención. */
+.builder-topbar__save-pill--error,
+.builder-topbar__save-pill--offline {
   color: var(--rose);
   border-color: var(--rose);
 }

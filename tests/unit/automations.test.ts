@@ -135,7 +135,7 @@ describe("ListAutomationsService", () => {
   it("deriva el resumen del draft y no crea workspaces ausentes", async () => {
     automationRepo.seed({ id: "f1", tenantId: "t1", key: "flow-1", name: "Flow", status: "draft", metadata: { createdAt: "x", updatedAt: "x" } });
     workspaceRepo.seed({
-      tenantId: "t1", flowKey: "flow-1", updatedAt: "x", autosaveRevision: 0, publishedSnapshots: [],
+      tenantId: "t1", flowKey: "flow-1", updatedAt: "x", autosaveRevision: 0,
       draft: {
         flow: { id: "f1", key: "flow-1", name: "Flow" },
         version: { id: "v1", versionNumber: 1, status: "draft", entryNodeId: "inicio" },
@@ -161,7 +161,7 @@ describe("ListAutomationsService", () => {
     // recorre servicio → respuesta y mira las claves realmente emitidas.
     automationRepo.seed({ id: "f1", tenantId: "t1", key: "flow-1", name: "Flow", status: "draft", metadata: { createdAt: "x", updatedAt: "x" } });
     workspaceRepo.seed({
-      tenantId: "t1", flowKey: "flow-1", updatedAt: "x", autosaveRevision: 0, publishedSnapshots: [],
+      tenantId: "t1", flowKey: "flow-1", updatedAt: "x", autosaveRevision: 0,
       draft: {
         flow: { id: "f1", key: "flow-1", name: "Flow" },
         version: { id: "v1", versionNumber: 1, status: "draft", entryNodeId: "inicio" },
@@ -190,11 +190,11 @@ describe("ListAutomationsService", () => {
     automationRepo.seed({ id: "f1", tenantId: "t1", key: "one", name: "Uno", status: "draft", metadata: { createdAt: "x", updatedAt: "x" } });
     automationRepo.seed({ id: "f2", tenantId: "t1", key: "two", name: "Dos", status: "draft", metadata: { createdAt: "x", updatedAt: "x" } });
     workspaceRepo.seed({
-      tenantId: "t1", flowKey: "one", updatedAt: "x", autosaveRevision: 0, publishedSnapshots: [],
+      tenantId: "t1", flowKey: "one", updatedAt: "x", autosaveRevision: 0,
       draft: { flow: { id: "f1", key: "one", name: "Uno" }, version: { id: "v1", versionNumber: 1, status: "draft", entryNodeId: "inicio" }, nodes: { inicio: { id: "inicio", type: "message", name: "Inicio", content: {}, config: {}, metadata: {} }, fin: { id: "fin", type: "end", name: "Fin", content: {}, config: {}, metadata: {} } }, edgesBySource: { inicio: [{ id: "e", fromNodeId: "inicio", toNodeId: "fin", priority: 0, isFallback: false, condition: { operator: "always" } }] } }
     });
     workspaceRepo.seed({
-      tenantId: "t1", flowKey: "two", updatedAt: "x", autosaveRevision: 0, publishedSnapshots: [],
+      tenantId: "t1", flowKey: "two", updatedAt: "x", autosaveRevision: 0,
       draft: { flow: { id: "f2", key: "two", name: "Dos" }, version: { id: "v2", versionNumber: 1, status: "draft", entryNodeId: "inicio" }, nodes: { inicio: { id: "inicio", type: "message", name: "Inicio", content: {}, config: {}, metadata: {} }, suelto: { id: "suelto", type: "tags", name: "Suelto", content: {}, config: {}, metadata: {} } }, edgesBySource: {} }
     });
 

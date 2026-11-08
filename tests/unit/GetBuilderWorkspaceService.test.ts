@@ -42,7 +42,6 @@ const makeWorkspace = (tenantId: string, flowKey: string): PersistedBuilderWorks
     nodes: {},
     edgesBySource: {}
   },
-  publishedSnapshots: [],
   updatedAt: new Date().toISOString(),
   autosaveRevision: 0
 });

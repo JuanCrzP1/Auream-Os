@@ -1,7 +1,10 @@
 import type { AutosaveStatus } from "../../hooks/builder/useBuilderAutosave";
 
+/** `offline`: el workspace es el respaldo en memoria y no hay a dónde guardar. */
+export type SaveStatus = AutosaveStatus | "offline";
+
 interface SaveStatusPillProps {
-  readonly status: AutosaveStatus;
+  readonly status: SaveStatus;
 }
 
 /**
@@ -16,16 +19,16 @@ interface SaveStatusPillProps {
  * `idle` comparte presentación con `saved` a propósito: un workspace recién
  * cargado y sin editar no tiene cambios pendientes.
  *
- * Nota: que el estado `error` llegue aquí de forma fiable es trabajo de B7 —
- * hoy el autosave puede fallar en escenarios que no lo reportan. Esta cápsula
- * ya lo presenta correctamente cuando ocurre; no inventa un sistema nuevo.
+ * `offline` no viene del autoguardado (que ni se intenta): lo decide la
+ * página cuando la carga no llegó del servidor.
  */
 
-const LABELS: Record<AutosaveStatus, string> = {
+const LABELS: Record<SaveStatus, string> = {
   idle: "Guardado",
   saving: "Guardando...",
   saved: "Guardado",
-  error: "Error al guardar"
+  error: "Error al guardar",
+  offline: "Sin conexión"
 };
 
 function StatusIcon({ status }: SaveStatusPillProps) {
@@ -37,7 +40,7 @@ function StatusIcon({ status }: SaveStatusPillProps) {
     );
   }
 
-  if (status === "error") {
+  if (status === "error" || status === "offline") {
     return (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
         <circle cx="8" cy="8" r="6.2" />

@@ -134,3 +134,17 @@ describe("FlowNodeCard — icono del nodo cerrado", () => {
     seleccionado.unmount();
   });
 });
+
+describe("FlowNodeCard — acción Editar", () => {
+  const editar = (container: HTMLElement) => container.querySelector('button[title="Editar"]');
+
+  it("las herramientas con editor ofrecen el lápiz", () => {
+    const { container } = montar(createNodeDraft("message", 0));
+    expect(editar(container)).not.toBeNull();
+  });
+
+  it("Finalizar no tiene editor y no ofrece un lápiz que no haría nada", () => {
+    const { container } = montar(createNodeDraft("end", 0));
+    expect(editar(container)).toBeNull();
+  });
+});

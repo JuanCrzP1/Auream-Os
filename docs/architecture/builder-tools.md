@@ -69,11 +69,15 @@ Las reglas para conectar salidas (una conexión por salida, inicio, ciclos…) y
 - **Evolución.** El lector es la capa de migración: debe aceptar toda forma que se haya persistido alguna vez (ej. `mode` → `trigger` en el Programador), y el editor reescribe la forma actual en el siguiente guardado. Si un cambio de forma no se puede deducir de los datos, se añade `schemaVersion` a esa config y el lector migra por versión. No se migra nada en lote.
 - **Ids locales** con `createLocalId` (bloques, salidas, aristas).
 
+## Nodos de sistema
+
+**Inicio** (`start`) y **Finalizar** (`end`) son herramientas registradas como las demás, pero con `availableInPalette: false`. No declaran `Editor`, así que no se editan: el lienzo no ofrece el lápiz y el doble clic no hace nada. Inicio tampoco se borra ni se duplica. Ver [flow-connections.md](flow-connections.md#el-bloque-de-inicio).
+
 ## Convenciones
 
 - **Idioma.** Identificadores, archivos y clases CSS en **inglés**. Textos visibles y comentarios en **español**.
 - **Comentarios.** Solo el *por qué* que no se deduce del código, en 1–3 líneas. La historia va en git, y las decisiones grandes en estos documentos.
-- **Editores.** Estructura fija: `ToolEditorLayout` (icono, título y qué hace el bloque) → `CardSection` numeradas en el orden en que se decide → `OutputsPreview` al final. Las decisiones importantes van en `ChoiceCards`; las listas vacías, en `EmptyState`; lo que ve el cliente, en `ChatPreview`.
+- **Editores.** Toda herramienta configurable declara `Editor`; ya no existe un editor genérico de respaldo. Estructura fija: `ToolEditorLayout` (icono, título y qué hace el bloque) → `CardSection` numeradas en el orden en que se decide → `OutputsPreview` al final. Las decisiones importantes van en `ChoiceCards`; las listas vacías, en `EmptyState`; lo que ve el cliente, en `ChatPreview`.
 - **Estilos.** Cada herramienta aporta su acento con variables (`--kit-switch-accent`, `--kit-switch-on-bg`…). Forma, tamaño, foco y movimiento son del kit.
 - **Resultado de validación:** `ValidationResult` (`{ valid, reason }`) con `VALID` / `invalid(reason)`.
 

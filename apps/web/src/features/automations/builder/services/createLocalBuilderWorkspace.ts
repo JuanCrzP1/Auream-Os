@@ -1,4 +1,5 @@
 import type { PersistedBuilderWorkspace } from "@contracts/BuilderContracts";
+import { START_NODE_ID, createStartNode } from "@contracts/FlowEntry";
 
 /**
  * Workspace local de respaldo cuando la API no está accesible.
@@ -20,21 +21,13 @@ export function createLocalBuilderWorkspace(flowKey: string, tenantId: string): 
         id: `${flowKey}:v1:draft`,
         versionNumber: 1,
         status: "draft",
-        entryNodeId: "start_message"
+        entryNodeId: START_NODE_ID
       },
       nodes: {
-        start_message: {
-          id: "start_message",
-          type: "message",
-          name: "Inicio",
-          content: { text: "Inicio del flujo" },
-          config: {},
-          metadata: { ui: { x: 200, y: 220 } }
-        }
+        [START_NODE_ID]: createStartNode()
       },
       edgesBySource: {}
     },
-    publishedSnapshots: [],
     updatedAt: new Date().toISOString(),
     autosaveRevision: 0
   };

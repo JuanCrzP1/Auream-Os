@@ -273,7 +273,7 @@ apps/api/
 └── http/          serialización y mapeo de errores
 ```
 
-Endpoints: `GET /health`, `GET /me/tenants`, `POST /me/onboarding`, `GET /automations`, `PATCH|DELETE /automations/:id`, y bajo `/api/builder/flows/:flowKey` → `workspace`, `draft`, `publish`, `rollback`, `simulate`.
+Endpoints: `GET /health`, `GET /me/tenants`, `POST /me/onboarding`, `GET /automations`, `PATCH|DELETE /automations/:id`, y bajo `/api/builder/flows/:flowKey` → `workspace`, `draft`, `simulate`. Los flujos no se publican: se autoguardan.
 
 `NO IMPLEMENTADO` `apps/worker` no procesa nada todavía: no existe cola, así que las sesiones en estado `delayed` no se reanudan y no hay reintentos.
 
@@ -292,7 +292,7 @@ Detalle en [`backend.md`](docs/architecture/backend.md).
 | `analytics` | `PREPARADO` | Registro de eventos operativos en memoria |
 | `conversations`, `contacts`, `connections`, `integrations`, `ai-agents` | `NO IMPLEMENTADO` | Frontera de carpeta, sin código |
 
-El versionado y la publicación viven en `automations/builder` (`PublishDraftService`, `createVersionedBuilderSnapshot`).
+Los flujos no se publican ni se versionan: se autoguardan y lo guardado es lo que corre. Un flujo atiende clientes cuando una conexión de WhatsApp lo tiene asignado (FASE D).
 
 ---
 

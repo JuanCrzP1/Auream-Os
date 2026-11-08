@@ -12,6 +12,7 @@ import { NodeRuntime } from "../../../flow-engine/nodes/NodeRuntime.js";
 import { MessageNodeHandler } from "../../../flow-engine/nodes/message/MessageNodeHandler.js";
 import { QuestionNodeHandler } from "../../../flow-engine/nodes/question/QuestionNodeHandler.js";
 import { EndNodeHandler } from "../../../flow-engine/nodes/end/EndNodeHandler.js";
+import { StartNodeHandler } from "../../../flow-engine/nodes/start/StartNodeHandler.js";
 import { AnalyticsService } from "../../../domains/analytics/application/AnalyticsService.js";
 import { InMemorySessionRepository } from "../../../infrastructure/persistence/memory/InMemorySessionRepository.js";
 import { validLeadCaptureFlow } from "../../fixtures/flows/validLeadCaptureFlow.js";
@@ -62,6 +63,7 @@ export function buildLoop(): ExecutionLoop {
     new SessionService(sessionRepo),
     new ContextService(),
     new NodeRuntime([
+      new StartNodeHandler(),
       new MessageNodeHandler(),
       new QuestionNodeHandler(),
       new EndNodeHandler()

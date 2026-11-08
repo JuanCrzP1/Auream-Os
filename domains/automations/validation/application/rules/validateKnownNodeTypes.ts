@@ -11,6 +11,7 @@ import type { ValidationIssue } from "../ValidationReport";
  * herramienta se retirara.
  */
 const KNOWN_NODE_TYPES: ReadonlySet<string> = new Set<NodeType>([
+  "start",
   "message",
   "question",
   "tags",

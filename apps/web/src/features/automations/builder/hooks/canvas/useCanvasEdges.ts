@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { addEdge, applyEdgeChanges, type Connection, type OnEdgesChange } from "@xyflow/react";
 import { buildEdgePresentation } from "@features/automations/builder/services/buildEdgePresentation";
-import { ensureEdgeData } from "@features/automations/builder/services/ensureEdgeData";
 import { pruneCanvasEdges } from "@features/automations/builder/services/nodeOutputs";
 import { createLocalId } from "@features/automations/builder/tools/_kit/createLocalId";
 import type { CanvasEdge, CanvasNode } from "@features/automations/builder/types/canvas";
@@ -15,10 +14,9 @@ function nextPriority(edges: ReadonlyArray<CanvasEdge>): number {
 /**
  * Gestiona el estado de los edges del canvas y todas las operaciones sobre ellos.
  *
- * @param initialEdges   Edges iniciales (solo se usa en el primer render).
- * @param selectedEdgeId ID del edge actualmente seleccionado (manejado por useCanvasSelection).
+ * @param initialEdges Edges iniciales (solo se usa en el primer render).
  */
-export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: string | null) {
+export function useCanvasEdges(initialEdges: CanvasEdge[]) {
   const [edges, setEdges] = useState<CanvasEdge[]>(initialEdges);
 
   const handleEdgesChange: OnEdgesChange<CanvasEdge> = (changes) => {
@@ -78,47 +76,12 @@ export function useCanvasEdges(initialEdges: CanvasEdge[], selectedEdgeId: strin
     setEdges((current) => pruneCanvasEdges(nodes, current));
   }, []);
 
-  function updateSelectedEdge(
-    field: "label" | "priority" | "fact" | "value" | "operator" | "fallback",
-    value: string | number | boolean
-  ): void {
-    if (!selectedEdgeId) return;
-
-    setEdges((current) =>
-      current.map((edge) => {
-        if (edge.id !== selectedEdgeId) return edge;
-
-        const currentData = ensureEdgeData(edge.data);
-        const nextData = {
-          ...currentData,
-          label: field === "label" ? String(value) : currentData.label,
-          priority: field === "priority" ? Number(value) : currentData.priority,
-          isFallback: field === "fallback" ? Boolean(value) : currentData.isFallback,
-          condition: {
-            ...currentData.condition,
-            operator: field === "operator"
-              ? String(value) as NonNullable<CanvasEdge["data"]>["condition"]["operator"]
-              : currentData.condition.operator,
-            fact: field === "fact" ? String(value) : currentData.condition.fact,
-            value: field === "value" ? String(value) : currentData.condition.value
-          }
-        };
-
-        return { ...edge, data: nextData, ...buildEdgePresentation(nextData) };
-      })
-    );
-  }
-
-  const selectedEdge = edges.find((e) => e.id === selectedEdgeId) ?? null;
-
   return {
     edges,
     setEdges,
-    selectedEdge,
     handleEdgesChange,
     handleConnect,
     removeEdgesOfNode,
-    pruneEdges,
-    updateSelectedEdge
+    pruneEdges
   };
 }

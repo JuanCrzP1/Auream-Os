@@ -17,7 +17,12 @@ export interface BuilderLoaderState {
    * guardado sin haberse enviado nunca.
    */
   serverSignature: string | null;
-  /** Publica un workspace CONFIRMADO POR EL SERVIDOR: carga, guardado, publicación. */
+  /**
+   * `true` si el workspace es el respaldo en memoria porque la API no
+   * respondió: nada de lo que se edite se guardará.
+   */
+  offline: boolean;
+  /** Adopta un workspace CONFIRMADO POR EL SERVIDOR: la carga y cada guardado. */
   setWorkspace: (ws: PersistedBuilderWorkspace) => void;
   renameFlow: (name: string) => void;
 }
@@ -33,6 +38,7 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
   const { activeTenantId } = useActiveTenant();
   const [workspace, setWorkspaceState] = useState<PersistedBuilderWorkspace | null>(null);
   const [serverSignature, setServerSignature] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
@@ -40,8 +46,8 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
   /**
    * Adopta un workspace que viene del servidor.
    *
-   * Es el ÚNICO camino por el que avanza la firma confirmada: la carga inicial,
-   * la respuesta de un guardado y la de publicar o revertir. Una edición local
+   * Es el ÚNICO camino por el que avanza la firma confirmada: la carga inicial
+   * y la respuesta de cada guardado. Una edición local
    * —renombrar, mover un nodo— no pasa por aquí, y por eso no puede hacerse
    * pasar por guardada.
    */
@@ -56,9 +62,10 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
     setError(null);
 
     fetchBuilderWorkspace(flowKey, activeTenantId ?? "")
-      .then((result) => {
+      .then(({ workspace: loaded, persisted }) => {
         if (mountedRef.current) {
-          setWorkspace(result);
+          setWorkspace(loaded);
+          setOffline(!persisted);
           setLoading(false);
         }
       })
@@ -89,5 +96,5 @@ export function useBuilderLoader(flowKey: string): BuilderLoaderState {
     );
   }, []);
 
-  return { workspace, loading, error, serverSignature, setWorkspace, renameFlow };
+  return { workspace, loading, error, serverSignature, offline, setWorkspace, renameFlow };
 }

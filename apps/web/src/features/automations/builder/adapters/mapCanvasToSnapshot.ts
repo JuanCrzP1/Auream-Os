@@ -58,9 +58,15 @@ export function mapCanvasToSnapshot(baseSnapshot: BuilderFlowSnapshot, nodes: Ca
     return accumulator;
   }, {});
 
+  // La entrada la dice el lienzo (el nodo marcado `isEntry`), no la versión
+  // de partida: así nunca puede quedar apuntando a un nodo que ya no está.
+  const entryNodeId = nodes.find((node) => node.data.isEntry)?.id ?? baseSnapshot.version.entryNodeId;
+
   return {
     flow: baseSnapshot.flow,
-    version: baseSnapshot.version,
+    version: entryNodeId === baseSnapshot.version.entryNodeId
+      ? baseSnapshot.version
+      : { ...baseSnapshot.version, entryNodeId },
     nodes: mappedNodes,
     edgesBySource: groupedEdges
   };

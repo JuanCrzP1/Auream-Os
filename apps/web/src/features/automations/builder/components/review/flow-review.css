@@ -1,0 +1,261 @@
+/* Revisión del flujo: cápsula en la esquina superior derecha del lienzo y su
+   tarjeta desplegable. Mismo cristal que la topbar y la Toolbox. */
+
+.flow-review {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+}
+
+.flow-review__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--elevation-inset), var(--shadow);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease-out), background 160ms var(--ease-out);
+}
+
+.flow-review__toggle:hover {
+  background: var(--chip-bg);
+}
+
+.flow-review__toggle:focus-visible,
+.flow-review__issue--link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.flow-review__toggle-icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.flow-review__toggle-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.flow-review__toggle--ok .flow-review__toggle-icon {
+  background: color-mix(in srgb, var(--status-active-text) 16%, transparent);
+  color: var(--status-active-text);
+}
+
+.flow-review__toggle--warning {
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--line));
+}
+
+.flow-review__toggle--warning .flow-review__toggle-icon {
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  color: var(--amber);
+}
+
+.flow-review__toggle--error {
+  border-color: color-mix(in srgb, var(--rose) 55%, var(--line));
+}
+
+.flow-review__toggle--error .flow-review__toggle-icon {
+  background: color-mix(in srgb, var(--rose) 18%, transparent);
+  color: var(--rose);
+}
+
+.flow-review__count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.flow-review__count--error {
+  background: color-mix(in srgb, var(--rose) 22%, transparent);
+  color: var(--rose);
+}
+
+.flow-review__count--warning {
+  background: color-mix(in srgb, var(--amber) 22%, transparent);
+  color: var(--amber);
+}
+
+/* --- Tarjeta ------------------------------------------------------------- */
+
+.flow-review__card {
+  width: 360px;
+  max-width: 100%;
+  max-height: min(60vh, 520px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-floating);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--elevation-inset), var(--shadow);
+  animation: flow-review-in 160ms var(--ease-out);
+}
+
+.flow-review__header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.flow-review__header h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.flow-review__header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.flow-review__list {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.flow-review__issue {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.flow-review__issue--link {
+  cursor: pointer;
+}
+
+.flow-review__issue--link:hover {
+  background: var(--chip-bg);
+}
+
+.flow-review__issue-mark {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+}
+
+.flow-review__issue--error .flow-review__issue-mark {
+  background: var(--rose);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rose) 22%, transparent);
+}
+
+.flow-review__issue--warning .flow-review__issue-mark {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent);
+}
+
+.flow-review__issue-text {
+  flex: 1 1 auto;
+}
+
+.flow-review__issue-go {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--muted);
+}
+
+.flow-review__issue-go svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.flow-review__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 16px 24px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.flow-review__empty-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--status-active-text) 14%, transparent);
+  color: var(--status-active-text);
+}
+
+.flow-review__empty-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Solo para lectores de pantalla. */
+.flow-review__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:root[data-theme="light"] .flow-review__toggle {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.2)),
+    rgba(255, 255, 255, 0.48);
+}
+
+@keyframes flow-review-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-review__card {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .flow-review__card {
+    width: calc(100vw - 24px);
+  }
+}

@@ -7,8 +7,8 @@
 Las reglas que deciden **cómo se pueden conectar los bloques** de una automatización. Son las mismas en tres puntos:
 
 1. **Al conectar en el lienzo:** la conexión no permitida no se crea y se explica por qué.
-2. **Al validar el lienzo:** el builder avisa de problemas en flujos ya construidos.
-3. **Al publicar:** el backend rechaza la versión (`GraphValidator`).
+2. **En la revisión del flujo:** el builder lista los problemas de un flujo ya construido y lleva a cada bloque (`reviewFlow`).
+3. **En el backend:** `GraphValidator` responde si el grafo puede ejecutarse. Los flujos no se publican (se autoguardan), así que ninguno de los dos bloquea el guardado.
 
 Siguen el mismo modelo que los bloques equivalentes de Leona, que es la referencia funcional del producto.
 
@@ -20,7 +20,7 @@ Cada bloque tiene **salidas**. Una conexión dice de qué bloque sale, **por cu�
 |---|---|
 | **Una conexión por salida** | De cada salida sale como mucho una conexión. Para llevar el flujo a dos sitios se usa un bloque con varias salidas (Distribuidor, Condicional, Menú…). |
 | **Entradas ilimitadas** | A un bloque pueden llegar todas las conexiones que se quiera. |
-| **Inicio** | No recibe conexiones y tiene una sola salida, hacia el primer paso. |
+| **Inicio** | Bloque de sistema `start`, uno por flujo. No recibe conexiones y tiene una sola salida, hacia el primer paso. Ver [El bloque de inicio](#el-bloque-de-inicio). |
 | **Sin auto-conexión** | Un bloque no se conecta consigo mismo. |
 | **La salida debe existir** | Solo se puede conectar desde una salida que la configuración actual del bloque ofrece. Si una salida desaparece (se borra una opción del Menú, se activa «sin límite»…), sus conexiones se eliminan solas. |
 | **Ciclos** | Se permiten si pasan por un bloque que **espera** (Esperar respuesta, Menú, Programador): cada vuelta se detiene. Un ciclo sin ninguno de ellos sería infinito y se rechaza. |
@@ -29,7 +29,7 @@ Cada bloque tiene **salidas**. Una conexión dice de qué bloque sale, **por cu�
 
 | Bloque | Salidas | Id persistido (`fromOutput`) |
 |---|---|---|
-| Mensaje, Programador, Etiquetas, Pixel, Notificación | Una, implícita | — |
+| Inicio (sistema), Mensaje, Programador, Etiquetas, Pixel, Notificación | Una, implícita | — |
 | Esperar respuesta | Respuesta; Tiempo agotado (solo con límite de tiempo) | `respuesta`, `tiempo-agotado` |
 | Condicional | Se cumple; No se cumple | `true`, `false` |
 | Integración | Éxito; Error | `success`, `failure` |
@@ -43,12 +43,13 @@ Los ids son **datos persistidos**: cambiar uno desconecta las aristas guardadas.
 
 ## Dónde se aplica cada regla
 
-| Regla | Lienzo (al conectar) | Builder (validación) | Backend (publicar) |
+| Regla | Lienzo (al conectar) | Builder (revisión del flujo) | Backend (`GraphValidator`) |
 |---|---|---|---|
 | Una conexión por salida con nombre | `checkConnection` | `findOvercrowdedOutputs` | — (el snapshot de ejecución no lleva `fromOutput`) |
 | Una conexión en bloques de salida única | `checkConnection` | `findOvercrowdedOutputs` | `validateOutgoingLimits` (`NODE_TOO_MANY_OUTGOING`) |
 | Inicio con una sola salida | `checkConnection` | `findOvercrowdedOutputs` | `validateOutgoingLimits` (`ENTRY_TOO_MANY_OUTGOING`) |
-| Nada entra a Inicio | `checkConnection` (y el nodo no tiene punto de entrada) | — | — |
+| Nada entra a Inicio | `checkConnection` (y el nodo no tiene punto de entrada) | `reviewFlow` | `validateStartBlock` (`ENTRY_HAS_INCOMING`) |
+| El flujo empieza en un `start`, y solo hay uno | — (no está en la paleta, no se borra ni se duplica) | `reviewFlow` | `validateStartBlock` (`ENTRY_NODE_NOT_START`, `START_NODE_NOT_ENTRY`) |
 | Sin auto-conexión | `checkConnection` | — | — |
 | La salida existe | `checkConnection` + poda automática (`pruneCanvasEdges`) | — | — |
 | Ciclos solo a través de bloques que esperan | — | aviso | `detectCycles` (`INFINITE_CYCLE`) |
@@ -59,6 +60,25 @@ Las listas compartidas viven en `contracts/FlowConnectionRules.ts`:
 - `PAUSING_NODE_TYPES`: bloques que esperan.
 
 Los escenarios compartidos de `tests/fixtures/validation/scenarios.ts` comprueban que el builder y el backend dan el mismo veredicto.
+
+## El bloque de inicio
+
+Todo flujo empieza en un bloque **Inicio** (tipo `start`, `contracts/FlowEntry.ts`), igual que en Leona:
+
+- Es un nodo de **sistema**: se crea con el flujo, no está en la paleta, no se borra, no se duplica y no se edita.
+- Es el `entryNodeId` de la versión. El builder lo deriva del nodo marcado como entrada en el lienzo, así que nunca puede quedar apuntando a un nodo que ya no existe.
+- En ejecución **no hace nada**: `StartNodeHandler` pasa al siguiente bloque sin enviar mensajes.
+- Será el sitio de los **disparadores** del flujo (palabras clave, anuncios…).
+
+**Migración de flujos antiguos.** Antes, el inicio era un bloque Mensaje con el texto «Inicio del flujo», que el motor habría enviado a cada cliente. `ensureStartEntry` corrige al leer:
+
+| Caso guardado | Resultado |
+|---|---|
+| Mensaje sembrado «Inicio del flujo» | Pasa a `start` en su sitio: mismo id, posición y conexiones |
+| La entrada es un bloque real (un Mensaje con contenido propio…) | Se inserta un `start` delante, conectado a él: el flujo se comporta igual |
+| La entrada no existe (flujo vacío o roto) | Se crea un `start` |
+
+La aplica `UpgradingBuilderWorkspaceRepository`, un decorador del repositorio de workspaces: toda lectura (builder, listado del Hub, renombrar) sale migrada, sea cual sea la base de datos. El siguiente autoguardado deja el formato nuevo en disco. Las migraciones futuras se añaden en `upgradeWorkspace`, nunca en un caso de uso.
 
 ## Experiencia en el lienzo
 

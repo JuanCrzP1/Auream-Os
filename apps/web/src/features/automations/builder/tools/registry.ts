@@ -1,5 +1,6 @@
 import type { NodeType } from "@contracts/FlowSnapshot";
 import type { ToolDefinition } from "./ToolDefinition";
+import { startTool } from "./start/definition";
 import { messageTool } from "./message/definition";
 import { waitResponseTool } from "./wait-response/definition";
 import { tagsTool } from "./tags/definition";
@@ -28,9 +29,11 @@ import { endTool } from "./end/definition";
 /**
  * Catálogo oficial. El orden de declaración ES el orden de la paleta.
  *
- * `end` va al final y queda fuera de la paleta por `availableInPalette: false`.
+ * `start` y `end` son nodos de sistema: quedan fuera de la paleta por
+ * `availableInPalette: false`.
  */
 const TOOLS: ReadonlyArray<ToolDefinition> = [
+  startTool,
   messageTool,
   waitResponseTool,
   tagsTool,

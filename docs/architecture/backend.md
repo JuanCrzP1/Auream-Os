@@ -29,8 +29,6 @@ apps/api/
 | `PATCH` `DELETE` | `/automations/:id` | `flows.write` |
 | `GET` | `/api/builder/flows/:flowKey/workspace` | `flows.read` |
 | `PUT` | `/api/builder/flows/:flowKey/draft` | `flows.write` |
-| `POST` | `/api/builder/flows/:flowKey/publish` | `flows.publish` |
-| `POST` | `/api/builder/flows/:flowKey/rollback` | `flows.write` |
 | `POST` | `/api/builder/flows/:flowKey/simulate` | `runtime.execute` |
 
 ### composition/
@@ -84,11 +82,11 @@ Ver [`boundaries.md`](boundaries.md) para responsabilidades y [`structure.md`](s
 
 Hay dos piezas maduras y deliberadamente separadas:
 
-**`automations`** es el producto: catálogo, builder y validación. El versionado y la publicación viven en `builder` (`PublishDraftService`, `createVersionedBuilderSnapshot`). Ocho reglas de validación de grafo, cada una en su archivo. Ver [`automations.md`](automations.md).
+**`automations`** es el producto: catálogo, builder y validación. Los flujos no se publican: se autoguardan y lo guardado es lo que corre. Diez reglas de validación de grafo, cada una en su archivo. Ver [`automations.md`](automations.md).
 
 **`flow-engine`** es el motor, y vive en la **raíz del proyecto**, no bajo `domains/`: orquestador, loop de ejecución, evaluador de edges, runtime de nodos con nueve handlers (`message`, `question`, `capture`, `action`, `condition`, `delay`, `fallback`, `end`, `ai`), el registry de versiones publicadas y el contrato de triggers. **No existe handler `handoff`:** esa responsabilidad es del AI Sales Engine. Ver [`flow-engine.md`](flow-engine.md).
 
-Automations produce versiones publicadas; el motor las ejecuta. La dependencia es unidireccional y solo por interfaces.
+Automations construye y guarda los flujos; el motor los ejecuta. La dependencia es unidireccional y solo por interfaces.
 
 `sessions` aporta el estado de ejecución que el motor consume a través de puertos.
 

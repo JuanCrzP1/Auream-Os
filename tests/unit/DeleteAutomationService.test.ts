@@ -54,7 +54,6 @@ const SAMPLE_WORKSPACE: PersistedBuilderWorkspace = {
     nodes: {},
     edgesBySource: {}
   },
-  publishedSnapshots: [],
   updatedAt: "2024-01-01",
   autosaveRevision: 0
 };

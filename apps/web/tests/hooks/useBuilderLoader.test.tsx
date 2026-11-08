@@ -73,6 +73,7 @@ describe("useBuilderLoader", () => {
 
     expect(result.current.workspace).not.toBeNull();
     expect(result.current.error).toBeNull();
+    expect(result.current.offline).toBe(false);
   });
 
   it("devuelve error cuando el fetch falla con error de red", async () => {
@@ -84,9 +85,10 @@ describe("useBuilderLoader", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // fetchBuilderWorkspace devuelve workspace local en error de red (comportamiento existente)
+    // Respaldo en memoria (solo desarrollo): se abre, pero marcado sin conexión.
     expect(result.current.workspace).not.toBeNull();
     expect(result.current.error).toBeNull();
+    expect(result.current.offline).toBe(true);
   });
 
   it("vuelve a cargar cuando cambia el flowKey", async () => {

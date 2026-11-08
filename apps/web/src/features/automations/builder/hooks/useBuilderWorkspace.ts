@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { mapCanvasToSnapshot } from "../adapters/mapCanvasToSnapshot";
 import { useBuilderAutosave } from "./builder/useBuilderAutosave";
 import { useBuilderLoader } from "./builder/useBuilderLoader";
-import { useBuilderPublishing } from "./builder/useBuilderPublishing";
 import { useBuilderSimulation } from "./builder/useBuilderSimulation";
 import { useBuilderController } from "./useBuilderController";
 
@@ -15,12 +14,12 @@ import { useBuilderController } from "./useBuilderController";
  * Hooks que coordina:
  *  - useBuilderLoader     → carga inicial
  *  - useBuilderController → estado del canvas
- *  - useBuilderAutosave   → persistencia automática
- *  - useBuilderPublishing → publish / rollback
- *  - useBuilderSimulation → simulación
+ *  - useBuilderAutosave   → persistencia automática (no hay publicación:
+ *                           lo guardado es lo que corre)
+ *  - useBuilderSimulation → simulación (se montará en la FASE C, C15)
  */
 export function useBuilderWorkspace(flowKey: string) {
-  const { workspace, loading, error, serverSignature, setWorkspace, renameFlow } =
+  const { workspace, loading, error, serverSignature, offline, setWorkspace, renameFlow } =
     useBuilderLoader(flowKey);
 
   const controller = useBuilderController(workspace?.draft ?? null);
@@ -39,13 +38,9 @@ export function useBuilderWorkspace(flowKey: string) {
     draft: currentDraft,
     // Lo que el servidor tiene, no lo que hay en pantalla. Ver `useBuilderLoader`.
     seedSignature: serverSignature,
-    enabled: workspace !== null,
+    // Sin servidor no hay a dónde guardar: intentarlo solo produciría errores.
+    enabled: workspace !== null && !offline,
     onSaved: setWorkspace
-  });
-
-  const { handlePublish, handleRollback } = useBuilderPublishing({
-    flowKey,
-    onUpdate: setWorkspace
   });
 
   const { simulationLog, simulationStatus, handleSimulate, resetSimulation } =
@@ -55,15 +50,12 @@ export function useBuilderWorkspace(flowKey: string) {
     // Carga
     loading,
     error,
+    offline,
     // Canvas
     flowName: controller.flowName,
-    versionLabel: controller.versionLabel,
     nodes: controller.nodes,
     edges: controller.edges,
-    stats: controller.stats,
-    validation: controller.validation,
-    selectedNode: controller.selectedNode,
-    selectedEdge: controller.selectedEdge,
+    review: controller.review,
     autosaveStatus,
     // Handlers del canvas
     handleNodesChange: controller.handleNodesChange,
@@ -80,8 +72,6 @@ export function useBuilderWorkspace(flowKey: string) {
     handleCollapseNodes: controller.handleCollapseNodes,
     // Acciones del workspace
     handleRenameFlow: renameFlow,
-    handlePublish,
-    handleRollback,
     // Simulación
     simulationLog,
     simulationStatus,

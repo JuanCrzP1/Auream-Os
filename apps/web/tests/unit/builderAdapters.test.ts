@@ -480,6 +480,18 @@ describe("adapters — nodo de entrada", () => {
     expect(result.nodes["n-inicio"].metadata.ui).toEqual({ x: 900, y: 900 });
   });
 
+  it("toma la entrada del lienzo, no de la versión de partida", () => {
+    // Una versión de partida que apunta a un nodo que ya no existe no puede
+    // volver a escribirse: manda el nodo marcado como entrada en el lienzo.
+    const original = makeSnapshot();
+    const canvas = mapSnapshotToCanvas(original);
+    const stale: BuilderFlowSnapshot = { ...original, version: { ...original.version, entryNodeId: "borrado" } };
+
+    const result = mapCanvasToSnapshot(stale, canvas.nodes, canvas.edges);
+
+    expect(result.version.entryNodeId).toBe("n-inicio");
+  });
+
   // -------------------------------------------------------------------------
   // LO QUE VIAJA AL SERVIDOR TIENE QUE CABER EN UN JSON.
   //

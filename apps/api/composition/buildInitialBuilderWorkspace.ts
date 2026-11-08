@@ -1,4 +1,5 @@
-﻿import type { PersistedBuilderWorkspace } from "../../../contracts/BuilderContracts";
+import type { PersistedBuilderWorkspace } from "../../../contracts/BuilderContracts";
+import { START_NODE_ID, createStartNode } from "../../../contracts/FlowEntry";
 
 export function buildInitialBuilderWorkspace(tenantId: string, flowKey: string): PersistedBuilderWorkspace {
   const initialSnapshot: PersistedBuilderWorkspace["draft"] = {
@@ -11,17 +12,10 @@ export function buildInitialBuilderWorkspace(tenantId: string, flowKey: string):
       id: `${flowKey}:v1:draft`,
       versionNumber: 1,
       status: "draft",
-      entryNodeId: "start_message"
+      entryNodeId: START_NODE_ID
     },
     nodes: {
-      start_message: {
-        id: "start_message",
-        type: "message",
-        name: "Inicio",
-        content: { text: "Inicio del flujo" },
-        config: {},
-        metadata: { ui: { x: 200, y: 220 } }
-      }
+      [START_NODE_ID]: createStartNode()
     },
     edgesBySource: {}
   };
@@ -30,7 +24,6 @@ export function buildInitialBuilderWorkspace(tenantId: string, flowKey: string):
     tenantId,
     flowKey,
     draft: initialSnapshot,
-    publishedSnapshots: [],
     updatedAt: new Date().toISOString(),
     autosaveRevision: 0
   };

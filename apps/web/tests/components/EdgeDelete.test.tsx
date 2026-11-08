@@ -73,7 +73,7 @@ function Lienzo({ inicial, alCambiar, alMontar }: {
   alCambiar?: (edges: CanvasEdge[]) => void;
   alMontar?: (cambiar: OnEdgesChange<CanvasEdge>) => void;
 }) {
-  const { edges, handleEdgesChange } = useCanvasEdges(inicial, null);
+  const { edges, handleEdgesChange } = useCanvasEdges(inicial);
   alCambiar?.(edges);
   alMontar?.(handleEdgesChange);
 
@@ -200,7 +200,7 @@ describe("eliminar una conexión desde el lienzo", () => {
     // antes de esta tarea. Esto fija que se siga aplicando.
     let ultimas: CanvasEdge[] = [];
     function Sonda() {
-      const { edges, handleEdgesChange } = useCanvasEdges([edge("e1", "inicio", "etiquetas", true)], null);
+      const { edges, handleEdgesChange } = useCanvasEdges([edge("e1", "inicio", "etiquetas", true)]);
       ultimas = edges;
       return <button onClick={() => handleEdgesChange([{ id: "e1", type: "remove" }])}>tecla</button>;
     }

@@ -1,9 +1,8 @@
 import { useCallback, useDeferredValue, useEffect, useMemo } from "react";
 import type { Connection } from "@xyflow/react";
 import { mapSnapshotToCanvas } from "../adapters/mapSnapshotToCanvas";
-import { buildStats } from "../services/buildStats";
 import { releaseNodeResources } from "../services/releaseNodeResources";
-import { validateCanvasGraph } from "../services/validateCanvasGraph";
+import { reviewFlow } from "../services/reviewFlow";
 import { checkConnection } from "../services/connectionRules";
 import type { NodeType, BuilderFlowSnapshot } from "@contracts/FlowSnapshot";
 import { useCanvasEdges } from "./canvas/useCanvasEdges";
@@ -14,7 +13,7 @@ import { useCanvasSelection } from "./canvas/useCanvasSelection";
  * Coordinador principal del canvas del builder.
  *
  * Compone los tres hooks especializados (selection, nodes, edges)
- * y expone la API pública que consume el canvas y los paneles laterales.
+ * y expone la API pública que consume la página del builder.
  *
  * Este hook NO contiene lógica de negocio: delega en los sub-hooks.
  */
@@ -23,9 +22,9 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
 
   const selection = useCanvasSelection();
   const nodesCtx = useCanvasNodes(initialCanvas.nodes, selection.selectedNodeId);
-  const edgesCtx = useCanvasEdges(initialCanvas.edges, selection.selectedEdgeId);
+  const edgesCtx = useCanvasEdges(initialCanvas.edges);
 
-  // Reinicializar el canvas cuando cambia la versión del snapshot (p.ej. tras rollback)
+  // Reinicializar el canvas cuando llega otro snapshot (la carga inicial).
   useEffect(() => {
     if (!snapshot) return;
     const nextCanvas = mapSnapshotToCanvas(snapshot);
@@ -46,19 +45,9 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
   const deferredNodes = useDeferredValue(nodesCtx.nodes);
   const deferredEdges = useDeferredValue(edgesCtx.edges);
 
-  // Ambos recorren el grafo entero. Sin memoizar se recalculaban en CADA
-  // render —incluido un simple cambio del estado de guardado—, así que en un
-  // flujo grande se pagaba O(V+E) por pulsación. Con `useMemo` solo se
-  // recalculan cuando el grafo cambia de verdad.
-  //
-  // No se eliminan aunque hoy nadie los consuma: son la entrada de los paneles
-  // de validación y de estadísticas, que existen y se montarán en B6. Quitarlos
-  // ahora obligaría a reconstruirlos entonces.
-  const stats = useMemo(() => buildStats(deferredNodes, deferredEdges), [deferredNodes, deferredEdges]);
-  const validation = useMemo(
-    () => validateCanvasGraph(deferredNodes, deferredEdges),
-    [deferredNodes, deferredEdges]
-  );
+  // Recorre el grafo entero: memoizado sobre el grafo diferido para no
+  // pagarlo en cada render ni en cada pulsación.
+  const review = useMemo(() => reviewFlow(deferredNodes, deferredEdges), [deferredNodes, deferredEdges]);
 
   /**
    * Borra un nodo y todo lo que colgaba de él.
@@ -92,13 +81,9 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
 
   return {
     flowName: snapshot?.flow.name ?? "Cargando flow...",
-    versionLabel: snapshot ? `v${snapshot.version.versionNumber}` : "--",
     nodes: nodesCtx.nodes,
     edges: edgesCtx.edges,
-    stats,
-    validation,
-    selectedNode: nodesCtx.selectedNode,
-    selectedEdge: edgesCtx.selectedEdge,
+    review,
     handleNodesChange: nodesCtx.handleNodesChange,
     handleEdgesChange: edgesCtx.handleEdgesChange,
     // Segunda barrera de las reglas de conexión: el lienzo ya las aplica al
@@ -117,8 +102,7 @@ export function useBuilderController(snapshot: BuilderFlowSnapshot | null) {
     handleUpdateNode: nodesCtx.updateNode,
     handleDuplicateNode: nodesCtx.duplicateNode,
     handleToggleNodeExpanded: nodesCtx.toggleNodeExpanded,
-    handleCollapseNodes: nodesCtx.collapseNodes,
-    handleUpdateSelectedEdge: edgesCtx.updateSelectedEdge
+    handleCollapseNodes: nodesCtx.collapseNodes
   };
 }
 

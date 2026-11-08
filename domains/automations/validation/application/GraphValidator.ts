@@ -2,6 +2,7 @@ import type { FlowSnapshot } from "../../../../contracts/FlowSnapshot";
 import type { ValidationIssue, ValidationReport } from "./ValidationReport";
 import { validateEmptyFlow } from "./rules/validateEmptyFlow";
 import { validateEntryNode } from "./rules/validateEntryNode";
+import { validateStartBlock } from "./rules/validateStartBlock";
 import { validateEdgeIntegrity } from "./rules/validateEdgeIntegrity";
 import { validateEdgePriorities } from "./rules/validateEdgePriorities";
 import { validateNodeDegree } from "./rules/validateNodeDegree";
@@ -29,6 +30,7 @@ export class GraphValidator {
     const errors: ValidationIssue[] = [
       ...validateKnownNodeTypes(snapshot),
       ...validateEntryNode(snapshot, nodeIds),
+      ...validateStartBlock(snapshot),
       ...validateEdgeIntegrity(snapshot, nodeIds),
       ...validateEdgePriorities(snapshot),
       ...validateNodeDegree(snapshot),
