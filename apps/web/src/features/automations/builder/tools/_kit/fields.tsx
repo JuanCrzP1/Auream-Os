@@ -229,14 +229,19 @@ export function InlineSelect<T extends string>({
 /** Variables que el usuario puede escribir entre llaves. */
 export function VariableHint({ variables }: { readonly variables: ReadonlyArray<string> }) {
   return (
-    <p className="kit-hint kit-variables">
-      Puedes usar variables:{" "}
-      {variables.map((variable) => (
-        <code key={variable} className="kit-variable">
-          {variable}
-        </code>
-      ))}
-    </p>
+    <>
+      <p className="kit-hint kit-variables">
+        Puedes usar variables:{" "}
+        {variables.map((variable) => (
+          <code key={variable} className="kit-variable">
+            {variable}
+          </code>
+        ))}
+      </p>
+      <p className="kit-hint">
+        Si puede faltar, dale un valor por defecto: <code className="kit-variable">{"{first_name|amigo}"}</code>
+      </p>
+    </>
   );
 }
 
@@ -287,112 +292,63 @@ export function ListCard({
 }
 
 /** Lista de valores cortos escritos como etiquetas (Enter o coma para añadir). */
-/** Valor ofrecido para un `ChipsField`, con su color si lo tiene. */
-export interface ChipSuggestion {
-  readonly value: string;
-  readonly color?: string;
-}
-
-const MAX_SUGGESTIONS = 8;
-
-const sameValue = (a: string, b: string) => a.toLocaleLowerCase() === b.toLocaleLowerCase();
-
 export function ChipsField({
   label,
   values,
   onChange,
   placeholder,
-  hint,
-  suggestions = []
+  hint
 }: {
   readonly label: string;
   readonly values: ReadonlyArray<string>;
   readonly onChange: (values: string[]) => void;
   readonly placeholder?: string;
   readonly hint?: string;
-  /** Valores que se ofrecen para elegir con un clic. Escribir otros sigue valiendo. */
-  readonly suggestions?: ReadonlyArray<ChipSuggestion>;
 }) {
   const [text, setText] = useState("");
 
-  const add = (raw: string) => {
-    const value = raw.trim().replace(/,$/, "").trim();
+  const commit = () => {
+    const value = text.trim().replace(/,$/, "").trim();
     setText("");
-    if (value.length === 0 || values.some((existing) => sameValue(existing, value))) return;
-    // Si coincide con una sugerencia, se usa su escritura exacta.
-    const known = suggestions.find((suggestion) => sameValue(suggestion.value, value));
-    onChange([...values, known?.value ?? value]);
+    if (value.length === 0 || values.includes(value)) return;
+    onChange([...values, value]);
   };
-
-  const colorOf = (value: string) => suggestions.find((suggestion) => sameValue(suggestion.value, value))?.color;
-  const query = text.trim().toLocaleLowerCase();
-  const offered = suggestions
-    .filter((suggestion) => !values.some((value) => sameValue(value, suggestion.value)))
-    .filter((suggestion) => query === "" || suggestion.value.toLocaleLowerCase().includes(query))
-    .slice(0, MAX_SUGGESTIONS);
 
   return (
     <Field label={label} hint={hint}>
       {(id) => (
-        <>
-          <div className="kit-chips">
-            {values.map((value) => {
-              const color = colorOf(value);
-              return (
-                <span
-                  key={value}
-                  className={color ? "kit-chip kit-chip--colored" : "kit-chip"}
-                  style={color ? ({ "--kit-chip-color": color } as CSSProperties) : undefined}
-                >
-                  {value}
-                  <button
-                    type="button"
-                    className="kit-chip__remove nodrag"
-                    aria-label={`Quitar ${value}`}
-                    onClick={() => onChange(values.filter((v) => v !== value))}
-                  >
-                    ×
-                  </button>
-                </span>
-              );
-            })}
-            <input
-              id={id}
-              type="text"
-              className="kit-chips__input nodrag"
-              value={text}
-              placeholder={values.length === 0 ? placeholder : ""}
-              onChange={(event) => setText(event.target.value)}
-              onBlur={() => add(text)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === ",") {
-                  event.preventDefault();
-                  add(text);
-                } else if (event.key === "Backspace" && text === "" && values.length > 0) {
-                  onChange(values.slice(0, -1));
-                }
-              }}
-            />
-          </div>
-          {offered.length > 0 ? (
-            <div className="kit-chip-suggestions" role="group" aria-label={`Sugerencias para ${label}`}>
-              {offered.map((suggestion) => (
-                <button
-                  key={suggestion.value}
-                  type="button"
-                  className="kit-chip-suggestion nodrag"
-                  style={suggestion.color ? ({ "--kit-chip-color": suggestion.color } as CSSProperties) : undefined}
-                  // mousedown: que el blur del campo no se coma el clic.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => add(suggestion.value)}
-                >
-                  <span className="kit-chip-suggestion__dot" aria-hidden="true" />
-                  {suggestion.value}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </>
+        <div className="kit-chips">
+          {values.map((value) => (
+            <span key={value} className="kit-chip">
+              {value}
+              <button
+                type="button"
+                className="kit-chip__remove nodrag"
+                aria-label={`Quitar ${value}`}
+                onClick={() => onChange(values.filter((v) => v !== value))}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <input
+            id={id}
+            type="text"
+            className="kit-chips__input nodrag"
+            value={text}
+            placeholder={values.length === 0 ? placeholder : ""}
+            onChange={(event) => setText(event.target.value)}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault();
+                commit();
+              } else if (event.key === "Backspace" && text === "" && values.length > 0) {
+                onChange(values.slice(0, -1));
+              }
+            }}
+          />
+        </div>
       )}
     </Field>
   );

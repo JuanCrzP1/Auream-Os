@@ -1,9 +1,11 @@
 import { VALID, invalid, type ToolData, type ValidationResult } from "../ToolDefinition";
+import { CONTACT_FIELD_KEY_PATTERN } from "@contracts/ContactContracts";
 import { readIntegrationConfig } from "./integrationConfig";
 
 export const INVALID_URL_MESSAGE = "La URL debe empezar por http:// o https:// (puede llevar variables).";
 export const EMPTY_HEADER_MESSAGE = "Cada cabecera necesita un nombre.";
 export const INCOMPLETE_MAPPING_MESSAGE = "Completa la ruta y el campo de cada dato a guardar.";
+export const INVALID_FIELD_MESSAGE = "El nombre de un campo solo puede tener letras, números, «_» y «.» (sin espacios ni tildes).";
 
 export function validateIntegration(_content: ToolData, config: ToolData): ValidationResult {
   const read = readIntegrationConfig(config);
@@ -13,6 +15,7 @@ export function validateIntegration(_content: ToolData, config: ToolData): Valid
   if (read.responseMappings.some((m) => m.path.trim().length === 0 || m.field.trim().length === 0)) {
     return invalid(INCOMPLETE_MAPPING_MESSAGE);
   }
+  if (read.responseMappings.some((m) => !CONTACT_FIELD_KEY_PATTERN.test(m.field.trim()))) return invalid(INVALID_FIELD_MESSAGE);
 
   return VALID;
 }

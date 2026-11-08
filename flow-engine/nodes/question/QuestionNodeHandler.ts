@@ -8,6 +8,7 @@ import {
   waitResponseTimeoutMs
 } from "../../../contracts/WaitResponseConfig";
 import type { NodeHandler } from "../NodeHandler";
+import { ConversationTemplates } from "../../templates/ConversationTemplates";
 
 // ---------------------------------------------------------------------------
 // Nodo `question` — la herramienta «Esperar respuesta».
@@ -39,11 +40,13 @@ import type { NodeHandler } from "../NodeHandler";
 // ---------------------------------------------------------------------------
 
 export class QuestionNodeHandler implements NodeHandler {
+  public constructor(private readonly templates: ConversationTemplates = new ConversationTemplates()) {}
+
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "question";
   }
 
-  public async execute(node: FlowNode, input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
+  public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const config = readWaitResponseConfig(node.config);
     const inboundText = input.envelope.payload.text;
 
@@ -95,7 +98,7 @@ export class QuestionNodeHandler implements NodeHandler {
     // MENSAJE ANTES DE ESPERAR: opcional. Sin texto no se emite nada y el nodo
     // se limita a esperar — que es justo lo que se pide de un «Esperar
     // respuesta» colocado detrás de un Mensaje que ya preguntó.
-    const texto = String(node.content.text ?? "");
+    const [texto = ""] = await this.templates.render([String(node.content.text ?? "")], input, session);
     const mensajePrevio: OutboundMessage[] =
       texto.length > 0
         ? [

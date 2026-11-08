@@ -7,6 +7,7 @@ import { ContactsTable } from "../components/ContactsTable";
 import { ContactDrawer } from "../components/ContactDrawer";
 import { NewContactDialog } from "../components/NewContactDialog";
 import { LabelsManager } from "../components/LabelsManager";
+import { ContactsState, ContactsTableSkeleton, RetryButton } from "../components/ContactsState";
 
 type Tab = "contacts" | "labels";
 
@@ -22,6 +23,15 @@ export function ContactsPage() {
   const [creating, setCreating] = useState(false);
   const list = useContactList();
   const catalog = useLabelCatalog();
+  // Mientras se reintenta se mantiene el aviso (con el botón ocupado) en vez
+  // de saltar a la carga y volver al aviso si falla otra vez.
+  const [retrying, setRetrying] = useState(false);
+  const retry = async () => {
+    setRetrying(true);
+    await Promise.all([list.reload(), catalog.refresh()]);
+    setRetrying(false);
+  };
+  const filtering = list.search.trim() !== "" || list.labelId !== null;
 
   // Al cambiar etiquetas cambian los contadores del catálogo y las fichas.
   const afterLabelChange = () => void list.reload();
@@ -73,15 +83,47 @@ export function ContactsPage() {
             </select>
           </div>
 
-          {list.status === "error" ? (
-            <p className="contacts-error" role="alert">
-              No se pudieron cargar los contactos.{" "}
-              <button type="button" className="contacts-link" onClick={() => void list.reload()}>Reintentar</button>
-            </p>
-          ) : list.contacts.length === 0 && list.status === "ready" ? (
-            <p className="contacts-empty">
-              {list.search || list.labelId ? "Ningún contacto coincide con la búsqueda." : "Aún no hay contactos. Llegarán solos cuando alguien escriba a una de tus conexiones."}
-            </p>
+          {list.status === "error" || retrying ? (
+            <ContactsState
+              role="alert"
+              tone="warning"
+              icon="offline"
+              title="No pudimos cargar tus contactos"
+              description="Parece un problema de conexión momentáneo. Tus datos están a salvo; vuelve a intentarlo en unos segundos."
+              actions={<RetryButton busy={retrying} onRetry={() => void retry()} />}
+            />
+          ) : list.status === "loading" && list.contacts.length === 0 ? (
+            <ContactsTableSkeleton />
+          ) : list.contacts.length === 0 && filtering ? (
+            <ContactsState
+              role="status"
+              icon="search"
+              title="Sin resultados"
+              description="Ningún contacto coincide con la búsqueda. Prueba con otro nombre, teléfono o etiqueta."
+              actions={
+                <button
+                  type="button"
+                  className="contacts-btn contacts-btn--ghost"
+                  onClick={() => {
+                    list.setSearch("");
+                    list.setLabelId(null);
+                  }}
+                >
+                  Limpiar filtros
+                </button>
+              }
+            />
+          ) : list.contacts.length === 0 ? (
+            <ContactsState
+              icon="people"
+              title="Aún no tienes contactos"
+              description="Llegarán solos cuando alguien escriba a una de tus conexiones de WhatsApp. También puedes agregarlos a mano."
+              actions={
+                <button type="button" className="contacts-btn contacts-btn--primary" onClick={() => setCreating(true)}>
+                  Agregar contacto
+                </button>
+              }
+            />
           ) : (
             <ContactsTable contacts={list.contacts} onOpen={setOpen} />
           )}
@@ -97,6 +139,8 @@ export function ContactsPage() {
       ) : (
         <LabelsManager
           labels={catalog.labels}
+          status={catalog.status}
+          onRetry={catalog.refresh}
           onCreate={catalog.create}
           onUpdate={async (id, input) => {
             await catalog.update(id, input);

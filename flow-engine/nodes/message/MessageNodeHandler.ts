@@ -2,6 +2,7 @@ import type { FlowNode } from "../../../contracts/FlowSnapshot";
 import type { NodeExecutionResult, OutboundMessage, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
 import type { NodeHandler } from "../NodeHandler";
+import { ConversationTemplates } from "../../templates/ConversationTemplates";
 
 // ---------------------------------------------------------------------------
 // MessageNodeHandler
@@ -55,25 +56,20 @@ function readItems(node: FlowNode): ReadItem[] {
   return typeof legacy === "string" ? [{ kind: "text", text: legacy }] : [];
 }
 
-/** Resuelve `{{context.clave}}` contra el contexto de la sesión. */
-function render(template: string, session: Session): string {
-  return template.replace(/{{\s*context\.([a-zA-Z0-9_]+)\s*}}/g, (_match, key) => {
-    const value = session.context[key];
-    return value == null ? "" : String(value);
-  });
-}
-
 export class MessageNodeHandler implements NodeHandler {
+  public constructor(private readonly templates: ConversationTemplates = new ConversationTemplates()) {}
+
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "message";
   }
 
   public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const items = readItems(node);
+    const texts = await this.templates.render(items.map((item) => item.text), input, session);
     const outputMessages: OutboundMessage[] = [];
     const domainEvents: string[] = [];
 
-    for (const item of items) {
+    for (const [index, item] of items.entries()) {
       if (item.kind !== "text") {
         // El contenido existe en la configuración pero el motor no puede
         // entregarlo. Se deja constancia en lugar de omitirlo en silencio.
@@ -84,7 +80,7 @@ export class MessageNodeHandler implements NodeHandler {
       outputMessages.push({
         channel: input.envelope.channel,
         conversationKey: input.envelope.conversationKey,
-        content: render(item.text, session)
+        content: texts[index]!
       });
     }
 

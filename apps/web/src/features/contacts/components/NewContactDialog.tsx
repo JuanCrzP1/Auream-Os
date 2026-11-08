@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ContactSummary } from "@contracts/ContactContracts";
-import { apiErrorMessage } from "@shared/labels/useLabelCatalog";
+import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { createContact } from "../services/contactsApi";
 
 /** Alta manual de un contacto de WhatsApp (teléfono con código de país). */

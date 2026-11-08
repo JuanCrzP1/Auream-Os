@@ -7,7 +7,8 @@ import { validateIntegration } from "./validateIntegration";
  * Integración — petición HTTP a un servicio externo, con mapeo de la respuesta
  * a campos del contacto. Salidas: Éxito y Error.
  *
- * `executable: false`: el editor está completo; falta el ejecutor HTTP.
+ * Lo ejecuta `IntegrationNodeHandler` con un cliente HTTP protegido (sin
+ * acceso a la red interna, con plazos y tamaños máximos).
  */
 export const integrationTool: ToolDefinition = {
   type: "integration",
@@ -17,7 +18,7 @@ export const integrationTool: ToolDefinition = {
   editorTitle: "Editar integración",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultContent: {},
   defaultConfig: { ...INTEGRATION_DEFAULT_CONFIG },
   outputs: integrationOutputs,

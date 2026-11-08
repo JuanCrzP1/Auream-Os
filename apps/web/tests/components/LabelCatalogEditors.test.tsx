@@ -20,8 +20,16 @@ const RESOURCES: ToolResources = {
   ]
 };
 
-function TagsConEstado({ resources = RESOURCES, tags = [] as string[] }) {
-  const [draft, setDraft] = useState<ToolDraft>({ name: "Etiquetas", content: {}, config: { action: "add", tags } });
+function TagsConEstado({
+  resources = RESOURCES,
+  tags = [] as string[],
+  action = "add"
+}: {
+  resources?: ToolResources;
+  tags?: string[];
+  action?: "add" | "remove";
+}) {
+  const [draft, setDraft] = useState<ToolDraft>({ name: "Etiquetas", content: {}, config: { action, tags } });
   return (
     <>
       <TagsEditor draft={draft} resources={resources} onChange={(patch: NodePatch) => setDraft((d) => ({ ...d, ...patch }) as ToolDraft)} />
@@ -30,37 +38,70 @@ function TagsConEstado({ resources = RESOURCES, tags = [] as string[] }) {
   );
 }
 
-describe("Etiquetas con el catálogo", () => {
-  it("ofrece las etiquetas de la cuenta y un clic las agrega", async () => {
+const elegidas = () => JSON.parse(screen.getByTestId("tags").textContent!) as string[];
+
+describe("Etiquetas: lista del catálogo", () => {
+  it("muestra todas las etiquetas de la cuenta para marcar y desmarcar", async () => {
     render(<TagsConEstado />);
-    const sugerencias = screen.getByRole("group", { name: /sugerencias/i });
 
-    await userEvent.click(screen.getByRole("button", { name: "VIP" }));
+    expect(screen.getAllByRole("checkbox").map((c) => c.textContent)).toEqual(["VIP", "Lead"]);
+    await userEvent.click(screen.getByRole("checkbox", { name: "VIP" }));
+    expect(screen.getByRole("checkbox", { name: "VIP" })).toHaveAttribute("aria-checked", "true");
+    expect(elegidas()).toEqual(["VIP"]);
 
-    expect(screen.getByTestId("tags")).toHaveTextContent('["VIP"]');
-    expect(sugerencias).not.toHaveTextContent("VIP");
+    await userEvent.click(screen.getByRole("checkbox", { name: "VIP" }));
+    expect(elegidas()).toEqual([]);
   });
 
-  it("escribir un nombre conocido usa su escritura del catálogo", async () => {
+  it("el buscador filtra la lista y Enter marca la que coincide", async () => {
     render(<TagsConEstado />);
 
+    await userEvent.type(screen.getByLabelText("Etiquetas a agregar"), "lea");
+    expect(screen.getAllByRole("checkbox").map((c) => c.textContent)).toEqual(["Lead"]);
+    await userEvent.clear(screen.getByLabelText("Etiquetas a agregar"));
     await userEvent.type(screen.getByLabelText("Etiquetas a agregar"), "lead{Enter}");
-
-    expect(screen.getByTestId("tags")).toHaveTextContent('["Lead"]');
+    expect(elegidas()).toEqual(["Lead"]);
   });
 
-  it("avisa de las que no existen: se crearán al usarse", async () => {
-    render(<TagsConEstado />);
+  it("«Crear etiqueta» la guarda en el catálogo con un color y la deja marcada", async () => {
+    const createLabel = vi.fn(async (input: { name: string; color: string }) => ({ ok: true as const, label: { name: input.name, color: input.color } }));
+    render(<TagsConEstado resources={{ ...RESOURCES, createLabel }} />);
 
-    await userEvent.type(screen.getByLabelText("Etiquetas a agregar"), "Nuevo cliente{Enter}");
+    await userEvent.type(screen.getByLabelText("Etiquetas a agregar"), "Recompra");
+    await userEvent.click(screen.getByRole("button", { name: "Crear etiqueta «Recompra»" }));
 
-    expect(screen.getByText(/se crearán en tu catálogo al usarse: Nuevo cliente/i)).toBeInTheDocument();
+    expect(createLabel).toHaveBeenCalledWith({ name: "Recompra", color: expect.stringMatching(/^#[0-9a-f]{6}$/) });
+    expect(createLabel.mock.calls[0]![0].color).not.toBe("#ef4444"); // no repite el color de una existente
+    expect(elegidas()).toEqual(["Recompra"]);
   });
 
-  it("sin catálogo funciona como antes, sin sugerencias", () => {
+  it("si no se puede crear, lo explica y no la marca", async () => {
+    const createLabel = async () => ({ ok: false as const, message: "Ya existe una etiqueta llamada «vip»." });
+    render(<TagsConEstado resources={{ labels: [], createLabel }} />);
+
+    await userEvent.type(screen.getByLabelText("Etiquetas a agregar"), "vip{Enter}");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Ya existe una etiqueta llamada «vip».");
+    expect(elegidas()).toEqual([]);
+  });
+
+  it("al quitar no ofrece crear: solo se quita lo que existe", async () => {
+    render(<TagsConEstado action="remove" />);
+
+    await userEvent.type(screen.getByLabelText("Etiquetas a quitar"), "Nueva");
+    expect(screen.queryByRole("button", { name: /Crear etiqueta/ })).not.toBeInTheDocument();
+    expect(screen.getByText("No hay etiquetas que coincidan con «Nueva».")).toBeInTheDocument();
+  });
+
+  it("una etiqueta guardada que ya no está en el catálogo se ve como pendiente", () => {
+    render(<TagsConEstado tags={["Antigua"]} />);
+
+    expect(screen.getByTitle("No está en tu catálogo: se creará al usarse")).toHaveTextContent("Antigua");
+  });
+
+  it("sin catálogo invita a crear la primera", () => {
     render(<TagsConEstado resources={{ labels: [] }} />);
 
-    expect(screen.queryByRole("group", { name: /sugerencias/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Aún no tienes etiquetas. Escribe un nombre para crear la primera.")).toBeInTheDocument();
   });
 });
 

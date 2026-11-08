@@ -1,0 +1,224 @@
+/* Selector de etiquetas del bloque Etiquetas. Solo tokens del tema; el color
+   de cada etiqueta llega del catálogo en --tag-color. */
+
+.tag-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tag-picker__selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 26px;
+  align-items: center;
+}
+
+.tag-picker__none {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.tag-picker__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--tag-color) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tag-color) 18%, transparent);
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.tag-picker__chip--pending {
+  border-style: dashed;
+  background: transparent;
+}
+
+.tag-picker__chip-remove {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tag-picker__chip-remove:hover {
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+.tag-picker__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tag-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tag-color) 22%, transparent);
+}
+
+/* --- Caja: buscador + lista ------------------------------------------- */
+
+.tag-picker__box {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--kit-field, var(--surface-alt));
+}
+
+.tag-picker__box:focus-within {
+  border-color: var(--kit-accent, var(--primary));
+  box-shadow: 0 0 0 3px var(--kit-accent-soft, transparent);
+}
+
+.tag-picker__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.tag-picker__search svg {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+}
+
+.tag-picker__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+}
+
+.tag-picker__list {
+  max-height: 232px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.tag-picker__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--speed-fast) ease;
+}
+
+.tag-picker__option:hover:not(:disabled) {
+  background: var(--chip-bg);
+}
+
+.tag-picker__option:focus-visible {
+  outline: 2px solid var(--kit-accent, var(--primary));
+  outline-offset: -2px;
+}
+
+.tag-picker__option--checked {
+  background: color-mix(in srgb, var(--tag-color) 10%, transparent);
+}
+
+.tag-picker__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-picker__check {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  color: transparent;
+  transition: background var(--speed-fast) ease, border-color var(--speed-fast) ease;
+}
+
+.tag-picker__check svg {
+  width: 12px;
+  height: 12px;
+}
+
+.tag-picker__option--checked .tag-picker__check {
+  border-color: var(--kit-accent, var(--primary));
+  background: var(--kit-accent, var(--primary));
+  color: var(--on-primary);
+}
+
+.tag-picker__option--create {
+  margin-top: 2px;
+  color: var(--kit-accent, var(--primary));
+  font-weight: 600;
+}
+
+.tag-picker__option--create:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.tag-picker__plus {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 16%, transparent);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.tag-picker__empty {
+  padding: 14px 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.tag-picker__error {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--rose) 32%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rose) 9%, transparent);
+  color: color-mix(in srgb, var(--rose) 80%, var(--text));
+  font-size: 0.78rem;
+}
+
+.tag-picker__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

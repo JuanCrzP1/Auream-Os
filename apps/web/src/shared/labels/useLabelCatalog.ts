@@ -1,22 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { CreateLabelRequest, LabelSummary, UpdateLabelRequest } from "@contracts/ContactContracts";
-import { RequestError } from "@shared/http/RequestError";
 import { createLabel, deleteLabel, fetchLabels, updateLabel } from "./labelsApi";
 
 export type LabelCatalogStatus = "loading" | "ready" | "error";
-
-/** Mensaje legible de un error de la API (409, 422…), o uno genérico. */
-export function apiErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof RequestError) {
-    try {
-      const parsed = JSON.parse(error.body) as { message?: unknown };
-      if (typeof parsed.message === "string" && error.status < 500) return parsed.message;
-    } catch {
-      /* cuerpo no JSON */
-    }
-  }
-  return fallback;
-}
 
 /**
  * useLabelCatalog — el catálogo de etiquetas de la cuenta y sus operaciones.

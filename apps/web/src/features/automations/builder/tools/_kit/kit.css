@@ -361,49 +361,6 @@
   font-size: 0.82rem;
 }
 
-/* Chip con color propio (etiquetas del catálogo). */
-.kit-chip--colored {
-  background: color-mix(in srgb, var(--kit-chip-color) 20%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kit-chip-color) 45%, transparent);
-}
-
-.kit-chip-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.kit-chip-suggestion {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  border: 1px dashed var(--border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: 0.74rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color var(--speed-fast) ease, border-color var(--speed-fast) ease;
-}
-
-.kit-chip-suggestion:hover,
-.kit-chip-suggestion:focus-visible {
-  border-color: var(--kit-chip-color, var(--kit-accent, var(--primary)));
-  color: var(--text);
-  outline: none;
-}
-
-.kit-chip-suggestion__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--kit-chip-color, var(--muted));
-}
-
 /* ----- Variables y avisos ----- */
 
 .kit-variables {

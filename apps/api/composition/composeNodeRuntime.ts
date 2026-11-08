@@ -16,6 +16,9 @@ import { TagsNodeHandler } from "../../../flow-engine/nodes/tags/TagsNodeHandler
 import type { RoundRobinCounter } from "../../../flow-engine/ports/RoundRobinCounter";
 import { InMemoryRoundRobinCounter } from "../../../infrastructure/persistence/memory/InMemoryRoundRobinCounter";
 import type { ContactDirectory } from "../../../flow-engine/ports/ContactDirectory";
+import type { HttpRequester } from "../../../flow-engine/ports/HttpRequester";
+import { ConversationTemplates } from "../../../flow-engine/templates/ConversationTemplates";
+import { DisabledHttpRequester } from "../../../infrastructure/http/DisabledHttpRequester";
 import { ContactDirectoryService } from "../../../domains/contacts/application/ContactDirectoryService";
 import {
   InMemoryContactRepository,
@@ -29,14 +32,21 @@ export interface NodeRuntimeDependencies {
   readonly roundRobin: RoundRobinCounter;
   /** Contacto de la conversación. Simulación: en memoria; producción: PostgreSQL. */
   readonly contacts: ContactDirectory;
+  /** Peticiones de la Integración. Producción: `SafeHttpRequester`. */
+  readonly http: HttpRequester;
 }
 
-/** Dependencias aisladas para simular: no tocan turnos ni contactos reales. */
-export function simulationDependencies(): NodeRuntimeDependencies {
+/**
+ * Dependencias aisladas para simular: no tocan turnos ni contactos reales.
+ * Sin red por defecto; la API inyecta el cliente HTTP protegido para que
+ * «Probar» y la simulación del builder llamen al servicio de verdad.
+ */
+export function simulationDependencies(overrides: Partial<Pick<NodeRuntimeDependencies, "http">> = {}): NodeRuntimeDependencies {
   const store = new InMemoryContactsStore();
   return {
     roundRobin: new InMemoryRoundRobinCounter(),
-    contacts: new ContactDirectoryService(new InMemoryContactRepository(store), new InMemoryLabelRepository(store))
+    contacts: new ContactDirectoryService(new InMemoryContactRepository(store), new InMemoryLabelRepository(store)),
+    http: overrides.http ?? new DisabledHttpRequester()
   };
 }
 
@@ -55,10 +65,12 @@ export function simulationDependencies(): NodeRuntimeDependencies {
 export function composeNodeRuntime(
   dependencies: NodeRuntimeDependencies = simulationDependencies()
 ): NodeRuntime {
+  // Los textos que se envían al cliente resuelven variables con el contacto real.
+  const templates = new ConversationTemplates(dependencies.contacts);
   return new NodeRuntime([
     new StartNodeHandler(),
-    new MessageNodeHandler(),
-    new QuestionNodeHandler(),
+    new MessageNodeHandler(templates),
+    new QuestionNodeHandler(templates),
     new TagsNodeHandler(dependencies.contacts),
     new PaymentProofNodeHandler(),
     new ConditionNodeHandler(dependencies.contacts),
@@ -66,8 +78,8 @@ export function composeNodeRuntime(
     new PixelNodeHandler(),
     new AiNodeHandler(),
     new DelayNodeHandler(),
-    new IntegrationNodeHandler(),
-    new MenuNodeHandler(),
+    new IntegrationNodeHandler(dependencies.http, dependencies.contacts),
+    new MenuNodeHandler(templates),
     new NotificationNodeHandler(),
     new EndNodeHandler()
   ]);

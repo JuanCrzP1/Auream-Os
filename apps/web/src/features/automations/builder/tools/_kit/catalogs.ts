@@ -1,4 +1,5 @@
 import type { Option } from "./fields";
+import { BUILT_IN_VARIABLES } from "@contracts/TemplateVariables";
 
 // ---------------------------------------------------------------------------
 // Catálogos compartidos por los editores. Auream se vende en varios países:
@@ -87,8 +88,8 @@ export const CURRENCIES: ReadonlyArray<Option<string>> = Object.entries(CURRENCY
 
 export const CURRENCY_CODES = CURRENCIES.map((currency) => currency.value);
 
-/** Variables de contacto disponibles en plantillas. */
-export const CONTACT_VARIABLES = ["{first_name}", "{full_name}", "{phone}", "{email}", "{last_message}"] as const;
+/** Variables del sistema en plantillas. Fuente única: `contracts/TemplateVariables.ts`. */
+export const CONTACT_VARIABLES: ReadonlyArray<string> = BUILT_IN_VARIABLES.map((variable) => `{${variable.name}}`);
 
 /** Valores de ejemplo para mostrar variables en vistas previas. */
 const SAMPLE_VALUES: Readonly<Record<string, string>> = {

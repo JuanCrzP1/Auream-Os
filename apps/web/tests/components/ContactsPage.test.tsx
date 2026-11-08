@@ -136,3 +136,44 @@ describe("catálogo de etiquetas", () => {
     expect(api.contacts()[0]?.labels).toEqual([]);
   });
 });
+
+describe("estados de la lista", () => {
+  it("si falla la carga, muestra un aviso claro y «Reintentar» la recupera", async () => {
+    const api = stubContactsApi({ contacts: [ANA], labels: [VIP] });
+    const real = api.fetchMock.getMockImplementation()!;
+    let caida = true;
+    api.fetchMock.mockImplementation(async (url: string, init?: RequestInit) =>
+      caida ? ({ ok: false, status: 503, text: async () => "{}", json: async () => ({}) } as unknown as Response) : real(url, init)
+    );
+    render(<ContactsPage />);
+
+    const aviso = await screen.findByRole("alert");
+    expect(aviso).toHaveTextContent("No pudimos cargar tus contactos");
+
+    caida = false;
+    await userEvent.click(within(aviso).getByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByRole("button", { name: "Ana Pérez" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("sin resultados ofrece limpiar los filtros", async () => {
+    stubContactsApi({ contacts: [ANA] });
+    render(<ContactsPage />);
+    await screen.findByRole("button", { name: "Ana Pérez" });
+
+    await userEvent.type(screen.getByLabelText("Buscar contactos"), "zzz");
+    expect(await screen.findByText("Sin resultados")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+    expect(await screen.findByRole("button", { name: "Ana Pérez" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Buscar contactos")).toHaveValue("");
+  });
+
+  it("sin contactos invita a agregar uno", async () => {
+    stubContactsApi();
+    render(<ContactsPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Agregar contacto" }));
+    expect(screen.getByRole("dialog", { name: "Nuevo contacto" })).toBeInTheDocument();
+  });
+});

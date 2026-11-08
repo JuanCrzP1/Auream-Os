@@ -13,14 +13,25 @@ import {
 } from "./integrationConfig";
 import { integrationTool } from "./definition";
 import { IntegrationIcon } from "./IntegrationIcon";
+import { IntegrationTestPanel } from "./IntegrationTestPanel";
+import { suggestFieldName } from "./suggestFieldName";
 
-export function IntegrationEditor({ draft, onChange }: ToolEditorProps) {
+export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readIntegrationConfig(draft.config);
   const update = (patch: Partial<IntegrationConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
 
   const addHeader = () => update({ headers: [...config.headers, { id: createLocalId("h"), key: "", value: "" }] });
   const addMapping = () =>
     update({ responseMappings: [...config.responseMappings, { id: createLocalId("m"), path: "", field: "" }] });
+  // Desde «Probar»: guardar un dato de la respuesta con un nombre de campo propuesto.
+  const savePath = (path: string) =>
+    update({
+      responseMappings: [
+        ...config.responseMappings,
+        { id: createLocalId("m"), path, field: suggestFieldName(path, config.responseMappings.map((mapping) => mapping.field)) }
+      ]
+    });
+  const hasBody = methodHasBody(config.method);
 
   return (
     <ToolEditorLayout
@@ -90,23 +101,32 @@ export function IntegrationEditor({ draft, onChange }: ToolEditorProps) {
         )}
       </CardSection>
 
-      {methodHasBody(config.method) ? (
+      {hasBody ? (
         <CardSection step={3} title="Cuerpo" description="Lo que se envía al servicio.">
           <TextAreaField label="Contenido (JSON o texto)" value={config.body} monospace onChange={(body) => update({ body })} />
           <VariableHint variables={CONTACT_VARIABLES} />
+          <p className="kit-hint">También cualquier campo del contacto o dato guardado en la conversación, p. ej. {"{ciudad}"}.</p>
         </CardSection>
       ) : null}
 
       <CardSection
-        step={methodHasBody(config.method) ? 4 : 3}
+        step={hasBody ? 4 : 3}
+        title="Probar"
+        description="Envía la petición ahora y elige qué datos de la respuesta guardar."
+      >
+        <IntegrationTestPanel config={config} rawConfig={draft.config} test={resources?.testIntegration} onSavePath={savePath} />
+      </CardSection>
+
+      <CardSection
+        step={hasBody ? 5 : 4}
         title="Guardar datos de la respuesta"
-        description="Copia valores de la respuesta a campos del contacto."
+        description="Copia valores de la respuesta a campos del contacto. Quedan disponibles como {campo} en los bloques siguientes."
         aside={<Counter value={config.responseMappings.length} />}
       >
         {config.responseMappings.length === 0 ? (
           <EmptyState
             title="No se guarda nada"
-            description="Opcional. Ej.: guardar body.id en el campo id_crm."
+            description="Opcional. Ej.: guardar lead.id en el campo id_crm, o usa «Probar» y elige."
             action={<AddButton label="Añadir dato" onClick={addMapping} />}
           />
         ) : (
@@ -116,7 +136,7 @@ export function IntegrationEditor({ draft, onChange }: ToolEditorProps) {
                 <li key={mapping.id} className="kit-row">
                   <InlineInput
                     value={mapping.path}
-                    placeholder="Ruta: body.id"
+                    placeholder="Ruta: lead.id"
                     monospace
                     ariaLabel={`Ruta en la respuesta ${index + 1}`}
                     onChange={(path) => update({ responseMappings: replaceById(config.responseMappings, mapping.id, { path }) })}

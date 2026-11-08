@@ -24,7 +24,11 @@ import { JsonBuilderWorkspaceRepository } from "../../../infrastructure/persiste
 import { JsonFolderRepository } from "../../../infrastructure/persistence/json/JsonFolderRepository";
 import { BuilderSimulationRuntimeFactory } from "./BuilderSimulationRuntimeFactory";
 import { buildInitialBuilderWorkspace } from "./buildInitialBuilderWorkspace";
-import { composeNodeRuntime } from "./composeNodeRuntime";
+import { SafeHttpRequester } from "../../../infrastructure/http/SafeHttpRequester";
+import { InMemoryRateLimiter } from "../../../platform/security/rate-limiting/application/InMemoryRateLimiter";
+import { TestIntegrationRequestService } from "../../../domains/automations/builder/application/TestIntegrationRequestService";
+import { EngineIntegrationRequestTester } from "./EngineIntegrationRequestTester";
+import { composeNodeRuntime, simulationDependencies } from "./composeNodeRuntime";
 import type { ApiConfig } from "../config/loadApiConfig";
 
 // ---------------------------------------------------------------------------
@@ -40,6 +44,7 @@ import type { ApiConfig } from "../config/loadApiConfig";
 
 export interface ApiServices {
   readonly getWorkspaceService: GetBuilderWorkspaceService;
+  readonly testIntegrationService: TestIntegrationRequestService;
   readonly saveDraftService: SaveDraftService;
   readonly simulateDraftService: SimulateDraftService;
   readonly deleteAutomationService: DeleteAutomationService;
@@ -97,6 +102,9 @@ function composeAutomationsPersistence(config: ApiConfig, sqlClient: SqlClient):
 export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient): ApiServices {
   const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
     composeAutomationsPersistence(config, sqlClient);
+  // Un único cliente HTTP protegido (SSRF, plazos, tamaños) para la simulación
+  // y para «Probar» del bloque Integración.
+  const http = new SafeHttpRequester({ allowPrivateNetworks: config.integrationsAllowPrivateNetwork });
 
   return {
     getWorkspaceService: new GetBuilderWorkspaceService(
@@ -106,8 +114,9 @@ export function composeBuilderServices(config: ApiConfig, sqlClient: SqlClient):
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
     simulateDraftService: new SimulateDraftService(
-      new BuilderSimulationRuntimeFactory(composeNodeRuntime(), config.defaultTimezone)
+      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http })), config.defaultTimezone)
     ),
+    testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), new InMemoryRateLimiter()),
     deleteAutomationService: new DeleteAutomationService(unitOfWork),
     createAutomationService: new CreateAutomationService(unitOfWork, buildInitialBuilderWorkspace),
     duplicateAutomationService: new DuplicateAutomationService(unitOfWork, buildInitialBuilderWorkspace),

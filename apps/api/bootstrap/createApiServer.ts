@@ -3,6 +3,7 @@ import { applyCorsHeaders } from "../middleware/applyCorsHeaders";
 import { routeApiRequest, type ApiRouterDependencies } from "../routes/routeApiRequest";
 import { sendJson } from "../http/sendJson";
 import { toErrorResponse } from "../http/toErrorResponse";
+import { TooManyRequestsError } from "../../../platform/observability/errors/TooManyRequestsError";
 import type { ApiConfig } from "../config/loadApiConfig";
 import type { ErrorLogger } from "../../../platform/observability/logging/ErrorLogger";
 
@@ -38,6 +39,9 @@ export function createApiServer(config: ApiConfig, dependencies: ApiServerDepend
       );
 
       const { statusCode, message } = toErrorResponse(error);
+      if (error instanceof TooManyRequestsError) {
+        response.setHeader("Retry-After", String(Math.max(1, Math.ceil(error.retryAfterMs / 1000))));
+      }
       sendJson(response, statusCode, { message });
     }
   });

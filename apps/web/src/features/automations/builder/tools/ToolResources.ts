@@ -1,11 +1,17 @@
+import type { IntegrationTestRequest, IntegrationTestResult } from "@contracts/IntegrationTestContracts";
+
 // ---------------------------------------------------------------------------
-// Recursos de la cuenta que un editor puede OFRECER al configurar (etiquetas,
-// y mañana integraciones, píxeles, credenciales de IA…).
+// Lo que un editor puede usar de la cuenta al configurar:
 //
-// Llegan por props, ya cargados: una herramienta nunca llama a la API. Quien
-// los carga es el builder (`BuilderResourcesProvider`), una vez por pantalla.
-// Son sugerencias, no validación: un flujo puede nombrar algo que aún no existe
-// (el motor crea las etiquetas que falten).
+//   · DATOS para ofrecer (el catálogo de etiquetas; mañana píxeles,
+//     credenciales de IA…).
+//   · CAPACIDADES puntuales (crear una etiqueta, probar una integración).
+//
+// Llegan por props, ya preparados: una herramienta nunca llama a la API ni
+// conoce el contexto que los carga (`BuilderResourcesProvider`). Las
+// capacidades no lanzan: devuelven un resultado o un mensaje para mostrar.
+// Los datos son sugerencias, no validación: un flujo puede nombrar algo que
+// aún no existe (el motor crea las etiquetas que falten).
 // ---------------------------------------------------------------------------
 
 /** Etiqueta del catálogo de la cuenta, tal como la ofrece un editor. */
@@ -14,7 +20,22 @@ export interface ToolLabelOption {
   readonly color: string;
 }
 
-export interface ToolResources {
+export type IntegrationTestOutcome =
+  | { readonly ok: true; readonly result: IntegrationTestResult }
+  | { readonly ok: false; readonly message: string };
+
+export type CreateLabelOutcome =
+  | { readonly ok: true; readonly label: ToolLabelOption }
+  | { readonly ok: false; readonly message: string };
+
+export interface ToolCapabilities {
+  /** Crea una etiqueta en el catálogo de la cuenta (queda para todos los flujos). */
+  readonly createLabel?: (input: { readonly name: string; readonly color: string }) => Promise<CreateLabelOutcome>;
+  /** Envía una vez la petición de un bloque Integración y devuelve la respuesta. */
+  readonly testIntegration?: (request: IntegrationTestRequest) => Promise<IntegrationTestOutcome>;
+}
+
+export interface ToolResources extends ToolCapabilities {
   readonly labels: ReadonlyArray<ToolLabelOption>;
 }
 

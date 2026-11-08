@@ -67,17 +67,38 @@ Los nombres de directorio coinciden exactamente con los valores del tipo `NodeTy
 
 | Handler | Estado |
 |---|---|
-| `start`, `message`, `question`, `end` | `IMPLEMENTADO` |
+| `start`, `end` | `IMPLEMENTADO` |
+| `message`, `question` | `IMPLEMENTADO` — sus textos resuelven variables (ver «Variables en plantillas»). |
 | `condition` | `IMPLEMENTADO` (C10) — `evaluateCondition`: día, hora y fecha en la zona del negocio (`RuntimeInput.timezone`), ventana de 24 h, datos y campos del contacto; «todas»/«cualquiera». Las etiquetas se leen del contacto real (Contactos). Atención, asesor y variables globales se reportan como no disponibles (regla no cumplida) hasta que existan Conversaciones. Sale por `true`/`false`. |
-| `menu` | `IMPLEMENTADO` (C10) — envía el menú (texto numerado + `OutboundMessage.interactive` para botones/lista nativos) y espera; reconoce la opción por id nativo, número o texto (`matchMenuReply`) y sale por ella o por `menu-other`. |
+| `menu` | `IMPLEMENTADO` (C10) — encabezado, mensaje y pie con variables; envía el menú (texto numerado + `OutboundMessage.interactive` para botones/lista nativos) y espera; reconoce la opción por id nativo, número o texto (`matchMenuReply`) y sale por ella o por `menu-other`. |
 | `distributor` | `IMPLEMENTADO` (C10) — turnos por cuenta, flujo y bloque con el puerto `RoundRobinCounter` (memoria en simulación; `SqlRoundRobinCounter` atómico en producción). |
 | `delay` | `PARCIAL` — pausa el flujo (`delayed`); reanudarlo es de la cola de tareas (C6). |
 | `tags` | `IMPLEMENTADO` (C10) — resuelve (o crea) el contacto que escribe por canal e identificador y le agrega o quita etiquetas a través del puerto `ContactDirectory`; al agregar, crea en el catálogo las que falten. Salida única. |
-| `payment-proof`, `pixel`, `integration`, `notification`, `ai` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
+| `integration` | `IMPLEMENTADO` (C10) — petición HTTP con variables codificadas según dónde caen (URL, cabecera, JSON) vía el puerto `HttpRequester`; 2xx sale por `success` y guarda los datos mapeados en el contacto (`ContactDirectory.setFields`) y en la conversación; cualquier otra cosa sale por `failure` con el motivo. El resultado no incluye cabeceras ni cuerpo enviados (pueden llevar credenciales). |
+| `payment-proof`, `pixel`, `notification`, `ai` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
 
 La forma de la configuración de cada bloque es un contrato compartido con el builder (`contracts/*Config.ts`, lectores en `contracts/ConfigReaders.ts`): los dos lados leen lo mismo.
 
 `nodes/ai/AiNodeHandler.ts` es un tipo de nodo del grafo. **No es un agente** ni tiene relación con `domains/ai-agents` ni con el AI Sales Engine. Un flow con nodo de IA sigue siendo determinístico.
+
+### Variables en plantillas
+
+Una sola sintaxis para el builder y el motor (`contracts/TemplateVariables.ts`): `{nombre}`, con valor por defecto `{nombre|texto}` y el formato heredado `{{context.clave}}`.
+
+- **De dónde sale el valor** (`templates/templateResolver.ts`): variables del sistema (`first_name`, `full_name`, `phone`, `email`, `last_message`) → campos personalizados del contacto → datos guardados en la conversación. Mismo orden que usa el Condicional.
+- **Codificación según el destino**: texto tal cual en mensajes; componente de URL, cadena JSON escapada o cabecera sin saltos de línea en la Integración. Un dato del cliente nunca cambia la forma de la petición.
+- **Mensajes** (`templates/ConversationTemplates.ts`): Mensaje, Menú y Esperar respuesta resuelven sus textos; el contacto solo se consulta si el texto usa variables.
+
+### Peticiones salientes (Integración)
+
+El motor declara `ports/HttpRequester.ts`; la composición inyecta `infrastructure/http/SafeHttpRequester.ts`:
+
+- **SSRF**: solo Internet público. La IP se valida después de resolver el DNS y es la misma con la que se conecta; IP escritas en la URL, redirecciones e IPv4 dentro de IPv6 incluidas (`blockedAddresses.ts`).
+- **Límites**: 10 s en total, 3 redirecciones (sin `Authorization` ni `Cookie` al cambiar de origen), cuerpo enviado ≤ 256 KB, respuesta ≤ 1 MB también tras descomprimir.
+- `INTEGRATIONS_ALLOW_PRIVATE_NETWORK=true` permite la red privada **solo en desarrollo**; la API no arranca con él en producción.
+- Sin red (tests): `DisabledHttpRequester`, que el bloque trata como un fallo más.
+
+«Probar» del editor (`POST /api/builder/integrations/test`, permiso `flows.write`, 20 pruebas por minuto y cuenta) recorre el mismo código que el bloque (`runIntegrationRequest` + `mapResponseFields`) con valores de ejemplo, y devuelve las rutas de la respuesta para elegir qué guardar.
 
 ### Nodo de IA y proveedores
 

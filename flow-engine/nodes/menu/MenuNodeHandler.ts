@@ -3,6 +3,7 @@ import type { NodeExecutionResult, OutboundMessage, RuntimeInput } from "../../.
 import type { Session } from "../../../contracts/RuntimeContracts";
 import { MENU_OUTPUT, readMenuConfig, type MenuConfig } from "../../../contracts/MenuConfig";
 import type { NodeHandler } from "../NodeHandler";
+import { ConversationTemplates } from "../../templates/ConversationTemplates";
 import { matchMenuReply, renderMenuText } from "./matchMenuReply";
 
 // ---------------------------------------------------------------------------
@@ -46,11 +47,13 @@ function menuMessage(config: MenuConfig, input: RuntimeInput): OutboundMessage {
 }
 
 export class MenuNodeHandler implements NodeHandler {
+  public constructor(private readonly templates: ConversationTemplates = new ConversationTemplates()) {}
+
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "menu";
   }
 
-  public async execute(node: FlowNode, input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
+  public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const config = readMenuConfig(node.config);
     const payload = input.envelope.payload;
     const replied = input.isWaitingInput && (typeof payload["optionId"] === "string" || (typeof payload["text"] === "string" && payload["text"].trim() !== ""));
@@ -68,9 +71,11 @@ export class MenuNodeHandler implements NodeHandler {
     }
 
     const waitDeadlineAt = deadline(config, input.envelope.receivedAt);
+    // Encabezado, mensaje y pie admiten variables; las opciones no (son lo que el cliente elige).
+    const [title, message, footer] = await this.templates.render([config.title, config.message, config.footer], input, session);
     return {
       executionStatus: "waiting_input",
-      outputMessages: [menuMessage(config, input)],
+      outputMessages: [menuMessage({ ...config, title: title!, message: message!, footer: footer! }, input)],
       contextPatch: {},
       nodeResult: waitDeadlineAt ? { waitDeadlineAt } : {},
       domainEvents: [`menu_prompted:${node.id}`]

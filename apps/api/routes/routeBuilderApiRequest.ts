@@ -6,6 +6,9 @@ import { sendJson } from "../http/sendJson";
 import { GetBuilderWorkspaceService } from "../../../domains/automations/builder/application/GetBuilderWorkspaceService";
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
 import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
+import { TestIntegrationRequestService } from "../../../domains/automations/builder/application/TestIntegrationRequestService";
+import type { IntegrationTestRequest } from "../../../contracts/IntegrationTestContracts";
+import { parseJsonBody } from "../http/parseJsonBody";
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
 import { FlowPermissions } from "../../../platform/authorization/permissions/FlowPermissions";
@@ -15,6 +18,7 @@ export interface BuilderApiServices {
   readonly getWorkspaceService: GetBuilderWorkspaceService;
   readonly saveDraftService: SaveDraftService;
   readonly simulateDraftService: SimulateDraftService;
+  readonly testIntegrationService: TestIntegrationRequestService;
 }
 
 /** Ids de flujo: uuid u otros identificadores seguros para URL. */
@@ -31,6 +35,19 @@ export async function routeBuilderApiRequest(
   const url = new URL(request.url ?? "/", "http://localhost");
   const pathParts = url.pathname.split("/").filter(Boolean);
   const tenantId = requestContext.tenantId;
+
+  // «Probar» del bloque Integración: no depende de un flujo guardado (se prueba
+  // lo que hay en el editor). Quien edita flujos puede probar sus bloques.
+  if (url.pathname === "/api/builder/integrations/test") {
+    if (request.method !== "POST") {
+      sendJson(response, 405, { message: "Method not allowed" });
+      return;
+    }
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    const body = await parseJsonBody<Partial<IntegrationTestRequest>>(request);
+    sendJson(response, 200, await services.testIntegrationService.execute(tenantId, body));
+    return;
+  }
 
   if (pathParts.length < 4 || pathParts[0] !== "api" || pathParts[1] !== "builder" || pathParts[2] !== "flows") {
     sendJson(response, 404, { message: "Route not found" });

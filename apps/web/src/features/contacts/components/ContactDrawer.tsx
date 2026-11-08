@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ContactSummary, LabelSummary } from "@contracts/ContactContracts";
-import { apiErrorMessage } from "@shared/labels/useLabelCatalog";
+import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { setContactLabels, updateContact } from "../services/contactsApi";
 import { LabelChip } from "./LabelChip";
 

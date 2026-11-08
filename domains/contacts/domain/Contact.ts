@@ -1,4 +1,4 @@
-import type { ContactFieldValue } from "../../../contracts/ContactContracts";
+import { CONTACT_FIELD_KEY_PATTERN, MAX_CONTACT_FIELD_TEXT, type ContactFieldValue } from "../../../contracts/ContactContracts";
 
 /** Un contacto de una cuenta. Su identidad es (canal, clave externa). */
 export interface Contact {
@@ -31,8 +31,8 @@ export function normalizeEmail(value: string | null | undefined): string | null 
 }
 
 /** Nombre de campo personalizado: letras, números, punto y guion bajo. */
-export const CUSTOM_FIELD_KEY = /^[A-Za-z_][A-Za-z0-9_.]{0,63}$/;
+export const CUSTOM_FIELD_KEY = CONTACT_FIELD_KEY_PATTERN;
 
 export function isValidCustomFieldValue(value: unknown): value is ContactFieldValue {
-  return (typeof value === "string" && value.length <= 2000) || (typeof value === "number" && Number.isFinite(value)) || typeof value === "boolean";
+  return (typeof value === "string" && value.length <= MAX_CONTACT_FIELD_TEXT) || (typeof value === "number" && Number.isFinite(value)) || typeof value === "boolean";
 }

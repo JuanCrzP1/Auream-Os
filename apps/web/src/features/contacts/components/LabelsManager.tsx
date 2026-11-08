@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { DEFAULT_LABEL_COLOR, type LabelSummary } from "@contracts/ContactContracts";
-import { apiErrorMessage } from "@shared/labels/useLabelCatalog";
+import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { ColorSwatches } from "./ColorSwatches";
 import { LabelChip } from "./LabelChip";
+import { ContactsState, RetryButton } from "./ContactsState";
+import type { LabelCatalogStatus } from "@shared/labels/useLabelCatalog";
 
 interface LabelsManagerProps {
   readonly labels: ReadonlyArray<LabelSummary>;
+  readonly status: LabelCatalogStatus;
+  readonly onRetry: () => Promise<unknown>;
   readonly onCreate: (input: { name: string; color: string }) => Promise<unknown>;
   readonly onUpdate: (id: string, input: { name: string; color: string }) => Promise<unknown>;
   readonly onDelete: (id: string) => Promise<unknown>;
@@ -69,7 +73,8 @@ function LabelRow({ label, onUpdate, onDelete }: { readonly label: LabelSummary 
  * Catálogo de etiquetas de la cuenta: crear, renombrar, recolorear y borrar.
  * Son las mismas que usan el bloque Etiquetas y las reglas del Condicional.
  */
-export function LabelsManager({ labels, onCreate, onUpdate, onDelete }: LabelsManagerProps) {
+export function LabelsManager({ labels, status, onRetry, onCreate, onUpdate, onDelete }: LabelsManagerProps) {
+  const [retrying, setRetrying] = useState(false);
   const [name, setName] = useState("");
   const [color, setColor] = useState<string>(DEFAULT_LABEL_COLOR);
   const [error, setError] = useState<string | null>(null);
@@ -94,9 +99,30 @@ export function LabelsManager({ labels, onCreate, onUpdate, onDelete }: LabelsMa
         {error ? <p className="contacts-error" role="alert">{error}</p> : null}
       </form>
 
-      {labels.length === 0 ? (
-        <p className="contacts-empty">Aún no hay etiquetas. Créalas aquí o deja que el bloque Etiquetas las cree al usarlas.</p>
-      ) : (
+      {status === "error" || retrying ? (
+        <ContactsState
+          role="alert"
+          tone="warning"
+          icon="offline"
+          title="No pudimos cargar tus etiquetas"
+          description="Parece un problema de conexión momentáneo. Vuelve a intentarlo en unos segundos."
+          actions={
+            <RetryButton
+              busy={retrying}
+              onRetry={() => {
+                setRetrying(true);
+                void onRetry().finally(() => setRetrying(false));
+              }}
+            />
+          }
+        />
+      ) : labels.length === 0 && status === "ready" ? (
+        <ContactsState
+          icon="tag"
+          title="Aún no tienes etiquetas"
+          description="Créalas arriba para clasificar a tus contactos, o deja que el bloque Etiquetas de tus flujos las cree al usarlas."
+        />
+      ) : labels.length === 0 ? null : (
         <ul className="contacts-label-list">
           {labels.map((label) => (
             <LabelRow key={label.id} label={label} onUpdate={onUpdate} onDelete={onDelete} />

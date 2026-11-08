@@ -1,18 +1,16 @@
 import type { ToolEditorProps } from "../ToolUi";
-import { ChipsField } from "../_kit/fields";
 import { CardSection, ChoiceCards, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { MinusTagIcon, PlusTagIcon } from "../_kit/icons";
 import { readTagsConfig, type TagsConfig } from "./tagsConfig";
 import { tagsTool } from "./definition";
 import { TagsIcon } from "./TagsIcon";
+import { TagPicker } from "./TagPicker";
 
 export function TagsEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readTagsConfig(draft.config);
   const update = (patch: Partial<TagsConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
   const adding = config.action === "add";
   const catalog = resources?.labels ?? [];
-  const suggestions = catalog.map((label) => ({ value: label.name, color: label.color }));
-  const unknown = config.tags.filter((tag) => !catalog.some((label) => label.name.toLocaleLowerCase() === tag.toLocaleLowerCase()));
 
   return (
     <ToolEditorLayout
@@ -37,14 +35,14 @@ export function TagsEditor({ draft, onChange, resources }: ToolEditorProps) {
       <CardSection
         step={2}
         title={adding ? "Etiquetas a agregar" : "Etiquetas a quitar"}
-        description="Elige de tus etiquetas o escribe una nueva y pulsa Enter."
+        description={adding ? "Marca las que quieras; todas se aplican en este mismo bloque." : "Marca las que quieras retirar del contacto."}
       >
-        <ChipsField
+        <TagPicker
           label={adding ? "Etiquetas a agregar" : "Etiquetas a quitar"}
-          values={config.tags}
-          placeholder="cliente, vip, interesado…"
-          suggestions={suggestions}
-          {...(adding && unknown.length > 0 ? { hint: `Se crearán en tu catálogo al usarse: ${unknown.join(", ")}.` } : {})}
+          catalog={catalog}
+          selected={config.tags}
+          allowCreate={adding}
+          createLabel={resources?.createLabel}
           onChange={(tags) => update({ tags })}
         />
       </CardSection>

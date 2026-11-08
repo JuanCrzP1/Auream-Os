@@ -45,6 +45,12 @@ export interface ApiConfig {
    * no tengan la suya propia (ajustes de cuenta). `DEFAULT_TENANT_TIMEZONE`.
    */
   readonly defaultTimezone: string;
+  /**
+   * Permite que las integraciones lleguen a la red privada (localhost, LAN).
+   * Solo desarrollo, para probar contra servicios locales:
+   * `INTEGRATIONS_ALLOW_PRIVATE_NETWORK=true`. Prohibido en producción.
+   */
+  readonly integrationsAllowPrivateNetwork: boolean;
 }
 
 /** ¿Es una zona IANA que el motor sabe usar? */
@@ -110,6 +116,10 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (!isValidTimezone(defaultTimezone)) {
     throw new ApiConfigError(`DEFAULT_TENANT_TIMEZONE no es una zona horaria válida: "${defaultTimezone}".`);
   }
+  const integrationsAllowPrivateNetwork = env["INTEGRATIONS_ALLOW_PRIVATE_NETWORK"] === "true";
+  if (isProduction && integrationsAllowPrivateNetwork) {
+    throw new ApiConfigError("INTEGRATIONS_ALLOW_PRIVATE_NETWORK no se puede activar en producción: abriría la red interna a las integraciones.");
+  }
   if (isProduction && store !== "sql") {
     throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
   }
@@ -122,6 +132,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     devTenantId: env["DEV_TENANT_ID"] ?? "test-tenant",
     dataDirectory: env["DATA_DIR"] ?? join(process.cwd(), "data", "builder-workspaces"),
     automationsStore: store,
-    defaultTimezone
+    defaultTimezone,
+    integrationsAllowPrivateNetwork
   };
 }

@@ -14,6 +14,15 @@ export const DEFAULT_LABEL_COLOR = LABEL_COLORS[0];
 /** Valor de un campo personalizado del contacto. */
 export type ContactFieldValue = string | number | boolean;
 
+/**
+ * Clave válida de un campo personalizado (`ciudad`, `id_crm`, `crm.id`). Es
+ * también el formato de una variable en plantillas: `{ciudad}`.
+ */
+export const CONTACT_FIELD_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_.]{0,63}$/;
+
+/** Longitud máxima del texto de un campo personalizado. */
+export const MAX_CONTACT_FIELD_TEXT = 2000;
+
 export interface LabelSummary {
   readonly id: string;
   readonly name: string;

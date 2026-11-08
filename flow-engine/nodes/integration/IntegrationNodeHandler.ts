@@ -1,40 +1,88 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
-import type { NodeExecutionResult, RuntimeInput } from "../../../contracts/RuntimeContracts";
-import type { Session } from "../../../contracts/RuntimeContracts";
+import type { NodeExecutionResult, RuntimeInput, Session } from "../../../contracts/RuntimeContracts";
+import { INTEGRATION_OUTPUT, readIntegrationConfig } from "../../../contracts/IntegrationConfig";
+import { identityOf, type ContactDirectory } from "../../ports/ContactDirectory";
+import type { HttpRequester } from "../../ports/HttpRequester";
+import { templateResolver } from "../../templates/templateResolver";
 import type { NodeHandler } from "../NodeHandler";
+import { mapResponseFields, runIntegrationRequest } from "./runIntegrationRequest";
 
 // ---------------------------------------------------------------------------
-// IntegrationNodeHandler
+// IntegrationNodeHandler — el bloque «Integración».
 //
-// Estado: NO IMPLEMENTADO.
+// Llama al servicio externo con las variables del contacto y la conversación;
+// si responde 2xx guarda los datos mapeados en el contacto (y en la
+// conversación, para usarlos como `{campo}` en los bloques siguientes) y sale
+// por «Éxito». Si no, sale por «Error» con el motivo en el resultado.
 //
-// Un nodo de integración debe invocar un efecto externo (webhook, API de
-// dominio, CRM). Ese ejecutor todavía no existe, así que el nodo NO se ejecuta:
-// falla de forma explícita en lugar de simular un resultado.
-//
-// Antes este handler escribía en contexto un `config.mockResult` inventado, lo
-// que hacía parecer que la acción se había ejecutado. Se retiró: el runtime real
-// no finge integraciones.
-//
-// Se llamó `ActionNodeHandler` (tipo `action`). Es el mismo concepto con el
-// nombre que usa el producto: una sola herramienta, no dos.
+// El resultado NO incluye cabeceras ni cuerpo enviados: pueden llevar
+// credenciales. Solo el host, el estado y los motivos.
 // ---------------------------------------------------------------------------
 
 export class IntegrationNodeHandler implements NodeHandler {
+  public constructor(
+    private readonly http: HttpRequester,
+    private readonly contacts: ContactDirectory
+  ) {}
+
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "integration";
   }
 
-  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
+  public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
+    const config = readIntegrationConfig(node.config);
+    const contact = await this.contacts.resolve(session.tenantId, identityOf(input.envelope));
+    const run = await runIntegrationRequest(config, templateResolver(input, contact), this.http);
+    const host = hostOf(config.url);
+    const missingVariableEvents = run.missingVariables.map((name) => `integration_variable_missing:${node.id}:${name}`);
+
+    if (!run.succeeded || !run.response) {
+      return {
+        executionStatus: "success",
+        output: INTEGRATION_OUTPUT.failure,
+        outputMessages: [],
+        contextPatch: {},
+        nodeResult: {
+          host,
+          reason: run.reason,
+          message: run.message,
+          ...(run.response ? { status: run.response.status } : {}),
+          durationMs: run.durationMs
+        },
+        domainEvents: [`integration_failed:${node.id}:${run.reason}`, ...missingVariableEvents]
+      };
+    }
+
+    const mapped = mapResponseFields(config.responseMappings, run.response, run.json);
+    const saved = Object.keys(mapped.fields);
+    if (saved.length > 0) await this.contacts.setFields(session.tenantId, contact.id, mapped.fields);
+
     return {
-      executionStatus: "failed",
+      executionStatus: "success",
+      output: INTEGRATION_OUTPUT.success,
       outputMessages: [],
-      contextPatch: {},
+      contextPatch: { ...mapped.fields },
       nodeResult: {
-        integration: node.config.integrationName ?? node.name,
-        reason: "integration_executor_not_implemented"
+        host,
+        status: run.response.status,
+        durationMs: run.durationMs,
+        savedFields: saved,
+        ...(mapped.missingPaths.length > 0 ? { missingPaths: mapped.missingPaths } : {}),
+        ...(mapped.invalidFields.length > 0 ? { invalidFields: mapped.invalidFields } : {})
       },
-      domainEvents: [`integration_node_not_implemented:${node.id}`]
+      domainEvents: [
+        `integration_succeeded:${node.id}:${run.response.status}`,
+        ...mapped.missingPaths.map((path) => `integration_path_not_found:${node.id}:${path}`),
+        ...missingVariableEvents
+      ]
     };
+  }
+}
+
+function hostOf(url: string): string | null {
+  try {
+    return new URL(url).host || null;
+  } catch {
+    return null;
   }
 }
