@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AiCredentialSummary, AiModelOption, CreateAiCredentialRequest, UpdateAiCredentialRequest } from "../../../contracts/AiContracts";
-import { SecretDecryptionError, type SecretCipher } from "../../../platform/security/secrets/SecretCipher";
+import type { SecretCipher } from "../../../platform/security/secrets/SecretCipher";
+import { revealSecret } from "./revealSecret";
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 import {
@@ -42,16 +43,9 @@ async function requireCredential(repository: AiCredentialRepository, tenantId: s
   return credential;
 }
 
-/** La clave guardada, en claro. Si no se puede descifrar (otra clave maestra), lo dice. */
+/** La clave guardada, en claro. */
 function revealKey(cipher: SecretCipher, credential: AiCredential): string {
-  try {
-    return cipher.decrypt(credential.secret, secretContext(credential.tenantId, credential.id));
-  } catch (error) {
-    if (error instanceof SecretDecryptionError) {
-      throw new ValidationError("No se pudo leer la clave guardada de esta conexión. Vuelve a pegar la clave.");
-    }
-    throw error;
-  }
+  return revealSecret(cipher, credential.secret, secretContext(credential.tenantId, credential.id), "la clave de esta conexión");
 }
 
 /** Pide al proveedor que acepte la clave; si no, explica por qué. */

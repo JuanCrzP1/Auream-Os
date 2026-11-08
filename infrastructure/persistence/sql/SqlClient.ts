@@ -28,8 +28,17 @@ export interface SqlClient extends SqlExecutor {
   close(): Promise<void>;
 }
 
-export function createSqlClient(connectionString: string): SqlClient {
-  const pool = new pg.Pool({ connectionString });
+export interface SqlPoolOptions {
+  readonly max?: number;
+  readonly idleTimeoutMs?: number;
+}
+
+export function createSqlClient(connectionString: string, options: SqlPoolOptions = {}): SqlClient {
+  const pool = new pg.Pool({
+    connectionString,
+    ...(options.max !== undefined ? { max: options.max } : {}),
+    ...(options.idleTimeoutMs !== undefined ? { idleTimeoutMillis: options.idleTimeoutMs } : {})
+  });
 
   const runQuery = async <TRow>(
     executor: { query: (sql: string, params?: ReadonlyArray<unknown>) => Promise<{ rows: TRow[]; rowCount: number | null }> },

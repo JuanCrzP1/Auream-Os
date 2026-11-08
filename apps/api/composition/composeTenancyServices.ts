@@ -24,7 +24,7 @@ export interface TenancyServices {
 }
 
 export function composeTenancyServices(config: DatabaseConfig): TenancyServices {
-  const sqlClient = createSqlClient(config.connectionString);
+  const sqlClient = createSqlClient(config.connectionString, { max: config.poolMax, idleTimeoutMs: config.idleTimeoutMs });
 
   return {
     sqlClient,

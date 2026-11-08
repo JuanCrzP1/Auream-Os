@@ -517,9 +517,9 @@ Las áreas del sidebar que siguen sin implementación. Dependen de que las fases
 
 | Tarea | Descripción | Estado |
 |---|---|---|
-| H1 | Registrar dominio de producción en Neon Auth (`neonctl neon-auth domain add`) — bloqueante para autenticar en producción | ⬜ POR HACER |
+| H1 | Registrar dominio de producción en Neon Auth — bloqueante para autenticar en producción | ⬜ POR HACER — paso 3 de `docs/operations/deploy-vercel-neon.md` |
 | H2 | Remitente de correo propio (SMTP verificado) en Neon, sustituyendo el compartido de desarrollo | ⬜ POR HACER |
-| H3 | Despliegue: frontend en Vercel, API en infraestructura adecuada a un proceso `node:http` de larga duración (Vercel no aplica igual a un servidor con estado de conexión persistente) | ⬜ POR HACER |
+| H3 | Despliegue en **Vercel + Neon** (decisión 2026-11-08: solo esas dos plataformas). Web estática y API como función de Vercel en el mismo dominio (`api/index.ts`, mismo listener que el servidor local); el build revisa la configuración, migra la rama de producción y construye la web | 🟡 PREPARADO en el repositorio (2026-11-08) — falta la configuración del panel (raíz del proyecto, variables, dominio en Neon Auth): ver `docs/operations/deploy-vercel-neon.md` |
 | H4 | Conectar el resto de observabilidad ya implementada (auditoría, métricas, tracing — hoy `PREPARADO` sin consumidor) | ⬜ POR HACER |
 | H5 | Tests end-to-end de navegador (hoy no existen; la cobertura es unitaria + integración de API + componentes aislados) | ⬜ POR HACER |
 | H6 | Ciclo de vida de usuario eliminado en Neon Auth: `memberships.user_id` no tiene FK y no hay webhook `user.deleted`, así que borrar un usuario puede dejar memberships huérfanas | ⬜ POR HACER |

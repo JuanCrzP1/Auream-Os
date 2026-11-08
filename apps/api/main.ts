@@ -1,62 +1,31 @@
+import { createServer } from "node:http";
 import { loadEnvFile } from "./config/loadEnvFile";
-import { loadApiConfig, ApiConfigError } from "./config/loadApiConfig";
-import { loadDatabaseConfig } from "./config/loadDatabaseConfig";
-import { loadNeonAuthConfig } from "./config/loadNeonAuthConfig";
-import { composeAuthService } from "./composition/composeAuthService";
-import { composeBuilderServices } from "./composition/composeBuilderServices";
-import { composeTenancyServices } from "./composition/composeTenancyServices";
-import { composeContactsServices } from "./composition/composeContactsServices";
-import { composeIntegrationsServices } from "./composition/composeIntegrationsServices";
-import { createApiServer } from "./bootstrap/createApiServer";
-import { StructuredLogger } from "../../platform/observability/logging/StructuredLogger";
-import { RequestLogger } from "../../platform/observability/logging/RequestLogger";
-import { ErrorLogger } from "../../platform/observability/logging/ErrorLogger";
+import { ApiConfigError } from "./config/loadApiConfig";
+import { composeApiApplication, type ApiApplication } from "./bootstrap/composeApiApplication";
 
 // ---------------------------------------------------------------------------
-// Entrypoint de la API.
+// Entrypoint de la API como servidor (desarrollo local o un servidor propio).
 //
-// Responsabilidad única: cargar configuración, componer dependencias y
-// escuchar. Toda la lógica vive en config/, composition/, routes/ y bootstrap/.
+// Responsabilidad única: cargar `.env`, componer la aplicación y escuchar.
+// En Vercel no se usa: allí la sirve la función `api/index.ts`.
 // ---------------------------------------------------------------------------
 
 function start(): void {
-  let config;
-  let databaseConfig;
-  let authConfig;
+  let app: ApiApplication;
 
   try {
     loadEnvFile();
-    config = loadApiConfig();
-    databaseConfig = loadDatabaseConfig();
-    authConfig = loadNeonAuthConfig();
+    app = composeApiApplication();
   } catch (error) {
     if (error instanceof ApiConfigError) {
       console.error(`[FATAL] ${error.message}`);
       process.exit(1);
     }
-
     throw error;
   }
 
-  const logger = new StructuredLogger({ service: "bots-ai-platform-api" });
-  const tenancy = composeTenancyServices(databaseConfig);
-  const integrations = composeIntegrationsServices(tenancy.sqlClient, config.credentialsKeyRing);
-
-  const server = createApiServer(config, {
-    services: composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway),
-    contactsServices: composeContactsServices(tenancy.sqlClient),
-    integrationsServices: integrations,
-    meServices: {
-      membershipRepository: tenancy.membershipRepository,
-      onboarding: tenancy.onboarding
-    },
-    authService: composeAuthService(config, authConfig),
-    requestLogger: new RequestLogger(logger),
-    errorLogger: new ErrorLogger(logger)
-  });
-
-  server.listen(config.port, () => {
-    console.log(`API escuchando en http://localhost:${config.port}`);
+  createServer((request, response) => void app.listener(request, response)).listen(app.config.port, () => {
+    console.log(`API escuchando en http://localhost:${app.config.port}`);
   });
 }
 

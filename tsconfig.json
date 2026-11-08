@@ -5,6 +5,7 @@
     "outDir": "dist"
   },
   "include": [
+    "api/**/*.ts",
     "apps/api/**/*.ts",
     "apps/worker/**/*.ts",
     "domains/**/*.ts",
