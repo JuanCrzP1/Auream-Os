@@ -9,6 +9,7 @@ import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
 import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
+import { routeConversationsRequest } from "./routeConversationsRequest";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
 import type { MessagingServices } from "../composition/composeMessagingServices";
 import type { BackgroundTasks } from "../http/BackgroundTasks";
@@ -110,6 +111,7 @@ export async function routeApiRequest(
 
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeConnectionsRequest(request, response, url, connectionsServices, requestContext)) return;
+  if (dependencies.messagingServices && (await routeConversationsRequest(request, response, url, dependencies.messagingServices, requestContext))) return;
   if (await routeMediaRequest(request, response, url, mediaServices, requestContext)) return;
 
   const handledByAutomations = await routeAutomationsRequest(

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AutomationsHubPage } from "@features/automations/list/pages/AutomationsHubPage";
 import { BuilderPage } from "@features/automations/builder/pages/BuilderPage";
 import { ConnectionsPage } from "@features/connections/pages/ConnectionsPage";
+import { ConversationsPage } from "@features/conversations/pages/ConversationsPage";
 import { AiAgentsPage } from "@features/ai-agents/pages/AiAgentsPage";
 import { ContactsPage } from "@features/contacts/pages/ContactsPage";
 import { IntegrationsPage } from "@features/integrations/pages/IntegrationsPage";
@@ -33,6 +34,17 @@ export function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route path="/" element={<Navigate to="/automations" replace />} />
+
+      <Route
+        path="/conversations"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <ConversationsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/automations"

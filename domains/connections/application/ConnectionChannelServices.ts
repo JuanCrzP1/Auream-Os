@@ -51,15 +51,24 @@ export class ConnectionChannelServices {
   }
 
   /** Envía en orden. Un fallo en una salida no detiene las siguientes; queda en el informe. */
-  public async deliver(tenantId: string, connectionId: string, phone: string, messages: ReadonlyArray<OutboundMessage>): Promise<{ readonly sent: number; readonly failures: ReadonlyArray<string> }> {
-    if (messages.length === 0) return { sent: 0, failures: [] };
+  public async deliver(
+    tenantId: string,
+    connectionId: string,
+    phone: string,
+    messages: ReadonlyArray<OutboundMessage>
+  ): Promise<{ readonly sent: number; readonly failures: ReadonlyArray<string>; readonly results: ReadonlyArray<{ readonly message: OutboundMessage; readonly ok: boolean; readonly error?: string }> }> {
+    if (messages.length === 0) return { sent: 0, failures: [], results: [] };
     const connection = await this.repository.findById(tenantId, connectionId);
     const session = connection ? this.sessionOf(connection) : null;
     const messenger = connection ? this.messengers.for(connection.method) : null;
-    if (!connection || !session || !messenger) return { sent: 0, failures: ["El número no tiene una sesión activa para enviar."] };
+    if (!connection || !session || !messenger) {
+      const error = "El número no tiene una sesión activa para enviar.";
+      return { sent: 0, failures: [error], results: messages.filter((m) => m.kind !== "pause").map((message) => ({ message, ok: false, error })) };
+    }
 
     let sent = 0;
     const failures: string[] = [];
+    const results: Array<{ message: OutboundMessage; ok: boolean; error?: string }> = [];
     for (const message of messages) {
       if (message.kind === "pause") {
         const wait = message.delayMs ?? 0;
@@ -70,11 +79,14 @@ export class ConnectionChannelServices {
       try {
         await messenger.send(session, phone, message);
         sent += 1;
+        results.push({ message, ok: true });
       } catch (error) {
-        failures.push(error instanceof MessengerError ? error.message : "No se pudo enviar una respuesta.");
+        const reason = error instanceof MessengerError ? error.message : "No se pudo enviar una respuesta.";
+        failures.push(reason);
+        results.push({ message, ok: false, error: reason });
       }
     }
-    return { sent, failures };
+    return { sent, failures, results };
   }
 
   private sessionOf(connection: WhatsAppConnection): ProviderSession | null {

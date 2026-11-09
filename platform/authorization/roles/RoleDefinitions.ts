@@ -17,7 +17,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "credentials.read",
     "credentials.write",
     "connections.read",
-    "connections.write"
+    "connections.write",
+    "conversations.read",
+    "conversations.write"
   ],
   tenant_owner: [
     "flows.read",
@@ -31,7 +33,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "credentials.read",
     "credentials.write",
     "connections.read",
-    "connections.write"
+    "connections.write",
+    "conversations.read",
+    "conversations.write"
   ],
   tenant_admin: [
     "flows.read",
@@ -44,7 +48,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "credentials.read",
     "credentials.write",
     "connections.read",
-    "connections.write"
+    "connections.write",
+    "conversations.read",
+    "conversations.write"
   ],
   operator: [
     "flows.read",
@@ -54,13 +60,16 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "contacts.read",
     "contacts.write",
     "credentials.read",
-    "connections.read"
+    "connections.read",
+    "conversations.read",
+    "conversations.write"
   ],
   viewer: [
     "flows.read",
     "analytics.read",
     "contacts.read",
-    "connections.read"
+    "connections.read",
+    "conversations.read"
   ],
   api_client: [
     "flows.read",

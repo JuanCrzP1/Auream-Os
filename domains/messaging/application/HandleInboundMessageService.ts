@@ -1,6 +1,7 @@
 import type { InboundChannelMessage, InboundOutcome } from "../../../contracts/InboundMessageContracts";
 import type { InboundEnvelope } from "../../../contracts/RuntimeContracts";
 import type {
+  ConversationLog,
   ConversationLock,
   FlowRunner,
   InboundContacts,
@@ -17,10 +18,11 @@ import type {
 //   1. registro: si ya se recibió (el proveedor puede repetir), se ignora
 //   2. candado por conversación: los mensajes de un cliente, de a uno
 //   3. contacto: se identifica (o se crea con su nombre de WhatsApp)
-//   4. flujo: si está dentro de uno, lo continúa; si no, el disparador decide
-//   5. motor: corre el flujo con la sesión guardada
-//   6. respuestas: se envían por el mismo número
-//   7. registro: queda qué pasó (flujo, enviados, error)
+//   4. bandeja: el mensaje queda en su chat; si un asesor pausó el bot, aquí termina
+//   5. flujo: si está dentro de uno, lo continúa; si no, el disparador decide
+//   6. motor: corre el flujo con la sesión guardada
+//   7. respuestas: se envían por el mismo número y quedan en el chat
+//   8. registro: queda qué pasó (flujo, enviados, error)
 //
 // Cada paso es un puerto: este servicio solo coordina. Nunca lanza: un fallo
 // queda en el registro y no tumba al resto.
@@ -48,7 +50,8 @@ export class HandleInboundMessageService {
     private readonly sessions: LiveSessions,
     private readonly triggers: TriggerRouter,
     private readonly runner: FlowRunner,
-    private readonly delivery: OutboundDelivery
+    private readonly delivery: OutboundDelivery,
+    private readonly conversations: ConversationLog
   ) {}
 
   public async execute(tenantId: string, message: InboundChannelMessage): Promise<InboundResult> {
@@ -63,6 +66,8 @@ export class HandleInboundMessageService {
     try {
       return await this.lock.withLock(`${tenantId}:${conversationKey}`, async () => {
         const contact = await this.contacts.identify(tenantId, message.phone, message.senderName);
+        const conversation = await this.conversations.recordInbound(tenantId, message, contact.contactId);
+        if (!conversation.botEnabled) return finish("bot_paused");
 
         const liveFlow = await this.sessions.liveFlowOf(tenantId, conversationKey);
         const route = liveFlow
@@ -73,6 +78,7 @@ export class HandleInboundMessageService {
 
         const result = await this.runner.handle(toEnvelope(tenantId, flowKey, conversationKey, message));
         const report = await this.delivery.deliver(tenantId, message.connectionId, message.phone, result.outputMessages);
+        await this.conversations.recordOutbound(tenantId, conversation.id, report.results, { author: "bot", flowKey });
         return finish(liveFlow ? "flow_continued" : "flow_started", {
           flowKey,
           sent: report.sent,

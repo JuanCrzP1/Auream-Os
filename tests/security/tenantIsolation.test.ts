@@ -140,7 +140,8 @@ describe("manipulación de la petición", () => {
       "flows.read",
       "analytics.read",
       "contacts.read",
-      "connections.read"
+      "connections.read",
+      "conversations.read"
     ]);
   });
 

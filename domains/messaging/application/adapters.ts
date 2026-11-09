@@ -3,7 +3,7 @@ import type { SessionRepository } from "../../sessions/application/SessionReposi
 import type { ConnectionTriggerServices } from "../../connections/application/ConnectionTriggerServices";
 import type { FlowCatalog } from "../../connections/application/ports/FlowCatalog";
 import type { ContactDirectoryService } from "../../contacts/application/ContactDirectoryService";
-import type { InboundContacts, LiveSessions, TriggerRouter } from "./ports/MessagingPorts";
+import type { InboundContacts, LiveSessions, SessionControl, TriggerRouter } from "./ports/MessagingPorts";
 import { WHATSAPP_CHANNEL } from "./HandleInboundMessageService";
 
 // ---------------------------------------------------------------------------
@@ -41,5 +41,16 @@ export class ConnectionTriggerRouter implements TriggerRouter {
   public async route(tenantId: string, connectionId: string, facts: Parameters<TriggerRouter["route"]>[2]) {
     const resolved = await this.triggers.resolve(tenantId, connectionId, facts);
     return resolved ? { flowKey: resolved.flowKey, triggerId: resolved.triggerId } : null;
+  }
+}
+
+/** Termina la sesión en curso (si hay) marcándola como completada. */
+export class RepositorySessionControl implements SessionControl {
+  public constructor(private readonly sessions: SessionRepository) {}
+
+  public async endLive(tenantId: string, conversationKey: string): Promise<void> {
+    const session = await this.sessions.find(sessionIdFor(tenantId, conversationKey));
+    if (!session || !LIVE_SESSION_STATUSES.includes(session.status)) return;
+    await this.sessions.save({ ...session, status: "completed", revision: session.revision + 1, updatedAt: new Date().toISOString() });
   }
 }

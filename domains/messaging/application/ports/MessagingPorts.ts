@@ -44,12 +44,36 @@ export interface TriggerRouter {
 /** Corre el flujo con el mensaje: el contrato público del motor. */
 export type { FlowExecutor as FlowRunner } from "../../../../flow-engine/ports/FlowExecutor";
 
+/** Cómo le fue a cada salida (las pausas no se informan). */
+export interface DeliveryResult {
+  readonly message: OutboundMessage;
+  readonly ok: boolean;
+  readonly error?: string;
+}
+
 export interface DeliveryReport {
   readonly sent: number;
   readonly failures: ReadonlyArray<string>;
+  readonly results: ReadonlyArray<DeliveryResult>;
 }
 
 /** Envía las respuestas del flujo por el número que recibió el mensaje. */
 export interface OutboundDelivery {
   deliver(tenantId: string, connectionId: string, phone: string, messages: ReadonlyArray<OutboundMessage>): Promise<DeliveryReport>;
+}
+
+/** El chat de la bandeja: guarda cada mensaje y dice si el bot lo atiende. */
+export interface ConversationLog {
+  recordInbound(tenantId: string, message: InboundChannelMessage, contactId: string | null): Promise<{ readonly id: string; readonly botEnabled: boolean }>;
+  recordOutbound(
+    tenantId: string,
+    conversationId: string,
+    results: ReadonlyArray<DeliveryResult>,
+    origin: { readonly author: "bot" | "agent"; readonly flowKey?: string }
+  ): Promise<void>;
+}
+
+/** Terminar el recorrido en curso de una conversación (al enviar otro flujo a mano). */
+export interface SessionControl {
+  endLive(tenantId: string, conversationKey: string): Promise<void>;
 }

@@ -22,7 +22,10 @@ import { ExecutionEventTracker } from "../../../flow-engine/execution/ExecutionE
 import { EdgeEvaluator } from "../../../flow-engine/edges/EdgeEvaluator";
 import { DefaultTimezoneTenantResolver } from "../../../platform/tenancy/application/TenantResolver";
 import { HandleInboundMessageService } from "../../../domains/messaging/application/HandleInboundMessageService";
-import { ConnectionTriggerRouter, DirectoryInboundContacts, SessionLiveSessions } from "../../../domains/messaging/application/adapters";
+import { ConnectionTriggerRouter, DirectoryInboundContacts, RepositorySessionControl, SessionLiveSessions } from "../../../domains/messaging/application/adapters";
+import { StartFlowService } from "../../../domains/messaging/application/StartFlowService";
+import { ConversationInbox, ConversationRecorder } from "../../../domains/conversations/application/ConversationServices";
+import { SqlConversationRepository } from "../../../infrastructure/persistence/sql/SqlConversationRepository";
 
 // ---------------------------------------------------------------------------
 // composeMessagingServices — los mensajes reales de WhatsApp de punta a punta:
@@ -35,6 +38,8 @@ import { ConnectionTriggerRouter, DirectoryInboundContacts, SessionLiveSessions 
 
 export interface MessagingServices {
   readonly inbound: HandleInboundMessageService;
+  /** La bandeja de Conversaciones (lista, hilo, responder, pausar el bot, enviar flujos). */
+  readonly conversations: ConversationInbox;
 }
 
 export interface MessagingDependencies {
@@ -72,15 +77,23 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     new ExecutionLoop(sessions, new ContextService(), nodeRuntime, new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService()))
   );
 
+  const lock = new SqlConversationLock(deps.lockSql);
+  const conversations = new SqlConversationRepository(deps.sql);
+  const recorder = new ConversationRecorder(conversations);
+  const delivery = deps.connections.channel;
+  const launcher = new StartFlowService(deps.connections.flows, lock, new RepositorySessionControl(sessionRepository), engine, delivery, recorder);
+
   return {
     inbound: new HandleInboundMessageService(
       new SqlInboundMessageLog(deps.sql),
-      new SqlConversationLock(deps.lockSql),
+      lock,
       new DirectoryInboundContacts(deps.contacts.directory),
       new SessionLiveSessions(sessionRepository, deps.connections.flows),
       new ConnectionTriggerRouter(deps.connections.triggers),
       engine,
-      deps.connections.channel
-    )
+      delivery,
+      recorder
+    ),
+    conversations: new ConversationInbox(conversations, recorder, delivery, launcher)
   };
 }

@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionTrigger, SaveConnectionTriggerRequest } from "@contracts/ConnectionTriggerContracts";
-import type { AutomationListResponse } from "@contracts/AutomationContracts";
-import { builderApiClient } from "@shared/http/builderApiClient";
+import { fetchFlowOptions, type FlowOption } from "@shared/automations/flowOptions";
 import { createTrigger, deleteTrigger, fetchTriggers, updateTrigger } from "./connectionTriggersApi";
 
-export interface FlowOption {
-  readonly id: string;
-  readonly name: string;
-}
+export type { FlowOption };
 
 export type TriggersStatus = "loading" | "ready" | "error";
 
@@ -19,9 +15,9 @@ export function useConnectionTriggers(connectionId: string) {
 
   const refresh = useCallback(async () => {
     try {
-      const [list, catalog] = await Promise.all([fetchTriggers(connectionId), builderApiClient.get<AutomationListResponse>("/automations")]);
+      const [list, options] = await Promise.all([fetchTriggers(connectionId), fetchFlowOptions()]);
       setTriggers(list);
-      setFlows(catalog.flows.filter((flow) => flow.status !== "archived").map((flow) => ({ id: flow.id, name: flow.name })));
+      setFlows(options);
       setStatus("ready");
     } catch {
       setStatus("error");

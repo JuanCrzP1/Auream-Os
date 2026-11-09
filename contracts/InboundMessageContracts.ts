@@ -45,7 +45,8 @@ export interface InboundChannelMessage {
  *   flow_started    inició un flujo por un disparador
  *   flow_continued  continuó el flujo en que estaba el cliente
  *   no_trigger      ningún disparador del número coincidió
+ *   bot_paused      un asesor atiende el chat: se guarda, el bot no actúa
  *   ignored         no se procesa (grupo, propio, estado…)
  *   failed          algo falló (ver el detalle)
  */
-export type InboundOutcome = "flow_started" | "flow_continued" | "no_trigger" | "ignored" | "failed";
+export type InboundOutcome = "flow_started" | "flow_continued" | "no_trigger" | "bot_paused" | "ignored" | "failed";
