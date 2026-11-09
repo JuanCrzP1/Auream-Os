@@ -72,6 +72,12 @@ export class ConversationRecorder {
     return conversation;
   }
 
+  /** El chat de ese cliente en ese número; lo abre si no existe (un flujo iniciado desde fuera, p. ej. un webhook). */
+  public async openChat(tenantId: string, connectionId: string, phone: string, contactId: string | null): Promise<{ readonly id: string }> {
+    const conversation = await this.repository.findOrCreate(tenantId, connectionId, phone, contactId);
+    return { id: conversation.id };
+  }
+
   /** El chat de ese cliente en ese número (para los despertadores de los flujos). */
   public async findChat(tenantId: string, connectionId: string, phone: string) {
     const conversation = await this.repository.findByPhone(tenantId, connectionId, phone);

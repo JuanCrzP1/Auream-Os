@@ -1,4 +1,5 @@
 import type { AiProviderId } from "@contracts/AiContracts";
+import type { IntegrationMarkKind } from "../catalog/integrationCatalog";
 
 const INITIALS: Readonly<Record<AiProviderId, string>> = { openai: "AI", gemini: "G", openrouter: "OR" };
 
@@ -16,6 +17,17 @@ export function ProviderMark({ provider, size = "md" }: { readonly provider: AiP
   return (
     <span className={`provider-mark provider-mark--${provider} provider-mark--${size}`} aria-hidden="true">
       {INITIALS[provider]}
+    </span>
+  );
+}
+
+const MARK_INITIALS: Readonly<Record<IntegrationMarkKind, string>> = { ...INITIALS, meta: "PX", webhook: "WH", mcp: "MCP" };
+
+/** Distintivo de cualquier integración del catálogo (iniciales con su color; sin logos de marca). */
+export function IntegrationMark({ kind, size = "md" }: { readonly kind: IntegrationMarkKind; readonly size?: "sm" | "md" | "lg" }) {
+  return (
+    <span className={`provider-mark provider-mark--${kind} provider-mark--${size}`} aria-hidden="true">
+      {MARK_INITIALS[kind]}
     </span>
   );
 }

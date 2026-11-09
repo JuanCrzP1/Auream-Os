@@ -76,6 +76,8 @@ export interface OutboundDelivery {
 /** El chat de la bandeja: guarda cada mensaje y dice si el bot lo atiende. */
 export interface ConversationLog {
   recordInbound(tenantId: string, message: InboundChannelMessage, contactId: string | null): Promise<{ readonly id: string; readonly botEnabled: boolean }>;
+  /** El chat de ese cliente en ese número; lo abre si no existe (flujos iniciados desde fuera). */
+  openChat(tenantId: string, connectionId: string, phone: string, contactId: string | null): Promise<{ readonly id: string }>;
   /** El chat de ese cliente en ese número, si existe (para los despertadores). */
   findChat(tenantId: string, connectionId: string, phone: string): Promise<{ readonly id: string; readonly botEnabled: boolean; readonly connectionDeleted: boolean } | null>;
   recordOutbound(

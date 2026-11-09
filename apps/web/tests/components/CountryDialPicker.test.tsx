@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { CountryDialPicker } from "@features/automations/builder/tools/_kit/CountryDialPicker";
+import { CountryDialPicker } from "@shared/ui/country-dial/CountryDialPicker";
 
 // Prefijo con bandera, como en Leona: lista con bandera, país y prefijo, con
 // buscador por nombre o número; guarda solo el prefijo.

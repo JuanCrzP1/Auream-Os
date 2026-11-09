@@ -12,6 +12,9 @@ import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
 import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
 import { routeInternalTasks, type InternalTasksDependencies } from "./routeInternalTasks";
+import { routeInboundWebhook } from "./routeInboundWebhook";
+import { routeWebhooksRequest } from "./routeWebhooksRequest";
+import type { WebhookServices } from "../composition/composeWebhookServices";
 import { routeConversationsRequest } from "./routeConversationsRequest";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
 import type { MessagingServices } from "../composition/composeMessagingServices";
@@ -53,6 +56,8 @@ export interface ApiRouterDependencies {
   readonly requestLogger: RequestLogger;
   /** Límite de peticiones (`limitRequests`). Ausente: sin límite (pruebas). */
   readonly rateLimiter?: RateLimiter;
+  /** Webhooks de entrada (`null`: sin cifrado configurado). */
+  readonly webhookServices?: WebhookServices | null;
 }
 
 export async function routeApiRequest(
@@ -71,6 +76,9 @@ export async function routeApiRequest(
 
   // Avisos de los proveedores de WhatsApp: los autentica el token de la instancia, no una sesión.
   if (await routeWhatsAppWebhooks(request, response, url, connectionsServices, dependencies.messagingServices, dependencies.background)) return;
+
+  // Webhooks de entrada: los autoriza el secreto de su dirección, no una sesión.
+  if (await routeInboundWebhook(request, response, url, dependencies.webhookServices, dependencies.background, dependencies.rateLimiter)) return;
 
   // Trabajador de la cola: lo autoriza `CRON_SECRET`, no una sesión.
   if (await routeInternalTasks(request, response, url, dependencies.tasks)) return;
@@ -123,6 +131,7 @@ export async function routeApiRequest(
   }
 
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
+  if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeConnectionsRequest(request, response, url, connectionsServices, requestContext)) return;
   if (dependencies.messagingServices && (await routeConversationsRequest(request, response, url, dependencies.messagingServices, requestContext))) return;
   if (await routeMediaRequest(request, response, url, mediaServices, requestContext)) return;

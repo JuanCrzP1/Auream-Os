@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { aiProviderInfo, type AiCredentialSummary } from "@contracts/AiContracts";
+import { aiProviderInfo, type AiCredentialSummary, type AiProviderId } from "@contracts/AiContracts";
 import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
 import { ConnectionCard } from "./ConnectionCard";
 import { ConnectAiDialog } from "./ConnectAiDialog";
@@ -12,30 +12,38 @@ import { StateIcons } from "@shared/ui/state/stateIcons";
 
 type Dialog = { readonly kind: "connect" } | { readonly kind: "rename" | "secret" | "delete"; readonly credential: AiCredentialSummary } | null;
 
-/** Integraciones → Inteligencia artificial: conexiones para el bloque «Extensión IA». */
-export function AiSection() {
+/**
+ * Integraciones → Inteligencia artificial: conexiones para el bloque
+ * «Extensión IA». Con `provider`, solo las de ese proveedor (su página en el
+ * catálogo) y el diálogo de conectar llega con él elegido.
+ */
+export function AiSection({ provider }: { readonly provider?: AiProviderId } = {}) {
   const ai = useAiCredentials();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const credentials = provider ? ai.credentials.filter((credential) => credential.provider === provider) : ai.credentials;
+  const providerName = provider ? aiProviderInfo(provider).name : null;
 
   return (
     <IntegrationSection
       id="ai"
-      title="Inteligencia artificial"
+      title={providerName ? `Conexiones de ${providerName}` : "Inteligencia artificial"}
       noun="tus conexiones de IA"
       description="Las usa el bloque «Extensión IA» de tus flujos. Pagas a tu proveedor según su uso."
       status={ai.status}
       onRetry={ai.refresh}
-      count={ai.credentials.length}
-      connectLabel="Conectar IA"
+      count={credentials.length}
+      connectLabel={providerName ? `Conectar ${providerName}` : "Conectar IA"}
       onConnect={() => setDialog({ kind: "connect" })}
       empty={{
         icon: StateIcons.sparkles,
-        title: "Conecta tu primera IA",
-        description: "Pega la clave de API de OpenAI, Google Gemini u OpenRouter. La comprobamos con el proveedor y la guardamos cifrada."
+        title: providerName ? `Conecta tu cuenta de ${providerName}` : "Conecta tu primera IA",
+        description: providerName
+          ? `Pega tu clave de API de ${providerName}. La comprobamos con ${providerName} y la guardamos cifrada.`
+          : "Pega la clave de API de OpenAI, Google Gemini u OpenRouter. La comprobamos con el proveedor y la guardamos cifrada."
       }}
       dialogs={
         <>
-          {dialog?.kind === "connect" ? <ConnectAiDialog onConnect={ai.create} onClose={() => setDialog(null)} /> : null}
+          {dialog?.kind === "connect" ? <ConnectAiDialog onConnect={ai.create} onClose={() => setDialog(null)} {...(provider ? { provider } : {})} /> : null}
           {dialog?.kind === "rename" || dialog?.kind === "secret" ? (
             <EditConnectionDialog
               name={dialog.credential.name}
@@ -60,7 +68,7 @@ export function AiSection() {
         </>
       }
     >
-      {ai.credentials.map((credential) => (
+      {credentials.map((credential) => (
         <ConnectionCard
           key={credential.id}
           mark={<ProviderMark provider={credential.provider} />}

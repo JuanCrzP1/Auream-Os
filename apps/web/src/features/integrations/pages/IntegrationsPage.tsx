@@ -1,13 +1,11 @@
 import "@shared/ui/page/page.css";
 import "@shared/ui/controls/controls.css";
 import "../components/integrations.css";
-import { AiSection } from "../components/AiSection";
-import { PixelSection } from "../components/PixelSection";
+import { IntegrationsHub } from "../hub/IntegrationsHub";
 
 /**
- * IntegrationsPage — las conexiones de la cuenta con servicios externos. Cada
- * tipo es una sección independiente (sus datos, tarjetas y diálogos); la
- * página solo las ordena.
+ * IntegrationsPage — el centro de Integraciones con la cabecera estándar de
+ * los módulos. El catálogo y su lógica viven en `hub/` y `catalog/`.
  */
 export function IntegrationsPage() {
   return (
@@ -15,11 +13,10 @@ export function IntegrationsPage() {
       <header className="ui-page__header">
         <div>
           <h1 className="ui-page__title">Integraciones</h1>
-          <p className="ui-page__subtitle">Conecta tus cuentas de IA y tus píxeles de Meta. Las claves se guardan cifradas y nunca se muestran completas.</p>
+          <p className="ui-page__subtitle">Conecta Auream con tus servicios de IA, seguimiento y automatización. Las claves se guardan cifradas y nunca se muestran completas.</p>
         </div>
       </header>
-      <AiSection />
-      <PixelSection />
+      <IntegrationsHub />
     </div>
   );
 }

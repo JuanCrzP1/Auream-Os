@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { IntegrationsPage } from "../../src/features/integrations/pages/IntegrationsPage";
+import { AiSection } from "../../src/features/integrations/components/AiSection";
 import type { AiCredentialSummary } from "@contracts/AiContracts";
 
 // ---------------------------------------------------------------------------
-// Integraciones → Inteligencia artificial: conectar, ver (sin la clave),
-// verificar, cambiar clave, renombrar y eliminar. API falsa con estado.
+// Integraciones → Inteligencia artificial (la sección que usa la página de
+// cada proveedor): conectar, ver (sin la clave), verificar, cambiar clave,
+// renombrar y eliminar. API falsa con estado.
 // ---------------------------------------------------------------------------
 
 const reply = (status: number, body?: unknown) =>
@@ -57,7 +58,7 @@ beforeEach(() => {
 describe("conectar", () => {
   it("sin conexiones invita a conectar; al conectar aparece la tarjeta con solo la pista de la clave", async () => {
     const api = stubApi();
-    render(<IntegrationsPage />);
+    render(<AiSection />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Conectar IA" }));
     const dialog = screen.getByRole("dialog", { name: "Conectar una IA" });
@@ -74,7 +75,7 @@ describe("conectar", () => {
 
   it("si el proveedor rechaza la clave lo explica y no cierra el diálogo", async () => {
     stubApi();
-    render(<IntegrationsPage />);
+    render(<AiSection />);
     await userEvent.click(await screen.findByRole("button", { name: "Conectar IA" }));
     const dialog = screen.getByRole("dialog", { name: "Conectar una IA" });
     await userEvent.type(within(dialog).getByLabelText("Clave de API"), "sk-incorrecta-0123456789abcdef");
@@ -87,7 +88,7 @@ describe("conectar", () => {
 describe("administrar", () => {
   it("verificar muestra si el proveedor ya no acepta la clave; cambiarla la reactiva", async () => {
     stubApi([OPENAI]);
-    render(<IntegrationsPage />);
+    render(<AiSection />);
     const card = await screen.findByRole("article", { name: "OpenAI principal" });
 
     await userEvent.click(within(card).getByRole("button", { name: "Verificar" }));
@@ -103,7 +104,7 @@ describe("administrar", () => {
 
   it("renombrar y eliminar (con confirmación)", async () => {
     const api = stubApi([OPENAI]);
-    render(<IntegrationsPage />);
+    render(<AiSection />);
     await userEvent.click(await screen.findByRole("button", { name: "Renombrar OpenAI principal" }));
     const name = screen.getByLabelText("Nombre");
     await userEvent.clear(name);
@@ -125,7 +126,7 @@ describe("estados", () => {
     [500, "No pudimos cargar tus conexiones de IA"]
   ])("HTTP %i → %s", async (status, title) => {
     stubApi([], { listStatus: status });
-    render(<IntegrationsPage />);
+    render(<AiSection />);
     expect(await screen.findByText(title)).toBeInTheDocument();
   });
 });

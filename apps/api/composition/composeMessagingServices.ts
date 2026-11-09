@@ -25,6 +25,7 @@ import { HandleInboundMessageService } from "../../../domains/messaging/applicat
 import { ConnectionTriggerRouter, DirectoryInboundContacts, RepositorySessionControl, SessionLiveSessions } from "../../../domains/messaging/application/adapters";
 import { StartFlowService } from "../../../domains/messaging/application/StartFlowService";
 import type { TurnJournal } from "../../../domains/messaging/application/FlowTurnJournal";
+import { StartFlowForContactService } from "../../../domains/messaging/application/StartFlowForContactService";
 import { FlowTurn } from "../../../domains/messaging/application/FlowTurn";
 import { FlowTimerService } from "../../../domains/messaging/application/FlowTimerService";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
@@ -50,6 +51,8 @@ export interface MessagingServices {
   readonly timers: FlowTimerService;
   /** Recibos de entregado/leído de lo que salió por un número (avisos del proveedor). */
   readonly receipts: Pick<ConversationRecorder, "applyReceipts">;
+  /** Iniciar un flujo para un teléfono aunque nunca haya escrito (webhooks de entrada). */
+  readonly flows: StartFlowForContactService;
 }
 
 export interface MessagingDependencies {
@@ -119,6 +122,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
       }
     },
     timers: new FlowTimerService(lock, recorder, turn),
+    flows: new StartFlowForContactService(recorder, launcher),
     receipts: recorder,
     conversations: new ConversationInbox(conversations, recorder, delivery, launcher, {
       // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).

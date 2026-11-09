@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { COUNTRIES, type Country } from "./catalogs";
+import { COUNTRIES, type Country } from "@contracts/Countries";
 import "./countryDialPicker.css";
 
 // ---------------------------------------------------------------------------
@@ -9,9 +9,10 @@ import "./countryDialPicker.css";
 // nombre o por número). Guarda solo el prefijo («57»).
 //
 // Propio en lugar de `<select>`: el desplegable nativo no admite el tema oscuro
-// ni muestra bien bandera y país. Se monta por portal en `.kit-editor` (sin
-// transform, con las variables del tema y el acento del bloque) y se cierra al
-// desplazar, como el selector de unidad del Intervalo.
+// ni muestra bien bandera y país. Se monta por portal en el editor o la página
+// que lo contiene (`.kit-editor` o `.ui-page`: sin transform, con las variables
+// del tema y el acento) y se cierra al desplazar. Lo usan el editor de flujos
+// (Notificación) e Integraciones (webhooks).
 // ---------------------------------------------------------------------------
 
 const MENU_WIDTH = 264;
@@ -115,7 +116,7 @@ export function CountryDialPicker({
     }
   };
 
-  const host = open ? triggerRef.current?.closest<HTMLElement>(".kit-editor") ?? document.body : null;
+  const host = open ? triggerRef.current?.closest<HTMLElement>(".kit-editor, .ui-page") ?? document.body : null;
 
   return (
     <>

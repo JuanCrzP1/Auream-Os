@@ -10,13 +10,16 @@ import { SecretInput } from "./SecretInput";
  */
 export function ConnectAiDialog({
   onConnect,
-  onClose
+  onClose,
+  provider: fixedProvider
 }: {
   readonly onConnect: (request: CreateAiCredentialRequest) => Promise<unknown>;
   readonly onClose: () => void;
+  /** Desde la página de un proveedor: ya viene elegido y no se ofrece cambiarlo. */
+  readonly provider?: AiProviderId;
 }) {
   const titleId = useId();
-  const [provider, setProvider] = useState<AiProviderId>("openai");
+  const [provider, setProvider] = useState<AiProviderId>(fixedProvider ?? "openai");
   const [name, setName] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
@@ -40,9 +43,10 @@ export function ConnectAiDialog({
   return (
     <div className="ui-overlay" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={saving ? undefined : onClose}>
       <form className="ui-dialog ai-dialog" onClick={(e) => e.stopPropagation()} onSubmit={(e) => void submit(e)}>
-        <h2 id={titleId}>Conectar una IA</h2>
+        <h2 id={titleId}>{fixedProvider ? `Conectar ${info.name}` : "Conectar una IA"}</h2>
         <p className="ui-muted">La clave se comprueba con el proveedor y se guarda cifrada. Nunca se vuelve a mostrar completa.</p>
 
+        {fixedProvider ? null : (
         <div className="ai-providers" role="radiogroup" aria-label="Proveedor">
           {AI_PROVIDERS.map((option) => (
             <button
@@ -58,6 +62,7 @@ export function ConnectAiDialog({
             </button>
           ))}
         </div>
+        )}
 
         <label className="ui-field">
           <span>Nombre</span>

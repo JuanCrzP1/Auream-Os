@@ -16,6 +16,7 @@ import { createSqlClient } from "../../../infrastructure/persistence/sql/SqlClie
 import { SqlRateLimiter } from "../../../infrastructure/persistence/sql/SqlRateLimiter";
 import { SqlFlowTurnJournal } from "../../../infrastructure/persistence/sql/SqlFlowTurnJournal";
 import { composeTurnJournal } from "../composition/composeTurnJournal";
+import { composeWebhookServices } from "../composition/composeWebhookServices";
 import { TesseractDocumentReader } from "../../../infrastructure/documents/TesseractDocumentReader";
 import { createBackgroundTasks } from "../http/BackgroundTasks";
 import { StructuredLogger } from "../../../platform/observability/logging/StructuredLogger";
@@ -123,6 +124,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       }
     },
     mediaServices: composeMediaServices(config, tenancy.sqlClient, rateLimiter),
+    webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     rateLimiter,
     meServices: {
       membershipRepository: tenancy.membershipRepository,

@@ -1,0 +1,234 @@
+/* ===== CENTRO DE INTEGRACIONES =====
+   Catálogo por categorías (tarjetas, grupos, buscador) y la página de cada
+   integración. Página, pestañas y controles son los de `shared/ui`. Solo
+   tokens del tema. */
+
+.integrations-hub {
+  gap: 24px;
+}
+
+.integrations-hub__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 420px;
+}
+
+.integrations-hub__search svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.integrations-hub__search .ui-input {
+  padding-left: 36px;
+}
+
+.integrations-hub__group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.integrations-hub__group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.integrations-hub__group-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.integrations-hub__group-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.integrations-hub__count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-size: 0.72rem;
+  letter-spacing: 0;
+}
+
+.integrations-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* --- Tarjeta -------------------------------------------------------------- */
+
+.integration-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-glass);
+  box-shadow: var(--elevation-inset);
+  transition: border-color var(--speed-fast) ease, transform var(--speed-fast) var(--ease-out);
+}
+
+.integration-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--line));
+  transform: translateY(-1px);
+}
+
+.integration-card--active {
+  border-color: color-mix(in srgb, var(--status-success) 30%, var(--line));
+}
+
+.integration-card--skeleton {
+  height: 176px;
+  background: linear-gradient(90deg, var(--chip-bg) 0%, color-mix(in srgb, var(--text) 7%, transparent) 50%, var(--chip-bg) 100%);
+  background-size: 200% 100%;
+  animation: ai-shimmer 1.4s ease-in-out infinite;
+}
+
+.integration-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.integration-card__category {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.integration-card__name {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.integration-card__tagline {
+  flex: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.integration-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.integration-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--status-success);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.integration-card__status--idle {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.integration-card__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.integration-card__action {
+  text-decoration: none;
+}
+
+/* --- Página de una integración ----------------------------------------- */
+
+.integration-detail__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.integration-detail__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.integration-detail__crumbs a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.integration-detail__crumbs a:hover,
+.integration-detail__crumbs a:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.integration-detail__title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .integration-card,
+  .integration-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Pestañas: en pantallas angostas se deslizan de lado, sin partir el texto. */
+.integrations-hub__tabs {
+  /* Con desplazamiento propio, la columna de la página la encogería a cero. */
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.integrations-hub__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.integrations-hub__tabs .ui-tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}

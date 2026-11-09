@@ -41,6 +41,9 @@
 .provider-mark--gemini { --mark: var(--slate); }
 .provider-mark--openrouter { --mark: var(--primary); }
 .provider-mark--meta { --mark: var(--rose); }
+.provider-mark--webhook { --mark: var(--amber); }
+.provider-mark--mcp { --mark: var(--teal); font-size: 0.68rem; }
+.provider-mark--lg { width: 52px; height: 52px; border-radius: 14px; font-size: 1rem; }
 
 /* --- Tarjetas ------------------------------------------------------------- */
 

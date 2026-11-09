@@ -6,6 +6,8 @@ import { ConversationsPage } from "@features/conversations/pages/ConversationsPa
 import { AiAgentsPage } from "@features/ai-agents/pages/AiAgentsPage";
 import { ContactsPage } from "@features/contacts/pages/ContactsPage";
 import { IntegrationsPage } from "@features/integrations/pages/IntegrationsPage";
+import { IntegrationDetailPage } from "@features/integrations/pages/IntegrationDetailPage";
+import { IntegrationItemPage } from "@features/integrations/pages/IntegrationItemPage";
 import { LoginPage } from "@features/auth/pages/LoginPage";
 import { RegisterPage } from "@features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@features/auth/pages/ForgotPasswordPage";
@@ -116,6 +118,26 @@ export function AppRouter() {
           <ProtectedRoute>
             <AppShell>
               <IntegrationsPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/integrations/:integrationId"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <IntegrationDetailPage />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/integrations/:integrationId/:itemId"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <IntegrationItemPage />
             </AppShell>
           </ProtectedRoute>
         }

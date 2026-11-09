@@ -2,7 +2,7 @@ import type { ToolEditorProps } from "../ToolUi";
 import { Field, TextAreaField, TextField, VariableHint } from "../_kit/fields";
 import { CardSection, ChatPreview, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { CONTACT_VARIABLES } from "../_kit/catalogs";
-import { CountryDialPicker } from "../_kit/CountryDialPicker";
+import { CountryDialPicker } from "@shared/ui/country-dial/CountryDialPicker";
 import { readNotificationConfig, type NotificationConfig } from "./notificationConfig";
 import { notificationTool } from "./definition";
 import { NotificationIcon } from "./NotificationIcon";
