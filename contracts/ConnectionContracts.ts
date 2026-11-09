@@ -32,6 +32,8 @@ export interface ConnectionSummary {
   /** Nombre del perfil de WhatsApp del número vinculado. */
   readonly profileName: string | null;
   readonly lastConnectedAt: string | null;
+  /** Cuántos disparadores tiene (activos y pausados). */
+  readonly triggerCount: number;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -61,3 +63,16 @@ export type ConnectionLinkState =
 
 /** Cada cuánto vuelve a consultar la pantalla mientras muestra el QR. */
 export const LINK_POLL_INTERVAL_MS = 3_000;
+
+/**
+ * Cuánto dura el QR de WhatsApp (medido con uazapi el 2026-11-09): el primer
+ * código ~60 s, después WhatsApp lo cambia cada ~20 s y a los ~2 min 45 s la
+ * vinculación se cierra y hay que generar otra. La pantalla lo usa para la
+ * cuenta atrás; quien manda es el estado que devuelve el proveedor.
+ */
+export const WHATSAPP_QR_TIMING = { firstCodeSeconds: 60, nextCodeSeconds: 20, sessionSeconds: 165 } as const;
+
+export interface LinkConnectionRequest {
+  /** Descartar el código actual y empezar con uno nuevo (reinicia el tiempo). */
+  readonly restart?: boolean;
+}

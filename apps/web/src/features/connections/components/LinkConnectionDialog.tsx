@@ -3,12 +3,15 @@ import { LINK_POLL_INTERVAL_MS, type ConnectionLinkState, type ConnectionSummary
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { formatPhone } from "@shared/phone/formatPhone";
 import { ChatPhoneGlyph, OfficialGlyph, QrGlyph } from "./ConnectionGlyphs";
+import { QrCountdown, useQrClock } from "./QrCountdown";
 
 // ---------------------------------------------------------------------------
 // Vincular un número. Pide la vinculación y muestra lo que toca:
-//   · el código QR, que se renueva solo: la ventana consulta cada pocos
-//     segundos y en cuanto se escanea pasa a «Número conectado»
-//   · el código vencido, con un botón para generar otro
+//   · el código QR con su cuenta atrás: WhatsApp lo cambia solo (el primero
+//     dura ~60 s, los siguientes ~20 s) y a los ~2 min 45 s la vinculación se
+//     cierra. La ventana consulta cada pocos segundos y en cuanto se escanea
+//     pasa a «Número conectado». «Generar otro código» siempre a la mano.
+//   · el tiempo agotado, con un botón para generar otro
 //   · el número ya conectado
 //   · sin proveedor configurado: cómo será el proceso, sin fingir un código
 // ---------------------------------------------------------------------------
@@ -25,22 +28,33 @@ export function LinkConnectionDialog({
   onClose
 }: {
   readonly connection: ConnectionSummary;
-  readonly onLink: (id: string) => Promise<ConnectionLinkState>;
+  readonly onLink: (id: string, restart?: boolean) => Promise<ConnectionLinkState>;
   readonly onCheck: (id: string) => Promise<ConnectionLinkState>;
   readonly onClose: () => void;
 }) {
   const titleId = useId();
   const [view, setView] = useState<View>({ kind: "loading" });
+  const [regenerating, setRegenerating] = useState(false);
+  /** Cambia con cada vinculación nueva: reinicia la cuenta atrás. */
+  const [sessionKey, setSessionKey] = useState(0);
   const failures = useRef(0);
 
-  const request = useCallback(async () => {
-    setView({ kind: "loading" });
-    try {
-      setView({ kind: "ready", state: await onLink(connection.id) });
-    } catch (e) {
-      setView({ kind: "error", message: apiErrorMessage(e, "No se pudo preparar la vinculación. Inténtalo de nuevo.") });
-    }
-  }, [connection.id, onLink]);
+  const request = useCallback(
+    async (restart = false) => {
+      if (restart) setRegenerating(true);
+      else setView({ kind: "loading" });
+      try {
+        const state = await onLink(connection.id, restart);
+        setSessionKey((key) => key + 1);
+        setView({ kind: "ready", state });
+      } catch (e) {
+        setView({ kind: "error", message: apiErrorMessage(e, "No se pudo preparar la vinculación. Inténtalo de nuevo.") });
+      } finally {
+        setRegenerating(false);
+      }
+    },
+    [connection.id, onLink]
+  );
 
   useEffect(() => {
     void request();
@@ -68,6 +82,7 @@ export function LinkConnectionDialog({
   }, [waiting, connection.id, onCheck]);
 
   const state = view.kind === "ready" ? view.state : null;
+  const clock = useQrClock(state?.state === "qr" ? state.qrImage : "", sessionKey);
   const isQr = connection.method === "qr";
   const steps = isQr ? QR_STEPS : CLOUD_STEPS;
 
@@ -82,7 +97,7 @@ export function LinkConnectionDialog({
             <div className="wa-qr wa-qr--loading" aria-hidden="true">
               <span className="wa-qr__spinner" />
             </div>
-            <p className="ui-muted">Preparando la vinculación…</p>
+            <p className="ui-muted">{isQr ? "Pidiendo el código a WhatsApp… tarda unos segundos." : "Preparando la conexión…"}</p>
           </div>
         ) : null}
 
@@ -94,7 +109,8 @@ export function LinkConnectionDialog({
 
         {state?.state === "qr" ? (
           <div className="wa-link__body wa-link__body--split">
-            <div className="wa-qr">
+            <div className={`wa-qr${regenerating ? " wa-qr--refreshing" : ""}`} aria-busy={regenerating}>
+              {regenerating ? <span className="wa-qr__spinner wa-qr__spinner--over" aria-hidden="true" /> : null}
               {state.qrImage ? (
                 <img src={state.qrImage} alt="Código QR para vincular el número" />
               ) : (
@@ -109,8 +125,12 @@ export function LinkConnectionDialog({
               </ol>
               <p className="wa-waiting" aria-live="polite">
                 <span className="wa-waiting__dot" aria-hidden="true" />
-                Esperando que escanees el código… se renueva solo.
+                Esperando que escanees el código…
               </p>
+              {clock ? <QrCountdown {...clock} /> : null}
+              <button type="button" className="ui-btn ui-btn--ghost wa-regenerate" onClick={() => void request(true)} disabled={regenerating}>
+                {regenerating ? "Generando…" : "Generar otro código"}
+              </button>
             </div>
           </div>
         ) : null}
@@ -129,10 +149,10 @@ export function LinkConnectionDialog({
             <div className="wa-qr wa-qr--preview" aria-hidden="true"><QrGlyph /></div>
             <div>
               <p className="wa-soon wa-soon--warning">
-                <strong>El código venció</strong>
-                <span>Pasó el tiempo para escanearlo. Genera otro y escanéalo desde tu celular.</span>
+                <strong>Se acabó el tiempo para escanear</strong>
+                <span>WhatsApp cierra la vinculación a los pocos minutos si no se escanea. Genera otro código y escanéalo desde tu celular.</span>
               </p>
-              <button type="button" className="ui-btn ui-btn--primary" onClick={() => void request()}>Generar otro código</button>
+              <button type="button" className="ui-btn ui-btn--primary" onClick={() => void request(true)}>Generar otro código</button>
             </div>
           </div>
         ) : null}
@@ -161,8 +181,12 @@ export function LinkConnectionDialog({
           {view.kind === "error" ? (
             <button type="button" className="ui-btn ui-btn--ghost" onClick={() => void request()}>Reintentar</button>
           ) : null}
-          <button type="button" className={`ui-btn ${state?.state === "qr" ? "ui-btn--ghost" : "ui-btn--primary"}`} onClick={onClose}>
-            {state?.state === "qr" ? "Cancelar" : state?.state === "connected" ? "Listo" : "Entendido"}
+          <button
+            type="button"
+            className={`ui-btn ${view.kind === "loading" || state?.state === "qr" ? "ui-btn--ghost" : "ui-btn--primary"}`}
+            onClick={onClose}
+          >
+            {view.kind === "loading" || state?.state === "qr" ? "Cancelar" : state?.state === "connected" ? "Listo" : "Entendido"}
           </button>
         </div>
       </div>

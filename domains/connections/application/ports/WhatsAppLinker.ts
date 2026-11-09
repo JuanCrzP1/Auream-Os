@@ -46,6 +46,11 @@ export interface WhatsAppLinker {
    * una nueva. Lanza `LinkerError` si el proveedor falla.
    */
   start(target: LinkTarget, session: ProviderSession | null): Promise<StartOutcome>;
+  /**
+   * Descarta la vinculación en curso y empieza otra con un código nuevo
+   * (reinicia el tiempo para escanear). Lanza `LinkerError` si el proveedor falla.
+   */
+  restart(session: ProviderSession): Promise<SessionState>;
   /** Estado actual de la sesión. Lanza `LinkerError` si el proveedor falla. */
   check(session: ProviderSession): Promise<SessionState>;
   /** Cierra y borra la sesión en el proveedor. No falla si ya no existía. */

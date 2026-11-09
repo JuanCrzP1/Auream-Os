@@ -54,8 +54,8 @@ export function useConnections() {
   );
 
   const link = useCallback(
-    async (id: string) => {
-      const state = await linkConnection(id);
+    async (id: string, restart = false) => {
+      const state = await linkConnection(id, restart);
       await refresh();
       return state;
     },
@@ -70,7 +70,7 @@ export function useConnections() {
         const before = current.find((connection) => connection.id === id);
         return before && before.status === state.connection.status && before.phoneNumber === state.connection.phoneNumber
           ? current
-          : current.map((connection) => (connection.id === id ? state.connection : connection));
+          : current.map((connection) => (connection.id === id ? { ...state.connection, triggerCount: connection.triggerCount } : connection));
       });
       return state;
     },

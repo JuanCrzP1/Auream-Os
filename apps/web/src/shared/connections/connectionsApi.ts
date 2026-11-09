@@ -24,8 +24,9 @@ export async function deleteConnection(id: string): Promise<void> {
   await builderApiClient.delete<unknown>(`/connections/${encodeURIComponent(id)}`);
 }
 
-export function linkConnection(id: string): Promise<ConnectionLinkState> {
-  return builderApiClient.post<ConnectionLinkState>(`/connections/${encodeURIComponent(id)}/link`);
+/** Vincular o reconectar. `restart`: descartar el código actual y pedir uno nuevo. */
+export function linkConnection(id: string, restart = false): Promise<ConnectionLinkState> {
+  return builderApiClient.post<ConnectionLinkState>(`/connections/${encodeURIComponent(id)}/link`, restart ? { restart: true } : {});
 }
 
 /** Cómo va la vinculación: QR renovado, conectada o sesión cerrada. */

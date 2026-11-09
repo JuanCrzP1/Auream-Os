@@ -5,6 +5,7 @@
 //   POST   /instance/create   admintoken   crear la sesión (instancia)
 //   POST   /instance/connect  token        pedir el QR
 //   GET    /instance/status   token        estado, QR renovado, número y perfil
+//   POST   /instance/disconnect token      cerrar la sesión (o el QR en curso)
 //   DELETE /instance          token        borrar la sesión
 //   POST   /webhook           token        avisos de conexión a Auream
 //
@@ -113,6 +114,11 @@ export class UazapiClient {
 
   public async status(token: string): Promise<UazapiInstanceInfo> {
     return toInstanceInfo(await this.request("GET", "/instance/status", { token }));
+  }
+
+  /** Cierra la sesión o la vinculación en curso; la instancia sigue existiendo. */
+  public async disconnect(token: string): Promise<void> {
+    await this.request("POST", "/instance/disconnect", { token });
   }
 
   /** Borra la instancia. Si ya no existía, no es un error. */

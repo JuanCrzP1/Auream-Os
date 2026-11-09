@@ -13,13 +13,15 @@ import type { ConnectionSummary } from "@contracts/ConnectionContracts";
 const reply = (status: number, body?: unknown) =>
   ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body ?? {}) }) as unknown as Response;
 
-const base = { profileName: null, lastConnectedAt: null, createdAt: "2026-11-08T15:00:00.000Z", updatedAt: "2026-11-08T15:00:00.000Z" };
+const base = { profileName: null, lastConnectedAt: null, triggerCount: 0, createdAt: "2026-11-08T15:00:00.000Z", updatedAt: "2026-11-08T15:00:00.000Z" };
 const CONNECTED: ConnectionSummary = { ...base, id: "w1", name: "Ventas Colombia", method: "qr", status: "connected", phoneNumber: "573013815302", profileName: "Auream", lastConnectedAt: "2026-11-01T15:00:00.000Z" };
 const DOWN: ConnectionSummary = { ...base, id: "w2", name: "Venezuela", method: "qr", status: "disconnected", phoneNumber: "584121234567" };
 const OFFICIAL: ConnectionSummary = { ...base, id: "w3", name: "Línea oficial", method: "cloud_api", status: "pending", phoneNumber: null };
 
-function stubApi(seed: ConnectionSummary[] = [], options: { listStatus?: number; qr?: boolean } = {}) {
+function stubApi(seed: ConnectionSummary[] = [], options: { listStatus?: number; qr?: boolean; scanAfterChecks?: number } = {}) {
   let items = [...seed];
+  let restarts = 0;
+  let checks = 0;
   const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
     const url = new URL(String(input), "http://api.test");
     const method = init?.method ?? "GET";
@@ -35,13 +37,15 @@ function stubApi(seed: ConnectionSummary[] = [], options: { listStatus?: number;
     }
     const status = /^\/connections\/([^/]+)\/status$/.exec(url.pathname);
     if (status) {
+      if (++checks < (options.scanAfterChecks ?? 1)) return reply(200, { state: "qr", qrImage: `data:image/png;base64,QR${restarts}`, connection: items.find((c) => c.id === status[1]) });
       items = items.map((c) => (c.id === status[1] ? { ...c, status: "connected", phoneNumber: "573013815302", profileName: "Dilo Cantando" } : c));
       return reply(200, { state: "connected", connection: items.find((c) => c.id === status[1]) });
     }
     const link = /^\/connections\/([^/]+)\/link$/.exec(url.pathname);
     if (link && options.qr) {
       items = items.map((c) => (c.id === link[1] ? { ...c, status: "connecting" } : c));
-      return reply(200, { state: "qr", qrImage: "data:image/png;base64,iVBORw0KGgo", connection: items.find((c) => c.id === link[1]) });
+      restarts += body["restart"] ? 1 : 0;
+      return reply(200, { state: "qr", qrImage: `data:image/png;base64,QR${restarts}`, connection: items.find((c) => c.id === link[1]) });
     }
     if (link) {
       const connection = items.find((c) => c.id === link[1])!;
@@ -168,4 +172,22 @@ describe("ConnectionsPage", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Listo" }));
     expect(await screen.findByRole("article", { name: "Ventas QR, Conectada" })).toBeInTheDocument();
   }, 10_000);
+
+  it("el QR muestra cuánto le queda y «Generar otro código» trae uno nuevo", async () => {
+    const api = stubApi([{ ...DOWN, id: "w9", name: "Ventas QR", status: "pending", phoneNumber: null }], { qr: true, scanAfterChecks: 99 });
+    render(<ConnectionsPage />);
+    await userEvent.click(within(await screen.findByRole("article", { name: "Ventas QR, Sin vincular" })).getByRole("button", { name: "Vincular número" }));
+    const dialog = await screen.findByRole("dialog", { name: "Ventas QR" });
+
+    const qr = await within(dialog).findByRole("img", { name: "Código QR para vincular el número" });
+    expect(qr).toHaveAttribute("src", "data:image/png;base64,QR0");
+    expect(within(dialog).getByText(/Este código cambia en \d+ s/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/para escanear/)).toBeInTheDocument();
+    expect(within(dialog).getByRole("progressbar", { name: "Vigencia del código" })).toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Generar otro código" }));
+    await vi.waitFor(() => expect(within(dialog).getByRole("img", { name: "Código QR para vincular el número" })).toHaveAttribute("src", "data:image/png;base64,QR1"));
+    const restart = api.fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/link") && String(init?.body ?? "").includes("restart"));
+    expect(restart).toBeDefined();
+  });
 });

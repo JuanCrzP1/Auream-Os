@@ -106,3 +106,13 @@ describe("routeWhatsAppWebhooks (avisos de uazapi)", () => {
     expect(await routeWhatsAppWebhooks(req("POST", "/otra"), response as never, new URL("http://x/otra"), {} as ConnectionsServices)).toBe(false);
   });
 });
+
+describe("routeConnectionsRequest · disparadores", () => {
+  it("leer con connections.read; crear o cambiar exige connections.write", async () => {
+    const s = services();
+    const created = await run(s, "POST", "/connections", ROLE_SCOPES.tenant_owner, "tenant-a", { name: "Ventas", method: "qr" });
+    const path = `/connections/${created.body.id}/triggers`;
+    expect((await run(s, "GET", path, ROLE_SCOPES.viewer)).body).toEqual({ triggers: [] });
+    await expect(run(s, "POST", path, ROLE_SCOPES.operator, "tenant-a", { type: "any_message", automationId: "x" })).rejects.toThrow(AccessError);
+  });
+});

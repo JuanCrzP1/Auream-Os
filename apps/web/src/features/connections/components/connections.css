@@ -758,3 +758,125 @@
     justify-items: center;
   }
 }
+
+/* Cuenta atrás del QR */
+.wa-countdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-alt, var(--surface));
+}
+
+.wa-countdown__bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
+}
+
+.wa-countdown__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--teal);
+  transition: width 1s linear, background var(--speed-fast, 0.15s) ease;
+}
+
+.wa-countdown__bar span.is-ending {
+  background: var(--amber);
+}
+
+.wa-countdown__code,
+.wa-countdown__total {
+  margin: 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.wa-countdown__code {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.wa-countdown__total {
+  color: var(--muted);
+}
+
+.wa-regenerate {
+  margin-top: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-countdown__bar span {
+    transition: none;
+  }
+}
+
+/* Acceso a los disparadores desde la tarjeta */
+.wa-triggers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--speed-fast, 0.15s) ease, background var(--speed-fast, 0.15s) ease;
+}
+
+.wa-triggers:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+  background: color-mix(in srgb, var(--primary) 11%, transparent);
+}
+
+.wa-triggers:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.wa-triggers svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+.wa-triggers__text {
+  flex: 1;
+  font-weight: 600;
+}
+
+.wa-triggers__cta {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.wa-triggers--empty {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--line));
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+}
+
+.wa-triggers--empty svg {
+  color: var(--amber);
+}
+
+/* Pidiendo otro código: el actual se atenúa hasta que llega el nuevo. */
+.wa-qr--refreshing img {
+  filter: blur(2px);
+  opacity: 0.3;
+}
+
+.wa-qr__spinner--over {
+  position: absolute;
+}

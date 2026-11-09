@@ -7,6 +7,12 @@ import { UazapiLinker } from "../../../infrastructure/whatsapp/uazapi/UazapiLink
 import { AesGcmSecretCipher, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
 import { SecretDecryptionError, type SecretCipher } from "../../../platform/security/secrets/SecretCipher";
 import type { ConnectionRepository } from "../../../domains/connections/application/ConnectionRepository";
+import type { ConnectionTriggerRepository } from "../../../domains/connections/application/ConnectionTriggerRepository";
+import type { FlowCatalog } from "../../../domains/connections/application/ports/FlowCatalog";
+import { ConnectionTriggerServices } from "../../../domains/connections/application/ConnectionTriggerServices";
+import { SqlConnectionTriggerRepository } from "../../../infrastructure/persistence/sql/SqlConnectionTriggerRepository";
+import { SqlFlowCatalog } from "../../../infrastructure/persistence/sql/SqlFlowCatalog";
+import { InMemoryConnectionTriggerRepository, InMemoryFlowCatalog } from "../../../infrastructure/persistence/memory/InMemoryConnectionTriggerRepository";
 import type { WhatsAppLinkers } from "../../../domains/connections/application/ports/WhatsAppLinker";
 import {
   CheckConnectionService,
@@ -37,6 +43,8 @@ export interface ConnectionsServices {
   readonly link: LinkConnectionService;
   readonly check: CheckConnectionService;
   readonly providerEvents: HandleProviderEventService;
+  /** Qué flujo arranca cada número (palabra clave, anuncio, primer mensaje…). */
+  readonly triggers: ConnectionTriggerServices;
 }
 
 export interface ConnectionsOptions {
@@ -68,20 +76,32 @@ export function composeLinkers(options: ConnectionsOptions): WhatsAppLinkers {
   return new LinkersByMethod({ qr, cloud_api: unconfigured });
 }
 
-export function composeConnectionsServicesWith(repository: ConnectionRepository, options: ConnectionsOptions): ConnectionsServices {
+export interface ConnectionsStores {
+  readonly connections: ConnectionRepository;
+  readonly triggers?: ConnectionTriggerRepository;
+  readonly flows?: FlowCatalog;
+}
+
+export function composeConnectionsServicesWith(stores: ConnectionsStores | ConnectionRepository, options: ConnectionsOptions): ConnectionsServices {
+  const { connections: repository, triggers = new InMemoryConnectionTriggerRepository(), flows = new InMemoryFlowCatalog() } =
+    "connections" in stores ? stores : { connections: stores };
   const cipher = options.keyRing ? new AesGcmSecretCipher(options.keyRing) : NO_CIPHER;
   const linkers = composeLinkers(options);
   return {
-    list: new ListConnectionsService(repository),
+    list: new ListConnectionsService(repository, triggers),
     create: new CreateConnectionService(repository),
     rename: new RenameConnectionService(repository),
     remove: new DeleteConnectionService(repository, linkers, cipher),
     link: new LinkConnectionService(repository, linkers, cipher),
     check: new CheckConnectionService(repository, linkers, cipher),
-    providerEvents: new HandleProviderEventService(repository, cipher)
+    providerEvents: new HandleProviderEventService(repository, cipher),
+    triggers: new ConnectionTriggerServices(repository, triggers, flows)
   };
 }
 
 export function composeConnectionsServices(sqlClient: SqlClient, options: ConnectionsOptions): ConnectionsServices {
-  return composeConnectionsServicesWith(new SqlConnectionRepository(sqlClient), options);
+  return composeConnectionsServicesWith(
+    { connections: new SqlConnectionRepository(sqlClient), triggers: new SqlConnectionTriggerRepository(sqlClient), flows: new SqlFlowCatalog(sqlClient) },
+    options
+  );
 }

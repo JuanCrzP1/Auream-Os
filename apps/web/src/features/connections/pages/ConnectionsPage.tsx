@@ -12,17 +12,19 @@ import { ConnectionsOverview } from "../components/ConnectionsOverview";
 import { METHOD_OPTIONS, NewConnectionDialog } from "../components/NewConnectionDialog";
 import { LinkConnectionDialog } from "../components/LinkConnectionDialog";
 import { RenameConnectionDialog } from "../components/RenameConnectionDialog";
+import { ConnectionTriggersDialog } from "../components/triggers/ConnectionTriggersDialog";
 import { ChatPhoneGlyph, PlusGlyph } from "../components/ConnectionGlyphs";
 
 /**
  * ConnectionsPage — los números de WhatsApp de la cuenta: su estado de un
- * vistazo, crear uno (QR o API oficial), vincularlo, renombrarlo o quitarlo.
+ * vistazo, crear uno (QR o API oficial), vincularlo, elegir qué flujos inicia
+ * (disparadores), renombrarlo o quitarlo.
  * La lista viene del servidor; esta página solo ordena las piezas.
  */
 
 type Dialog =
   | { readonly kind: "new"; readonly method?: ConnectionMethod }
-  | { readonly kind: "link" | "rename" | "delete"; readonly connection: ConnectionSummary }
+  | { readonly kind: "link" | "triggers" | "rename" | "delete"; readonly connection: ConnectionSummary }
   | null;
 
 export function ConnectionsPage() {
@@ -110,6 +112,7 @@ export function ConnectionsPage() {
                   key={connection.id}
                   connection={connection}
                   onLink={() => setDialog({ kind: "link", connection })}
+                  onTriggers={() => setDialog({ kind: "triggers", connection })}
                   onRename={() => setDialog({ kind: "rename", connection })}
                   onDelete={() => setDialog({ kind: "delete", connection })}
                 />
@@ -137,6 +140,15 @@ export function ConnectionsPage() {
             void connections.refresh();
           }}
         /> : null}
+      {dialog?.kind === "triggers" ? (
+        <ConnectionTriggersDialog
+          connection={dialog.connection}
+          onClose={() => {
+            setDialog(null);
+            void connections.refresh();
+          }}
+        />
+      ) : null}
       {dialog?.kind === "rename" ? (
         <RenameConnectionDialog name={dialog.connection.name} onSave={(name) => connections.rename(dialog.connection.id, name)} onClose={() => setDialog(null)} />
       ) : null}

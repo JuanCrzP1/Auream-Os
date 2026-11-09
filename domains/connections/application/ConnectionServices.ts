@@ -4,6 +4,7 @@ import type {
   ConnectionStatus,
   ConnectionSummary,
   CreateConnectionRequest,
+  LinkConnectionRequest,
   UpdateConnectionRequest
 } from "../../../contracts/ConnectionContracts";
 import type { SecretCipher } from "../../../platform/security/secrets/SecretCipher";
@@ -18,6 +19,7 @@ import {
   type WhatsAppConnection
 } from "../domain/WhatsAppConnection";
 import type { ConnectionRepository } from "./ConnectionRepository";
+import type { ConnectionTriggerRepository } from "./ConnectionTriggerRepository";
 import { LinkerError, type ProviderSession, type SessionState, type WhatsAppLinkers } from "./ports/WhatsAppLinker";
 
 // ---------------------------------------------------------------------------
@@ -27,7 +29,7 @@ import { LinkerError, type ProviderSession, type SessionState, type WhatsAppLink
 // respuesta la lleva.
 // ---------------------------------------------------------------------------
 
-export function toConnectionSummary(connection: WhatsAppConnection): ConnectionSummary {
+export function toConnectionSummary(connection: WhatsAppConnection, triggerCount = 0): ConnectionSummary {
   return {
     id: connection.id,
     name: connection.name,
@@ -36,6 +38,7 @@ export function toConnectionSummary(connection: WhatsAppConnection): ConnectionS
     phoneNumber: connection.phoneNumber,
     profileName: connection.profileName,
     lastConnectedAt: connection.lastConnectedAt,
+    triggerCount,
     createdAt: connection.createdAt,
     updatedAt: connection.updatedAt
   };
@@ -94,10 +97,17 @@ function upstream(error: unknown): never {
 const NAME_RULE = "Ponle un nombre de 1 a 40 caracteres (p. ej. «Ventas Colombia»).";
 
 export class ListConnectionsService {
-  public constructor(private readonly repository: ConnectionRepository) {}
+  public constructor(
+    private readonly repository: ConnectionRepository,
+    private readonly triggers?: Pick<ConnectionTriggerRepository, "countByConnection">
+  ) {}
 
   public async execute(tenantId: string): Promise<ConnectionSummary[]> {
-    return (await this.repository.listByTenant(tenantId)).map(toConnectionSummary);
+    const [connections, counts] = await Promise.all([
+      this.repository.listByTenant(tenantId),
+      this.triggers ? this.triggers.countByConnection(tenantId) : Promise.resolve(new Map<string, number>())
+    ]);
+    return connections.map((connection) => toConnectionSummary(connection, counts.get(connection.id) ?? 0));
   }
 }
 
@@ -167,7 +177,10 @@ export class DeleteConnectionService {
   }
 }
 
-/** Vincular o reconectar un número: el proveedor da un QR o lo conecta. */
+/**
+ * Vincular o reconectar un número: el proveedor da un QR o lo conecta. Con
+ * `restart`, descarta el código en curso y empieza con uno nuevo.
+ */
 export class LinkConnectionService {
   public constructor(
     private readonly repository: ConnectionRepository,
@@ -176,13 +189,21 @@ export class LinkConnectionService {
     private readonly now: () => Date = () => new Date()
   ) {}
 
-  public async execute(tenantId: string, id: string): Promise<ConnectionLinkState> {
+  public async execute(tenantId: string, id: string, request: LinkConnectionRequest = {}): Promise<ConnectionLinkState> {
     const connection = await requireConnection(this.repository, tenantId, id);
     if (connection.status === "connected") return { state: "connected", connection: toConnectionSummary(connection) };
 
+    const session = sessionOf(connection, this.cipher);
+    if (request.restart === true && session && connection.status === "connecting") {
+      const state = await this.linkers.for(connection.method).restart(session).catch(upstream);
+      const updated = applyState(connection, state, this.now().toISOString());
+      await this.repository.save(updated);
+      return toLinkState(updated, state);
+    }
+
     const outcome = await this.linkers
       .for(connection.method)
-      .start({ id: connection.id, tenantId, name: connection.name, method: connection.method }, sessionOf(connection, this.cipher))
+      .start({ id: connection.id, tenantId, name: connection.name, method: connection.method }, session)
       .catch(upstream);
 
     if (outcome.kind === "unavailable") {

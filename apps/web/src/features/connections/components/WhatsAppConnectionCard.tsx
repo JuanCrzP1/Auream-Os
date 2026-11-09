@@ -2,22 +2,26 @@ import { useEffect, useRef, useState } from "react";
 import type { ConnectionSummary } from "@contracts/ConnectionContracts";
 import { formatPhone } from "@shared/phone/formatPhone";
 import { formatDate } from "@shared/format/formatDate";
-import { ChatPhoneGlyph, DotsGlyph, LinkGlyph, OfficialGlyph, QrGlyph } from "./ConnectionGlyphs";
+import { BoltGlyph, ChatPhoneGlyph, DotsGlyph, LinkGlyph, OfficialGlyph, QrGlyph } from "./ConnectionGlyphs";
 import { METHOD_LABEL, primaryAction, STATUS_HINT, STATUS_LABEL } from "./connectionLabels";
 
 // ---------------------------------------------------------------------------
 // Tarjeta de un número: avatar con anillo de estado, número con su bandera,
-// método, desde cuándo y la acción que toca (vincular, ver código, reconectar).
+// método, desde cuándo, sus disparadores y la acción que toca (vincular,
+// ver código, reconectar).
 // ---------------------------------------------------------------------------
 
 export function WhatsAppConnectionCard({
   connection,
   onLink,
+  onTriggers,
   onRename,
   onDelete
 }: {
   readonly connection: ConnectionSummary;
   readonly onLink: () => void;
+  /** Abrir sus disparadores (qué flujo inicia cada mensaje). */
+  readonly onTriggers: () => void;
   readonly onRename: () => void;
   readonly onDelete: () => void;
 }) {
@@ -106,6 +110,21 @@ export function WhatsAppConnectionCard({
       </div>
 
       <p className="wa-card__hint">{STATUS_HINT[connection.status]}</p>
+
+      <button
+        type="button"
+        className={`wa-triggers${connection.triggerCount === 0 ? " wa-triggers--empty" : ""}`}
+        onClick={onTriggers}
+        aria-label={`Disparadores de ${connection.name}: ${connection.triggerCount === 0 ? "ninguno" : connection.triggerCount}`}
+      >
+        <BoltGlyph />
+        <span className="wa-triggers__text">
+          {connection.triggerCount === 0
+            ? "Sin disparadores: no inicia ningún flujo"
+            : `${connection.triggerCount} ${connection.triggerCount === 1 ? "disparador" : "disparadores"}`}
+        </span>
+        <span className="wa-triggers__cta" aria-hidden="true">{connection.triggerCount === 0 ? "Configurar" : "Ver"} ›</span>
+      </button>
 
       <footer className="wa-card__footer">
         <span className="wa-card__since">{since}</span>

@@ -116,4 +116,10 @@ describe("UazapiLinker", () => {
     expect(await linker(() => json(404, {})).check({ ref: "r", secret: "t" })).toEqual({ kind: "disconnected" });
     await expect(linker(() => json(500, {})).check({ ref: "r", secret: "t" })).rejects.toThrow(LinkerError);
   });
+
+  it("generar otro código: desconecta la vinculación en curso y vuelve a conectar (medido con uazapi)", async () => {
+    const api = server({ "POST /instance/disconnect": () => json(200, { response: "Disconnected" }), "POST /instance/connect": () => connecting("data:image/png;base64,NUEVO") });
+    expect(await new UazapiLinker(api.client, null).restart({ ref: "r", secret: "inst-token" })).toEqual({ kind: "qr", qrImage: "data:image/png;base64,NUEVO" });
+    expect(api.calls.map((c) => `${c.method} ${new URL(c.url).pathname}`)).toEqual(["POST /instance/disconnect", "POST /instance/connect"]);
+  });
 });

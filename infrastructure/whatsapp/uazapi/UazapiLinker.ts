@@ -61,6 +61,16 @@ export class UazapiLinker implements WhatsAppLinker {
     }
   }
 
+  /** Medido con uazapi: pedir el QR otra vez da el MISMO; desconectar y conectar da uno nuevo. */
+  public async restart(session: ProviderSession): Promise<SessionState> {
+    try {
+      await this.client.disconnect(session.secret);
+      return await this.connect(session.secret);
+    } catch (error) {
+      return asLinkerError(error);
+    }
+  }
+
   public async check(session: ProviderSession): Promise<SessionState> {
     try {
       return toState(await this.client.status(session.secret));

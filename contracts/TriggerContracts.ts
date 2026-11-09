@@ -11,8 +11,10 @@
  * WhatsApp, Meta ni QR. Connections traducirá cada canal concreto a un
  * `ExternalEvent`; el motor sólo conoce esta forma.
  *
- * Estado: PREPARADO. Existe el contrato y el mapeo a `InboundEnvelope`.
- * NO existe todavía ningún emisor de eventos ni almacén de bindings.
+ * Estado: los disparadores de cada conexión YA existen y se guardan
+ * (`ConnectionTriggerContracts.ts`, tabla `connection_triggers`, con
+ * `ConnectionTriggerServices.resolve` que elige el flujo de un mensaje).
+ * Falta el emisor: la entrada de mensajes de WhatsApp (FASE D4).
  */
 
 // ---------------------------------------------------------------------------

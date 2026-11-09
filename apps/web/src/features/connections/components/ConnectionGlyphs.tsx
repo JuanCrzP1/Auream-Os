@@ -58,3 +58,12 @@ export function LinkGlyph() {
     </svg>
   );
 }
+
+/** Rayo: disparadores (qué inicia un flujo). */
+export function BoltGlyph() {
+  return (
+    <svg {...svg}>
+      <path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" />
+    </svg>
+  );
+}

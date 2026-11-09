@@ -35,6 +35,7 @@ function fakeLinker(start: StartOutcome, checks: SessionState[] = []) {
   const queue = [...checks];
   return {
     start: vi.fn(async () => start),
+    restart: vi.fn(async () => ({ kind: "qr", qrImage: "data:image/png;base64,NUEVO" }) as SessionState),
     check: vi.fn(async () => queue.shift() ?? ({ kind: "disconnected" } as SessionState)),
     unlink: vi.fn(async () => undefined)
   } satisfies WhatsAppLinker;
@@ -118,6 +119,17 @@ describe("vincular por QR", () => {
     await s.link.execute(T, created.id);
     expect(linker.start.mock.calls[0]![1]).toBeNull();
     expect(linker.start.mock.calls[1]![1]).toEqual({ ref: "inst-1", secret: TOKEN });
+  });
+
+  it("«Generar otro código» descarta el actual y trae uno nuevo con la misma sesión", async () => {
+    const linker = fakeLinker(qrOutcome);
+    const s = setup(linker);
+    const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
+    await s.link.execute(T, created.id);
+    const fresh = await s.link.execute(T, created.id, { restart: true });
+    expect(fresh).toMatchObject({ state: "qr", qrImage: "data:image/png;base64,NUEVO", connection: { status: "connecting" } });
+    expect(linker.restart).toHaveBeenCalledWith({ ref: "inst-1", secret: TOKEN });
+    expect(linker.start).toHaveBeenCalledTimes(1);
   });
 
   it("al consultar: QR renovado → conectada con número y perfil", async () => {

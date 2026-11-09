@@ -15,6 +15,10 @@ export class UnconfiguredWhatsAppLinker implements WhatsAppLinker {
     };
   }
 
+  public async restart(): Promise<SessionState> {
+    return { kind: "disconnected" };
+  }
+
   public async check(): Promise<SessionState> {
     return { kind: "disconnected" };
   }
