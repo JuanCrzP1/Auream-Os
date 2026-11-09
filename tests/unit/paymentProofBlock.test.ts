@@ -329,6 +329,15 @@ describe("PaymentProofNodeHandler", () => {
     expect(result.contextPatch["comprobante.error"]).toMatch(/se esperaban/);
   });
 
+  it("con una sola salida de rechazo (lo normal), cualquier motivo sale por «rejected» y el motivo queda guardado", async () => {
+    const result = await handler(BANCOLOMBIA).execute(node({ amountCheck: "exact", expectedAmount: "99000", splitRejections: false }), runtimeInput, session);
+    expect(result.output).toBe("rejected");
+    expect(result.nodeResult).toMatchObject({ output: "wrong-amount" });
+    expect(result.contextPatch["comprobante.error"]).toMatch(/se esperaban/);
+    // Lo válido sigue saliendo por «valid».
+    expect((await handler(BANCOLOMBIA).execute(node({ splitRejections: false }), runtimeInput, session)).output).toBe("valid");
+  });
+
   it("la simulación sin lector de documentos sale por Error, sin detener el motor", async () => {
     const runtime = new PaymentProofNodeHandler(
       { fetcher: new DisabledHttpRequester(), reader: simulationDependencies().documents, receipts: new InMemoryReceiptRegistry() },

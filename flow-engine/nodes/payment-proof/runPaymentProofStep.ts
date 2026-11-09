@@ -86,7 +86,7 @@ function asSource(value: unknown): SourceRef | undefined {
  * (`{ url, contentType }`, como lo guarda «Esperar respuesta» al recibir media).
  */
 function resolveSource(template: string, resolve: VariableResolver, missing: Set<string>): SourceRef | undefined {
-  const single = /^\{([A-Za-z_][A-Za-z0-9_.]{0,63})\}$/.exec(template.trim());
+  const single = /^\{([A-Za-z_][A-Za-z0-9_.-]{0,63})\}$/.exec(template.trim());
   if (single) {
     const value = resolve(single[1]!);
     if (value === undefined || value === null || value === "") missing.add(single[1]!);

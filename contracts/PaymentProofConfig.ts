@@ -51,6 +51,12 @@ export interface PaymentProofConfig {
   readonly maxAgeHours: number;
   /** Rechazar comprobantes cuya referencia ya se usó antes. */
   readonly rejectDuplicates: boolean;
+  /**
+   * `false` (lo normal, como Leona): dos salidas, «Comprobante válido» y
+   * «Comprobante rechazado»; el motivo queda en `errorVariable`.
+   * `true`: una salida por cada motivo de rechazo (cuenta, titular, monto…).
+   */
+  readonly splitRejections: boolean;
   readonly resultVariable: string;
   readonly errorVariable: string;
 }
@@ -68,6 +74,7 @@ export const PAYMENT_PROOF_DEFAULT_CONFIG: PaymentProofConfig = {
   maxAgeEnabled: false,
   maxAgeHours: 24,
   rejectDuplicates: true,
+  splitRejections: false,
   resultVariable: "comprobante",
   errorVariable: "comprobante.error"
 };
@@ -130,6 +137,8 @@ export function readPaymentProofConfig(config: Readonly<Record<string, unknown>>
     maxAgeEnabled: readBoolean(config["maxAgeEnabled"]),
     maxAgeHours: readInteger(config["maxAgeHours"], d.maxAgeHours, 1, MAX_AGE_LIMIT_HOURS),
     rejectDuplicates: readBoolean(config["rejectDuplicates"], d.rejectDuplicates),
+    // Bloques guardados antes de esta opción ya tienen una salida por motivo: se respetan.
+    splitRejections: readBoolean(config["splitRejections"], true),
     resultVariable: readString(config["resultVariable"], d.resultVariable).trim(),
     errorVariable: readString(config["errorVariable"], d.errorVariable).trim()
   };
@@ -144,8 +153,18 @@ export const PAYMENT_PROOF_OUTPUT = {
   tooOld: "too-old",
   duplicate: "duplicate",
   invalid: "invalid",
-  failure: "failure"
+  failure: "failure",
+  /** Única salida de rechazo cuando no se separan por motivo. */
+  rejected: "rejected"
 } as const;
+
+/**
+ * Por qué salida sigue el flujo: la del motivo si se separan los rechazos;
+ * si no, todo lo que no es válido sale por «Comprobante rechazado».
+ */
+export function paymentProofRoute(config: Pick<PaymentProofConfig, "splitRejections">, output: string): string {
+  return output === PAYMENT_PROOF_OUTPUT.valid || config.splitRejections ? output : PAYMENT_PROOF_OUTPUT.rejected;
+}
 
 /** Datos que quedan disponibles tras leer el comprobante. */
 export const PAYMENT_PROOF_FIELDS = [

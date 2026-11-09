@@ -36,7 +36,7 @@ Cada bloque tiene **salidas**. Una conexión dice de qué bloque sale, **por cu�
 | Distribuidor | Una por salida configurada (reparto por turnos) | id de cada salida |
 | Menú | Una por opción; Otra respuesta; Tiempo agotado (con límite) | id de cada opción, `menu-other`, `menu-timeout` |
 | Extensión IA | Sin intenciones: Respuesta y Error. Con intenciones: una por intención, respaldo y Error | `success`/`failure`, o id de cada intención, `fallback`, `failure` |
-| Comprobante automático | Válido; una por verificación activa (cuenta, titular, monto, antigüedad, repetido); No es un comprobante; Error | `valid`, `wrong-key`, `wrong-recipient`, `wrong-amount`, `too-old`, `duplicate`, `invalid`, `failure` |
+| Comprobante automático | Lo normal (como Leona): Comprobante válido y Comprobante rechazado, con el motivo en la variable de error. Con «Una salida por cada motivo» (y en bloques guardados antes de la opción): Válido; una por verificación activa (cuenta, titular, monto, antigüedad, repetido); No es un comprobante; Error | `valid`, `rejected` · o `valid`, `wrong-key`, `wrong-recipient`, `wrong-amount`, `too-old`, `duplicate`, `invalid`, `failure` |
 | Finalizar (sistema) | Ninguna: cierra la rama | — |
 
 Los ids son **datos persistidos**: cambiar uno desconecta las aristas guardadas. Las salidas las declara cada herramienta con `outputs(config)` (ver [builder-tools.md](builder-tools.md)).

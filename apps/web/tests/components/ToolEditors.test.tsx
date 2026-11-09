@@ -118,11 +118,16 @@ describe("editores de las herramientas", () => {
     expect(screen.getByLabelText("RFC del titular (opcional)")).toBeInTheDocument();
   });
 
-  it("Comprobante: verificar el monto abre su campo y su salida", () => {
+  it("Comprobante: verificar el monto abre su campo; los rechazos salen por una sola salida salvo que se separen por motivo", () => {
     mount("payment-proof");
     fireEvent.click(screen.getByRole("radio", { name: "Monto mínimo" }));
 
     expect(screen.getByLabelText("Monto esperado")).toBeInTheDocument();
+    expect(screen.getByText("Comprobante rechazado")).toBeInTheDocument();
+    expect(screen.queryByText("Monto incorrecto")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("switch", { name: /Una salida por cada motivo de rechazo/ }));
     expect(screen.getByText("Monto incorrecto")).toBeInTheDocument();
+    expect(screen.queryByText("Comprobante rechazado")).not.toBeInTheDocument();
   });
 });

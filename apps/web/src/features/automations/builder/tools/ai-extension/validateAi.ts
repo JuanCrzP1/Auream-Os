@@ -8,9 +8,9 @@ export const MISSING_VARIABLE_MESSAGE = "Indica en qué variable se guarda la re
 export const INCOMPLETE_INTENT_MESSAGE = "Cada intención necesita una descripción y un nombre de salida.";
 export const DUPLICATE_INTENT_MESSAGE = "Dos intenciones tienen el mismo nombre de salida.";
 export const TOO_MANY_INTENTS_MESSAGE = `Puedes definir hasta ${AI_MAX_INTENTS} intenciones.`;
-export const INVALID_KEY_MESSAGE = "Los nombres de salida solo admiten letras, números y guion bajo.";
+export const INVALID_KEY_MESSAGE = "Los nombres de salida solo admiten letras, números, guion y guion bajo.";
 
-const KEY = /^[A-Za-z0-9_]+$/;
+const KEY = /^[A-Za-z0-9_-]+$/;
 
 export function validateAi(_content: ToolData, config: ToolData): ValidationResult {
   const read = readAiConfig(config);

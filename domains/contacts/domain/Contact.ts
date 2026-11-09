@@ -30,7 +30,7 @@ export function normalizeEmail(value: string | null | undefined): string | null 
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : null;
 }
 
-/** Nombre de campo personalizado: letras, números, punto y guion bajo. */
+/** Nombre de campo personalizado: letras, números, punto, guion y guion bajo (como Leona). */
 export const CUSTOM_FIELD_KEY = CONTACT_FIELD_KEY_PATTERN;
 
 export function isValidCustomFieldValue(value: unknown): value is ContactFieldValue {

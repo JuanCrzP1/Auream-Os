@@ -101,7 +101,16 @@ export function ConversationList({
     <section className="ios-list" aria-label="Chats" aria-busy={filtering || undefined}>
       <header className="ios-list__header">
         <div className="ios-list__titlebar">
-          <h1 className="ios-list__title">Conversaciones</h1>
+          <label className="ios-search">
+            <SearchGlyph />
+            <input
+              type="search"
+              value={filters.search}
+              placeholder="Buscar por nombre o número"
+              aria-label="Buscar chats"
+              onChange={(event) => onFilters({ search: event.target.value })}
+            />
+          </label>
           <button
             type="button"
             className={`ios-filter-btn${count ? " is-active" : ""}`}
@@ -114,16 +123,6 @@ export function ConversationList({
             {count ? <span className="ios-filter-btn__count" aria-label={`${count} aplicados`}>{count}</span> : null}
           </button>
         </div>
-        <label className="ios-search">
-          <SearchGlyph />
-          <input
-            type="search"
-            value={filters.search}
-            placeholder="Buscar por nombre o número"
-            aria-label="Buscar chats"
-            onChange={(event) => onFilters({ search: event.target.value })}
-          />
-        </label>
         <div className="ios-filters" role="tablist" aria-label="Estado del chat">
           {STATUS_OPTIONS.map((option) => (
             <button

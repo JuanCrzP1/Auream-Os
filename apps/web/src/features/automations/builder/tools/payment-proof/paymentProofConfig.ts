@@ -9,6 +9,7 @@ export {
   PAYMENT_PROOF_FIELDS,
   PAYMENT_PROOF_OUTPUT,
   createAccount,
+  paymentProofRoute,
   readPaymentProofConfig,
   type AmountCheck,
   type PaymentAccount,
@@ -16,9 +17,20 @@ export {
   type PaymentProofField
 } from "@contracts/PaymentProofConfig";
 
+/**
+ * Salidas del bloque. Lo normal son dos —válido y rechazado—, como en Leona;
+ * con «Una salida por cada motivo» cada verificación activa abre la suya.
+ */
 export function paymentProofOutputs(config: ToolData): ReadonlyArray<ToolOutput> {
   const read = readPaymentProofConfig(config);
   const O = PAYMENT_PROOF_OUTPUT;
+
+  if (!read.splitRejections) {
+    return [
+      { id: O.valid, label: "Comprobante válido" },
+      { id: O.rejected, label: "Comprobante rechazado" }
+    ];
+  }
 
   return [
     { id: O.valid, label: "Comprobante válido" },

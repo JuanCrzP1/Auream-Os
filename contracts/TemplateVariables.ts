@@ -27,7 +27,8 @@ export const BUILT_IN_VARIABLES: ReadonlyArray<BuiltInVariable> = [
 ];
 
 /** Mismo formato que la clave de un campo personalizado del contacto. */
-const VARIABLE = /\{\{\s*context\.([A-Za-z0-9_]+)\s*\}\}|\{([A-Za-z_][A-Za-z0-9_.]{0,63})(?:\|([^{}\r\n]{0,100}))?\}/g;
+// Admite guion, como Leona: `{resposta-lead}`.
+const VARIABLE = /\{\{\s*context\.([A-Za-z0-9_-]+)\s*\}\}|\{([A-Za-z_][A-Za-z0-9_.-]{0,63})(?:\|([^{}\r\n]{0,100}))?\}/g;
 
 /**
  * Dónde se inserta el valor:

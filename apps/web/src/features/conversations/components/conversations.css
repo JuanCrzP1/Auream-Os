@@ -49,9 +49,9 @@
 
   position: relative;
   display: grid;
+  flex: 1;
   grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
-  height: 100vh;
-  height: 100dvh;
+  min-height: 0;
   overflow: hidden;
   background: var(--wa-list-bg);
   color: var(--wa-text);
@@ -96,6 +96,14 @@
   --wa-label-mix: 24%;
 }
 
+/* La página usa la cabecera estándar de los módulos (`ui-page__header`); la
+   bandeja ocupa el resto de la pantalla, sin desplazar la página. */
+.conversations-page {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .ios-inbox.has-info {
   grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) 340px;
 }
@@ -136,7 +144,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 18px 16px 10px;
+  padding: 12px 16px 10px;
   border-bottom: 1px solid var(--wa-separator);
   background: var(--wa-bar-bg);
   backdrop-filter: saturate(180%) blur(20px);
@@ -145,15 +153,12 @@
 .ios-list__titlebar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
-.ios-list__title {
-  margin: 0;
-  font-size: 1.9rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+.ios-list__titlebar .ios-search {
+  flex: 1;
+  min-width: 0;
 }
 
 .ios-filter-btn {
@@ -1561,6 +1566,11 @@
   .ios-inbox,
   .ios-inbox.has-info {
     grid-template-columns: 1fr;
+  }
+
+  /* Con un chat abierto, el chat usa toda la pantalla (como en el celular). */
+  .conversations-page.has-chat > .ui-page__header {
+    display: none;
   }
 
   .ios-inbox .ios-chat {

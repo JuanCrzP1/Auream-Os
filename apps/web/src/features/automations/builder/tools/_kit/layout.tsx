@@ -89,7 +89,7 @@ export type OutputTone = "success" | "danger" | "warning" | "neutral";
 /** Tono de una salida según su significado, deducido de su id persistido. */
 export function outputTone(id: string): OutputTone {
   if (/^(success|valid|true|respuesta)$/.test(id)) return "success";
-  if (/(failure|wrong|invalid|duplicate|^false$)/.test(id)) return "danger";
+  if (/(failure|wrong|invalid|duplicate|rejected|^false$)/.test(id)) return "danger";
   if (/(timeout|tiempo|too-old)/.test(id)) return "warning";
   return "neutral";
 }

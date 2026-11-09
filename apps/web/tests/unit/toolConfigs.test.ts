@@ -157,7 +157,17 @@ describe("Extensión IA", () => {
 describe("Comprobante automático", () => {
   const account = { id: "a1", country: "CO", provider: "co-nequi", accountType: "wallet", number: "3001234567", holder: "Auream SAS" };
 
-  it("abre una salida por cada verificación activa", () => {
+  it("lo normal son dos salidas: válido y rechazado (como Leona), con cualquier verificación", () => {
+    expect(ids("payment-proof", { splitRejections: false, matchAccount: true, matchHolder: true, amountCheck: "exact", maxAgeEnabled: true })).toEqual([
+      PAYMENT_PROOF_OUTPUT.valid,
+      PAYMENT_PROOF_OUTPUT.rejected
+    ]);
+    // Un bloque nuevo nace así.
+    const tool = getTool("payment-proof")!;
+    expect(tool.outputs!(tool.defaultConfig!).map((output) => output.id)).toEqual([PAYMENT_PROOF_OUTPUT.valid, PAYMENT_PROOF_OUTPUT.rejected]);
+  });
+
+  it("con «una salida por cada motivo» (y en bloques guardados antes) abre una por cada verificación activa", () => {
     const off = { matchAccount: false, matchHolder: false, rejectDuplicates: false };
     expect(ids("payment-proof", off)).toEqual([PAYMENT_PROOF_OUTPUT.valid, PAYMENT_PROOF_OUTPUT.invalid, PAYMENT_PROOF_OUTPUT.failure]);
     expect(

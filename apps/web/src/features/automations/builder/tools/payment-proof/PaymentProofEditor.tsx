@@ -93,7 +93,7 @@ export function PaymentProofEditor({ draft, onChange, resources }: ToolEditorPro
         )}
       </CardSection>
 
-      <CardSection step={3} title="Qué debe cumplir el comprobante" description="Cada verificación activa abre un camino de salida.">
+      <CardSection step={3} title="Qué debe cumplir el comprobante" description="Si algo no se cumple, el flujo sigue por «Comprobante rechazado».">
         <SwitchField
           label="Cuenta de destino registrada"
           hint="El banco y el número o llave deben coincidir con una de tus cuentas."
@@ -128,6 +128,12 @@ export function PaymentProofEditor({ draft, onChange, resources }: ToolEditorPro
           hint="Si la referencia del pago ya se aceptó antes en tu cuenta, sale por «Comprobante repetido»."
           checked={config.rejectDuplicates}
           onChange={(rejectDuplicates) => update({ rejectDuplicates })}
+        />
+        <SwitchField
+          label="Una salida por cada motivo de rechazo"
+          hint="Apagado: una sola salida «Comprobante rechazado» y el motivo queda en la variable de error. Encendido: una salida por cada verificación (cuenta, titular, monto, antigüedad, repetido, no es comprobante y error)."
+          checked={config.splitRejections}
+          onChange={(splitRejections) => update({ splitRejections })}
         />
       </CardSection>
 
@@ -164,7 +170,7 @@ export function PaymentProofEditor({ draft, onChange, resources }: ToolEditorPro
             onChange={(resultVariable) => update({ resultVariable: resultVariable.trim() })}
           />
           <TextField
-            label="Guardar error en"
+            label="Guardar motivo del rechazo en"
             value={config.errorVariable}
             monospace
             onChange={(errorVariable) => update({ errorVariable: errorVariable.trim() })}

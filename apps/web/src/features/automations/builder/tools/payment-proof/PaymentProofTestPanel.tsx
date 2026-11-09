@@ -3,7 +3,7 @@ import { BUILT_IN_VARIABLES, variablesIn } from "@contracts/TemplateVariables";
 import type { PaymentProofTestResult } from "@contracts/PaymentProofTestContracts";
 import type { ToolCapabilities } from "../ToolResources";
 import { InlineInput, Notice } from "../_kit/fields";
-import { maskNumber, paymentProofOutputs, PAYMENT_PROOF_OUTPUT, type PaymentProofConfig } from "./paymentProofConfig";
+import { maskNumber, paymentProofOutputs, paymentProofRoute, PAYMENT_PROOF_OUTPUT, type PaymentProofConfig } from "./paymentProofConfig";
 
 // ---------------------------------------------------------------------------
 // «Probar»: sube una captura o PDF de un comprobante real y mira qué leyó el
@@ -66,7 +66,14 @@ export function PaymentProofTestPanel({
   if (!test) return <Notice>La prueba está disponible al editar el flujo con conexión.</Notice>;
 
   const custom = config.amountCheck === "off" ? [] : variablesIn(config.expectedAmount).filter((name) => !BUILT_IN_NAMES.has(name));
-  const outputLabel = (id: string) => paymentProofOutputs(rawConfig).find((output) => output.id === id)?.label ?? id;
+  // La salida por la que seguiría (válido / rechazado, o la del motivo si se separan) y, si es rechazo, el motivo.
+  const outputLabel = (id: string) => {
+    const route = paymentProofRoute(config, id);
+    const routeLabel = paymentProofOutputs(rawConfig).find((output) => output.id === route)?.label ?? route;
+    if (route === id) return routeLabel;
+    const reason = paymentProofOutputs({ ...rawConfig, splitRejections: true }).find((output) => output.id === id)?.label;
+    return reason ? `${routeLabel} · ${reason}` : routeLabel;
+  };
 
   const run = async () => {
     if (!file) return;

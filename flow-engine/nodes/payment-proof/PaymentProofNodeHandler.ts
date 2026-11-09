@@ -1,5 +1,5 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
-import { PAYMENT_PROOF_OUTPUT, readPaymentProofConfig } from "../../../contracts/PaymentProofConfig";
+import { PAYMENT_PROOF_OUTPUT, paymentProofRoute, readPaymentProofConfig } from "../../../contracts/PaymentProofConfig";
 import type { NodeExecutionResult, RuntimeInput, Session } from "../../../contracts/RuntimeContracts";
 import { identityOf, type ContactDirectory } from "../../ports/ContactDirectory";
 import { templateResolver } from "../../templates/templateResolver";
@@ -55,7 +55,8 @@ export class PaymentProofNodeHandler implements NodeHandler {
 
     return {
       executionStatus: "success",
-      output: step.output,
+      // El motivo exacto queda en `nodeResult` y en la variable de error; la salida puede ser la única de rechazo.
+      output: paymentProofRoute(config, step.output),
       outputMessages: [],
       contextPatch,
       nodeResult: {

@@ -28,7 +28,8 @@ export interface ReceiptCheck {
   readonly detail: string;
 }
 
-export type ReceiptOutput = (typeof PAYMENT_PROOF_OUTPUT)[keyof typeof PAYMENT_PROOF_OUTPUT];
+/** Resultado detallado de la revisión (nunca «rejected», que es solo una salida del bloque: `paymentProofRoute`). */
+export type ReceiptOutput = Exclude<(typeof PAYMENT_PROOF_OUTPUT)[keyof typeof PAYMENT_PROOF_OUTPUT], "rejected">;
 
 export interface ReceiptVerification {
   /** Salida por la que sale si nada más falla (falta lo repetido). */

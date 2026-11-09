@@ -71,6 +71,8 @@ describe("configuraciones válidas", () => {
 
   it("acepta un destino con guion bajo y dígitos", () => {
     expect(validateWaitResponse(sinContenido, { targetKey: "ciudad_2" }).valid).toBe(true);
+    // Con guion, como en Leona («resposta-lead»).
+    expect(validateWaitResponse(sinContenido, { targetKey: "resposta-lead" }).valid).toBe(true);
   });
 
   it("acepta el destino escrito con prefijo context.", () => {
@@ -133,7 +135,7 @@ describe("destino donde guardar la respuesta", () => {
   it("rechaza un nombre que el contexto no podría resolver", () => {
     // `EdgeEvaluator` y las plantillas resuelven `session.context[x]`: un nombre
     // con espacios o puntos se escribiría bien y sería ilegible después.
-    for (const targetKey of ["mi ciudad", "ciudad.principal", "ciudad-1", "2ciudad", "ciudad[0]"]) {
+    for (const targetKey of ["mi ciudad", "ciudad.principal", "2ciudad", "ciudad[0]", "-ciudad"]) {
       expect(validateWaitResponse(sinContenido, { targetKey })).toEqual({
         valid: false,
         reason: INVALID_TARGET_MESSAGE

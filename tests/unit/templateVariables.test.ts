@@ -17,6 +17,12 @@ describe("renderTemplate", () => {
     expect(renderTemplate("Hola {full_name}, ¿sigues en {city}? {n} {ok}", resolve).text).toBe("Hola Ana \"La Jefa\" Pérez, ¿sigues en Bogotá D.C.? 3 true");
   });
 
+  it("admite guiones en el nombre, como Leona: {resposta-lead}", () => {
+    const r = renderTemplate("Recibí: {resposta-lead} · {sin-valor|nada}", (name) => (name === "resposta-lead" ? "https://blob/comprobante.jpg" : undefined));
+    expect(r.text).toBe("Recibí: https://blob/comprobante.jpg · nada");
+    expect(variablesIn("{resposta-lead} {comprobante.valor}")).toEqual(["resposta-lead", "comprobante.valor"]);
+  });
+
   it("no toca llaves que no son variables (JSON)", () => {
     expect(renderTemplate('{"a": {"b": 1}, "c": {}}', resolve).text).toBe('{"a": {"b": 1}, "c": {}}');
   });
