@@ -3,13 +3,17 @@ import type { ApiConfig } from "../config/loadApiConfig";
 import { publicBaseUrlOf } from "../config/publicBaseUrl";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlMcpCredentialRepository } from "../../../infrastructure/persistence/sql/SqlMcpCredentialRepository";
+import { SqlMcpOAuthRepository } from "../../../infrastructure/persistence/sql/SqlMcpOAuthRepository";
 import { McpCredentialServices } from "../../../domains/mcp/application/McpCredentialServices";
+import { McpOAuthServices } from "../../../domains/mcp/application/McpOAuthServices";
 import type { McpCredentialRepository } from "../../../domains/mcp/application/McpCredentialRepository";
+import type { McpOAuthRepository } from "../../../domains/mcp/application/McpOAuthRepository";
 import type { ApiServices } from "../composition/composeBuilderServices";
 import type { ContactsServices } from "../composition/composeContactsServices";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
 import type { MessagingServices } from "../composition/composeMessagingServices";
 import { McpProtocol, type ToolCallReport } from "./McpProtocol";
+import type { OAuthAddresses } from "./oauthMetadata";
 import type { McpTool } from "./McpTool";
 import type { McpAccess } from "../../../domains/mcp/domain/McpCredential";
 import { flowTools } from "./tools/flowTools";
@@ -19,14 +23,18 @@ import { connectionTools } from "./tools/connectionTools";
 
 // ---------------------------------------------------------------------------
 // composeMcpServer — el servidor MCP de Auream: las credenciales (dominio
-// `mcp`), las herramientas (adaptadores sobre los MISMOS servicios de la
-// aplicación) y el protocolo. Agregar herramientas = un archivo en `tools/`.
+// `mcp`), OAuth (para Claude web y escritorio), las herramientas (adaptadores
+// sobre los MISMOS servicios de la aplicación) y el protocolo. Agregar
+// herramientas = un archivo en `tools/`.
 // ---------------------------------------------------------------------------
 
 export const MCP_PATH = "/mcp";
 
 export interface McpServer {
   readonly credentials: McpCredentialServices;
+  readonly oauth: McpOAuthServices;
+  /** Direcciones públicas para el descubrimiento OAuth. */
+  readonly addresses: OAuthAddresses;
   readonly protocol: McpProtocol;
   /** La dirección pública del servidor (la que se pega en el agente). */
   readonly url: string;
@@ -37,6 +45,7 @@ export interface McpDependencies {
   readonly config: ApiConfig;
   readonly sql?: SqlClient;
   readonly repository?: McpCredentialRepository;
+  readonly oauthRepository?: McpOAuthRepository;
   readonly builder: Pick<ApiServices, "listAutomationsService" | "getWorkspaceService">;
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list">;
@@ -45,10 +54,16 @@ export interface McpDependencies {
 }
 
 export function composeMcpServer(deps: McpDependencies): McpServer {
-  const credentials = new McpCredentialServices({
-    repository: deps.repository ?? new SqlMcpCredentialRepository(deps.sql!),
+  const newSecret = () => randomBytes(32).toString("base64url");
+  const apiBaseUrl = publicBaseUrlOf(deps.config);
+  const addresses: OAuthAddresses = { issuer: deps.config.publicAppOrigin, apiBaseUrl, resource: `${apiBaseUrl}${MCP_PATH}` };
+  const credentials = new McpCredentialServices({ repository: deps.repository ?? new SqlMcpCredentialRepository(deps.sql!), newId: randomUUID, newSecret });
+  const oauth = new McpOAuthServices({
+    repository: deps.oauthRepository ?? new SqlMcpOAuthRepository(deps.sql!),
+    credentials,
+    resourceUrl: addresses.resource,
     newId: randomUUID,
-    newSecret: () => randomBytes(32).toString("base64url")
+    newSecret
   });
   const tools: McpTool[] = [
     ...flowTools(deps.builder),
@@ -58,8 +73,10 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
   ];
   return {
     credentials,
+    oauth,
+    addresses,
     tools,
     protocol: new McpProtocol(tools, { name: "auream", version: "1.0.0" }, deps.onToolCall),
-    url: `${publicBaseUrlOf(deps.config)}${MCP_PATH}`
+    url: addresses.resource
   };
 }

@@ -1,7 +1,7 @@
 import { CopyButton } from "./CopyButton";
 import { McpSnippets } from "./McpSnippets";
 
-/** La dirección del servidor MCP y cómo conectar Claude Code, Cursor o n8n. */
+/** La dirección del servidor MCP y cómo conectar Claude (web, escritorio y Code), Cursor o n8n. */
 export function McpServerCard({ url }: { readonly url: string }) {
   return (
     <section className="ui-panel mcp-server" aria-labelledby="mcp-server-title">
@@ -15,7 +15,7 @@ export function McpServerCard({ url }: { readonly url: string }) {
           <CopyButton text={url} />
         </div>
         <McpSnippets url={url} />
-        <p className="ui-muted mcp-server__note">Claude en la web y en la app de escritorio se conectan con OAuth (inicias sesión y autorizas): llega en la próxima versión.</p>
+        <p className="ui-muted mcp-server__note">Claude en la web y en el escritorio se conecta solo con la dirección: al conectarlo inicias sesión y eliges los permisos, y aparece aquí como una credencial más. Para los demás, crea una credencial con su token.</p>
       </div>
     </section>
   );

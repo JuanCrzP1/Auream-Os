@@ -76,69 +76,6 @@
   width: min(620px, 100%);
 }
 
-.mcp-permissions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.mcp-permissions legend {
-  margin-bottom: 6px;
-  color: var(--text);
-  font-size: 0.84rem;
-  font-weight: 700;
-}
-
-.mcp-permissions__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-}
-
-.mcp-permissions__row strong {
-  color: var(--text);
-  font-size: 0.86rem;
-}
-
-.mcp-permissions__row p {
-  margin: 2px 0 0;
-  font-size: 0.76rem;
-}
-
-.mcp-segmented {
-  display: inline-flex;
-  flex: 0 0 auto;
-  padding: 3px;
-  border-radius: 10px;
-  background: var(--chip-bg);
-}
-
-.mcp-segmented__option {
-  padding: 5px 10px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.mcp-segmented__option[aria-checked="true"] {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
-}
-
 .mcp-scopes {
   display: flex;
   flex-wrap: wrap;
@@ -159,11 +96,4 @@
 
 .mcp-revoke {
   color: var(--status-danger);
-}
-
-@media (max-width: 560px) {
-  .mcp-permissions__row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }

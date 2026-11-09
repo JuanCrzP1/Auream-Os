@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
 import { MCP_PATH, type McpServer } from "../mcp/composeMcpServer";
+import { resourceMetadataUrlOf } from "../mcp/oauthMetadata";
 import { enforceRateLimit } from "../middleware/limitRequests";
 import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
@@ -8,8 +9,10 @@ import { sendJson } from "../http/sendJson";
 // ---------------------------------------------------------------------------
 // `POST /mcp` — el servidor MCP (transporte HTTP «Streamable», sin estado ni
 // flujo de eventos: cada petición JSON-RPC recibe su respuesta JSON). Lo usan
-// los agentes con `Authorization: Bearer <token de su credencial>`; sin token
-// válido, 401. Límite: 300 peticiones por minuto por credencial.
+// los agentes con `Authorization: Bearer <token>` (el fijo de una credencial o
+// uno de acceso OAuth). Sin token válido, 401 con la dirección de los
+// metadatos OAuth (así Claude web y escritorio saben cómo pedir acceso).
+// Límite: 300 peticiones por minuto por credencial.
 // ---------------------------------------------------------------------------
 
 export const MCP_POLICY = { windowMs: 60_000, maxRequests: 300 };
@@ -38,9 +41,11 @@ export async function routeMcp(
     sendJson(response, 405, { message: "El servidor MCP de Auream recibe peticiones POST." });
     return true;
   }
-  const access = await server.credentials.authenticate(bearer(request));
+  const token = bearer(request);
+  const access = token ? await server.credentials.authenticate(token) : null;
   if (!access) {
-    response.setHeader("WWW-Authenticate", 'Bearer realm="auream-mcp"');
+    const invalid = token ? ', error="invalid_token"' : "";
+    response.setHeader("WWW-Authenticate", `Bearer realm="auream-mcp", resource_metadata="${resourceMetadataUrlOf(server.url)}"${invalid}`);
     sendJson(response, 401, { message: "Falta una credencial válida: Authorization: Bearer <token>." });
     return true;
   }

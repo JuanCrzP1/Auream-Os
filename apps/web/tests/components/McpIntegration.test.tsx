@@ -15,8 +15,8 @@ const reply = (status: number, body?: unknown) =>
   ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body ?? {}) }) as unknown as Response;
 const URL_MCP = "https://auream-os.vercel.app/api/mcp";
 
-function stubApi() {
-  let credentials: McpCredentialSummary[] = [];
+function stubApi(initial: McpCredentialSummary[] = []) {
+  let credentials: McpCredentialSummary[] = initial;
   const posts: unknown[] = [];
   vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
     const url = new URL(String(input), "http://api.test");
@@ -25,7 +25,7 @@ function stubApi() {
     if (url.pathname === "/mcp-credentials" && method === "POST") {
       const body = JSON.parse(String(init!.body));
       posts.push(body);
-      const credential: McpCredentialSummary = { id: "k1", name: body.name, permissions: body.permissions, hint: "••••9xyz", createdAt: "2026-11-09T19:00:00.000Z", lastUsedAt: null, expiresAt: null };
+      const credential: McpCredentialSummary = { id: "k1", kind: "token", name: body.name, permissions: body.permissions, hint: "••••9xyz", createdAt: "2026-11-09T19:00:00.000Z", lastUsedAt: null, expiresAt: null };
       credentials = [credential];
       return reply(201, { credential, token: "aur_mcp_secreto9xyz" });
     }
@@ -52,10 +52,13 @@ beforeEach(() => {
 });
 
 describe("agentes de IA (MCP)", () => {
-  it("muestra la dirección del servidor y cómo conectar Claude Code, Cursor o n8n", async () => {
+  it("muestra la dirección del servidor y cómo conectar Claude (web y escritorio, solo la dirección), Claude Code, Cursor o n8n", async () => {
     stubApi();
     renderPanel();
     expect(await screen.findByRole("textbox", { name: "Dirección del servidor MCP" })).toHaveValue(URL_MCP);
+    expect(screen.getByRole("tab", { name: "Claude (web y escritorio)" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(/Agregar conector personalizado/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Claude Code" }));
     expect(screen.getByText(`claude mcp add --transport http auream ${URL_MCP} --header "Authorization: Bearer <tu-token>"`)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "n8n" }));
     expect(screen.getByText(/Encabezado: Authorization/)).toBeInTheDocument();
@@ -76,6 +79,7 @@ describe("agentes de IA (MCP)", () => {
     const token = await screen.findByRole("dialog", { name: "Credencial «Claude de ventas» creada" });
     expect(within(token).getByRole("textbox", { name: "Token de la credencial" })).toHaveValue("aur_mcp_secreto9xyz");
     expect(within(token).getByText(/Bearer aur_mcp_secreto9xyz/)).toBeInTheDocument();
+    expect(within(token).queryByRole("tab", { name: "Claude (web y escritorio)" })).not.toBeInTheDocument();
     await userEvent.click(within(token).getByRole("button", { name: "Ya lo guardé" }));
 
     const card = screen.getByRole("article", { name: "Claude de ventas" });
@@ -95,5 +99,14 @@ describe("agentes de IA (MCP)", () => {
     await userEvent.click(within(screen.getByRole("article", { name: "n8n" })).getByRole("button", { name: "Revocar" }));
     await userEvent.click(within(screen.getByRole("alertdialog", { name: "¿Revocar «n8n»?" })).getByRole("button", { name: "Revocar credencial" }));
     expect(await screen.findByText("Crea la credencial de tu primer agente")).toBeInTheDocument();
+  });
+
+  it("una credencial que autorizó Claude por OAuth se distingue: sin token y con acceso que se renueva", async () => {
+    stubApi([{ id: "o1", kind: "oauth", name: "Claude", permissions: { contacts: "read" }, hint: "", createdAt: "2026-11-09T19:00:00.000Z", lastUsedAt: "2026-11-09T19:05:00.000Z", expiresAt: null }]);
+    renderPanel();
+    const card = await screen.findByRole("article", { name: "Claude" });
+    expect(within(card).getByText("Autorizada con OAuth")).toBeInTheDocument();
+    expect(within(card).getByText("Se renueva mientras se use")).toBeInTheDocument();
+    expect(within(card).getByText("Conectada")).toBeInTheDocument();
   });
 });

@@ -53,13 +53,18 @@ Reglas:
 
 ## Agentes de IA (MCP)
 
-`contracts/McpContracts.ts` · `domains/mcp` · `apps/api/mcp` · `apps/api/routes/routeMcp.ts` · `apps/api/routes/routeMcpCredentialsRequest.ts` · `025_mcp_credentials.sql`
+`contracts/McpContracts.ts` · `contracts/McpOAuthContracts.ts` · `domains/mcp` · `apps/api/mcp` · `apps/api/routes/routeMcp.ts` · `apps/api/routes/routeMcpCredentialsRequest.ts` · `apps/api/routes/routeOAuthPublic.ts` · `apps/api/routes/routeOAuthConsentRequest.ts` · `025_mcp_credentials.sql` · `026_mcp_oauth.sql`
 
-Un agente (Claude Code, Cursor, n8n…) se conecta a `POST /api/mcp` con `Authorization: Bearer <token>` y usa las herramientas que su credencial permite, dentro de SU cuenta.
+Un agente se conecta a `POST /api/mcp` con `Authorization: Bearer <token>` y usa las herramientas que su credencial permite, dentro de SU cuenta. Hay dos maneras de obtener ese token:
+
+- **Credencial con token fijo** (`kind: token`): Claude Code, Cursor, n8n… Se crea a mano en Integraciones → Agentes de IA y se pega el token.
+- **OAuth** (`kind: oauth`): Claude en la web y en la app de escritorio. Se pega SOLO la dirección; Claude abre Auream, el usuario inicia sesión, elige la cuenta y los permisos, y autoriza. La credencial nace al autorizar.
 
 | Pieza | Responsabilidad | No sabe de |
 |---|---|---|
-| `domains/mcp` | Credencial: permisos por área (ver / ver y editar) traducidos a los permisos internos, huella del token, vencimiento; crear (el token se entrega una vez), listar, revocar, autenticar | HTTP, MCP |
+| `domains/mcp` | Credencial: permisos por área (ver / ver y editar) traducidos a los permisos internos, huella del token, vencimiento; crear (el token se entrega una vez), listar, revocar, autenticar (token fijo o de acceso OAuth). OAuth (`OAuth.ts`, `McpOAuthServices`): registro del agente, solicitud de autorización, PKCE, códigos de un solo uso y tokens que rotan | HTTP, MCP |
+| `apps/api/mcp/oauthMetadata.ts` | Descubrimiento: metadatos del recurso (RFC 9728) y del servidor de autorización (RFC 8414) con las direcciones públicas | — |
+| `routeOAuthPublic` / `routeOAuthConsentRequest` | Sin sesión (lo usa el agente): `/.well-known/oauth-*`, `POST /oauth/register`, `POST /oauth/token`. Con sesión y `credentials.write` (la pantalla `/oauth/authorize` de la web): qué agente pide acceso y la decisión | las reglas de OAuth |
 | `apps/api/mcp/McpProtocol.ts` | El protocolo (JSON-RPC 2.0, sin estado): `initialize` (negocia la versión), `ping`, `tools/list` (solo lo permitido), `tools/call` (vuelve a comprobar el permiso y valida los argumentos) | qué hace cada herramienta |
 | `apps/api/mcp/tools/*` | Las herramientas, como adaptadores sobre los MISMOS servicios de la app (flujos, contactos y etiquetas, conversaciones, números) | el protocolo |
 | `routeMcp` | Transporte HTTP («Streamable», sin flujo de eventos): token, límite, JSON-RPC simple o en lote | — |
@@ -73,4 +78,15 @@ Reglas:
 - **Administrarlas** exige `credentials.write` (dueños y administradores).
 - **Responder como asesor** pausa el bot del chat, como en la bandeja; las herramientas que escriben al cliente piden confirmarlo antes.
 
-Siguiente: **OAuth** para Claude en la web y en la app de escritorio (pegas la dirección, inicias sesión en Auream y autorizas los permisos), y herramientas para **crear y editar flujos**.
+### OAuth (Claude web y escritorio)
+
+1. Claude llama a `/api/mcp` sin token → 401 con `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/api/mcp"`.
+2. Lee los metadatos: el servidor de autorización es el origen de la web (`PUBLIC_APP_URL`, o el dominio de producción). `vercel.json` reescribe `/.well-known/oauth-*` a la función de la API.
+3. Se registra solo (`POST /api/oauth/register`, RFC 7591): cliente público, sin secreto; direcciones de regreso https (o http en el propio equipo). Límite: 30 registros por hora por IP.
+4. Abre `/oauth/authorize?…` en la web (`OAuthConsentPage`): si no hay sesión pasa por el inicio de sesión y vuelve con la misma consulta. La página muestra el agente, la cuenta, a dónde vuelve y la matriz de permisos (la misma del diálogo de credenciales).
+5. Autorizar crea la credencial `oauth` con esos permisos (si el mismo agente ya estaba autorizado en la cuenta, la reemplaza) y un código de 10 minutos; cancelar vuelve con `access_denied`. Siempre se vuelve a una dirección registrada por el agente, con su `state`.
+6. Claude cambia el código en `POST /api/oauth/token` con PKCE S256 (obligatorio): token de acceso `aur_at_` de 1 hora y de renovación `aur_rt_` de 30 días, que ROTA en cada uso (el viejo deja de servir). Límite: 60 por minuto por IP.
+
+Todo se guarda como huella SHA-256; códigos y tokens se TOMAN con `delete … returning` (un solo uso aunque lleguen dos peticiones a la vez) y se borran con su credencial: revocarla en Integraciones corta el acceso al instante. Los errores tienen el formato de OAuth (`error`, `error_description`) y van sin caché.
+
+Siguiente: herramientas para **crear y editar flujos**.

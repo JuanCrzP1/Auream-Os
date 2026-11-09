@@ -35,11 +35,15 @@ export const MCP_EXPIRY_OPTIONS: ReadonlyArray<number | null> = [30, 90, 365, nu
 
 export const MCP_TOKEN_PREFIX = "aur_mcp_";
 
+/** `token`: creada a mano (se pega el token); `oauth`: autorizada desde el agente (Claude web y escritorio). */
+export type McpCredentialKind = "token" | "oauth";
+
 export interface McpCredentialSummary {
   readonly id: string;
+  readonly kind: McpCredentialKind;
   readonly name: string;
   readonly permissions: McpPermissions;
-  /** Últimos caracteres del token: `••••3f9a`. */
+  /** Últimos caracteres del token: `••••3f9a` (vacío en las de OAuth: sus tokens rotan). */
   readonly hint: string;
   readonly createdAt: string;
   readonly lastUsedAt: string | null;

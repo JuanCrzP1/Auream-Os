@@ -1,0 +1,126 @@
+/* ===== AUTORIZAR UN AGENTE (OAuth) =====
+   Pantalla suelta (sin barra lateral), como el inicio de sesión: el usuario
+   llega desde Claude y vuelve a Claude. Usa las variables del tema global. */
+
+.oauth-consent {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 5vw, 56px) 16px;
+  overflow: hidden;
+  background-color: var(--bg);
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
+.oauth-consent__ambient {
+  position: absolute;
+  inset: -20% -10%;
+  pointer-events: none;
+  background:
+    radial-gradient(620px 480px at 20% 10%, rgba(168, 85, 247, 0.2), transparent 62%),
+    radial-gradient(640px 520px at 80% 85%, rgba(56, 189, 248, 0.12), transparent 64%);
+}
+
+.oauth-consent__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(560px, 100%);
+  padding: clamp(20px, 4vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.18);
+}
+
+.oauth-consent__brand {
+  display: flex;
+  justify-content: center;
+}
+
+.oauth-consent__handshake {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.oauth-consent__handshake-line {
+  width: 48px;
+  border-top: 2px dashed var(--line);
+}
+
+.oauth-consent__agent {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.oauth-consent__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 3.5vw, 1.45rem);
+  line-height: 1.25;
+  text-align: center;
+}
+
+.oauth-consent__lead {
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.oauth-consent__account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+  font-size: 0.84rem;
+}
+
+.oauth-consent__account select {
+  max-width: 60%;
+}
+
+.oauth-consent__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.oauth-consent__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.oauth-consent__actions .ui-btn {
+  min-width: 120px;
+  justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .oauth-consent__actions {
+    flex-direction: column-reverse;
+  }
+
+  .oauth-consent__actions .ui-btn {
+    width: 100%;
+  }
+}

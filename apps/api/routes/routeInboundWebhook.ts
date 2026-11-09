@@ -5,7 +5,7 @@ import type { RateLimiter } from "../../../platform/security/rate-limiting/appli
 import type { WebhookServices } from "../composition/composeWebhookServices";
 import type { BackgroundTasks } from "../http/BackgroundTasks";
 import { enforceRateLimit } from "../middleware/limitRequests";
-import { BodyTooLargeError, parseJsonBody } from "../http/parseJsonBody";
+import { parseFormOrJsonBody } from "../http/parseFormOrJsonBody";
 import { sendJson } from "../http/sendJson";
 
 // ---------------------------------------------------------------------------
@@ -22,20 +22,6 @@ import { sendJson } from "../http/sendJson";
 
 const ROUTE = new RegExp(`^${INBOUND_WEBHOOK_PATH}/([^/]+)/([^/]+)$`);
 export const INBOUND_WEBHOOK_POLICY = { windowMs: 60_000, maxRequests: 600 };
-
-async function readPayload(request: IncomingMessage): Promise<unknown> {
-  const type = String(request.headers["content-type"] ?? "").toLowerCase();
-  if (!type.includes("application/x-www-form-urlencoded")) return parseJsonBody<unknown>(request, WEBHOOK_LIMITS.payloadBytes);
-  const chunks: Buffer[] = [];
-  let size = 0;
-  for await (const chunk of request) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    size += buffer.length;
-    if (size > WEBHOOK_LIMITS.payloadBytes) throw new BodyTooLargeError();
-    chunks.push(buffer);
-  }
-  return Object.fromEntries(new URLSearchParams(Buffer.concat(chunks).toString("utf-8")));
-}
 
 export async function routeInboundWebhook(
   request: IncomingMessage,
@@ -62,7 +48,7 @@ export async function routeInboundWebhook(
     sendJson(response, 404, { message: "No encontrado." });
     return true;
   }
-  const payload = await readPayload(request);
+  const payload = await parseFormOrJsonBody(request, WEBHOOK_LIMITS.payloadBytes);
   if (typeof payload !== "object" || payload === null) {
     sendJson(response, 400, { message: "El envío debe ser un objeto JSON." });
     return true;

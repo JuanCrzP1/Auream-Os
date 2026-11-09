@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { MCP_AREAS, type McpAccessLevel, type McpAreaId, type McpPermissions } from "../../../contracts/McpContracts";
+import { MCP_AREAS, type McpAccessLevel, type McpAreaId, type McpCredentialKind, type McpPermissions } from "../../../contracts/McpContracts";
 import type { Scope } from "../../../platform/authorization/contracts/Scope";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 
@@ -7,15 +7,20 @@ import { ValidationError } from "../../../platform/observability/errors/Validati
 // Credencial de un agente de IA (MCP). Reglas puras: nombre, permisos por
 // área (y su traducción a los permisos internos de la plataforma), huella del
 // token y vencimiento. El token nunca se guarda: solo su huella SHA-256 (es
-// aleatorio de 32 bytes, no se puede adivinar) y una pista.
+// aleatorio de 32 bytes, no se puede adivinar) y una pista. Las de tipo
+// `oauth` no tienen token propio: sus tokens rotan (`OAuth.ts`).
 // ---------------------------------------------------------------------------
 
 export interface McpCredential {
   readonly id: string;
   readonly tenantId: string;
+  readonly kind: McpCredentialKind;
   readonly name: string;
   readonly permissions: McpPermissions;
-  readonly tokenHash: string;
+  /** Huella del token fijo (`token`); `null` en las de OAuth. */
+  readonly tokenHash: string | null;
+  /** El agente registrado que la autorizó (solo `oauth`). */
+  readonly clientId: string | null;
   readonly hint: string;
   readonly createdAt: string;
   readonly lastUsedAt: string | null;

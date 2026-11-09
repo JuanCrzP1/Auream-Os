@@ -8,6 +8,7 @@ import { ContactsPage } from "@features/contacts/pages/ContactsPage";
 import { IntegrationsPage } from "@features/integrations/pages/IntegrationsPage";
 import { IntegrationDetailPage } from "@features/integrations/pages/IntegrationDetailPage";
 import { IntegrationItemPage } from "@features/integrations/pages/IntegrationItemPage";
+import { OAuthConsentPage } from "@features/integrations/pages/OAuthConsentPage";
 import { LoginPage } from "@features/auth/pages/LoginPage";
 import { RegisterPage } from "@features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@features/auth/pages/ForgotPasswordPage";
@@ -36,6 +37,18 @@ export function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route path="/" element={<Navigate to="/automations" replace />} />
+
+      {/* Autorizar un agente de IA (Claude web y escritorio) por OAuth: con
+          sesión, pero suelta (sin barra lateral): se llega desde el agente y
+          se vuelve a él. */}
+      <Route
+        path="/oauth/authorize"
+        element={
+          <ProtectedRoute>
+            <OAuthConsentPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/conversations"

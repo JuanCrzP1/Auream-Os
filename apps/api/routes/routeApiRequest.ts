@@ -16,6 +16,8 @@ import { routeInboundWebhook } from "./routeInboundWebhook";
 import { routeWebhooksRequest } from "./routeWebhooksRequest";
 import { routeMcp } from "./routeMcp";
 import { routeMcpCredentialsRequest } from "./routeMcpCredentialsRequest";
+import { routeOAuthPublic } from "./routeOAuthPublic";
+import { routeOAuthConsentRequest } from "./routeOAuthConsentRequest";
 import type { McpServer } from "../mcp/composeMcpServer";
 import type { WebhookServices } from "../composition/composeWebhookServices";
 import { routeConversationsRequest } from "./routeConversationsRequest";
@@ -88,6 +90,9 @@ export async function routeApiRequest(
   // Servidor MCP: lo autoriza el token de la credencial del agente, no una sesión.
   if (await routeMcp(request, response, url, dependencies.mcpServer, dependencies.rateLimiter)) return;
 
+  // OAuth del servidor MCP (descubrimiento, registro y tokens): lo usa el agente, sin sesión.
+  if (await routeOAuthPublic(request, response, url, dependencies.mcpServer, dependencies.rateLimiter)) return;
+
   // Trabajador de la cola: lo autoriza `CRON_SECRET`, no una sesión.
   if (await routeInternalTasks(request, response, url, dependencies.tasks)) return;
 
@@ -141,6 +146,7 @@ export async function routeApiRequest(
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;
+  if (await routeOAuthConsentRequest(request, response, url, dependencies.mcpServer, requestContext)) return;
   if (await routeConnectionsRequest(request, response, url, connectionsServices, requestContext)) return;
   if (dependencies.messagingServices && (await routeConversationsRequest(request, response, url, dependencies.messagingServices, requestContext))) return;
   if (await routeMediaRequest(request, response, url, mediaServices, requestContext)) return;

@@ -69,6 +69,8 @@ export interface ApiConfig {
   readonly blobReadWriteToken: string | null;
   /** Dirección pública de la API para las URLs de los medios locales (desarrollo). */
   readonly publicApiBaseUrl: string;
+  /** Origen público de la web (emisor OAuth): `PUBLIC_APP_URL`, el dominio de producción o el primer origen permitido. */
+  readonly publicAppOrigin: string;
   /** Versión de la Graph API de Meta para el Pixel (`META_GRAPH_API_VERSION`, p. ej. `v23.0`). */
   readonly metaGraphVersion: string;
   /**
@@ -133,7 +135,6 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   }
 
   const allowedOrigins = configuredOrigins.length > 0 ? configuredOrigins : DEFAULT_DEV_ORIGINS;
-
   const store = env["AUTOMATIONS_STORE"] ?? (isProduction ? "sql" : "json");
   if (store !== "json" && store !== "sql") {
     throw new ApiConfigError(`AUTOMATIONS_STORE debe ser "sql" o "json" (llegó "${store}").`);
@@ -190,6 +191,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     credentialsKeyRing,
     blobReadWriteToken: env["BLOB_READ_WRITE_TOKEN"]?.trim() || null,
     publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`,
+    publicAppOrigin: env["PUBLIC_APP_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}` : (allowedOrigins[0] ?? "http://localhost:5173")),
     metaGraphVersion,
     uazapi: uazapiUrl ? { baseUrl: uazapiUrl, adminToken: uazapiToken } : null,
     whatsappWebhookBaseUrl,

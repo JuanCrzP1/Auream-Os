@@ -20,7 +20,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (state.status === "anonymous") {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    // Con la consulta: una página como la autorización OAuth la necesita al volver.
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
   return <>{children}</>;

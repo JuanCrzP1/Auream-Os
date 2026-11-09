@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
-import { MCP_AREAS, MCP_EXPIRY_OPTIONS, type CreateMcpCredentialRequest, type McpAccessLevel, type McpAreaId, type McpCredentialCreated } from "@contracts/McpContracts";
+import { MCP_EXPIRY_OPTIONS, type CreateMcpCredentialRequest, type McpCredentialCreated } from "@contracts/McpContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
+import { DEFAULT_PERMISSIONS, hasAnyAccess, PermissionMatrix, type PermissionDraft } from "./PermissionMatrix";
 
 const EXPIRY_LABEL = (days: number | null) => (days === null ? "No vence" : days === 365 ? "1 año" : `${days} días`);
 
@@ -20,11 +21,11 @@ export function CreateMcpCredentialDialog({
 }) {
   const titleId = useId();
   const [name, setName] = useState("");
-  const [permissions, setPermissions] = useState<Partial<Record<McpAreaId, McpAccessLevel>>>({ flows: "read", contacts: "read" });
+  const [permissions, setPermissions] = useState<PermissionDraft>(DEFAULT_PERMISSIONS);
   const [expiresInDays, setExpiresInDays] = useState<number | null>(90);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const anyAccess = Object.values(permissions).some((level) => level && level !== "none");
+  const anyAccess = hasAnyAccess(permissions);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -48,28 +49,7 @@ export function CreateMcpCredentialDialog({
           <input className="ui-input" value={name} maxLength={60} placeholder="Ej.: Claude de ventas" autoFocus onChange={(e) => setName(e.target.value)} />
         </label>
 
-        <fieldset className="mcp-permissions">
-          <legend>Permisos</legend>
-          {MCP_AREAS.map((area) => {
-            const level = permissions[area.id] ?? "none";
-            const options: Array<{ value: McpAccessLevel; label: string }> = [{ value: "none", label: "Sin acceso" }, { value: "read", label: "Ver" }, ...(area.write ? [{ value: "write" as const, label: "Ver y editar" }] : [])];
-            return (
-              <div key={area.id} className="mcp-permissions__row">
-                <div>
-                  <strong>{area.label}</strong>
-                  <p className="ui-muted">{level === "write" ? area.write : area.read}</p>
-                </div>
-                <div className="mcp-segmented" role="radiogroup" aria-label={area.label}>
-                  {options.map((option) => (
-                    <button key={option.value} type="button" role="radio" aria-checked={level === option.value} className="mcp-segmented__option" onClick={() => setPermissions({ ...permissions, [area.id]: option.value })}>
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </fieldset>
+        <PermissionMatrix value={permissions} onChange={setPermissions} />
 
         <label className="ui-field">
           <span>Vence</span>
