@@ -23,7 +23,7 @@ apps/web  ──HTTP──>  apps/api        (nunca import de código fuente)
 
 Un dominio no sabe si sus datos viven en JSON, en memoria o en una base SQL.
 
-Cuando ensamblar algo exige instanciar infraestructura, ese ensamblaje pertenece a la composición, no al dominio. Por eso `BuilderSimulationRuntimeFactory` vive en `apps/api/composition/` y el dominio solo conoce el puerto `SimulationRuntimeFactory`.
+Cuando ensamblar algo exige instanciar infraestructura, ese ensamblaje pertenece a la composición, no al dominio. Por eso `composeSimulationSandbox` vive en `apps/api/composition/` y el dominio solo conoce el puerto `SimulationSandboxFactory`.
 
 ### 2. Un dominio no importa otro dominio
 

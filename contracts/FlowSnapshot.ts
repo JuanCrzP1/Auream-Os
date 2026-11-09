@@ -200,7 +200,7 @@ export interface BuilderFlowSnapshot {
 }
 
 // ---------------------------------------------------------------------------
-// BuilderSimulationRequest y PersistedBuilderWorkspace
-// han sido movidos a BuilderContracts.ts
+// PersistedBuilderWorkspace vive en BuilderContracts.ts; el contrato del
+// laboratorio de pruebas, en SimulationContracts.ts.
 // ---------------------------------------------------------------------------
 

@@ -24,7 +24,9 @@ import {
   type Edge,
   type FinalConnectionState
 } from "@xyflow/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { withLabTrail, type LabTrail } from "./labTrail";
+import "./lab-trail.css";
 import { checkConnection } from "@features/automations/builder/services/connectionRules";
 import { nodeTypes } from "./nodeTypes";
 import { edgeTypes } from "./edgeTypes";
@@ -61,6 +63,10 @@ interface BuilderCanvasProps {
    * toque aparezca donde el usuario está mirando (clave en pantallas pequeñas).
    */
   registerViewportCenter?: (getCenter: () => { x: number; y: number }) => void;
+  /** Bloques que ilumina el laboratorio de pruebas. */
+  labTrail?: LabTrail;
+  /** Entrega a la página la función que lleva a un bloque (el laboratorio la usa). */
+  registerFocusNode?: (focus: (nodeId: string) => void) => void;
 }
 
 /** Encuadre inicial: algo alejado, con aire alrededor. */
@@ -136,6 +142,12 @@ function CanvasInner(props: BuilderCanvasProps) {
     },
     [nodes, onNodesChange, fitView]
   );
+
+  const { registerFocusNode } = props;
+  useEffect(() => {
+    registerFocusNode?.(focusNode);
+  }, [registerFocusNode, focusNode]);
+  const shownNodes = useMemo(() => withLabTrail(props.nodes, props.labTrail), [props.nodes, props.labTrail]);
 
   // Teclado (B13): con un bloque enfocado (Tab), Enter abre su editor.
   // Suprimir/Retroceso ya los borra React Flow; Escape cierra el editor.
@@ -215,7 +227,7 @@ function CanvasInner(props: BuilderCanvasProps) {
              2 por omisión de React Flow, igual que antes. */
           minZoom={0.05}
           snapToGrid
-          nodes={props.nodes}
+          nodes={shownNodes}
           edges={props.edges}
           nodeTypes={nodeTypes}
           snapGrid={[24, 24]}

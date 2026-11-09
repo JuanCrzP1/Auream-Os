@@ -215,7 +215,7 @@ grep -rn "flow-engine/" domains/automations --include=*.ts | grep -v "import typ
 
 ## Composición
 
-El motor no se ensambla a sí mismo. `apps/api/composition/` construye el `NodeRuntime` con sus handlers y, para la simulación del builder, un stack aislado por tenant mediante `BuilderSimulationRuntimeFactory`.
+El motor no se ensambla a sí mismo. `apps/api/composition/` construye el `NodeRuntime` con sus handlers y, para la simulación del builder, un motor aislado por turno mediante `composeSimulationSandbox` (laboratorio de pruebas, ver `automations.md`).
 
 Instanciar implementaciones concretas es composición, no motor.
 

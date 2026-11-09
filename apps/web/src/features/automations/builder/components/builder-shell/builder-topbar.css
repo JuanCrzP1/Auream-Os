@@ -310,3 +310,42 @@
     width: 112px;
   }
 }
+
+/* «Probar»: abre el laboratorio de pruebas. */
+.builder-topbar__test {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.builder-topbar__test svg {
+  width: 15px;
+  height: 15px;
+  color: var(--primary);
+}
+
+.builder-topbar__test:hover,
+.builder-topbar__test.is-active {
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--teal)));
+  color: white;
+}
+
+.builder-topbar__test:hover svg,
+.builder-topbar__test.is-active svg {
+  color: white;
+}
+
+.builder-topbar__test:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

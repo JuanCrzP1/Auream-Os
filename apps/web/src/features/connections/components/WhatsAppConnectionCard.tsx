@@ -17,7 +17,9 @@ import "./connection-card.css";
 
 function ConnectionAvatar({ connection }: { readonly connection: ConnectionSummary }) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [connection.profilePictureUrl]);
+  useEffect(() => {
+    setFailed(false);
+  }, [connection.profilePictureUrl]);
   const photo = connection.profilePictureUrl && !failed ? connection.profilePictureUrl : null;
   return (
     <span className={`wa-avatar wa-avatar--${connection.method}${photo ? " has-photo" : ""}`} aria-hidden="true">

@@ -71,7 +71,7 @@ El `tenantId` nunca es una afirmación del cliente, pero sí puede ser una **sel
 
 Eso es distinto de "declarar el tenant": el cliente propone, el servidor decide contra la base de datos. Por eso el aislamiento sigue siendo verificable pese a que el header exista.
 
-`platform/tenancy` provee además `TenantResolver`, un concepto **separado**: resuelve el contexto de límites operativos que necesita el runtime de simulación del builder (`BuilderSimulationRuntimeFactory`), no la identidad de una petición HTTP. No debe confundirse con `resolveRequestContext`. Unificar ambos caminos sigue pendiente (ver «Pendiente»).
+`platform/tenancy` provee además `TenantResolver`, un concepto **separado**: resuelve el contexto de límites operativos que necesita el runtime de simulación del builder (`composeSimulationSandbox`), no la identidad de una petición HTTP. No debe confundirse con `resolveRequestContext`. Unificar ambos caminos sigue pendiente (ver «Pendiente»).
 
 ## Contexto del tenant
 

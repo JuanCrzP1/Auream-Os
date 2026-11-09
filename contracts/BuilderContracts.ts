@@ -25,15 +25,3 @@ export interface PersistedBuilderWorkspace {
   readonly autosaveRevision: number;
 }
 
-// ---------------------------------------------------------------------------
-// BuilderSimulationRequest
-//
-// DTO de la API de simulación. Viene del frontend cuando el usuario
-// escribe un mensaje en el simulador del builder.
-// ---------------------------------------------------------------------------
-
-export interface BuilderSimulationRequest {
-  readonly message: string;
-  readonly conversationKey: string;
-  readonly userKey: string;
-}

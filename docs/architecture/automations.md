@@ -33,7 +33,13 @@ Estado de edición: workspace, borrador, autoguardado y simulación.
 
 `BuilderWorkspaceRepository` es el puerto de persistencia; la composición lo envuelve en `UpgradingBuilderWorkspaceRepository`, que migra al formato vigente todo lo que se lee. `GetBuilderWorkspaceService`, `SaveDraftService` y `SimulateDraftService` son los casos de uso. `convertBuilderSnapshotToRuntime` traduce el snapshot del editor al del runtime.
 
-`BuilderSimulationRuntime` permite probar un borrador sin clientes reales. Depende del puerto `FlowExecutor`, no del orquestador concreto: el builder pide una ejecución, no sabe cómo se ejecuta.
+**Laboratorio de pruebas** (`domains/automations/simulation`, web en `builder/lab/`): prueba lo que está en el lienzo (guardado o no) como si fueras el cliente, con el motor REAL en un arenero que se arma de cero en cada turno (`SimulationSandbox`, compuesto en `apps/api/composition/composeSimulationSandbox.ts`).
+
+- **Sin estado en el servidor:** el navegador guarda el estado de la prueba (sesión, cliente de prueba, espera pendiente, turnos del Distribuidor) y lo manda en cada turno (`contracts/SimulationContracts.ts`); el servidor lo valida (`simulationInput.ts`: forma, tamaños, sesión de esta cuenta y este flujo). Así funciona en Vercel aunque cada petición caiga en una instancia distinta.
+- **Efectos de prueba** (`infrastructure/simulation/`): el contacto es el cliente de prueba (`SimulatedContactDirectory`), nada sale por WhatsApp (canal `builder-simulator`), el Pixel nunca va a Meta, la IA y la Integración reales solo si se piden («Usar IA real», «Integraciones reales»), anotadas.
+- **Recorrido:** `JournaledNodeRuntime` anota cada bloque en la `SimulationJournal`; `describeTurn.ts` lo traduce a pasos con la salida por la que siguió (nombre visible de `contracts/blocks`) y lo que hizo («Guardó {nombre}», «Etiquetas añadidas»…), y a los mensajes que se habrían enviado.
+- **Esperas:** un Programador o un tiempo máximo quedan como `wait`; «Saltar espera» manda el despertador al instante. Si el flujo cambió donde estaba la prueba, empieza de nuevo y lo avisa.
+- **Límite:** 120 turnos por minuto por cuenta (la IA y la Integración reales cuestan).
 
 **No contiene:** el ciclo de ejecución, los handlers de nodo ni la evaluación de edges.
 

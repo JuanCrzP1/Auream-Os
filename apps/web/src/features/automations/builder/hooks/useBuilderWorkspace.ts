@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { mapCanvasToSnapshot } from "../adapters/mapCanvasToSnapshot";
 import { useBuilderAutosave } from "./builder/useBuilderAutosave";
 import { useBuilderLoader } from "./builder/useBuilderLoader";
-import { useBuilderSimulation } from "./builder/useBuilderSimulation";
 import { useBuilderController } from "./useBuilderController";
 
 /**
@@ -16,7 +15,9 @@ import { useBuilderController } from "./useBuilderController";
  *  - useBuilderController → estado del canvas
  *  - useBuilderAutosave   → persistencia automática (no hay publicación:
  *                           lo guardado es lo que corre)
- *  - useBuilderSimulation → simulación (se montará en la FASE C, C15)
+ *
+ * El laboratorio de pruebas (`lab/useFlowLab`) prueba `currentDraft`: lo que
+ * está en el lienzo, guardado o no.
  */
 export function useBuilderWorkspace(flowKey: string) {
   const { workspace, loading, error, serverSignature, offline, setWorkspace, renameFlow } =
@@ -44,9 +45,6 @@ export function useBuilderWorkspace(flowKey: string) {
     onSaved: setWorkspace
   });
 
-  const { simulationLog, simulationStatus, handleSimulate, resetSimulation } =
-    useBuilderSimulation({ flowKey });
-
   return {
     // Carga
     loading,
@@ -73,10 +71,7 @@ export function useBuilderWorkspace(flowKey: string) {
     handleCollapseNodes: controller.handleCollapseNodes,
     // Acciones del workspace
     handleRenameFlow: renameFlow,
-    // Simulación
-    simulationLog,
-    simulationStatus,
-    handleSimulate,
-    resetSimulation
+    /** Lo que está en el lienzo ahora (lo que prueba el laboratorio). */
+    currentDraft
   };
 }

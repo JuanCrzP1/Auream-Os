@@ -1,0 +1,22 @@
+/* ===== BLOQUES DE LA PRUEBA =====
+   Mientras el laboratorio está abierto, los bloques por los que pasó el último
+   turno llevan un halo (el color de la marca) y el bloque donde la prueba
+   espera, además, late. */
+
+.react-flow__node.is-lab-visited .flow-node {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 85%, transparent), 0 0 28px 2px color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+.react-flow__node.is-lab-current .flow-node {
+  box-shadow: 0 0 0 3px var(--teal), 0 0 30px 2px color-mix(in srgb, var(--teal) 70%, transparent);
+  animation: lab-trail-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes lab-trail-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--teal), 0 0 16px 0 color-mix(in srgb, var(--teal) 55%, transparent); }
+  50% { box-shadow: 0 0 0 4px var(--teal), 0 0 36px 4px color-mix(in srgb, var(--teal) 75%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node.is-lab-current .flow-node { animation: none; }
+}

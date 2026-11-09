@@ -40,7 +40,7 @@ apps/api/
 
 El único lugar donde se instancian implementaciones concretas. Contiene también el seed del workspace inicial y el flow de ejemplo.
 
-Aquí vive `BuilderSimulationRuntimeFactory`: ensambla un stack aislado por tenant —registry, repositorio de sesiones, servicios y orquestador— para simular un draft. Instanciar infraestructura es composición, no dominio; por eso está aquí y el dominio solo conoce el puerto `SimulationRuntimeFactory`.
+Aquí vive `composeSimulationSandbox`: arma en cada turno del laboratorio de pruebas un motor aislado —registry, sesiones en memoria, efectos de prueba y orquestador—. Instanciar infraestructura es composición, no dominio; por eso está aquí y el dominio solo conoce el puerto `SimulationSandboxFactory`.
 
 ### Estructura
 
@@ -54,7 +54,7 @@ apps/api/
 │   ├── composeAuthService.ts
 │   ├── composeNodeRuntime.ts
 │   ├── composeBuilderServices.ts   ← ÚNICO punto que elige la persistencia
-│   └── BuilderSimulationRuntimeFactory.ts
+│   └── composeSimulationSandbox.ts
 ├── bootstrap/createApiServer.ts    CORS → routing → errores
 ├── middleware/                applyCorsHeaders · authenticateRequest
 ├── routes/                    routeApiRequest · routeAutomationsRequest · routeBuilderApiRequest

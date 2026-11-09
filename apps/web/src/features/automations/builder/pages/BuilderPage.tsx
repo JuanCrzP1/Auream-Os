@@ -1,6 +1,6 @@
 import "../components/builder-shell/builder-topbar.css";
 import "./builder-page.css";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { BuilderCanvas } from "../components/canvas/BuilderCanvas";
 import { BuilderShell } from "../components/builder-shell/BuilderShell";
@@ -15,6 +15,10 @@ import { resolveToolUi } from "../tools/ui-registry";
 import { freeCanvasPosition } from "../services/freeCanvasPosition";
 import type { CanvasNode } from "../types/canvas";
 import type { NodeType } from "@contracts/FlowSnapshot";
+import { FlowLab } from "../lab/FlowLab";
+import { FlaskIcon } from "../lab/LabIcons";
+import { canvasTrail } from "../lab/labModel";
+import { useFlowLab } from "../lab/useFlowLab";
 
 /** Medio ancho y medio alto aproximados de un bloque: se centra en el punto. */
 const NODE_HALF_SIZE = { x: 132, y: 48 } as const;
@@ -28,6 +32,19 @@ interface BuilderViewProps {
 function BuilderView({ flowKey, onReload }: BuilderViewProps) {
   const navigate = useNavigate();
   const builder = useBuilderWorkspace(flowKey);
+
+  // Laboratorio de pruebas: prueba lo que está en el lienzo AHORA (guardado o no).
+  const draftRef = useRef(builder.currentDraft);
+  draftRef.current = builder.currentDraft;
+  const getDraft = useCallback(() => draftRef.current, []);
+  const lab = useFlowLab(flowKey, getDraft);
+  const [labOpen, setLabOpen] = useState(false);
+  const labTrail = useMemo(() => (labOpen ? canvasTrail(lab.turns) : undefined), [labOpen, lab.turns]);
+  const focusBlock = useRef<((nodeId: string) => void) | null>(null);
+  const registerFocusNode = useCallback((focus: (nodeId: string) => void) => {
+    focusBlock.current = focus;
+  }, []);
+  const blockName = useCallback((nodeId: string) => builder.nodes.find((node: CanvasNode) => node.id === nodeId)?.data.title ?? "Bloque", [builder.nodes]);
 
   // Añadir desde la Toolbox con un toque: el bloque aparece en el centro de lo
   // que se está viendo, no en una posición fija que puede quedar fuera de la
@@ -102,11 +119,15 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
             <SaveStatusPill status={builder.offline ? "offline" : builder.autosaveStatus} />
           </div>
           {/* Sin publicar, versión ni rollback: los flujos se autoguardan y lo
-              guardado es lo que corre (ROADMAP, B6). */}
+              guardado es lo que corre (ROADMAP, B6). Se prueba en el laboratorio. */}
+          <button type="button" className={`builder-topbar__test${labOpen ? " is-active" : ""}`} aria-pressed={labOpen} onClick={() => setLabOpen((open) => !open)}>
+            <FlaskIcon />
+            Probar
+          </button>
         </header>
         {/* Área de trabajo: el lienzo ocupa todo el ancho y la paleta flota
             encima. La paleta NO es una columna del layout. */}
-        <div className="builder-workspace">
+        <div className={`builder-workspace${labOpen ? " builder-workspace--lab" : ""}`}>
           <BuilderCanvas
             nodes={builder.nodes}
             edges={builder.edges}
@@ -120,8 +141,11 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
             onPaneClick={builder.handleCollapseNodes}
             review={builder.review}
             registerViewportCenter={registerViewportCenter}
+            registerFocusNode={registerFocusNode}
+            {...(labTrail ? { labTrail } : {})}
           />
           <PalettePanel onAddNode={addNodeAtCenter} />
+          {labOpen ? <FlowLab lab={lab} blockName={blockName} onFocusBlock={(nodeId) => focusBlock.current?.(nodeId)} onClose={() => setLabOpen(false)} /> : null}
           {builder.offline ? <OfflineNotice onRetry={onReload} /> : null}
           {builder.autosaveStatus === "conflict" ? <OfflineNotice reason="conflict" onRetry={onReload} /> : null}
         </div>

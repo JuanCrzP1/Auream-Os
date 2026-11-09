@@ -9,7 +9,9 @@ const HUES = [152, 200, 262, 330, 24, 45, 180, 290];
  */
 export function Avatar({ name, phone, photoUrl = null, size = 48 }: { readonly name: string | null; readonly phone: string; readonly photoUrl?: string | null; readonly size?: number }) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [photoUrl]);
+  useEffect(() => {
+    setFailed(false);
+  }, [photoUrl]);
 
   const words = (name ?? "").trim().split(/\s+/).filter(Boolean);
   const initials = words.length ? (words[0]![0]! + (words[1]?.[0] ?? "")).toUpperCase() : "#";

@@ -1,6 +1,6 @@
 import { GetBuilderWorkspaceService } from "../../../domains/automations/builder/application/GetBuilderWorkspaceService";
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
-import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
+import { SimulateTurnService } from "../../../domains/automations/simulation/application/SimulateTurnService";
 import { UpgradingBuilderWorkspaceRepository } from "../../../domains/automations/builder/application/UpgradingBuilderWorkspaceRepository";
 import { CreateAutomationService } from "../../../domains/automations/builder/application/CreateAutomationService";
 import { DuplicateAutomationService } from "../../../domains/automations/builder/application/DuplicateAutomationService";
@@ -22,7 +22,7 @@ import { DirectUnitOfWork, type AutomationsUnitOfWork } from "../../../domains/a
 import { JsonAutomationRepository } from "../../../infrastructure/persistence/json/JsonAutomationRepository";
 import { JsonBuilderWorkspaceRepository } from "../../../infrastructure/persistence/json/JsonBuilderWorkspaceRepository";
 import { JsonFolderRepository } from "../../../infrastructure/persistence/json/JsonFolderRepository";
-import { BuilderSimulationRuntimeFactory } from "./BuilderSimulationRuntimeFactory";
+import { composeSimulationSandbox } from "./composeSimulationSandbox";
 import { buildInitialBuilderWorkspace } from "./buildInitialBuilderWorkspace";
 import { SafeHttpRequester } from "../../../infrastructure/http/SafeHttpRequester";
 import { InMemoryRateLimiter } from "../../../platform/security/rate-limiting/application/InMemoryRateLimiter";
@@ -43,7 +43,6 @@ import { TesseractDocumentReader } from "../../../infrastructure/documents/Tesse
 import type { DocumentTextReader } from "../../../flow-engine/ports/DocumentTextReader";
 import { SqlReceiptRegistry } from "../../../infrastructure/persistence/sql/SqlReceiptRegistry";
 import { InMemoryReceiptRegistry } from "../../../infrastructure/persistence/memory/InMemoryReceiptRegistry";
-import { composeNodeRuntime, simulationDependencies } from "./composeNodeRuntime";
 import type { ApiConfig } from "../config/loadApiConfig";
 
 // ---------------------------------------------------------------------------
@@ -64,7 +63,8 @@ export interface ApiServices {
   readonly testPixelService: TestPixelEventService;
   readonly testPaymentProofService: TestPaymentProofService;
   readonly saveDraftService: SaveDraftService;
-  readonly simulateDraftService: SimulateDraftService;
+  /** Laboratorio de pruebas del editor (lo del lienzo contra un cliente de prueba). */
+  readonly simulateTurnService: SimulateTurnService;
   readonly deleteAutomationService: DeleteAutomationService;
   readonly createAutomationService: CreateAutomationService;
   readonly duplicateAutomationService: DuplicateAutomationService;
@@ -141,9 +141,7 @@ export function composeBuilderServices(
       automationRepository
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
-    simulateDraftService: new SimulateDraftService(
-      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http, ai, conversions, media: http, documents })), config.defaultTimezone)
-    ),
+    simulateTurnService: new SimulateTurnService(composeSimulationSandbox({ ai, http, timezone: config.defaultTimezone }), rateLimiter),
     testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), rateLimiter),
     testAiService: new TestAiStepService(new EngineAiStepTester(ai), rateLimiter),
     testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), rateLimiter),

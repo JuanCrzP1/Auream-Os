@@ -1,0 +1,89 @@
+/* ===== RECORRIDO =====
+   Línea de tiempo por turno: cada bloque con el color de su herramienta, la
+   salida por la que siguió y lo que hizo. */
+
+.lab-trace,
+.lab-trace__steps { margin: 0; padding: 0; list-style: none; }
+.lab-trace { display: flex; flex-direction: column; gap: 16px; }
+
+.lab-trace__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.lab-trace__number {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.lab-trace__none,
+.lab-trace__empty { margin: 0; color: var(--muted); font-size: 0.76rem; }
+.lab-trace__empty { padding: 24px 8px; text-align: center; line-height: 1.5; }
+
+.lab-trace__steps { position: relative; display: flex; flex-direction: column; gap: 6px; padding-left: 10px; }
+.lab-trace__steps::before { content: ""; position: absolute; top: 6px; bottom: 6px; left: 19px; border-left: 2px solid var(--line); }
+
+.lab-step {
+  position: relative;
+  padding: 7px 10px 7px 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.lab-step--failed { border-color: color-mix(in srgb, var(--rose) 50%, var(--line)); }
+
+.lab-step__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lab-step__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--step-color);
+  color: white;
+}
+
+.lab-step__icon svg { width: 13px; height: 13px; }
+.lab-step__name { flex: 1; min-width: 0; overflow: hidden; font-size: 0.8rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.lab-step__head:hover .lab-step__name { text-decoration: underline; }
+
+.lab-step__status {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.lab-step--failed .lab-step__status { background: color-mix(in srgb, var(--rose) 16%, transparent); color: var(--rose); }
+.lab-step__output { margin: 4px 0 0 30px; color: var(--primary); font-size: 0.72rem; font-weight: 600; }
+.lab-step__notes { margin: 4px 0 0 30px; padding: 0; list-style: none; color: var(--muted); font-size: 0.72rem; line-height: 1.45; }
+.lab-step__notes li::before { content: "· "; }

@@ -1,11 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { handleGetBuilderWorkspaceRequest } from "../handlers/handleGetBuilderWorkspaceRequest";
 import { handleSaveDraftRequest } from "../handlers/handleSaveDraftRequest";
-import { handleSimulateDraftRequest } from "../handlers/handleSimulateDraftRequest";
+import { handleSimulateTurnRequest } from "../handlers/handleSimulateTurnRequest";
 import { sendJson } from "../http/sendJson";
 import { GetBuilderWorkspaceService } from "../../../domains/automations/builder/application/GetBuilderWorkspaceService";
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
-import { SimulateDraftService } from "../../../domains/automations/builder/application/SimulateDraftService";
+import { SimulateTurnService } from "../../../domains/automations/simulation/application/SimulateTurnService";
 import { TestIntegrationRequestService } from "../../../domains/automations/builder/application/TestIntegrationRequestService";
 import type { IntegrationTestRequest } from "../../../contracts/IntegrationTestContracts";
 import { TestAiStepService } from "../../../domains/automations/builder/application/TestAiStepService";
@@ -23,7 +23,7 @@ import { RuntimePermissions } from "../../../platform/authorization/permissions/
 export interface BuilderApiServices {
   readonly getWorkspaceService: GetBuilderWorkspaceService;
   readonly saveDraftService: SaveDraftService;
-  readonly simulateDraftService: SimulateDraftService;
+  readonly simulateTurnService: SimulateTurnService;
   readonly testIntegrationService: TestIntegrationRequestService;
   readonly testAiService: TestAiStepService;
   readonly testPixelService: TestPixelEventService;
@@ -126,7 +126,7 @@ export async function routeBuilderApiRequest(
 
   if (request.method === "POST" && action === "simulate") {
     requireScope(requestContext, RuntimePermissions.execute, tenantId);
-    await handleSimulateDraftRequest(request, response, services.getWorkspaceService, services.simulateDraftService, tenantId, flowKey);
+    await handleSimulateTurnRequest(request, response, services.getWorkspaceService, services.simulateTurnService, tenantId, flowKey);
     return;
   }
 

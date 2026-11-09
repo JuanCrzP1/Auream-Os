@@ -1,136 +1,157 @@
-import { describe, expect, it } from "vitest";
-import { SimulateDraftService } from "../../domains/automations/builder/application/SimulateDraftService.js";
-import { BuilderSimulationRuntimeFactory } from "../../apps/api/composition/BuilderSimulationRuntimeFactory.js";
-import { composeNodeRuntime } from "../../apps/api/composition/composeNodeRuntime.js";
+import { describe, expect, it, vi } from "vitest";
+import { SimulateTurnService } from "../../domains/automations/simulation/application/SimulateTurnService.js";
+import { composeSimulationSandbox } from "../../apps/api/composition/composeSimulationSandbox.js";
 import { buildInitialBuilderWorkspace } from "../../apps/api/composition/buildInitialBuilderWorkspace.js";
+import { DisabledAiGateway } from "../../infrastructure/ai/DisabledAiGateway.js";
+import { DisabledHttpRequester } from "../../infrastructure/http/DisabledHttpRequester.js";
 import type { PersistedBuilderWorkspace } from "../../contracts/BuilderContracts.js";
+import type { BuilderFlowNode } from "../../contracts/FlowSnapshot.js";
+import type { SimulationEvent, SimulationState, SimulationTurnResponse } from "../../contracts/SimulationContracts.js";
 
 // ---------------------------------------------------------------------------
-// La cadena real de la API (SimulateDraftService → orquestador → loop →
-// bloques), asíncrona de punta a punta (C5) y enrutando por salida (C14).
+// El laboratorio de pruebas de punta a punta, con el motor real: cada turno
+// llega con el estado que guardó el navegador (nada queda en el servidor) y
+// devuelve el recorrido, lo que se le habría mandado al cliente y cómo quedó.
 // ---------------------------------------------------------------------------
 
-function workspace(): PersistedBuilderWorkspace {
-  const base = buildInitialBuilderWorkspace("tenant-sim", "flujo");
-  const always = { operator: "always" as const };
-  return {
-    ...base,
-    draft: {
-      ...base.draft,
-      nodes: {
-        ...base.draft.nodes,
-        hola: { id: "hola", type: "message", name: "Hola", content: {}, config: { items: [{ id: "t", kind: "text", text: "¿Cómo te llamas?" }] }, metadata: {} },
-        ask: { id: "ask", type: "question", name: "Nombre", content: {}, config: { targetKey: "nombre" }, metadata: {} },
-        fin: { id: "fin", type: "end", name: "Fin", content: { text: "Encantado, {{context.nombre}}" }, config: {}, metadata: {} }
-      },
-      edgesBySource: {
-        start: [{ id: "e1", fromNodeId: "start", toNodeId: "hola", priority: 10, isFallback: false, condition: always }],
-        hola: [{ id: "e2", fromNodeId: "hola", toNodeId: "ask", priority: 10, isFallback: false, condition: always }],
-        ask: [{ id: "e3", fromNodeId: "ask", toNodeId: "fin", fromOutput: "respuesta", priority: 10, isFallback: false, condition: always }]
-      }
-    }
-  };
+const T = "tenant-sim";
+const always = { operator: "always" as const };
+const link = (from: string, to: string, fromOutput?: string) => ({ id: `${from}-${to}-${fromOutput ?? ""}`, fromNodeId: from, toNodeId: to, priority: 10, isFallback: false, condition: always, ...(fromOutput ? { fromOutput } : {}) });
+const node = (id: string, type: string, config: Record<string, unknown>, content: Record<string, unknown> = {}): BuilderFlowNode => ({ id, type: type as BuilderFlowNode["type"], name: id, content, config, metadata: {} });
+const end = (id: string, text: string) => node(id, "end", {}, { text });
+
+function workspace(nodes: Record<string, BuilderFlowNode>, edges: Record<string, ReturnType<typeof link>[]>): PersistedBuilderWorkspace {
+  const base = buildInitialBuilderWorkspace(T, "flujo");
+  return { ...base, draft: { ...base.draft, nodes: { ...base.draft.nodes, ...nodes }, edgesBySource: edges } };
 }
 
-describe("simulación de punta a punta", () => {
-  it("saluda, espera la respuesta y sale por «respuesta» con el dato guardado", async () => {
-    const service = new SimulateDraftService(new BuilderSimulationRuntimeFactory(composeNodeRuntime()));
-    const ws = workspace();
-    const request = (message: string) => ({ message, conversationKey: "c1", userKey: "u1" });
+function setup(http = new DisabledHttpRequester()) {
+  const service = new SimulateTurnService(composeSimulationSandbox({ ai: new DisabledAiGateway(), http, timezone: "America/Bogota" }));
+  let state: SimulationState | null = null;
+  const turn = async (ws: PersistedBuilderWorkspace, event: SimulationEvent, options = { realAi: false, realIntegrations: false }): Promise<SimulationTurnResponse> => {
+    const result = await service.execute(T, ws, { draft: ws.draft, state: JSON.parse(JSON.stringify(state)), event, options });
+    state = result.state;
+    return result;
+  };
+  return { turn, say: (ws: PersistedBuilderWorkspace, text: string) => turn(ws, { type: "message", text }) };
+}
 
-    const first = await service.simulate(ws, request("hola"));
-    expect(first.executionStatus).toBe("waiting_input");
-    expect(first.outputMessages.map((m) => m.content)).toEqual(["¿Cómo te llamas?"]);
+const texts = (result: SimulationTurnResponse) => result.messages.map((message) => message.text);
 
-    const second = await service.simulate(ws, request("Ana"));
-    expect(second.executionStatus).toBe("completed");
-    expect(second.outputMessages.map((m) => m.content)).toEqual(["Encantado, Ana"]);
+const greeting = () =>
+  workspace(
+    { hola: node("hola", "message", { items: [{ id: "t", kind: "text", text: "¿Cómo te llamas, {first_name}?" }] }), ask: node("ask", "question", { targetKey: "nombre" }), fin: end("fin", "Encantado, {{context.nombre}}") },
+    { start: [link("start", "hola")], hola: [link("hola", "ask")], ask: [link("ask", "fin", "respuesta")] }
+  );
+
+describe("laboratorio de pruebas", () => {
+  it("saluda al cliente de prueba, espera la respuesta y sigue por «respuesta» con el dato guardado; el estado viaja con el navegador", async () => {
+    const lab = setup();
+    const first = await lab.turn(greeting(), { type: "start" });
+    expect([first.status, texts(first)]).toEqual(["waiting_reply", ["¿Cómo te llamas, Cliente?"]]);
+    expect(first.steps.map((step) => [step.nodeId, step.status])).toEqual([["start", "success"], ["hola", "success"], ["ask", "waiting_input"]]);
+    expect(first.steps[2]!.notes).toContain("Espera la respuesta del cliente");
+
+    const second = await lab.say(greeting(), "Ana");
+    expect([second.status, texts(second)]).toEqual(["finished", ["Encantado, Ana"]]);
+    expect(second.steps[0]).toMatchObject({ nodeId: "ask", output: { id: "respuesta", label: "Respuesta" }, notes: expect.arrayContaining(["Guardó {nombre} = Ana"]) });
+    expect(second.variables).toEqual({ nombre: "Ana" });
+  });
+
+  it("si el flujo cambió donde estaba la prueba, empieza de nuevo y lo avisa", async () => {
+    const lab = setup();
+    await lab.turn(greeting(), { type: "start" });
+    const changed = greeting();
+    const { ask: _ask, ...nodes } = changed.draft.nodes;
+    void _ask;
+    const result = await lab.say({ ...changed, draft: { ...changed.draft, nodes, edgesBySource: { start: [link("start", "hola")] } } }, "Ana");
+    expect(result.notice).toMatch(/empezó de nuevo/);
+    expect(texts(result)).toEqual(["¿Cómo te llamas, Cliente?"]);
+  });
+
+  it("las etiquetas van al cliente de prueba y el Pixel no se envía a Meta (queda anotado)", async () => {
+    const lab = setup();
+    const ws = workspace(
+      { tags: node("tags", "tags", { action: "add", tags: ["VIP"] }), pixel: node("pixel", "pixel", { connectionId: "px1", event: "lead" }) },
+      { start: [link("start", "tags")], tags: [link("tags", "pixel")] }
+    );
+    const result = await lab.turn(ws, { type: "start" });
+    expect(result.state.persona.tags).toEqual(["VIP"]);
+    expect(result.steps.find((step) => step.nodeId === "tags")!.notes).toContain("Etiquetas añadidas: VIP");
+    expect(result.steps.find((step) => step.nodeId === "pixel")!.notes.join(" ")).toMatch(/Lead.*no se envía a Meta/);
+  });
+
+  it("la Integración no sale salvo que se pida; con «Integraciones reales» llama de verdad", async () => {
+    const send = vi.fn(async () => ({ ok: true as const, response: { status: 201, headers: {}, body: "{}" }, durationMs: 12 }));
+    const lab = setup({ send } as never);
+    const ws = workspace({ api: node("api", "integration", { method: "POST", url: "https://hooks.ejemplo.com/lead" }) }, { start: [link("start", "api")] });
+    const simulated = await lab.turn(ws, { type: "start" });
+    expect(send).not.toHaveBeenCalled();
+    expect(simulated.steps[1]!.notes.join(" ")).toMatch(/Integración simulada: POST https:\/\/hooks\.ejemplo\.com\/lead/);
+    const real = await lab.turn(ws, { type: "start" }, { realAi: false, realIntegrations: true });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(real.steps[1]!.notes.join(" ")).toMatch(/Integración real: .* 201/);
+  });
+
+  it("el Programador deja la prueba esperando; «Saltar espera» la continúa (un mensaje mientras tanto no la mueve)", async () => {
+    const lab = setup();
+    const ws = workspace(
+      { wait: node("wait", "delay", { trigger: "interval", wait: { amount: 2, unit: "hours" } }), fin: end("fin", "Ya pasaron 2 horas") },
+      { start: [link("start", "wait")], wait: [link("wait", "fin")] }
+    );
+    const first = await lab.turn(ws, { type: "start" });
+    expect([first.status, first.wait?.reason]).toEqual(["waiting_timer", "resume"]);
+    const ignored = await lab.say(ws, "¿hola?");
+    expect([ignored.notice, ignored.steps]).toEqual([expect.stringMatching(/Saltar espera/), []]);
+    const resumed = await lab.turn(ws, { type: "skip-wait" });
+    expect([resumed.status, texts(resumed)]).toEqual(["finished", ["Ya pasaron 2 horas"]]);
   });
 });
 
-describe("simulación — Menú, Condicional y Distribuidor juntos", () => {
-  const always = { operator: "always" as const };
-  const link = (from: string, to: string, fromOutput?: string) => ({
-    id: `${from}-${to}`, fromNodeId: from, toNodeId: to, priority: 10, isFallback: false, condition: always,
-    ...(fromOutput ? { fromOutput } : {})
-  });
-  const end = (id: string, text: string) => ({ id, type: "end" as const, name: id, content: { text }, config: {}, metadata: {} });
-
-  function flow(): PersistedBuilderWorkspace {
-    const base = buildInitialBuilderWorkspace("tenant-sim", "soporte");
-    return {
-      ...base,
-      draft: {
-        ...base.draft,
-        nodes: {
-          ...base.draft.nodes,
-          menu: { id: "menu", type: "menu", name: "Menú", content: {}, metadata: {}, config: {
-            format: "buttons", message: "¿En qué te ayudo?",
-            options: [{ id: "precios", title: "Precios" }, { id: "horarios", title: "Horarios" }, { id: "asesor", title: "Asesor" }]
-          } },
-          precios: end("precios", "El plan cuesta $50.000"),
-          horario: { id: "horario", type: "condition", name: "¿Abierto?", content: {}, metadata: {}, config: {
-            match: "all", rules: [{ id: "r1", category: "time", operator: "after", value: "00:00", field: "" }]
-          } },
-          abierto: end("abierto", "Estamos abiertos"),
-          cerrado: end("cerrado", "Estamos cerrados"),
-          reparto: { id: "reparto", type: "distributor", name: "Reparto", content: {}, metadata: {}, config: {
-            outputs: [{ id: "ana", label: "Ana" }, { id: "beto", label: "Beto" }]
-          } },
-          ana: end("ana", "Te atiende Ana"),
-          beto: end("beto", "Te atiende Beto"),
-          otra: end("otra", "No entendí tu respuesta")
-        },
-        edgesBySource: {
-          start: [link("start", "menu")],
-          menu: [link("menu", "precios", "precios"), link("menu", "horario", "horarios"), link("menu", "reparto", "asesor"), link("menu", "otra", "menu-other")],
-          horario: [link("horario", "abierto", "true"), link("horario", "cerrado", "false")],
-          reparto: [link("reparto", "ana", "ana"), link("reparto", "beto", "beto")]
-        }
+describe("laboratorio — Menú, Condicional y Distribuidor juntos", () => {
+  function flow(otherTo = "otra"): PersistedBuilderWorkspace {
+    return workspace(
+      {
+        menu: node("menu", "menu", { format: "buttons", message: "¿En qué te ayudo?", options: [{ id: "precios", title: "Precios" }, { id: "horarios", title: "Horarios" }, { id: "asesor", title: "Asesor" }] }),
+        precios: end("precios", "El plan cuesta $50.000"),
+        horario: node("horario", "condition", { match: "all", rules: [{ id: "r1", category: "time", operator: "after", value: "00:00", field: "" }] }),
+        abierto: end("abierto", "Estamos abiertos"),
+        cerrado: end("cerrado", "Estamos cerrados"),
+        reparto: node("reparto", "distributor", { outputs: [{ id: "ana", label: "Ana" }, { id: "beto", label: "Beto" }] }),
+        ana: end("ana", "Te atiende Ana"),
+        beto: end("beto", "Te atiende Beto"),
+        otra: end("otra", "No entendí tu respuesta")
+      },
+      {
+        start: [link("start", "menu")],
+        menu: [link("menu", "precios", "precios"), link("menu", "horario", "horarios"), link("menu", "reparto", "asesor"), link("menu", otherTo, "menu-other")],
+        horario: [link("horario", "abierto", "true"), link("horario", "cerrado", "false")],
+        reparto: [link("reparto", "ana", "ana"), link("reparto", "beto", "beto")]
       }
-    };
+    );
   }
 
-  /** «Otra respuesta» vuelve al mismo Menú (como en Leona). */
-  function menuLoopFlow(): PersistedBuilderWorkspace {
-    const base = flow();
-    const menuEdges = base.draft.edgesBySource["menu"]!.map((edge) => (edge.fromOutput === "menu-other" ? { ...edge, toNodeId: "menu" } : edge));
-    return { ...base, draft: { ...base.draft, edgesBySource: { ...base.draft.edgesBySource, menu: menuEdges } } };
-  }
+  it("cada opción lleva a su camino (por botón o por texto), con el nombre de la salida en el recorrido; el asesor se reparte por turnos", async () => {
+    const lab = setup();
+    const menu = await lab.turn(flow(), { type: "start" });
+    expect(menu.messages[0]).toMatchObject({ kind: "menu", text: "¿En qué te ayudo?", menu: { format: "buttons", options: [{ id: "precios" }, { id: "horarios" }, { id: "asesor" }] } });
+    const prices = await lab.turn(flow(), { type: "choice", optionId: "precios", title: "Precios" });
+    expect([texts(prices), prices.steps[0]!.output]).toEqual([["El plan cuesta $50.000"], { id: "precios", label: "Precios" }]);
 
-  async function chat(service: SimulateDraftService, conversation: string, ...messages: string[]) {
-    return chatWith(service, flow, conversation, ...messages);
-  }
-
-  async function chatWith(service: SimulateDraftService, build: () => PersistedBuilderWorkspace, conversation: string, ...messages: string[]) {
-    const replies: string[][] = [];
-    for (const message of messages) {
-      const result = await service.simulate(build(), { message, conversationKey: conversation, userKey: conversation });
-      replies.push(result.outputMessages.map((m) => m.content));
+    const answers: string[] = [];
+    for (const reply of ["horarios", "quiero otra cosa", "3", "Asesor", "3"]) {
+      await lab.turn(flow(), { type: "start" });
+      answers.push(texts(await lab.say(flow(), reply))[0]!);
     }
-    return replies;
-  }
-
-  it("cada opción del menú lleva a su camino, y el asesor se reparte por turnos", async () => {
-    const service = new SimulateDraftService(new BuilderSimulationRuntimeFactory(composeNodeRuntime(), "America/Bogota"));
-
-    expect((await chat(service, "c1", "hola", "1"))[1]).toEqual(["El plan cuesta $50.000"]);
-    expect((await chat(service, "c2", "hola", "horarios"))[1]).toEqual(["Estamos abiertos"]);
-    expect((await chat(service, "c3", "hola", "quiero otra cosa"))[1]).toEqual(["No entendí tu respuesta"]);
-    expect((await chat(service, "c4", "hola", "3"))[1]).toEqual(["Te atiende Ana"]);
-    expect((await chat(service, "c5", "hola", "Asesor"))[1]).toEqual(["Te atiende Beto"]);
-    expect((await chat(service, "c6", "hola", "3"))[1]).toEqual(["Te atiende Ana"]);
+    expect(answers).toEqual(["Estamos abiertos", "No entendí tu respuesta", "Te atiende Ana", "Te atiende Beto", "Te atiende Ana"]);
   });
 
   it("«Otra respuesta» conectada al mismo Menú lo vuelve a enviar y espera; luego una opción válida sigue su camino", async () => {
-    const service = new SimulateDraftService(new BuilderSimulationRuntimeFactory(composeNodeRuntime(), "America/Bogota"));
-    const replies = await chatWith(service, menuLoopFlow, "loop", "hola", "quiero otra cosa", "tampoco sé", "1");
-
-    const menuText = replies[0]!.join("\n");
-    expect(menuText).toContain("¿En qué te ayudo?");
-    // Cada respuesta que no es opción vuelve a mostrar el menú, una sola vez (sin dar vueltas).
-    expect(replies[1]).toEqual(replies[0]);
-    expect(replies[2]).toEqual(replies[0]);
-    expect(replies[3]).toEqual(["El plan cuesta $50.000"]);
+    const lab = setup();
+    const first = await lab.turn(flow("menu"), { type: "start" });
+    const again = await lab.say(flow("menu"), "quiero otra cosa");
+    expect(texts(again)).toEqual(texts(first));
+    expect(texts(await lab.say(flow("menu"), "tampoco sé"))).toEqual(texts(first));
+    expect(texts(await lab.say(flow("menu"), "1"))).toEqual(["El plan cuesta $50.000"]);
   });
 });

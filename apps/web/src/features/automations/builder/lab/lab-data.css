@@ -1,0 +1,12 @@
+/* Datos de la prueba: el cliente de prueba y las variables. */
+
+.lab-data { display: flex; flex-direction: column; gap: 18px; }
+.lab-data__title { margin: 0 0 8px; color: var(--text); font-size: 0.8rem; }
+.lab-data__list { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.lab-data__list > div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
+.lab-data__list dt { color: var(--muted); font-size: 0.76rem; }
+.lab-data__list dd { margin: 0; overflow-wrap: anywhere; color: var(--text); font-size: 0.78rem; font-weight: 600; text-align: right; }
+.lab-data__tags { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.lab-data__tag { padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 14%, transparent); font-size: 0.7rem; }
+.lab-data__empty { margin: 0; color: var(--muted); font-size: 0.76rem; }
+
