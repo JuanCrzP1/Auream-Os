@@ -40,10 +40,18 @@ export const ChatsGlyph = () => (
   </svg>
 );
 
-/** Un visto gris de WhatsApp: salió hacia el cliente (no sabemos si lo leyó). */
+/** Un chulo: salió hacia WhatsApp (aún no llega al teléfono del cliente). */
 export const SentGlyph = () => (
-  <svg viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="m2 6.5 3.2 3.2L12 2.5" />
+  <svg viewBox="0 0 16 11" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m2.5 5.8 3 3L12 2.2" />
+  </svg>
+);
+
+/** Dos chulos: llegó al teléfono del cliente (grises) o lo leyó (azules, por CSS). */
+export const DeliveredGlyph = () => (
+  <svg viewBox="0 0 16 11" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m.8 5.8 3 3L10.3 2.2" />
+    <path d="m7.4 8.4.4.4 6.5-6.6" />
   </svg>
 );
 

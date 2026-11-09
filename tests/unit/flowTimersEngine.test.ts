@@ -97,11 +97,15 @@ describe("bloques al despertar", () => {
       { id: "p3", kind: "interval", amount: 2, unit: "minutes" },
       { id: "d", kind: "text", text: "Cuatro" }
     ] });
-    const contents = (result: { outputMessages: ReadonlyArray<{ kind?: string; content: string }> }) => result.outputMessages.filter((m) => m.kind !== "pause").map((m) => m.content);
+    type Outputs = { outputMessages: ReadonlyArray<{ kind?: string; content: string; presence?: string; delayMs?: number }> };
+    const contents = (result: Outputs) => result.outputMessages.filter((m) => m.kind !== "pause" && m.kind !== "presence").map((m) => m.content);
+    const waits = (result: Outputs) => result.outputMessages.filter((m) => m.kind === "pause" || m.kind === "presence").map((m) => [m.kind, m.presence, m.delayMs]);
 
     const first = await handler.execute(message, input(), session());
     expect(first).toMatchObject({ executionStatus: "delayed", nodeResult: { resumeAt: "2026-11-09T12:00:26.000Z" } });
     expect(contents(first)).toEqual(["Uno", "Dos"]);
+    // El cliente ve «escribiendo…» en cada pausa, también en la que queda para el despertador.
+    expect(waits(first)).toEqual([["pause", "composing", 6_000], ["presence", "composing", 20_000]]);
     expect(first.contextPatch[messageCursorKey("n1")]).toBe(4);
 
     const second = await handler.execute(message, input({ timer: "resume" }), session({ [messageCursorKey("n1")]: 4 }));

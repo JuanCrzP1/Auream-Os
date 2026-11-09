@@ -91,7 +91,7 @@ describe("UazapiLinker", () => {
     const outcome = await linker.start({ id: "c1", tenantId: "t", name: "Ventas", method: "qr" }, null);
     expect(outcome).toMatchObject({ kind: "qr", qrImage: "data:image/png;base64,iVBORw0KGgo", session: { ref: "r1a2b3", secret: "inst-token" } });
     expect(api.calls[0]!.body).toMatchObject({ name: instanceNameFor("c1") });
-    expect(api.calls[1]!.body).toEqual({ enabled: true, url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection", "messages"], excludeMessages: ["wasSentByApi"] });
+    expect(api.calls[1]!.body).toEqual({ enabled: true, url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection", "messages", "messages_update"], excludeMessages: [] });
   });
 
   it("sin URL pública (desarrollo) no registra avisos", async () => {
@@ -123,9 +123,9 @@ describe("UazapiLinker", () => {
     expect(api.calls.map((c) => `${c.method} ${new URL(c.url).pathname}`)).toEqual(["POST /instance/disconnect", "POST /instance/connect"]);
   });
 
-  it("ver estado: vuelve a registrar los avisos de conexión y mensajes", async () => {
+  it("ver estado: vuelve a registrar los avisos de conexión, mensajes y entregado/leído", async () => {
     const api = server({ "POST /webhook": () => json(200, []) });
     await new UazapiLinker(api.client, "https://auream-os.vercel.app/api/webhooks/uazapi").refresh({ ref: "r", secret: "inst-token" });
-    expect(api.calls[0]!.body).toMatchObject({ url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection", "messages"] });
+    expect(api.calls[0]!.body).toMatchObject({ url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection", "messages", "messages_update"] });
   });
 });

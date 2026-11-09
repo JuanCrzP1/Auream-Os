@@ -30,7 +30,10 @@ describe("AesGcmSecretCipher", () => {
 
   it("detecta un sobre alterado o mal formado", () => {
     const [v, iv, tag, ct] = cipher.encrypt("sk-secreto", "x").split(".");
-    const alterado = [v, iv, tag, `${ct!.slice(0, -2)}AA`].join(".");
+    // Se invierte un byte del cifrado: siempre cambia (cambiar letras al azar a veces no cambia nada).
+    const bytes = Buffer.from(ct!, "base64url");
+    bytes[0] = bytes[0]! ^ 0xff;
+    const alterado = [v, iv, tag, bytes.toString("base64url")].join(".");
     expect(() => cipher.decrypt(alterado, "x")).toThrow(SecretDecryptionError);
     expect(() => cipher.decrypt("basura", "x")).toThrow(SecretDecryptionError);
   });

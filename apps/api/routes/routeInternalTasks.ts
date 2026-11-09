@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { TaskRunner, RunReport } from "../../../domains/scheduling/application/TaskRunner";
 import type { BackgroundTasks } from "../http/BackgroundTasks";
 import { sendJson } from "../http/sendJson";
-import { TASKS_RUN_PATH } from "../composition/composeSchedulingServices";
+import { TASKS_RUN_PATH } from "../config/loadTasksConfig";
 
 // ---------------------------------------------------------------------------
 // `/internal/tasks/run` — despierta al trabajador de la cola (FASE C6).
@@ -14,9 +14,10 @@ import { TASKS_RUN_PATH } from "../composition/composeSchedulingServices";
 // atiende a nadie.
 //
 // Responde enseguida (202) y la ronda sigue en segundo plano dentro del tiempo
-// de la función: así quien llama no espera ni corta el trabajo. Con cadena de
-// rondas (plan sin cron frecuente), la ronda se sostiene si algo vence pronto
-// y, al terminar, despierta a la siguiente.
+// de la función: así quien llama no espera ni corta el trabajo. Al terminar,
+// asegura quién despierta para la próxima pendiente (`armNext`: ya, o su
+// despertador). Con cadena de rondas (sin despertadores ni cron frecuente), la
+// ronda se sostiene si algo vence pronto y, al terminar, despierta a la siguiente.
 // ---------------------------------------------------------------------------
 
 export interface InternalTasksDependencies {
@@ -26,6 +27,8 @@ export interface InternalTasksDependencies {
   readonly background: BackgroundTasks;
   /** Cadena de rondas: margen (0 = apagada) y cómo despertar la siguiente. */
   readonly chain?: { readonly horizonMs: number; continueIfSoon(horizonMs: number): Promise<boolean> };
+  /** Tras cada ronda: el despertador (o el aviso) de la próxima pendiente. */
+  readonly armNext?: () => Promise<void>;
   readonly onReport?: (report: RunReport) => void;
 }
 
@@ -61,6 +64,7 @@ export async function routeInternalTasks(
     const report = await tasks.runner.run({ budgetMs: tasks.budgetMs, holdWithinMs: chain?.horizonMs ?? 0 });
     tasks.onReport?.(report);
     if (chain) await chain.continueIfSoon(chain.horizonMs);
+    await tasks.armNext?.();
   });
   sendJson(response, 202, { started: true });
   return true;

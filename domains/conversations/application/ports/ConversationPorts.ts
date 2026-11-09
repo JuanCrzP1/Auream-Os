@@ -6,6 +6,8 @@ export interface SendResult {
   readonly message: OutboundMessage;
   readonly ok: boolean;
   readonly error?: string;
+  /** Id que WhatsApp le dio (para los avisos de entregado y leído). */
+  readonly providerMessageId?: string;
 }
 
 /** Envía por el número del chat (Conexiones). */

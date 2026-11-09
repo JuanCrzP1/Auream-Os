@@ -8,6 +8,7 @@
 //   POST   /instance/disconnect token      cerrar la sesión (o el QR en curso)
 //   POST   /send/text · /send/media · /send/menu   token   enviar
 //   POST   /message/react      token        reaccionar con un emoji
+//   POST   /message/presence   token        «escribiendo…» / «grabando audio…»
 //   POST   /message/download   token        enlace de un archivo recibido (2 días)
 //   DELETE /instance          token        borrar la sesión
 //   POST   /webhook           token        avisos de conexión a Auream
@@ -15,6 +16,8 @@
 // Los tokens van en cabeceras (`admintoken`, `token`), nunca en la URL, y
 // ningún mensaje de error los repite.
 // ---------------------------------------------------------------------------
+
+import { record, sentId, text, toInstanceInfo, type Json, type UazapiInstanceInfo } from "./uazapiResponses";
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -42,49 +45,7 @@ export class UazapiError extends Error {
   }
 }
 
-export interface UazapiInstanceInfo {
-  readonly id: string;
-  readonly token: string;
-  /** `disconnected` · `connecting` · `connected` · `hibernated`. */
-  readonly status: string;
-  /** QR como data URL (vacío mientras se genera). */
-  readonly qrcode: string;
-  readonly profileName: string | null;
-  /** Número conectado, solo dígitos (de `status.jid.user`). */
-  readonly phoneNumber: string | null;
-}
-
 const TIMEOUT_MS = 15_000;
-
-type Json = Record<string, unknown>;
-
-const record = (value: unknown): Json => (typeof value === "object" && value !== null ? (value as Json) : {});
-const text = (value: unknown): string => (typeof value === "string" ? value : "");
-
-function digits(value: unknown): string | null {
-  const only = text(value).split("@")[0]!.replace(/\D/g, "");
-  return only.length >= 7 && only.length <= 15 ? only : null;
-}
-
-/** Algunos servidores devuelven el PNG sin el prefijo `data:`. */
-function asDataUrl(qr: string): string {
-  if (!qr) return "";
-  return qr.startsWith("data:") ? qr : `data:image/png;base64,${qr}`;
-}
-
-function toInstanceInfo(body: Json): UazapiInstanceInfo {
-  const instance = record(body["instance"]);
-  const status = record(body["status"]);
-  const jid = record(status["jid"] ?? body["jid"]);
-  return {
-    id: text(instance["id"]),
-    token: text(instance["token"] ?? body["token"]),
-    status: text(instance["status"]) || (status["connected"] === true || body["connected"] === true ? "connected" : "disconnected"),
-    qrcode: asDataUrl(text(instance["qrcode"])),
-    profileName: text(instance["profileName"]) || null,
-    phoneNumber: digits(jid["user"]) ?? digits(instance["owner"])
-  };
-}
 
 export class UazapiClient {
   private readonly baseUrl: string;
@@ -124,19 +85,28 @@ export class UazapiClient {
     await this.request("POST", "/instance/disconnect", { token });
   }
 
-  public async sendText(token: string, number: string, text: string, replyId?: string): Promise<void> {
-    await this.request("POST", "/send/text", { token }, { number, text, ...(replyId ? { replyid: replyId } : {}) });
+  /** Devuelve el id que WhatsApp le dio al mensaje (`messageid`), si viene. */
+  public async sendText(token: string, number: string, text: string, replyId?: string): Promise<string | null> {
+    return sentId(await this.request("POST", "/send/text", { token }, { number, text, ...(replyId ? { replyid: replyId } : {}) }));
+  }
+
+  /**
+   * Presencia en el chat: `composing` («escribiendo…») o `recording` («grabando
+   * audio…») durante `delayMs` (uazapi la renueva y la quita al enviar). Máx. 5 min.
+   */
+  public async presence(token: string, number: string, presence: "composing" | "recording" | "paused", delayMs: number): Promise<void> {
+    await this.request("POST", "/message/presence", { token }, { number, presence, delay: Math.max(1_000, Math.min(Math.round(delayMs), 300_000)) });
   }
 
   /** `type`: image · video · audio · ptt · document (según la documentación de uazapi). */
-  public async sendMedia(token: string, number: string, media: { readonly type: string; readonly file: string; readonly text?: string; readonly docName?: string }): Promise<void> {
-    await this.request("POST", "/send/media", { token }, {
+  public async sendMedia(token: string, number: string, media: { readonly type: string; readonly file: string; readonly text?: string; readonly docName?: string }): Promise<string | null> {
+    return sentId(await this.request("POST", "/send/media", { token }, {
       number,
       type: media.type,
       file: media.file,
       ...(media.text ? { text: media.text } : {}),
       ...(media.docName ? { docName: media.docName } : {})
-    });
+    }));
   }
 
   /**
@@ -147,15 +117,15 @@ export class UazapiClient {
     token: string,
     number: string,
     menu: { readonly type: "button" | "list"; readonly text: string; readonly choices: ReadonlyArray<string>; readonly footerText?: string; readonly listButton?: string }
-  ): Promise<void> {
-    await this.request("POST", "/send/menu", { token }, {
+  ): Promise<string | null> {
+    return sentId(await this.request("POST", "/send/menu", { token }, {
       number,
       type: menu.type,
       text: menu.text,
       choices: [...menu.choices],
       ...(menu.footerText ? { footerText: menu.footerText } : {}),
       ...(menu.listButton ? { listButton: menu.listButton } : {})
-    });
+    }));
   }
 
   public async react(token: string, messageId: string, emoji: string): Promise<void> {
@@ -180,9 +150,14 @@ export class UazapiClient {
     }
   }
 
-  /** Avisos de la instancia a Auream (modo simple: uno por instancia). */
+  /**
+   * Avisos de la instancia a Auream (modo simple: uno por instancia). Sin
+   * excluir lo enviado por la API: ese filtro también se come los avisos de
+   * entregado/leído de nuestros mensajes. Los mensajes propios que lleguen se
+   * descartan al leerlos (`parseUazapiMessage`), así no hay bucles.
+   */
   public async setWebhook(token: string, url: string, events: ReadonlyArray<string>): Promise<void> {
-    await this.request("POST", "/webhook", { token }, { enabled: true, url, events: [...events], excludeMessages: ["wasSentByApi"] });
+    await this.request("POST", "/webhook", { token }, { enabled: true, url, events: [...events], excludeMessages: [] });
   }
 
   private async request(method: string, path: string, auth: Readonly<Record<string, string>>, payload?: Json): Promise<Json> {

@@ -1,13 +1,15 @@
 import type { ConversationMessage } from "@contracts/ConversationContracts";
 import { messageTime } from "./chatTime";
-import { AlertGlyph, DocGlyph, SentGlyph } from "./ChatGlyphs";
+import { AlertGlyph, DocGlyph } from "./ChatGlyphs";
+import { DeliveryTicks } from "./DeliveryTicks";
+import "./chatBubbles.css";
 
 // ---------------------------------------------------------------------------
-// Un mensaje del hilo como en WhatsApp iOS: el cliente a la izquierda, lo que
-// sale (bot o asesor) a la derecha, con hora y visto de enviado (la colita va
-// en el último de cada tanda); los menús enviados con
-// sus botones; las fotos y archivos con su vista previa. Un envío fallido lo
-// dice con su motivo.
+// Un mensaje del hilo como en WhatsApp: el cliente a la izquierda, lo que sale
+// (bot o asesor) a la derecha, con su hora y sus chulos (enviado, entregado,
+// leído; la colita va en el último de cada tanda); los menús enviados con sus
+// botones; las fotos y archivos con su vista previa. Un envío fallido lo dice
+// con su motivo.
 // ---------------------------------------------------------------------------
 
 function Media({ message }: { readonly message: ConversationMessage }) {
@@ -43,7 +45,7 @@ export function MessageBubble({ message, tail = true }: { readonly message: Conv
   const meta = (
     <span className={`ios-bubble__meta${message.text ? "" : " is-static"}`}>
       {messageTime(message.createdAt)}
-      {outbound && message.status === "sent" ? <span className="ios-sent" title="Enviado"><SentGlyph /></span> : null}
+      {outbound ? <DeliveryTicks status={message.status} /> : null}
       {message.status === "failed" ? <AlertGlyph /> : null}
     </span>
   );

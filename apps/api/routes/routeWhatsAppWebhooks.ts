@@ -5,6 +5,7 @@ import type { MessagingServices } from "../composition/composeMessagingServices"
 import type { BackgroundTasks } from "../http/BackgroundTasks";
 import { UAZAPI_INSTANCE_PREFIX } from "../../../infrastructure/whatsapp/uazapi/UazapiLinker";
 import { parseUazapiMessage } from "../../../infrastructure/whatsapp/uazapi/parseUazapiMessage";
+import { parseUazapiReceipt } from "../../../infrastructure/whatsapp/uazapi/parseUazapiReceipt";
 import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
 
@@ -15,8 +16,14 @@ import { sendJson } from "../http/sendJson";
 //
 //   POST /webhooks/uazapi
 //     connection  la conexión se conectó o desconectó
-//     messages    un cliente escribió: se responde enseguida (uazapi lo pide)
-//                 y el mensaje se procesa después (`BackgroundTasks`)
+//     messages         un cliente escribió: se responde enseguida (uazapi lo
+//                      pide) y el mensaje se procesa después (`BackgroundTasks`)
+//     messages_update  recibos de entregado/leído de lo que mandamos: los
+//                      chulos de la bandeja
+//
+// Cada aviso válido de un número pone al día, de paso, su configuración de
+// avisos en el proveedor (`webhooks.ensureCurrent`): versiones nuevas de
+// Auream piden eventos nuevos sin que nadie toque nada.
 // ---------------------------------------------------------------------------
 
 const MAX_WEBHOOK_BYTES = 256 * 1024;
@@ -73,6 +80,21 @@ export async function routeWhatsAppWebhooks(
         // Archivo sin enlace en el aviso: se pide a uazapi (válido 2 días).
         const media = event.needsMediaDownload ? await connections.channel.inboundMedia(connection, event.message.providerMessageId) : event.message.media;
         await messaging.inbound.execute(connection.tenantId, { ...event.message, connectionId: connection.id, media });
+        // Después de atender al cliente: su configuración de avisos al día (entregado/leído…).
+        await connections.webhooks.ensureCurrent(connection);
+      });
+    }
+  }
+
+  if (eventType === "messages_update" && messaging && background) {
+    const parsed = parseUazapiReceipt(body);
+    const connectionId = parsed.ok ? connectionIdOf(parsed.receipt.instanceName) : null;
+    if (parsed.ok && connectionId) {
+      const { receipt } = parsed;
+      background.run(async () => {
+        const connection = await connections.channel.authenticate(connectionId, receipt.token);
+        if (!connection) return;
+        await messaging.receipts.applyReceipts(connection.tenantId, connection.id, receipt.providerMessageIds, receipt.status);
       });
     }
   }

@@ -165,6 +165,7 @@ describe("routeWhatsAppWebhooks · mensajes", () => {
     const connection = { id: CONNECTION, tenantId: T };
     const connections = {
       providerEvents: { execute: vi.fn() },
+      webhooks: { ensureCurrent: vi.fn(async () => undefined) },
       channel: { authenticate: vi.fn(async (_id: string, token: string) => (token === TOKEN ? connection : null)), inboundMedia: vi.fn(async () => ({ url: "https://cdn/x.jpg", mimeType: "image/jpeg" })) }
     } as unknown as ConnectionsServices;
     const response = recorder();

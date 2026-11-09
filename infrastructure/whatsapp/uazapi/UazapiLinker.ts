@@ -6,7 +6,8 @@ import {
   type StartOutcome,
   type WhatsAppLinker
 } from "../../../domains/connections/application/ports/WhatsAppLinker";
-import { UazapiClient, UazapiError, type UazapiInstanceInfo } from "./UazapiClient";
+import { UazapiClient, UazapiError } from "./UazapiClient";
+import type { UazapiInstanceInfo } from "./uazapiResponses";
 
 // ---------------------------------------------------------------------------
 // Vinculación por código QR con uazapi.
@@ -18,7 +19,8 @@ import { UazapiClient, UazapiError, type UazapiInstanceInfo } from "./UazapiClie
 
 export const UAZAPI_INSTANCE_PREFIX = "auream-";
 /** Avisos que Auream pide a cada instancia: su conexión y los mensajes que llegan. */
-export const WEBHOOK_EVENTS = ["connection", "messages"] as const;
+/** Avisos que pide Auream: conexión, mensajes y recibos de entregado/leído. */
+export const WEBHOOK_EVENTS = ["connection", "messages", "messages_update"] as const;
 /** Nombre del dispositivo que ve el cliente en «Dispositivos vinculados». */
 const DEVICE_NAME = "Auream";
 

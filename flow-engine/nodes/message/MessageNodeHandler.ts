@@ -1,5 +1,5 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
-import { type NodeExecutionResult, type OutboundMessage, type RuntimeInput } from "../../../contracts/RuntimeContracts";
+import type { ChatPresence, NodeExecutionResult, OutboundMessage, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import { INLINE_PAUSE_BUDGET_MS } from "../../../contracts/FlowTimerContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
 import { intervalMs, readMessageItems, type MessageItem } from "../../../contracts/MessageConfig";
@@ -15,6 +15,10 @@ import { ConversationTemplates } from "../../templates/ConversationTemplates";
 //   texto     → `text` (variables resueltas)
 //   archivo   → `media` con su URL pública; la leyenda, con variables
 //   pausa     → `pause` con su duración; la entrega espera antes de seguir
+//
+// «ESCRIBIENDO…» (como Leona). Durante una pausa el cliente ve lo que se
+// prepara: «grabando audio…» si lo siguiente es un audio, «escribiendo…» si es
+// texto u otro archivo (`presenceBefore`). Una pausa al final no muestra nada.
 //
 // PAUSAS LARGAS (FASE C6). Las pausas de un turno pueden sumar hasta
 // `INLINE_PAUSE_BUDGET_MS` (la función que entrega tiene tiempo limitado). La
@@ -37,6 +41,13 @@ export function sentOnceKey(nodeId: string, itemId: string): string {
 /** Clave de contexto con el bloque desde el que retomar el Mensaje tras una pausa larga. */
 export function messageCursorKey(nodeId: string): string {
   return `__message_cursor.${nodeId}`;
+}
+
+/** Qué ve el cliente durante la pausa en `index`: según el siguiente bloque que no sea pausa. */
+export function presenceBefore(items: ReadonlyArray<MessageItem>, index: number): ChatPresence | undefined {
+  const next = items.slice(index + 1).find((item) => item.kind !== "interval");
+  if (!next) return undefined;
+  return next.kind === "audio" ? "recording" : "composing";
 }
 
 /** Texto de cada bloque que lleva variables (texto o leyenda). */
@@ -74,19 +85,21 @@ export class MessageNodeHandler implements NodeHandler {
       }
       if (item.kind === "interval") {
         const ms = intervalMs(item);
+        const presence = presenceBefore(items, index);
         if (pausedMs + ms > INLINE_PAUSE_BUDGET_MS) {
           // No cabe en este turno: sigue después de la pausa, con la cola de tareas.
+          // El cliente ve «escribiendo…» o «grabando audio…» mientras tanto.
           const resumeAt = new Date(new Date(input.now).getTime() + pausedMs + ms).toISOString();
           return {
             executionStatus: "delayed",
-            outputMessages,
+            outputMessages: presence ? [...outputMessages, { ...base, kind: "presence", content: "", presence, delayMs: ms }] : outputMessages,
             contextPatch: { ...contextPatch, [cursorKey]: index + 1 },
             nodeResult: { resumeAt, pausedAtItem: index },
             domainEvents: [...domainEvents, `message_paused:${node.id}:${index}`]
           };
         }
         pausedMs += ms;
-        outputMessages.push({ ...base, kind: "pause", content: "", delayMs: ms });
+        outputMessages.push({ ...base, kind: "pause", content: "", delayMs: ms, ...(presence ? { presence } : {}) });
         continue;
       }
       if (!item.url) {

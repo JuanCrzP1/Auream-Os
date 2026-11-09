@@ -47,6 +47,8 @@ export interface MessagingServices {
   readonly conversations: ConversationInbox;
   /** Despertadores vencidos de los flujos (los ejecuta la cola de tareas). */
   readonly timers: FlowTimerService;
+  /** Recibos de entregado/leído de lo que salió por un número (avisos del proveedor). */
+  readonly receipts: Pick<ConversationRecorder, "applyReceipts">;
 }
 
 export interface MessagingDependencies {
@@ -114,6 +116,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
       }
     },
     timers: new FlowTimerService(lock, recorder, turn),
+    receipts: recorder,
     conversations: new ConversationInbox(conversations, recorder, delivery, launcher, {
       // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).
       setLabels: async (tenantId, contactId, labelIds) => {

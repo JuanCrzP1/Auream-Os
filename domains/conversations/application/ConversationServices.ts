@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
   CONVERSATION_FILTERS,
   CONVERSATIONS_PAGE_SIZE,
@@ -7,18 +6,19 @@ import {
   type ConversationFilter,
   type ConversationListQuery,
   type ConversationListResponse,
-  type ConversationMessageKind,
+  type ConversationLiveResponse,
   type ConversationMessagesResponse,
-  type ConversationSummary,
-  type MessageAuthor
+  type ConversationSummary
 } from "../../../contracts/ConversationContracts";
-import type { InboundChannelMessage } from "../../../contracts/InboundMessageContracts";
-import type { OutboundMessage } from "../../../contracts/RuntimeContracts";
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
-import type { Conversation, StoredMessage } from "../domain/Conversation";
+import type { Conversation } from "../domain/Conversation";
 import type { ConversationRepository, InboxCursor, InboxQuery } from "./ConversationRepository";
-import type { ContactLabeler, ConversationSender, FlowLauncher, SendResult } from "./ports/ConversationPorts";
+import { ConversationRecorder } from "./ConversationRecorder";
+import type { ContactLabeler, ConversationSender, FlowLauncher } from "./ports/ConversationPorts";
+
+// El guardado de mensajes vive en `ConversationRecorder.ts`; se re-exporta por compatibilidad.
+export { ConversationRecorder };
 
 // ---------------------------------------------------------------------------
 // La bandeja de Conversaciones.
@@ -29,21 +29,6 @@ import type { ContactLabeler, ConversationSender, FlowLauncher, SendResult } fro
 //                         filtrar, leer, responder, pausar el bot, etiquetar
 //                         y enviar un flujo a mano
 // ---------------------------------------------------------------------------
-
-/** Qué guarda la bandeja de una salida del flujo o del asesor. */
-function outboundRecord(result: SendResult): { kind: ConversationMessageKind; text: string; mediaUrl: string | null; mediaType: string | null; options: string[] } {
-  const message: OutboundMessage = result.message;
-  if (message.kind === "media" && message.media) {
-    const kind = message.media.type === "file" ? "document" : message.media.type;
-    return { kind, text: message.content, mediaUrl: message.media.url, mediaType: null, options: [] };
-  }
-  if (message.kind === "reaction") return { kind: "reaction", text: message.content, mediaUrl: null, mediaType: null, options: [] };
-  if (message.interactive) {
-    const body = [message.interactive.header, message.interactive.body].filter(Boolean).join("\n\n") || message.content;
-    return { kind: "menu", text: body, mediaUrl: null, mediaType: null, options: message.interactive.options.map((option) => option.title) };
-  }
-  return { kind: "text", text: message.content, mediaUrl: null, mediaType: null, options: [] };
-}
 
 /** El cursor viaja opaco (base64url): la web solo lo devuelve tal cual. */
 function encodeCursor(summary: ConversationSummary): string {
@@ -91,73 +76,6 @@ function inboxQuery(query: ConversationListQuery): Omit<InboxQuery, "limit"> {
   };
 }
 
-export class ConversationRecorder {
-  public constructor(
-    private readonly repository: ConversationRepository,
-    private readonly now: () => Date = () => new Date()
-  ) {}
-
-  /** Guarda lo que escribió el cliente. Devuelve su chat (y si el bot lo atiende). */
-  public async recordInbound(tenantId: string, message: InboundChannelMessage, contactId: string | null): Promise<Conversation> {
-    const conversation = await this.repository.findOrCreate(tenantId, message.connectionId, message.phone, contactId);
-    await this.repository.append({
-      id: randomUUID(),
-      tenantId,
-      conversationId: conversation.id,
-      direction: "inbound",
-      author: "contact",
-      kind: message.kind,
-      text: message.text,
-      mediaUrl: message.media?.url ?? null,
-      mediaType: message.media?.mimeType ?? null,
-      options: [],
-      status: "received",
-      error: null,
-      flowKey: null,
-      agentId: null,
-      agentName: null,
-      providerMessageId: message.providerMessageId,
-      createdAt: message.sentAt
-    });
-    return conversation;
-  }
-
-  /** El chat de ese cliente en ese número (para los despertadores de los flujos). */
-  public async findChat(tenantId: string, connectionId: string, phone: string) {
-    const conversation = await this.repository.findByPhone(tenantId, connectionId, phone);
-    return conversation ? { id: conversation.id, botEnabled: conversation.botEnabled, connectionDeleted: conversation.connectionDeleted } : null;
-  }
-
-  /** Guarda lo que salió (o no) hacia el cliente: del bot o de un asesor. */
-  public async recordOutbound(
-    tenantId: string,
-    conversationId: string,
-    results: ReadonlyArray<SendResult>,
-    origin: { readonly author: Exclude<MessageAuthor, "contact">; readonly flowKey?: string; readonly agentId?: string; readonly agentName?: string }
-  ): Promise<void> {
-    let at = this.now().getTime();
-    for (const result of results) {
-      const record = outboundRecord(result);
-      await this.repository.append({
-        id: randomUUID(),
-        tenantId,
-        conversationId,
-        direction: "outbound",
-        author: origin.author,
-        ...record,
-        status: result.ok ? "sent" : "failed",
-        error: result.ok ? null : (result.error ?? "No se pudo enviar.").slice(0, 300),
-        flowKey: origin.flowKey ?? null,
-        agentId: origin.agentId ?? null,
-        agentName: origin.agentName ?? null,
-        providerMessageId: null,
-        // Un milisegundo entre cada uno: conservan su orden al listarlos.
-        createdAt: new Date(at++).toISOString()
-      });
-    }
-  }
-}
-
 export interface Agent {
   readonly id: string;
   readonly name: string | null;
@@ -189,6 +107,21 @@ export class ConversationInbox {
   public async messages(tenantId: string, id: string, before?: string): Promise<ConversationMessagesResponse> {
     await this.require(tenantId, id);
     return this.repository.messages(tenantId, id, { limit: 50, ...(before ? { before } : {}) });
+  }
+
+  /**
+   * Un chat abierto, en vivo: la primera vez (sin `since`) la última página del
+   * hilo; después, solo lo nuevo o cambiado (entregado/leído). Una consulta.
+   */
+  public async live(tenantId: string, id: string, since?: string): Promise<ConversationLiveResponse> {
+    const conversation = await this.get(tenantId, id);
+    if (!since) {
+      const [page, cursor] = await Promise.all([this.repository.messages(tenantId, id, { limit: 50 }), this.repository.liveCursor(tenantId, id)]);
+      return { conversation, messages: page.messages, hasMore: page.hasMore, cursor };
+    }
+    if (since.length > 64) throw new ValidationError("Marca de actualización inválida.");
+    const changes = await this.repository.changesSince(tenantId, id, since);
+    return { conversation, messages: changes.messages, hasMore: false, cursor: changes.cursor };
   }
 
   public async markRead(tenantId: string, id: string): Promise<void> {

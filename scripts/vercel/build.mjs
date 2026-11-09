@@ -38,7 +38,8 @@ if (target === "production") {
     ["VITE_NEON_AUTH_URL", "la misma URL de Neon Auth, para la web"],
     ["CORS_ALLOWED_ORIGINS", "el dominio de producción, p. ej. https://auream-os.vercel.app"],
     ["CREDENTIALS_ENCRYPTION_KEY", "clave maestra de cifrado (openssl rand -base64 32)"],
-    ["BLOB_READ_WRITE_TOKEN", "almacén de archivos: Vercel → Storage → Blob → conectar al proyecto (lo crea Vercel)"]
+    ["BLOB_READ_WRITE_TOKEN", "almacén de archivos: Vercel → Storage → Blob → conectar al proyecto (lo crea Vercel)"],
+    ["CRON_SECRET", "llave del trabajador de la cola (Programador, tiempos de espera, pausas largas): openssl rand -hex 32"]
   ];
   const missing = required.filter(([name]) => !env[name]).map(([name, what]) => `falta ${name}: ${what}`);
   const forbidden = ["DEV_API_KEY", "VITE_DEV_API_KEY", "INTEGRATIONS_ALLOW_PRIVATE_NETWORK"]

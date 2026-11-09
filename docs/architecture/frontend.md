@@ -37,7 +37,7 @@ La navegación es fija: doce áreas en orden inmutable. `app/navigation/sidebar/
 | Área | Ruta | Estado |
 |---|---|---|
 | Dashboard | `/dashboard` | `NO IMPLEMENTADO` |
-| Conversaciones | `/conversations` | `NO IMPLEMENTADO` |
+| Conversaciones | `/conversations` | `IMPLEMENTADO` — bandeja con filtros y etiquetas, chat en vivo con chulos de WhatsApp, respuesta del asesor y «Ejecutar flujo» |
 | Automatizaciones | `/automations` | `IMPLEMENTADO` — hub y builder |
 | Conexiones | `/connections` | `PREPARADO` — placeholder |
 | Contactos | `/contacts` | `IMPLEMENTADO` — lista con búsqueda y filtro, ficha editable y catálogo de etiquetas |

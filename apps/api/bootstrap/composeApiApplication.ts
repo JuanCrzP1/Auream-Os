@@ -57,14 +57,20 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const errorLogger = new ErrorLogger(logger);
   const background = createBackgroundTasks((error) => errorLogger.log(error instanceof Error ? error : new Error(String(error)), {}));
   // Cola de tareas (FASE C6): primero el programador (lo usan los flujos), después el trabajador.
-  const scheduling = composeSchedulingServices(config, tenancy.sqlClient, background, (task, error) =>
-    logger.warn("tasks.attempt_failed", {
-      taskId: task.id,
-      kind: task.kind,
-      tenantId: task.tenantId,
-      attempt: task.attempts,
-      error: error instanceof Error ? error.message : String(error)
-    })
+  const scheduling = composeSchedulingServices(
+    config,
+    tenancy.sqlClient,
+    background,
+    (task, error) =>
+      logger.warn("tasks.attempt_failed", {
+        taskId: task.id,
+        kind: task.kind,
+        tenantId: task.tenantId,
+        attempt: task.attempts,
+        error: error instanceof Error ? error.message : String(error)
+      }),
+    // Un despertador que no se pudo armar: lo cubren el próximo mensaje, la próxima ronda y el barrido diario.
+    (error) => logger.warn("tasks.alarm_failed", { error: error instanceof Error ? error.message : String(error) })
   );
   const messagingServices = composeMessagingServices({
     config,
@@ -93,6 +99,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       budgetMs: config.tasks.runnerBudgetMs,
       background,
       chain: { horizonMs: config.tasks.chainHorizonMs, continueIfSoon: (horizonMs) => scheduling.scheduler.continueIfSoon(horizonMs) },
+      armNext: () => scheduling.scheduler.armNext(),
       onReport: (report) => {
         if (report.claimed > 0) logger.info("tasks.round", { ...report });
       }

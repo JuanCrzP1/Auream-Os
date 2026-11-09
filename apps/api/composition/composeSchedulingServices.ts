@@ -3,8 +3,10 @@ import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClien
 import type { BackgroundTasks } from "../http/BackgroundTasks";
 import { SqlTaskRepository } from "../../../infrastructure/persistence/sql/SqlTaskRepository";
 import { HttpTaskKicker, InProcessTaskKicker } from "../../../infrastructure/scheduling/TaskKickers";
-import { KICK_HORIZON_MS, systemClock, TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
+import { VercelQueueTaskAlarm } from "../../../infrastructure/scheduling/VercelQueueTaskAlarm";
+import { KICK_HORIZON_MS, NO_ALARM, systemClock, TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { randomUUID } from "node:crypto";
+import { send } from "@vercel/queue";
 import { TaskRunner } from "../../../domains/scheduling/application/TaskRunner";
 import type { TaskHandler } from "../../../domains/scheduling/application/ports/TaskPorts";
 import type { ScheduledTask } from "../../../domains/scheduling/domain/ScheduledTask";
@@ -18,10 +20,9 @@ import type { ScheduledTask } from "../../../domains/scheduling/domain/Scheduled
 //
 // Despertar al trabajador cuando algo vence en segundos: en producción, por
 // HTTP en una invocación nueva (`/internal/tasks/run`, con `CRON_SECRET`);
-// si no, en el mismo proceso.
+// si no, en el mismo proceso. Lo que vence más tarde, con un despertador de
+// Vercel Queues a su hora (`config.tasks.alarms`).
 // ---------------------------------------------------------------------------
-
-export const TASKS_RUN_PATH = "/internal/tasks/run";
 
 export interface SchedulingServices {
   readonly scheduler: TaskScheduler;
@@ -33,7 +34,8 @@ export function composeSchedulingServices(
   config: ApiConfig,
   sql: SqlClient,
   background: BackgroundTasks,
-  onTaskError: (task: ScheduledTask, error: unknown) => void = () => undefined
+  onTaskError: (task: ScheduledTask, error: unknown) => void = () => undefined,
+  onAlarmError: (error: unknown) => void = () => undefined
 ): SchedulingServices {
   const repository = new SqlTaskRepository(sql);
   let runner: TaskRunner | null = null;
@@ -41,13 +43,17 @@ export function composeSchedulingServices(
   const runInBackground = (work: () => Promise<unknown>) => background.run(work);
 
   const kicker =
-    config.tasks.selfBaseUrl && config.tasks.cronSecret
-      ? new HttpTaskKicker(`${config.tasks.selfBaseUrl}${TASKS_RUN_PATH}`, config.tasks.cronSecret, runInBackground)
+    config.tasks.runUrl && config.tasks.cronSecret
+      ? new HttpTaskKicker(config.tasks.runUrl, config.tasks.cronSecret, runInBackground)
       : new InProcessTaskKicker(runInProcess, runInBackground);
+  const alarm = config.tasks.alarms ? new VercelQueueTaskAlarm((topic, payload, options) => send(topic, payload, options), onAlarmError) : NO_ALARM;
 
   return {
     // Con cadena de rondas, lo que vence dentro de su margen la arranca enseguida.
-    scheduler: new TaskScheduler(repository, kicker, systemClock, randomUUID, Math.max(KICK_HORIZON_MS, config.tasks.chainHorizonMs)),
+    scheduler: new TaskScheduler(repository, kicker, systemClock, randomUUID, {
+      kickHorizonMs: Math.max(KICK_HORIZON_MS, config.tasks.chainHorizonMs),
+      alarm
+    }),
     attachHandlers(handlers) {
       if (runner) throw new Error("La cola ya tiene su trabajador.");
       runner = new TaskRunner(repository, handlers, {}, systemClock, undefined, onTaskError);

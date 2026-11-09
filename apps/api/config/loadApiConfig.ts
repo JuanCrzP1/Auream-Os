@@ -1,5 +1,5 @@
 import { ApiConfigError } from "./ApiConfigError";
-import { loadTasksConfig, type TasksConfig } from "./loadTasksConfig";
+import { loadTasksConfig, productionHostOf, type TasksConfig } from "./loadTasksConfig";
 import { join } from "node:path";
 import { readSecretKeyRing, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
 
@@ -170,7 +170,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (uazapiUrl && !credentialsKeyRing) {
     throw new ApiConfigError("Conectar WhatsApp por QR necesita CREDENTIALS_ENCRYPTION_KEY: el token de cada número se guarda cifrado.");
   }
-  const productionHost = env["VERCEL_ENV"] === "production" ? env["VERCEL_PROJECT_PRODUCTION_URL"]?.trim() : "";
+  const productionHost = productionHostOf(env);
   const whatsappWebhookBaseUrl =
     env["WHATSAPP_WEBHOOK_BASE_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}/api` : null);
   if (isProduction && store !== "sql") {

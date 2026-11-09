@@ -45,11 +45,13 @@ export interface TriggerRouter {
 /** Corre el flujo con el mensaje: el contrato público del motor. */
 export type { FlowExecutor as FlowRunner } from "../../../../flow-engine/ports/FlowExecutor";
 
-/** Cómo le fue a cada salida (las pausas no se informan). */
+/** Cómo le fue a cada salida (las pausas y presencias no se informan). */
 export interface DeliveryResult {
   readonly message: OutboundMessage;
   readonly ok: boolean;
   readonly error?: string;
+  /** Id que WhatsApp le dio (con él llegan los avisos de entregado y leído). */
+  readonly providerMessageId?: string;
 }
 
 export interface DeliveryReport {
@@ -58,9 +60,15 @@ export interface DeliveryReport {
   readonly results: ReadonlyArray<DeliveryResult>;
 }
 
-/** Envía las respuestas del flujo por el número que recibió el mensaje. */
+/** Envía las respuestas del flujo por el número que recibió el mensaje. `onResult`: cada salida al momento. */
 export interface OutboundDelivery {
-  deliver(tenantId: string, connectionId: string, phone: string, messages: ReadonlyArray<OutboundMessage>): Promise<DeliveryReport>;
+  deliver(
+    tenantId: string,
+    connectionId: string,
+    phone: string,
+    messages: ReadonlyArray<OutboundMessage>,
+    onResult?: (result: DeliveryResult) => Promise<void>
+  ): Promise<DeliveryReport>;
 }
 
 /** El chat de la bandeja: guarda cada mensaje y dice si el bot lo atiende. */

@@ -21,6 +21,8 @@ import { sendJson } from "../http/sendJson";
 //                                             to, cursor)
 //   GET    /conversations/:id                 un chat
 //   GET    /conversations/:id/messages        hilo (?before=<id> para más antiguos)
+//   GET    /conversations/:id/live            chat abierto en vivo (?since=<cursor>:
+//                                             solo lo nuevo o cambiado)
 //   POST   /conversations/:id/read            marcar como leído
 //   PATCH  /conversations/:id                 { botEnabled }
 //   POST   /conversations/:id/messages        responder como asesor (pausa el bot)
@@ -36,6 +38,7 @@ const MESSAGES = /^\/conversations\/([^/]+)\/messages$/;
 const READ = /^\/conversations\/([^/]+)\/read$/;
 const FLOWS = /^\/conversations\/([^/]+)\/flows$/;
 const LABELS = /^\/conversations\/([^/]+)\/labels$/;
+const LIVE = /^\/conversations\/([^/]+)\/live$/;
 
 /** Texto de la URL o nada (un parámetro vacío es como si no estuviera). */
 const textParam = (url: URL, name: string): string | undefined => url.searchParams.get(name)?.trim() || undefined;
@@ -69,6 +72,12 @@ export async function routeConversationsRequest(
     };
     const defined = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined));
     sendJson(response, 200, await inbox.list(tenantId, defined));
+    return true;
+  }
+
+  const live = LIVE.exec(path);
+  if (live && method === "GET") {
+    sendJson(response, 200, await inbox.live(tenantId, live[1]!, textParam(url, "since")));
     return true;
   }
 

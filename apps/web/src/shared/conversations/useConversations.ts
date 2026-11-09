@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CONVERSATIONS_POLL_INTERVAL_MS, type ConversationListQuery, type ConversationSummary } from "@contracts/ConversationContracts";
 import { RequestError } from "@shared/http/RequestError";
 import { fetchConversations } from "./conversationsApi";
+import { LivePoller } from "./LivePoller";
 
 export type InboxStatus = "loading" | "ready" | "forbidden" | "error";
 
@@ -17,8 +18,9 @@ function merge(head: ReadonlyArray<ConversationSummary>, older: ReadonlyArray<Co
 
 /**
  * Los chats de la bandeja, al día y por páginas: la primera página se vuelve
- * a pedir cada pocos segundos (las funciones de Vercel no mantienen
- * conexiones abiertas); «Ver más chats» trae las siguientes con su cursor.
+ * a pedir cada pocos segundos mientras la pestaña está a la vista (las
+ * funciones de Vercel no mantienen conexiones abiertas); «Ver más chats» trae
+ * las siguientes con su cursor.
  * Cambiar un filtro empieza de cero. Un fallo suelto mientras ya hay datos
  * no tumba la lista.
  */
@@ -59,9 +61,13 @@ export function useConversations(query: ConversationListQuery) {
     setOlder([]);
     setCursor(null);
     if (loaded.current) setFiltering(true);
-    void refresh();
-    const timer = setInterval(() => void refresh(), CONVERSATIONS_POLL_INTERVAL_MS);
-    return () => clearInterval(timer);
+    // Una consulta a la vez y ninguna con la pestaña oculta (al volver, enseguida).
+    const poller = new LivePoller(async () => {
+      await refresh();
+      return false;
+    }, { activeMs: CONVERSATIONS_POLL_INTERVAL_MS, idleMs: CONVERSATIONS_POLL_INTERVAL_MS, activeWindowMs: 0 });
+    poller.start();
+    return () => poller.stop();
   }, [key, refresh]);
 
   const loadMore = useCallback(async () => {

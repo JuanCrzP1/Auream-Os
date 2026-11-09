@@ -2,6 +2,7 @@ import { builderApiClient } from "@shared/http/builderApiClient";
 import type {
   ConversationListQuery,
   ConversationListResponse,
+  ConversationLiveResponse,
   ConversationMessagesResponse,
   ConversationSummary
 } from "@contracts/ConversationContracts";
@@ -28,6 +29,14 @@ export function fetchConversation(id: string): Promise<ConversationSummary> {
 
 export function fetchMessages(id: string, before?: string): Promise<ConversationMessagesResponse> {
   return builderApiClient.get<ConversationMessagesResponse>(`${one(id)}/messages${before ? `?before=${encodeURIComponent(before)}` : ""}`);
+}
+
+/**
+ * Un chat en vivo: sin `since`, el chat y su última página; con `since` (el
+ * `cursor` anterior, tal cual), solo lo nuevo o cambiado (entregado, leído…).
+ */
+export function fetchLive(id: string, since?: string): Promise<ConversationLiveResponse> {
+  return builderApiClient.get<ConversationLiveResponse>(`${one(id)}/live${since ? `?since=${encodeURIComponent(since)}` : ""}`);
 }
 
 export async function markConversationRead(id: string): Promise<void> {

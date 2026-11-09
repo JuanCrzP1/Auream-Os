@@ -46,9 +46,9 @@ Existió una entidad `Conversation` en `contracts/RuntimeContracts.ts` y un `Con
 
 ---
 
-## conversations · `NO IMPLEMENTADO`
+## conversations · `IMPLEMENTADO` (D3, 2026-11-09)
 
-Inbox **visual** de la plataforma: lista de chats, chat abierto, mensajes, historial, estado, contacto asociado, asignación humana, notas internas, media.
+Inbox **visual** de la plataforma: lista de chats, chat abierto en vivo, mensajes con su estado de WhatsApp (enviado, entregado, leído), historial, contacto asociado y sus etiquetas, atención por un asesor, media. Ver [`conversations.md`](conversations.md).
 
 **No contiene:** estado de ejecución del runtime (`sessions`) · construcción de flows (`automations`) · ejecución de flows (`flow-engine`) · decisión de cuándo se dispara un flow (eso es un trigger) · lógica comercial del AI Sales Engine.
 

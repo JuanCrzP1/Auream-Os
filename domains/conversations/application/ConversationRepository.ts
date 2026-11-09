@@ -1,4 +1,4 @@
-import type { ConversationFilter, ConversationMessage, ConversationSummary } from "../../../contracts/ConversationContracts";
+import type { ConversationFilter, ConversationMessage, ConversationSummary, DeliveryStatus } from "../../../contracts/ConversationContracts";
 import type { Conversation, StoredMessage } from "../domain/Conversation";
 
 /** Posición en la bandeja: la última actividad del chat y su id (orden estable al paginar). */
@@ -21,6 +21,12 @@ export interface InboxQuery {
   readonly limit: number;
 }
 
+/** Un aviso de entregado/leído: cuántos de sus mensajes había y cuántos avanzaron. */
+export interface DeliveryMarkOutcome {
+  readonly matched: number;
+  readonly advanced: number;
+}
+
 export interface ConversationRepository {
   /** El chat de ese cliente en ese número; si no existe, se crea. */
   findOrCreate(tenantId: string, connectionId: string, phone: string, contactId: string | null): Promise<Conversation>;
@@ -37,6 +43,18 @@ export interface ConversationRepository {
    */
   inbox(tenantId: string, query: InboxQuery): Promise<ConversationSummary[]>;
   summary(tenantId: string, id: string): Promise<ConversationSummary | null>;
+  /**
+   * En vivo: mensajes nuevos o cambiados (p. ej. entregado/leído) desde la
+   * marca `since`, más la marca nueva. Opaca para quien la usa.
+   */
+  changesSince(tenantId: string, conversationId: string, since: string): Promise<{ messages: ConversationMessage[]; cursor: string }>;
+  /** La marca actual del hilo (para empezar a pedir cambios). */
+  liveCursor(tenantId: string, conversationId: string): Promise<string>;
+  /**
+   * Entregado/leído de lo que salió por ese número, por el id de WhatsApp.
+   * Solo avanza. Dice cuántos de esos mensajes encontró y cuántos avanzaron.
+   */
+  markDelivery(tenantId: string, connectionId: string, providerMessageIds: ReadonlyArray<string>, status: DeliveryStatus): Promise<DeliveryMarkOutcome>;
   /** Mensajes del hilo, del más nuevo hacia atrás (`before` = id del más antiguo ya visto). */
   messages(tenantId: string, conversationId: string, options: { readonly before?: string; readonly limit: number }): Promise<{ messages: ConversationMessage[]; hasMore: boolean }>;
 }

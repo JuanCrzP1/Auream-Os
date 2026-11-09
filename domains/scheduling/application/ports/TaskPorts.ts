@@ -20,6 +20,16 @@ export interface TaskKicker {
   kick(): void;
 }
 
+/**
+ * Despertador a una hora exacta, fuera del proceso (p. ej. un mensaje con
+ * retraso en Vercel Queues). Sin cron frecuente, asegura que el trabajador
+ * corra cuando vence una tarea lejana aunque nadie escriba. Varias peticiones
+ * para la misma hora suenan una vez. Nunca lanza: `false` si no pudo armarlo.
+ */
+export interface TaskAlarm {
+  ringAt(at: Date): Promise<boolean>;
+}
+
 export interface Clock {
   now(): Date;
 }

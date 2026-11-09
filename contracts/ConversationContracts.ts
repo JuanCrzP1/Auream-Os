@@ -9,10 +9,20 @@ export type MessageAuthor = "contact" | "bot" | "agent";
 export type MessageDirection = "inbound" | "outbound";
 /**
  *   received   llegó del cliente
- *   sent       salió por WhatsApp
+ *   sent       salió por WhatsApp (un chulo gris)
+ *   delivered  llegó al celular del cliente (dos chulos grises)
+ *   read       el cliente lo leyó (dos chulos azules)
  *   failed     no se pudo enviar (ver `error`)
+ *
+ * Un mensaje solo avanza (enviado → entregado → leído), nunca retrocede.
  */
-export type MessageStatus = "received" | "sent" | "failed";
+export type MessageStatus = "received" | "sent" | "delivered" | "read" | "failed";
+
+/** Lo que avisa WhatsApp de un mensaje enviado. */
+export type DeliveryStatus = "sent" | "delivered" | "read";
+
+/** Orden de avance de un mensaje enviado (los avisos llegan desordenados). */
+export const DELIVERY_RANK: Readonly<Record<DeliveryStatus, number>> = { sent: 1, delivered: 2, read: 3 };
 
 export type ConversationMessageKind =
   | "text"
@@ -146,3 +156,22 @@ export const CONVERSATIONS_PAGE_SIZE = 50;
 export const MAX_LABEL_FILTERS = 20;
 /** Cada cuánto consulta la bandeja si hay mensajes nuevos. */
 export const CONVERSATIONS_POLL_INTERVAL_MS = 4_000;
+
+/**
+ * Un chat abierto, en vivo: lo nuevo o cambiado desde `since` (el `cursor` de
+ * la respuesta anterior). Sin `since`, la última página del hilo.
+ */
+export interface ConversationLiveResponse {
+  readonly conversation: ConversationSummary;
+  readonly messages: ReadonlyArray<ConversationMessage>;
+  /** Hay mensajes más antiguos (solo en la primera carga). */
+  readonly hasMore: boolean;
+  /** Para la próxima consulta (`since`). */
+  readonly cursor: string;
+}
+
+/** Cada cuánto se consulta un chat abierto con actividad reciente, y en calma. */
+export const LIVE_POLL_ACTIVE_MS = 1_500;
+export const LIVE_POLL_IDLE_MS = 4_000;
+/** Cuánto dura la «actividad reciente» tras un cambio (un flujo enviando, un aviso de leído…). */
+export const LIVE_ACTIVE_WINDOW_MS = 60_000;

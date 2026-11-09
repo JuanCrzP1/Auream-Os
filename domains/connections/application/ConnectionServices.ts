@@ -51,7 +51,7 @@ async function requireConnection(repository: ConnectionRepository, tenantId: str
 }
 
 /** La sesión del proveedor, descifrada. `null` si aún no hay. */
-function sessionOf(connection: WhatsAppConnection, cipher: SecretCipher): ProviderSession | null {
+export function sessionOf(connection: WhatsAppConnection, cipher: SecretCipher): ProviderSession | null {
   if (!connection.providerRef || !connection.providerSecret) return null;
   return { ref: connection.providerRef, secret: cipher.decrypt(connection.providerSecret, connectionSecretContext(connection.tenantId, connection.id)) };
 }

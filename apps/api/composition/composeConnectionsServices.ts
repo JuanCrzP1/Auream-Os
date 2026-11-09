@@ -6,6 +6,7 @@ import { UazapiClient, type FetchLike } from "../../../infrastructure/whatsapp/u
 import { UazapiLinker } from "../../../infrastructure/whatsapp/uazapi/UazapiLinker";
 import { UazapiMessenger } from "../../../infrastructure/whatsapp/uazapi/UazapiMessenger";
 import { ConnectionChannelServices } from "../../../domains/connections/application/ConnectionChannelServices";
+import { ProviderWebhookKeeper } from "../../../domains/connections/application/ProviderWebhookKeeper";
 import type { WhatsAppMessengers } from "../../../domains/connections/application/ports/WhatsAppMessenger";
 import { AesGcmSecretCipher, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
 import { SecretDecryptionError, type SecretCipher } from "../../../platform/security/secrets/SecretCipher";
@@ -50,6 +51,8 @@ export interface ConnectionsServices {
   readonly triggers: ConnectionTriggerServices;
   /** El canal de cada número: reconocer los avisos de su proveedor y enviar por él. */
   readonly channel: ConnectionChannelServices;
+  /** Configuración de avisos de cada número en su proveedor, siempre al día. */
+  readonly webhooks: ProviderWebhookKeeper;
   /** Catálogo de flujos (nombre, clave, archivado) que usan disparadores y mensajería. */
   readonly flows: FlowCatalog;
 }
@@ -110,6 +113,7 @@ export function composeConnectionsServicesWith(stores: ConnectionsStores | Conne
     providerEvents: new HandleProviderEventService(repository, cipher),
     triggers: new ConnectionTriggerServices(repository, triggers, flows),
     channel: new ConnectionChannelServices(repository, composeMessengers(options), cipher),
+    webhooks: new ProviderWebhookKeeper(linkers, cipher),
     flows
   };
 }

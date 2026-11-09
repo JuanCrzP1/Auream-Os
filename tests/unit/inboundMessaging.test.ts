@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { FlowSnapshot } from "../../contracts/FlowSnapshot.js";
 import type { InboundChannelMessage } from "../../contracts/InboundMessageContracts.js";
 import type { OutboundMessage } from "../../contracts/RuntimeContracts.js";
+import { WAKE_CONTEXT_KEY } from "../../contracts/FlowTimerContracts.js";
 import { HandleInboundMessageService, conversationKeyFor } from "../../domains/messaging/application/HandleInboundMessageService.js";
 import { ConnectionTriggerRouter, DirectoryInboundContacts, SessionLiveSessions } from "../../domains/messaging/application/adapters.js";
 import { ConnectionTriggerServices } from "../../domains/connections/application/ConnectionTriggerServices.js";
@@ -20,7 +21,7 @@ import { InMemorySessionRepository } from "../../infrastructure/persistence/memo
 import { InMemoryConnectionRepository } from "../../infrastructure/persistence/memory/InMemoryConnectionRepository.js";
 import { InMemoryConnectionTriggerRepository, InMemoryFlowCatalog } from "../../infrastructure/persistence/memory/InMemoryConnectionTriggerRepository.js";
 import { InMemoryConversationLock, InMemoryInboundMessageLog } from "../../infrastructure/persistence/memory/InMemoryMessaging.js";
-import type { OutboundDelivery } from "../../domains/messaging/application/ports/MessagingPorts.js";
+import type { DeliveryResult, OutboundDelivery } from "../../domains/messaging/application/ports/MessagingPorts.js";
 import { ConversationInbox, ConversationRecorder } from "../../domains/conversations/application/ConversationServices.js";
 import { InMemoryConversationRepository } from "../../infrastructure/persistence/memory/InMemoryConversationRepository.js";
 import { StartFlowService } from "../../domains/messaging/application/StartFlowService.js";
@@ -86,9 +87,11 @@ async function setup(options: { readonly flow?: FlowSnapshot } = {}) {
 
   const sent: Array<{ phone: string; messages: ReadonlyArray<OutboundMessage> }> = [];
   const delivery: OutboundDelivery = {
-    deliver: vi.fn(async (_t: string, _c: string, phone: string, messages: ReadonlyArray<OutboundMessage>) => {
+    // Como el canal real: cada mensaje se informa apenas sale (la bandeja en vivo).
+    deliver: vi.fn(async (_t: string, _c: string, phone: string, messages: ReadonlyArray<OutboundMessage>, onResult?: (result: DeliveryResult) => Promise<void>) => {
       sent.push({ phone, messages });
-      const results = messages.filter((m) => m.kind !== "pause").map((message) => ({ message, ok: true }));
+      const results = messages.filter((m) => m.kind !== "pause" && m.kind !== "presence").map((message, index) => ({ message, ok: true, providerMessageId: `wa-${sent.length}-${index}` }));
+      for (const result of results) await onResult?.(result);
       return { sent: results.length, failures: [], results };
     })
   };
@@ -370,7 +373,7 @@ const TIMED_FLOW: FlowSnapshot = {
   }
 } as unknown as FlowSnapshot;
 
-const texts = (sent: ReadonlyArray<{ messages: ReadonlyArray<OutboundMessage> }>) => sent.flatMap((s) => s.messages.filter((m) => m.kind !== "pause").map((m) => m.content));
+const texts = (sent: ReadonlyArray<{ messages: ReadonlyArray<OutboundMessage> }>) => sent.flatMap((s) => s.messages.filter((m) => m.kind !== "pause" && m.kind !== "presence").map((m) => m.content));
 const MIN = 60_000;
 
 describe("despertadores de los flujos (cola de tareas)", () => {
@@ -430,6 +433,23 @@ describe("despertadores de los flujos (cola de tareas)", () => {
     await s.service.execute(T, s.message("volví"));
     // El Programador ya había vencido: el mensaje lo retoma y el flujo sigue a la pregunta.
     expect((await s.sessionsRepo.find(`${T}:${conversationKeyFor(s.connectionId, "573001112233")}`))!.currentNodeId).toBe("pregunta");
+    expect(s.pending()).toHaveLength(1);
+  });
+
+  it("una sesión que quedó esperando con la versión anterior (sin despertador ni hora) sigue con el próximo mensaje", async () => {
+    const s = await setup({ flow: TIMED_FLOW });
+    await s.service.execute(T, s.message("hola"));
+    await s.advance(30_000);
+    // Antes de la cola de tareas: la sesión quedaba en el Programador sin hora guardada y sin tarea.
+    const key = `${T}:${conversationKeyFor(s.connectionId, "573001112233")}`;
+    const waiting = (await s.sessionsRepo.find(key))!;
+    const { [WAKE_CONTEXT_KEY]: _wake, ...legacy } = waiting.context;
+    await s.sessionsRepo.save({ ...waiting, context: legacy });
+    for (const task of s.pending()) s.tasks.tasks.set(task.id, { ...task, status: "cancelled" });
+
+    await s.service.execute(T, s.message("¿sigue?"));
+    // El Programador ya había vencido: sigue a la pregunta, que espera con su despertador.
+    expect((await s.sessionsRepo.find(key))!.currentNodeId).toBe("pregunta");
     expect(s.pending()).toHaveLength(1);
   });
 

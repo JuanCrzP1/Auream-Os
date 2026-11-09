@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { ConversationLabel, ConversationMessage, ConversationSummary, MessageAuthor } from "../../../contracts/ConversationContracts";
-import type { ConversationRepository, InboxQuery } from "../../../domains/conversations/application/ConversationRepository";
+import { DELIVERY_RANK, type ConversationLabel, type ConversationMessage, type ConversationSummary, type DeliveryStatus, type MessageAuthor } from "../../../contracts/ConversationContracts";
+import type { ConversationRepository, DeliveryMarkOutcome, InboxQuery } from "../../../domains/conversations/application/ConversationRepository";
 import { previewOf, type Conversation, type StoredMessage } from "../../../domains/conversations/domain/Conversation";
 
 interface Row extends Conversation {
@@ -15,6 +15,9 @@ const activity = (row: Row) => row.lastMessageAt ?? row.createdAt;
 export class InMemoryConversationRepository implements ConversationRepository {
   private readonly rows = new Map<string, Row>();
   public readonly stored: StoredMessage[] = [];
+  /** Marca de cambio de cada mensaje (en SQL, `updated_at`): un contador que solo crece. */
+  private readonly changed = new Map<string, number>();
+  private tick = 0;
   /** Etiquetas de cada contacto (en SQL vienen de Contactos). */
   public readonly contactLabels = new Map<string, ConversationLabel[]>();
   /** Números eliminados (en SQL, `whatsapp_connections.deleted_at`). */
@@ -43,6 +46,7 @@ export class InMemoryConversationRepository implements ConversationRepository {
 
   public async append(message: StoredMessage): Promise<void> {
     this.stored.push(message);
+    this.changed.set(message.id, ++this.tick);
     const row = this.rows.get(message.conversationId);
     if (!row || message.kind === "reaction") return;
     this.rows.set(row.id, {
@@ -97,6 +101,34 @@ export class InMemoryConversationRepository implements ConversationRepository {
       error: message.error, flowName: message.flowKey, agentName: message.agentName, createdAt: message.createdAt
     }));
     return { messages, hasMore: end - options.limit > 0 };
+  }
+
+  public async changesSince(tenantId: string, conversationId: string, since: string) {
+    const from = Number(since) || 0;
+    const ids = new Set([...this.changed.entries()].filter(([, at]) => at > from).map(([id]) => id));
+    const all = await this.messages(tenantId, conversationId, { limit: Number.MAX_SAFE_INTEGER });
+    return { messages: all.messages.filter((message) => ids.has(message.id)), cursor: String(this.tick) };
+  }
+
+  public async liveCursor(): Promise<string> {
+    return String(this.tick);
+  }
+
+  public async markDelivery(tenantId: string, connectionId: string, providerMessageIds: ReadonlyArray<string>, status: DeliveryStatus): Promise<DeliveryMarkOutcome> {
+    let matched = 0;
+    let advanced = 0;
+    this.stored.forEach((message, index) => {
+      const row = this.rows.get(message.conversationId);
+      if (!row || row.tenantId !== tenantId || row.connectionId !== connectionId || message.direction !== "outbound") return;
+      if (!message.providerMessageId || !providerMessageIds.includes(message.providerMessageId)) return;
+      matched += 1;
+      const current = DELIVERY_RANK[message.status as DeliveryStatus] ?? 99;
+      if (current >= DELIVERY_RANK[status]) return;
+      this.stored[index] = { ...message, status };
+      this.changed.set(message.id, ++this.tick);
+      advanced += 1;
+    });
+    return { matched, advanced };
   }
 
   private labelsOf(row: Row): ConversationLabel[] {

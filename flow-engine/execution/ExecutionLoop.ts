@@ -73,9 +73,13 @@ export class ExecutionLoop {
       session: stateOf(session),
       untouched: true
     });
+    // ¿Ya pasó la hora de despertar? Sin hora conocida para este bloque (una
+    // sesión de una versión anterior, o un despertador perdido) también: nunca
+    // se queda atascada esperando algo que nadie va a disparar.
     const overdueWake = (): boolean => {
       const wake = session.context[WAKE_CONTEXT_KEY] as { nodeId?: unknown; at?: unknown } | undefined;
-      return wake?.nodeId === session.currentNodeId && typeof wake.at === "string" && Date.parse(wake.at) <= Date.parse(now);
+      if (wake?.nodeId !== session.currentNodeId || typeof wake.at !== "string") return true;
+      return Date.parse(wake.at) <= Date.parse(now);
     };
     // Un mensaje con el Programador ya vencido lo retoma, igual que su despertador.
     const resumeOverdue = !timer && session.status === "delayed" && overdueWake();

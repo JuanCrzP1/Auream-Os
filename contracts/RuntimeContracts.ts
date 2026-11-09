@@ -66,7 +66,10 @@ export interface InboundEnvelope {
  * a un mensaje ajeno—, así que se distingue en el contrato en lugar de dejar
  * que cada canal lo adivine por el tamaño del texto.
  */
-export type OutboundKind = "text" | "reaction" | "media" | "pause";
+export type OutboundKind = "text" | "reaction" | "media" | "pause" | "presence";
+
+/** Lo que el cliente ve mientras llega lo siguiente: «escribiendo…» o «grabando audio…». */
+export type ChatPresence = "composing" | "recording";
 
 /** Archivo de una salida `media`: URL pública (Vercel Blob o un enlace). */
 export interface OutboundMedia {
@@ -98,8 +101,10 @@ export interface OutboundMessage {
   readonly kind?: OutboundKind;
   /** Con `kind: "media"`: el archivo. `content` es su leyenda (puede ir vacía). */
   readonly media?: OutboundMedia;
-  /** Con `kind: "pause"`: cuánto esperar antes de la salida siguiente. */
+  /** `pause`: cuánto esperar antes de la salida siguiente. `presence`: cuánto se muestra (sin esperar). */
   readonly delayMs?: number;
+  /** Con `pause` o `presence`: qué ve el cliente mientras tanto. Ausente: nada. */
+  readonly presence?: ChatPresence;
   /**
    * Mensaje interactivo (botones o lista de WhatsApp). `content` lleva SIEMPRE
    * la versión en texto (opciones numeradas) para canales que no los admiten;
