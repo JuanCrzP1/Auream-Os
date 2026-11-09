@@ -1,19 +1,30 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import type {
   ConnectionLinkState,
+  ConnectionStatus,
   ConnectionSummary,
   CreateConnectionRequest,
   UpdateConnectionRequest
 } from "../../../contracts/ConnectionContracts";
+import type { SecretCipher } from "../../../platform/security/secrets/SecretCipher";
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
+import { UpstreamError } from "../../../platform/observability/errors/UpstreamError";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
-import { isConnectionMethod, normalizeConnectionName, type WhatsAppConnection } from "../domain/WhatsAppConnection";
+import {
+  connectionSecretContext,
+  isConnectionMethod,
+  normalizeConnectionName,
+  normalizePhoneNumber,
+  type WhatsAppConnection
+} from "../domain/WhatsAppConnection";
 import type { ConnectionRepository } from "./ConnectionRepository";
-import type { WhatsAppLinker } from "./ports/WhatsAppLinker";
+import { LinkerError, type ProviderSession, type SessionState, type WhatsAppLinkers } from "./ports/WhatsAppLinker";
 
 // ---------------------------------------------------------------------------
 // Casos de uso de las conexiones de WhatsApp. El tenant siempre sale del
-// contexto autenticado; ninguna respuesta lleva la referencia del proveedor.
+// contexto autenticado. La credencial de la sesión en el proveedor se guarda
+// cifrada y solo se descifra aquí, para entregársela al proveedor; ninguna
+// respuesta la lleva.
 // ---------------------------------------------------------------------------
 
 export function toConnectionSummary(connection: WhatsAppConnection): ConnectionSummary {
@@ -34,6 +45,50 @@ async function requireConnection(repository: ConnectionRepository, tenantId: str
   const connection = await repository.findById(tenantId, id);
   if (!connection) throw new NotFoundError("Conexión no encontrada.");
   return connection;
+}
+
+/** La sesión del proveedor, descifrada. `null` si aún no hay. */
+function sessionOf(connection: WhatsAppConnection, cipher: SecretCipher): ProviderSession | null {
+  if (!connection.providerRef || !connection.providerSecret) return null;
+  return { ref: connection.providerRef, secret: cipher.decrypt(connection.providerSecret, connectionSecretContext(connection.tenantId, connection.id)) };
+}
+
+function withSession(connection: WhatsAppConnection, session: ProviderSession, cipher: SecretCipher): WhatsAppConnection {
+  return {
+    ...connection,
+    providerRef: session.ref,
+    providerSecret: cipher.encrypt(session.secret, connectionSecretContext(connection.tenantId, connection.id))
+  };
+}
+
+/** Aplica lo que dice el proveedor a la conexión. */
+function applyState(connection: WhatsAppConnection, state: SessionState, at: string): WhatsAppConnection {
+  if (state.kind === "connected") {
+    return {
+      ...connection,
+      status: "connected",
+      phoneNumber: state.phoneNumber,
+      profileName: state.profileName,
+      lastConnectedAt: connection.status === "connected" && connection.lastConnectedAt ? connection.lastConnectedAt : at,
+      updatedAt: at
+    };
+  }
+  if (state.kind === "qr") return { ...connection, status: "connecting", updatedAt: at };
+  // Sin sesión: si estuvo conectada, se cayó; si no, sigue por vincular.
+  const status: ConnectionStatus = connection.status === "connected" || connection.status === "disconnected" ? "disconnected" : "pending";
+  return { ...connection, status, updatedAt: at };
+}
+
+function toLinkState(connection: WhatsAppConnection, state: SessionState): ConnectionLinkState {
+  const summary = toConnectionSummary(connection);
+  if (state.kind === "qr") return { state: "qr", qrImage: state.qrImage, connection: summary };
+  if (state.kind === "connected") return { state: "connected", connection: summary };
+  return { state: "disconnected", connection: summary };
+}
+
+function upstream(error: unknown): never {
+  if (error instanceof LinkerError) throw new UpstreamError(`El proveedor de WhatsApp falló: ${error.message}`);
+  throw error;
 }
 
 const NAME_RULE = "Ponle un nombre de 1 a 40 caracteres (p. ej. «Ventas Colombia»).";
@@ -67,6 +122,7 @@ export class CreateConnectionService {
       phoneNumber: null,
       profileName: null,
       providerRef: null,
+      providerSecret: null,
       lastConnectedAt: null,
       createdAt: at,
       updatedAt: at
@@ -95,25 +151,28 @@ export class RenameConnectionService {
 export class DeleteConnectionService {
   public constructor(
     private readonly repository: ConnectionRepository,
-    private readonly linker: WhatsAppLinker
+    private readonly linkers: WhatsAppLinkers,
+    private readonly cipher: SecretCipher
   ) {}
 
-  /** Cierra la sesión en el proveedor y borra la conexión. */
+  /**
+   * Borra la sesión en el proveedor y después la conexión. Si el proveedor
+   * falla no se borra nada: quedaría una sesión huérfana (y cobrada) allá.
+   */
   public async execute(tenantId: string, id: string): Promise<void> {
     const connection = await requireConnection(this.repository, tenantId, id);
-    await this.linker.unlink(connection);
+    const session = sessionOf(connection, this.cipher);
+    if (session) await this.linkers.for(connection.method).unlink(session).catch(upstream);
     await this.repository.delete(tenantId, id);
   }
 }
 
-/**
- * Vincular (o reconectar) un número: pide al proveedor un QR o completa la
- * conexión, y deja el estado como corresponde.
- */
+/** Vincular o reconectar un número: el proveedor da un QR o lo conecta. */
 export class LinkConnectionService {
   public constructor(
     private readonly repository: ConnectionRepository,
-    private readonly linker: WhatsAppLinker,
+    private readonly linkers: WhatsAppLinkers,
+    private readonly cipher: SecretCipher,
     private readonly now: () => Date = () => new Date()
   ) {}
 
@@ -121,27 +180,96 @@ export class LinkConnectionService {
     const connection = await requireConnection(this.repository, tenantId, id);
     if (connection.status === "connected") return { state: "connected", connection: toConnectionSummary(connection) };
 
-    const outcome = await this.linker.link(connection);
-    const at = this.now().toISOString();
+    const outcome = await this.linkers
+      .for(connection.method)
+      .start({ id: connection.id, tenantId, name: connection.name, method: connection.method }, sessionOf(connection, this.cipher))
+      .catch(upstream);
 
     if (outcome.kind === "unavailable") {
       return { state: "unavailable", reason: "provider_not_configured", message: outcome.message, connection: toConnectionSummary(connection) };
     }
-    if (outcome.kind === "qr") {
-      const waiting: WhatsAppConnection = { ...connection, status: "connecting", providerRef: outcome.providerRef, updatedAt: at };
-      await this.repository.save(waiting);
-      return { state: "qr", qrImage: outcome.qrImage, expiresAt: outcome.expiresAt, connection: toConnectionSummary(waiting) };
+    const updated = applyState(withSession(connection, outcome.session, this.cipher), outcome, this.now().toISOString());
+    await this.repository.save(updated);
+    return toLinkState(updated, outcome);
+  }
+}
+
+/**
+ * Cómo va la vinculación (la pantalla lo consulta mientras muestra el QR):
+ * el QR renovado, el número ya conectado o la sesión cerrada.
+ */
+export class CheckConnectionService {
+  public constructor(
+    private readonly repository: ConnectionRepository,
+    private readonly linkers: WhatsAppLinkers,
+    private readonly cipher: SecretCipher,
+    private readonly now: () => Date = () => new Date()
+  ) {}
+
+  public async execute(tenantId: string, id: string): Promise<ConnectionLinkState> {
+    const connection = await requireConnection(this.repository, tenantId, id);
+    const session = sessionOf(connection, this.cipher);
+    if (!session) return { state: "disconnected", connection: toConnectionSummary(connection) };
+
+    const state = await this.linkers.for(connection.method).check(session).catch(upstream);
+    const updated = applyState(connection, state, this.now().toISOString());
+    if (updated.status !== connection.status || updated.phoneNumber !== connection.phoneNumber || updated.profileName !== connection.profileName) {
+      await this.repository.save(updated);
     }
-    const linked: WhatsAppConnection = {
-      ...connection,
-      status: "connected",
-      phoneNumber: outcome.phoneNumber,
-      profileName: outcome.profileName,
-      providerRef: outcome.providerRef,
-      lastConnectedAt: at,
-      updatedAt: at
-    };
-    await this.repository.save(linked);
-    return { state: "connected", connection: toConnectionSummary(linked) };
+    return toLinkState(updated, state);
+  }
+}
+
+// --- Avisos del proveedor --------------------------------------------------------
+
+export interface ProviderConnectionEvent {
+  /** Conexión a la que se refiere (sale del nombre de la instancia). */
+  readonly connectionId: string;
+  /** Credencial con que firma el aviso el proveedor. */
+  readonly secret: string;
+  readonly status: "connected" | "connecting" | "disconnected";
+  readonly phoneNumber?: string | null;
+  readonly profileName?: string | null;
+}
+
+function sameSecret(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+/**
+ * Un aviso de conexión del proveedor (p. ej. «el número se desconectó»). No
+ * hay sesión de usuario: el aviso vale solo si trae la credencial de ESA
+ * conexión. Devuelve `false` si no se reconoce (se ignora sin decir por qué).
+ */
+export class HandleProviderEventService {
+  public constructor(
+    private readonly repository: ConnectionRepository,
+    private readonly cipher: SecretCipher,
+    private readonly now: () => Date = () => new Date()
+  ) {}
+
+  public async execute(event: ProviderConnectionEvent): Promise<boolean> {
+    const connection = await this.repository.findForProvider(event.connectionId);
+    if (!connection) return false;
+    let session: ProviderSession | null;
+    try {
+      session = sessionOf(connection, this.cipher);
+    } catch {
+      return false;
+    }
+    if (!session || !sameSecret(session.secret, event.secret)) return false;
+
+    const phone = normalizePhoneNumber(event.phoneNumber ?? connection.phoneNumber ?? "");
+    const state: SessionState =
+      event.status === "connected" && phone
+        ? { kind: "connected", phoneNumber: phone, profileName: event.profileName ?? connection.profileName }
+        : event.status === "connecting"
+          ? { kind: "qr", qrImage: "" }
+          : { kind: "disconnected" };
+    if (state.kind === "connected" && connection.status === "connected") return true;
+    await this.repository.save(applyState(connection, state, this.now().toISOString()));
+    return true;
   }
 }

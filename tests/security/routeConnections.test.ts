@@ -1,17 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Readable } from "node:stream";
 import type { IncomingMessage } from "node:http";
 import { routeConnectionsRequest } from "../../apps/api/routes/routeConnectionsRequest.js";
+import { routeWhatsAppWebhooks } from "../../apps/api/routes/routeWhatsAppWebhooks.js";
 import type { ConnectionsServices } from "../../apps/api/composition/composeConnectionsServices.js";
-import {
-  CreateConnectionService,
-  DeleteConnectionService,
-  LinkConnectionService,
-  ListConnectionsService,
-  RenameConnectionService
-} from "../../domains/connections/application/ConnectionServices.js";
+import { composeConnectionsServicesWith } from "../../apps/api/composition/composeConnectionsServices.js";
 import { InMemoryConnectionRepository } from "../../infrastructure/persistence/memory/InMemoryConnectionRepository.js";
-import { UnconfiguredWhatsAppLinker } from "../../infrastructure/whatsapp/UnconfiguredWhatsAppLinker.js";
 import { AccessError } from "../../platform/authorization/domain/AccessError.js";
 import { ROLE_SCOPES } from "../../platform/authorization/roles/RoleDefinitions.js";
 import { makeContext } from "./helpers/access.js";
@@ -31,15 +25,7 @@ function recorder() {
 }
 
 function services(): ConnectionsServices {
-  const repository = new InMemoryConnectionRepository();
-  const linker = new UnconfiguredWhatsAppLinker();
-  return {
-    list: new ListConnectionsService(repository),
-    create: new CreateConnectionService(repository),
-    rename: new RenameConnectionService(repository),
-    remove: new DeleteConnectionService(repository, linker),
-    link: new LinkConnectionService(repository, linker)
-  };
+  return composeConnectionsServicesWith(new InMemoryConnectionRepository(), { keyRing: null, uazapi: null, webhookBaseUrl: null });
 }
 
 const run = async (s: ConnectionsServices, method: string, path: string, scopes: ReadonlyArray<string>, tenantId = "tenant-a", body?: unknown) => {
@@ -80,5 +66,43 @@ describe("routeConnectionsRequest", () => {
     const s = services();
     await run(s, "POST", "/connections", ROLE_SCOPES.tenant_owner, "tenant-a", { name: "Ventas", method: "qr" });
     expect((await run(s, "GET", "/connections", ROLE_SCOPES.tenant_owner, "tenant-b")).body.connections).toEqual([]);
+  });
+});
+
+describe("routeWhatsAppWebhooks (avisos de uazapi)", () => {
+  const webhook = async (body: unknown, method = "POST") => {
+    const execute = vi.fn(async () => true);
+    const response = recorder();
+    const handled = await routeWhatsAppWebhooks(req(method, "/webhooks/uazapi", body), response as never, new URL("http://x/webhooks/uazapi"), {
+      providerEvents: { execute }
+    } as unknown as ConnectionsServices);
+    return { handled, status: response.statusCode, execute };
+  };
+
+  it("pasa el evento de conexión con el token y la conexión del nombre de la instancia", async () => {
+    const { status, execute } = await webhook({
+      EventType: "connection",
+      owner: "573013815302",
+      token: "inst-token",
+      instanceName: "auream-c1",
+      instance: { name: "auream-c1", status: "disconnected" },
+      type: "Disconnected"
+    });
+    expect(status).toBe(200);
+    expect(execute).toHaveBeenCalledWith({ connectionId: "c1", secret: "inst-token", status: "disconnected", phoneNumber: "573013815302" });
+  });
+
+  it("ignora otros eventos e instancias ajenas, y responde igual (no revela nada)", async () => {
+    for (const body of [{ EventType: "messages" }, { EventType: "connection", instanceName: "otra-app", instance: { status: "connected" } }]) {
+      const { status, execute } = await webhook(body);
+      expect(status).toBe(200);
+      expect(execute).not.toHaveBeenCalled();
+    }
+  });
+
+  it("solo acepta POST y no atiende otras rutas", async () => {
+    expect((await webhook({}, "GET")).status).toBe(405);
+    const response = recorder();
+    expect(await routeWhatsAppWebhooks(req("POST", "/otra"), response as never, new URL("http://x/otra"), {} as ConnectionsServices)).toBe(false);
   });
 });

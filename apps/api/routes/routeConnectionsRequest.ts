@@ -15,10 +15,12 @@ import { sendJson } from "../http/sendJson";
 //   PATCH  /connections/:id        renombrar
 //   DELETE /connections/:id        eliminar (cierra la sesión en el proveedor)
 //   POST   /connections/:id/link   vincular o reconectar: QR o conexión hecha
+//   GET    /connections/:id/status cómo va la vinculación (QR renovado, conectada…)
 // ---------------------------------------------------------------------------
 
 const ITEM = /^\/connections\/([^/]+)$/;
 const LINK = /^\/connections\/([^/]+)\/link$/;
+const STATUS = /^\/connections\/([^/]+)\/status$/;
 
 export async function routeConnectionsRequest(
   request: IncomingMessage,
@@ -41,6 +43,12 @@ export async function routeConnectionsRequest(
   if (path === "/connections" && method === "POST") {
     const body = await parseJsonBody<Partial<CreateConnectionRequest>>(request);
     sendJson(response, 201, await services.create.execute(tenantId, body));
+    return true;
+  }
+
+  const status = STATUS.exec(path);
+  if (status && method === "GET") {
+    sendJson(response, 200, await services.check.execute(tenantId, status[1]!));
     return true;
   }
 

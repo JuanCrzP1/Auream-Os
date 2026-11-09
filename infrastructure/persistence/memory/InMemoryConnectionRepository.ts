@@ -14,6 +14,10 @@ export class InMemoryConnectionRepository implements ConnectionRepository {
     return this.items.find((item) => item.tenantId === tenantId && item.id === id) ?? null;
   }
 
+  public async findForProvider(id: string): Promise<WhatsAppConnection | null> {
+    return this.items.find((item) => item.id === id) ?? null;
+  }
+
   public async save(connection: WhatsAppConnection): Promise<void> {
     const clash = this.items.find(
       (item) => item.tenantId === connection.tenantId && item.id !== connection.id && item.name.toLowerCase() === connection.name.toLowerCase()

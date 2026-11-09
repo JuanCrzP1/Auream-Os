@@ -161,7 +161,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .wa-avatar__ring,
-  .wa-card--skeleton {
+  .wa-card--skeleton,
+  .wa-waiting__dot {
     animation: none !important;
   }
 }
@@ -601,15 +602,6 @@
   image-rendering: pixelated;
 }
 
-.wa-qr--expired img {
-  filter: blur(3px);
-  opacity: 0.35;
-}
-
-.wa-qr__refresh {
-  position: absolute;
-}
-
 .wa-qr--preview,
 .wa-qr--loading {
   background:
@@ -695,11 +687,30 @@
   font-weight: 800;
 }
 
-.wa-countdown {
+.wa-waiting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 14px 0 0;
   color: var(--muted);
   font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
+}
+
+.wa-waiting__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: wa-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes wa-blink {
+  50% { opacity: 0.25; }
+}
+
+.wa-soon--warning {
+  border-color: color-mix(in srgb, var(--amber) 40%, var(--line));
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
 }
 
 .wa-link__success-icon {

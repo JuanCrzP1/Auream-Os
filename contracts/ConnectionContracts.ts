@@ -46,12 +46,18 @@ export interface UpdateConnectionRequest {
 }
 
 /**
- * Resultado de pedir la vinculación de un número:
- *   qr           código para escanear (imagen PNG en data URL) y cuándo caduca
- *   connected    ya quedó vinculado
- *   unavailable  este entorno todavía no puede vincular (proveedor sin configurar)
+ * Estado de la vinculación de un número (al pedirla y al consultarla):
+ *   qr            código para escanear (imagen PNG en data URL). El proveedor
+ *                 lo renueva solo: quien lo muestra vuelve a consultar
+ *   connected     ya quedó vinculado
+ *   disconnected  la sesión se cerró (desde el celular o por WhatsApp)
+ *   unavailable   este entorno todavía no puede vincular (proveedor sin configurar)
  */
 export type ConnectionLinkState =
-  | { readonly state: "qr"; readonly qrImage: string; readonly expiresAt: string; readonly connection: ConnectionSummary }
+  | { readonly state: "qr"; readonly qrImage: string; readonly connection: ConnectionSummary }
   | { readonly state: "connected"; readonly connection: ConnectionSummary }
+  | { readonly state: "disconnected"; readonly connection: ConnectionSummary }
   | { readonly state: "unavailable"; readonly reason: "provider_not_configured"; readonly message: string; readonly connection: ConnectionSummary };
+
+/** Cada cuánto vuelve a consultar la pantalla mientras muestra el QR. */
+export const LINK_POLL_INTERVAL_MS = 3_000;

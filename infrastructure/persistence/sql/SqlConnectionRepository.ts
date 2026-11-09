@@ -14,12 +14,13 @@ interface Row {
   phone_number: string | null;
   profile_name: string | null;
   provider_ref: string | null;
+  provider_secret: string | null;
   last_connected_at: Date | string | null;
   created_at: Date | string;
   updated_at: Date | string;
 }
 
-const COLUMNS = "id, tenant_id, name, method, status, phone_number, profile_name, provider_ref, last_connected_at, created_at, updated_at";
+const COLUMNS = "id, tenant_id, name, method, status, phone_number, profile_name, provider_ref, provider_secret, last_connected_at, created_at, updated_at";
 
 function toConnection(row: Row): WhatsAppConnection {
   return {
@@ -31,6 +32,7 @@ function toConnection(row: Row): WhatsAppConnection {
     phoneNumber: row.phone_number,
     profileName: row.profile_name,
     providerRef: row.provider_ref,
+    providerSecret: row.provider_secret,
     lastConnectedAt: row.last_connected_at === null ? null : toIso(row.last_connected_at),
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at)
@@ -53,19 +55,25 @@ export class SqlConnectionRepository implements ConnectionRepository {
     return result.rows[0] ? toConnection(result.rows[0]) : null;
   }
 
+  public async findForProvider(id: string): Promise<WhatsAppConnection | null> {
+    if (!isUuid(id)) return null;
+    const result = await this.sql.query<Row>(`select ${COLUMNS} from whatsapp_connections where id = $1`, [id]);
+    return result.rows[0] ? toConnection(result.rows[0]) : null;
+  }
+
   public async save(connection: WhatsAppConnection): Promise<void> {
     try {
       await this.sql.query(
         `insert into whatsapp_connections (${COLUMNS})
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          on conflict (id) do update set
            name = excluded.name, status = excluded.status, phone_number = excluded.phone_number,
-           profile_name = excluded.profile_name, provider_ref = excluded.provider_ref,
+           profile_name = excluded.profile_name, provider_ref = excluded.provider_ref, provider_secret = excluded.provider_secret,
            last_connected_at = excluded.last_connected_at, updated_at = excluded.updated_at
          where whatsapp_connections.tenant_id = excluded.tenant_id`,
         [
           connection.id, connection.tenantId, connection.name, connection.method, connection.status, connection.phoneNumber,
-          connection.profileName, connection.providerRef, connection.lastConnectedAt, connection.createdAt, connection.updatedAt
+          connection.profileName, connection.providerRef, connection.providerSecret, connection.lastConnectedAt, connection.createdAt, connection.updatedAt
         ]
       );
     } catch (error) {

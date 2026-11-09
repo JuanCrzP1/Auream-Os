@@ -51,8 +51,11 @@ describe("SqlConnectionRepository", () => {
     const created = await new CreateConnectionService(repository).execute(a, { name: "Ventas", method: "qr" });
     const stored = (await repository.findById(a, created.id))!;
     const at = new Date().toISOString();
-    await repository.save({ ...stored, status: "connected", phoneNumber: "573013815302", profileName: "Auream", providerRef: "s1", lastConnectedAt: at, updatedAt: at });
-    expect(await repository.findById(a, created.id)).toMatchObject({ status: "connected", phoneNumber: "573013815302", providerRef: "s1" });
+    const secret = "v1.aXY.dGFn.Y3Q";
+    await repository.save({ ...stored, status: "connected", phoneNumber: "573013815302", profileName: "Auream", providerRef: "s1", providerSecret: secret, lastConnectedAt: at, updatedAt: at });
+    expect(await repository.findById(a, created.id)).toMatchObject({ status: "connected", phoneNumber: "573013815302", providerRef: "s1", providerSecret: secret });
+    expect(await repository.findForProvider(created.id)).toMatchObject({ tenantId: a });
+    await expect(repository.save({ ...stored, providerSecret: "token en claro" })).rejects.toThrow();
     await expect(repository.save({ ...stored, phoneNumber: "abc" })).rejects.toThrow();
   });
 });

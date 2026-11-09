@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionSummary, CreateConnectionRequest } from "@contracts/ConnectionContracts";
 import { RequestError } from "@shared/http/RequestError";
-import { createConnection, deleteConnection, fetchConnections, linkConnection, renameConnection } from "./connectionsApi";
+import { checkConnection, createConnection, deleteConnection, fetchConnections, linkConnection, renameConnection } from "./connectionsApi";
 
 /**
  *   loading · ready · error
@@ -62,5 +62,20 @@ export function useConnections() {
     [refresh]
   );
 
-  return { connections, status, refresh, create, rename, remove, link };
+  /** Consulta la vinculación; recarga la lista solo si el estado cambió. */
+  const check = useCallback(
+    async (id: string) => {
+      const state = await checkConnection(id);
+      setConnections((current) => {
+        const before = current.find((connection) => connection.id === id);
+        return before && before.status === state.connection.status && before.phoneNumber === state.connection.phoneNumber
+          ? current
+          : current.map((connection) => (connection.id === id ? state.connection : connection));
+      });
+      return state;
+    },
+    []
+  );
+
+  return { connections, status, refresh, create, rename, remove, link, check };
 }

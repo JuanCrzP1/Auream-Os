@@ -69,6 +69,17 @@ export interface ApiConfig {
   readonly publicApiBaseUrl: string;
   /** Versión de la Graph API de Meta para el Pixel (`META_GRAPH_API_VERSION`, p. ej. `v23.0`). */
   readonly metaGraphVersion: string;
+  /**
+   * Proveedor de WhatsApp por código QR (`UAZAPI_BASE_URL` + `UAZAPI_ADMIN_TOKEN`).
+   * `null`: las conexiones por QR se crean, pero vincular dice que falta el proveedor.
+   */
+  readonly uazapi: { readonly baseUrl: string; readonly adminToken: string } | null;
+  /**
+   * Dirección pública de la API donde el proveedor avisa los cambios de
+   * conexión (`WHATSAPP_WEBHOOK_BASE_URL`; en Vercel producción, la oficial).
+   * `null` en desarrollo: la pantalla consulta el estado por su cuenta.
+   */
+  readonly whatsappWebhookBaseUrl: string | null;
 }
 
 /** ¿Es una zona IANA que el motor sabe usar? */
@@ -151,6 +162,20 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (!/^v\d+\.\d+$/.test(metaGraphVersion)) {
     throw new ApiConfigError(`META_GRAPH_API_VERSION debe tener la forma v23.0 (llegó "${metaGraphVersion}").`);
   }
+  const uazapiUrl = env["UAZAPI_BASE_URL"]?.trim().replace(/\/+$/, "") || "";
+  const uazapiToken = env["UAZAPI_ADMIN_TOKEN"]?.trim() || "";
+  if (Boolean(uazapiUrl) !== Boolean(uazapiToken)) {
+    throw new ApiConfigError("Para conectar WhatsApp por QR hacen falta UAZAPI_BASE_URL y UAZAPI_ADMIN_TOKEN juntos.");
+  }
+  if (uazapiUrl && !/^https:\/\/[^\s/]+$/.test(uazapiUrl)) {
+    throw new ApiConfigError(`UAZAPI_BASE_URL debe ser la dirección https de tu servidor de uazapi, p. ej. https://tunegocio.uazapi.com (llegó "${uazapiUrl}").`);
+  }
+  if (uazapiUrl && !credentialsKeyRing) {
+    throw new ApiConfigError("Conectar WhatsApp por QR necesita CREDENTIALS_ENCRYPTION_KEY: el token de cada número se guarda cifrado.");
+  }
+  const productionHost = env["VERCEL_ENV"] === "production" ? env["VERCEL_PROJECT_PRODUCTION_URL"]?.trim() : "";
+  const whatsappWebhookBaseUrl =
+    env["WHATSAPP_WEBHOOK_BASE_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}/api` : null);
   if (isProduction && store !== "sql") {
     throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
   }
@@ -168,6 +193,8 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     credentialsKeyRing,
     blobReadWriteToken: env["BLOB_READ_WRITE_TOKEN"]?.trim() || null,
     publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`,
-    metaGraphVersion
+    metaGraphVersion,
+    uazapi: uazapiUrl ? { baseUrl: uazapiUrl, adminToken: uazapiToken } : null,
+    whatsappWebhookBaseUrl
   };
 }

@@ -128,7 +128,15 @@ export function ConnectionsPage() {
           onClose={() => setDialog(null)}
         />
       ) : null}
-      {dialog?.kind === "link" ? <LinkConnectionDialog connection={dialog.connection} onLink={connections.link} onClose={() => setDialog(null)} /> : null}
+      {dialog?.kind === "link" ? <LinkConnectionDialog
+          connection={dialog.connection}
+          onLink={connections.link}
+          onCheck={connections.check}
+          onClose={() => {
+            setDialog(null);
+            void connections.refresh();
+          }}
+        /> : null}
       {dialog?.kind === "rename" ? (
         <RenameConnectionDialog name={dialog.connection.name} onSave={(name) => connections.rename(dialog.connection.id, name)} onClose={() => setDialog(null)} />
       ) : null}

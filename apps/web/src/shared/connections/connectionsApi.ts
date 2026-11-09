@@ -27,3 +27,8 @@ export async function deleteConnection(id: string): Promise<void> {
 export function linkConnection(id: string): Promise<ConnectionLinkState> {
   return builderApiClient.post<ConnectionLinkState>(`/connections/${encodeURIComponent(id)}/link`);
 }
+
+/** Cómo va la vinculación: QR renovado, conectada o sesión cerrada. */
+export function checkConnection(id: string): Promise<ConnectionLinkState> {
+  return builderApiClient.get<ConnectionLinkState>(`/connections/${encodeURIComponent(id)}/status`);
+}

@@ -18,7 +18,7 @@ const CONNECTED: ConnectionSummary = { ...base, id: "w1", name: "Ventas Colombia
 const DOWN: ConnectionSummary = { ...base, id: "w2", name: "Venezuela", method: "qr", status: "disconnected", phoneNumber: "584121234567" };
 const OFFICIAL: ConnectionSummary = { ...base, id: "w3", name: "Línea oficial", method: "cloud_api", status: "pending", phoneNumber: null };
 
-function stubApi(seed: ConnectionSummary[] = [], options: { listStatus?: number } = {}) {
+function stubApi(seed: ConnectionSummary[] = [], options: { listStatus?: number; qr?: boolean } = {}) {
   let items = [...seed];
   const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
     const url = new URL(String(input), "http://api.test");
@@ -33,7 +33,16 @@ function stubApi(seed: ConnectionSummary[] = [], options: { listStatus?: number 
       items.push(created);
       return reply(201, created);
     }
+    const status = /^\/connections\/([^/]+)\/status$/.exec(url.pathname);
+    if (status) {
+      items = items.map((c) => (c.id === status[1] ? { ...c, status: "connected", phoneNumber: "573013815302", profileName: "Dilo Cantando" } : c));
+      return reply(200, { state: "connected", connection: items.find((c) => c.id === status[1]) });
+    }
     const link = /^\/connections\/([^/]+)\/link$/.exec(url.pathname);
+    if (link && options.qr) {
+      items = items.map((c) => (c.id === link[1] ? { ...c, status: "connecting" } : c));
+      return reply(200, { state: "qr", qrImage: "data:image/png;base64,iVBORw0KGgo", connection: items.find((c) => c.id === link[1]) });
+    }
     if (link) {
       const connection = items.find((c) => c.id === link[1])!;
       return reply(200, { state: "unavailable", reason: "provider_not_configured", message: "La vinculación por código QR se activa al conectar el proveedor de WhatsApp.", connection });
@@ -143,4 +152,20 @@ describe("ConnectionsPage", () => {
     render(<ConnectionsPage />);
     expect(await screen.findByText("Sin acceso a las conexiones")).toBeInTheDocument();
   });
+
+  it("con proveedor: muestra el QR y, al escanearlo, pasa sola a «Número conectado»", async () => {
+    stubApi([OFFICIAL, { ...DOWN, id: "w9", name: "Ventas QR", status: "pending", phoneNumber: null }], { qr: true });
+    render(<ConnectionsPage />);
+    const card = await screen.findByRole("article", { name: "Ventas QR, Sin vincular" });
+    await userEvent.click(within(card).getByRole("button", { name: "Vincular número" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Ventas QR" });
+    expect(await within(dialog).findByRole("img", { name: "Código QR para vincular el número" })).toBeInTheDocument();
+    expect(within(dialog).getByText(/Esperando que escanees el código/)).toBeInTheDocument();
+
+    expect(await within(dialog).findByText("¡Número conectado!", undefined, { timeout: 5000 })).toBeInTheDocument();
+    expect(within(dialog).getByText("+57 301 381 5302")).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Listo" }));
+    expect(await screen.findByRole("article", { name: "Ventas QR, Conectada" })).toBeInTheDocument();
+  }, 10_000);
 });

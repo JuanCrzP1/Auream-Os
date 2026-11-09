@@ -6,9 +6,11 @@ import {
 } from "../../../contracts/ConnectionContracts";
 
 /**
- * Un número de WhatsApp de la cuenta. `providerRef` es el identificador de la
- * sesión en el proveedor (QR) o del número en Meta (API oficial); nunca sale
- * de la API.
+ * Un número de WhatsApp de la cuenta.
+ *   providerRef     identificador de la sesión en el proveedor (instancia de
+ *                   uazapi) o del número en Meta (API oficial)
+ *   providerSecret  credencial de esa sesión, CIFRADA (ver `SecretCipher`)
+ * Ninguno de los dos sale de la API.
  */
 export interface WhatsAppConnection {
   readonly id: string;
@@ -19,6 +21,7 @@ export interface WhatsAppConnection {
   readonly phoneNumber: string | null;
   readonly profileName: string | null;
   readonly providerRef: string | null;
+  readonly providerSecret: string | null;
   readonly lastConnectedAt: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -39,4 +42,9 @@ export function normalizePhoneNumber(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const digits = value.replace(/\D/g, "");
   return digits.length >= 7 && digits.length <= 15 ? digits : null;
+}
+
+/** Contexto del cifrado: la credencial solo se descifra en su cuenta y su conexión. */
+export function connectionSecretContext(tenantId: string, connectionId: string): string {
+  return `whatsapp-connection:${tenantId}:${connectionId}`;
 }

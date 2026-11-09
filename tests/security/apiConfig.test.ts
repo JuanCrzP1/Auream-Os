@@ -55,3 +55,28 @@ describe("loadApiConfig", () => {
     expect(config.allowedOrigins).toEqual(["https://a.example.com", "https://b.example.com"]);
   });
 });
+
+describe("loadApiConfig · WhatsApp por QR (uazapi)", () => {
+  const KEY = Buffer.alloc(32, 1).toString("base64");
+
+  it("sin uazapi, el QR queda sin proveedor y no hay avisos fuera de producción", () => {
+    const config = loadApiConfig({ JWT_SECRET: VALID_SECRET });
+    expect(config.uazapi).toBeNull();
+    expect(config.whatsappWebhookBaseUrl).toBeNull();
+  });
+
+  it("exige dirección y token juntos, https y la clave maestra para cifrar los tokens", () => {
+    expect(() => loadApiConfig({ JWT_SECRET: VALID_SECRET, UAZAPI_BASE_URL: "https://x.uazapi.com" })).toThrow(/juntos/);
+    expect(() => loadApiConfig({ JWT_SECRET: VALID_SECRET, CREDENTIALS_ENCRYPTION_KEY: KEY, UAZAPI_BASE_URL: "http://x.uazapi.com", UAZAPI_ADMIN_TOKEN: "t" })).toThrow(/https/);
+    expect(() => loadApiConfig({ JWT_SECRET: VALID_SECRET, UAZAPI_BASE_URL: "https://x.uazapi.com", UAZAPI_ADMIN_TOKEN: "t" })).toThrow(/CREDENTIALS_ENCRYPTION_KEY/);
+    expect(
+      loadApiConfig({ JWT_SECRET: VALID_SECRET, CREDENTIALS_ENCRYPTION_KEY: KEY, UAZAPI_BASE_URL: "https://x.uazapi.com/", UAZAPI_ADMIN_TOKEN: "t" }).uazapi
+    ).toEqual({ baseUrl: "https://x.uazapi.com", adminToken: "t" });
+  });
+
+  it("en Vercel producción los avisos llegan a la dirección oficial", () => {
+    const config = loadApiConfig({ JWT_SECRET: VALID_SECRET, VERCEL_ENV: "production", VERCEL_PROJECT_PRODUCTION_URL: "auream-os.vercel.app" });
+    expect(config.whatsappWebhookBaseUrl).toBe("https://auream-os.vercel.app/api");
+    expect(loadApiConfig({ JWT_SECRET: VALID_SECRET, VERCEL_ENV: "preview", VERCEL_PROJECT_PRODUCTION_URL: "auream-os.vercel.app" }).whatsappWebhookBaseUrl).toBeNull();
+  });
+});

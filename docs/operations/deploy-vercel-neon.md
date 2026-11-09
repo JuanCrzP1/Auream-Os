@@ -85,6 +85,18 @@ Si se crea un almacén nuevo: Vercel → *Storage* → *Blob* → crear y conect
 
 El bloque «Comprobante automático» lee las imágenes en la propia función, sin servicios externos: `sharp` (binario de Linux que instala `npm ci` en el build) y Tesseract en WebAssembly con el modelo de español del paquete `@tesseract.js-data/spa`. Como Tesseract carga sus archivos por ruta, `vercel.json` los añade a la función con `includeFiles` (solo las variantes LSTM, ~25 MB). No hay variables que configurar. La primera lectura de una instancia tarda un poco más (arranca el motor); las siguientes, ~0,3 s.
 
+## WhatsApp por código QR (uazapi)
+
+Vercel no puede mantener abierta una sesión de WhatsApp Web, así que la mantiene **uazapi** (como hace Leona). Auream crea una instancia por conexión (`auream-<id>`), muestra su QR, consulta el estado mientras se escanea y recibe los avisos de conexión en `POST /api/webhooks/uazapi`. El aviso solo cambia algo si trae el token de esa instancia; los tokens se guardan cifrados con `CREDENTIALS_ENCRYPTION_KEY`.
+
+Variables (Production; en Preview, las de un servidor de pruebas si se quiere probar ahí):
+
+- `UAZAPI_BASE_URL` — `https://<tu-subdominio>.uazapi.com` (sin barra final).
+- `UAZAPI_ADMIN_TOKEN` — token de administrador del servidor (**Sensitive**).
+- `WHATSAPP_WEBHOOK_BASE_URL` — opcional: en producción se usa `https://<dominio oficial>/api`.
+
+Sin ellas, las conexiones por QR se crean y la pantalla dice que falta el proveedor.
+
 ## Una sola dirección oficial
 
 Cada despliegue de Vercel responde en varias direcciones (la oficial, la del equipo, la de la rama y la propia del despliegue). Neon Auth solo acepta iniciar sesión desde la oficial. Por eso el build de producción le da a la web su dirección oficial (`VITE_APP_URL`, sacada de `VERCEL_PROJECT_PRODUCTION_URL`) y la web lleva ahí, antes de pintar nada, a quien entre por cualquier otra, conservando la ruta.

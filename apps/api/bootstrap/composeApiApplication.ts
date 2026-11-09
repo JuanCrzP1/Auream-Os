@@ -41,7 +41,11 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     services: composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker),
     contactsServices: composeContactsServices(tenancy.sqlClient),
     integrationsServices: integrations,
-    connectionsServices: composeConnectionsServices(tenancy.sqlClient),
+    connectionsServices: composeConnectionsServices(tenancy.sqlClient, {
+      keyRing: config.credentialsKeyRing,
+      uazapi: config.uazapi,
+      webhookBaseUrl: config.whatsappWebhookBaseUrl
+    }),
     mediaServices: composeMediaServices(config, tenancy.sqlClient),
     meServices: {
       membershipRepository: tenancy.membershipRepository,

@@ -1,23 +1,58 @@
-import type { WhatsAppConnection } from "../../domain/WhatsAppConnection";
-
 // ---------------------------------------------------------------------------
-// WhatsAppLinker — vincular y desvincular un número de WhatsApp.
+// WhatsAppLinker — vincular, consultar y desvincular un número de WhatsApp.
 //
-//   QR         → proveedor externo que mantiene la sesión (se elige al contratarlo)
-//   API oficial → Meta (WhatsApp Business Platform)
+//   QR          → proveedor externo que mantiene la sesión (uazapi)
+//   API oficial → Meta (WhatsApp Business Platform), fase siguiente
 //
-// Mientras no haya proveedor configurado, la composición inyecta
-// `UnconfiguredWhatsAppLinker`, que lo dice en lugar de fingir un QR.
+// La credencial de la sesión (`ProviderSession.secret`) viaja aquí en claro
+// solo en memoria: el caso de uso la cifra antes de guardarla y la descifra
+// para entregarla. Mientras no haya proveedor, `UnconfiguredWhatsAppLinker`
+// lo dice en lugar de fingir un QR.
 // ---------------------------------------------------------------------------
 
-export type LinkOutcome =
-  | { readonly kind: "qr"; readonly qrImage: string; readonly expiresAt: string; readonly providerRef: string }
-  | { readonly kind: "connected"; readonly phoneNumber: string; readonly profileName: string | null; readonly providerRef: string }
+import type { ConnectionMethod } from "../../../../contracts/ConnectionContracts";
+
+export interface ProviderSession {
+  /** Identificador de la sesión en el proveedor (no es secreto). */
+  readonly ref: string;
+  /** Credencial de la sesión. Secreta. */
+  readonly secret: string;
+}
+
+export interface LinkTarget {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly name: string;
+  readonly method: ConnectionMethod;
+}
+
+/** Cómo está la sesión en el proveedor. */
+export type SessionState =
+  | { readonly kind: "qr"; readonly qrImage: string }
+  | { readonly kind: "connected"; readonly phoneNumber: string; readonly profileName: string | null }
+  | { readonly kind: "disconnected" };
+
+export type StartOutcome =
+  | (SessionState & { readonly session: ProviderSession })
   | { readonly kind: "unavailable"; readonly message: string };
 
+/** Falla del proveedor (caído, credencial rechazada…). Mensaje sin secretos. */
+export class LinkerError extends Error {}
+
 export interface WhatsAppLinker {
-  /** Empieza (o renueva) la vinculación: un QR para escanear o la conexión hecha. */
-  link(connection: WhatsAppConnection): Promise<LinkOutcome>;
-  /** Cierra la sesión en el proveedor. No falla si ya estaba cerrada. */
-  unlink(connection: WhatsAppConnection): Promise<void>;
+  /**
+   * Empieza o retoma la vinculación. Con `session` reutiliza la sesión que ya
+   * existe en el proveedor; sin ella (o si el proveedor ya no la tiene) crea
+   * una nueva. Lanza `LinkerError` si el proveedor falla.
+   */
+  start(target: LinkTarget, session: ProviderSession | null): Promise<StartOutcome>;
+  /** Estado actual de la sesión. Lanza `LinkerError` si el proveedor falla. */
+  check(session: ProviderSession): Promise<SessionState>;
+  /** Cierra y borra la sesión en el proveedor. No falla si ya no existía. */
+  unlink(session: ProviderSession): Promise<void>;
+}
+
+/** El proveedor de cada forma de conectar (QR → uazapi; API oficial → Meta). */
+export interface WhatsAppLinkers {
+  for(method: ConnectionMethod): WhatsAppLinker;
 }

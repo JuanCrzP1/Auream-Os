@@ -8,6 +8,7 @@ import { routeContactsRequest } from "./routeContactsRequest";
 import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
+import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
 import { routeLocalMediaRequest, routeMediaRequest } from "./routeMediaRequest";
 import type { MediaServices } from "../composition/composeMediaServices";
@@ -53,6 +54,9 @@ export async function routeApiRequest(
     sendJson(response, 200, { status: "ok" });
     return;
   }
+
+  // Avisos de los proveedores de WhatsApp: los autentica el token de la instancia, no una sesión.
+  if (await routeWhatsAppWebhooks(request, response, url, connectionsServices)) return;
 
   // Almacén local de medios (solo desarrollo): autoriza el permiso firmado, no la sesión.
   if (await routeLocalMediaRequest(request, response, url, mediaServices)) return;

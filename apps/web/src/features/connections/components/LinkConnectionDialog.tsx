@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useId, useState } from "react";
-import type { ConnectionLinkState, ConnectionSummary } from "@contracts/ConnectionContracts";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { LINK_POLL_INTERVAL_MS, type ConnectionLinkState, type ConnectionSummary } from "@contracts/ConnectionContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { formatPhone } from "@shared/phone/formatPhone";
 import { ChatPhoneGlyph, OfficialGlyph, QrGlyph } from "./ConnectionGlyphs";
 
 // ---------------------------------------------------------------------------
-// Vincular un número. Pide al servidor la vinculación y muestra lo que toca:
-// el código QR con su cuenta atrás, el número ya conectado, o —mientras no
-// haya proveedor configurado— cómo será el proceso, sin fingir un código.
+// Vincular un número. Pide la vinculación y muestra lo que toca:
+//   · el código QR, que se renueva solo: la ventana consulta cada pocos
+//     segundos y en cuanto se escanea pasa a «Número conectado»
+//   · el código vencido, con un botón para generar otro
+//   · el número ya conectado
+//   · sin proveedor configurado: cómo será el proceso, sin fingir un código
 // ---------------------------------------------------------------------------
 
 const QR_STEPS = ["Abre WhatsApp en tu celular", "Toca Menú o Configuración → Dispositivos vinculados", "Toca «Vincular un dispositivo» y apunta al código"];
@@ -15,27 +18,20 @@ const CLOUD_STEPS = ["Inicia sesión con tu cuenta de Meta Business", "Elige o r
 
 type View = { readonly kind: "loading" } | { readonly kind: "error"; readonly message: string } | { readonly kind: "ready"; readonly state: ConnectionLinkState };
 
-function useSecondsLeft(expiresAt: string | null): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!expiresAt) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [expiresAt]);
-  return expiresAt ? Math.max(0, Math.round((new Date(expiresAt).getTime() - now) / 1000)) : 0;
-}
-
 export function LinkConnectionDialog({
   connection,
   onLink,
+  onCheck,
   onClose
 }: {
   readonly connection: ConnectionSummary;
   readonly onLink: (id: string) => Promise<ConnectionLinkState>;
+  readonly onCheck: (id: string) => Promise<ConnectionLinkState>;
   readonly onClose: () => void;
 }) {
   const titleId = useId();
   const [view, setView] = useState<View>({ kind: "loading" });
+  const failures = useRef(0);
 
   const request = useCallback(async () => {
     setView({ kind: "loading" });
@@ -50,8 +46,28 @@ export function LinkConnectionDialog({
     void request();
   }, [request]);
 
+  // Mientras se muestra el QR, se consulta si ya se escaneó (y trae el QR renovado).
+  const waiting = view.kind === "ready" && view.state.state === "qr";
+  useEffect(() => {
+    if (!waiting) return;
+    let cancelled = false;
+    const timer = setInterval(async () => {
+      try {
+        const state = await onCheck(connection.id);
+        failures.current = 0;
+        if (!cancelled) setView({ kind: "ready", state });
+      } catch (e) {
+        // Un fallo suelto no interrumpe; varios seguidos, sí.
+        if (++failures.current >= 3 && !cancelled) setView({ kind: "error", message: apiErrorMessage(e, "Se perdió la comunicación con el proveedor de WhatsApp.") });
+      }
+    }, LINK_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [waiting, connection.id, onCheck]);
+
   const state = view.kind === "ready" ? view.state : null;
-  const secondsLeft = useSecondsLeft(state?.state === "qr" ? state.expiresAt : null);
   const isQr = connection.method === "qr";
   const steps = isQr ? QR_STEPS : CLOUD_STEPS;
 
@@ -78,13 +94,12 @@ export function LinkConnectionDialog({
 
         {state?.state === "qr" ? (
           <div className="wa-link__body wa-link__body--split">
-            <div className={`wa-qr${secondsLeft === 0 ? " wa-qr--expired" : ""}`}>
-              <img src={state.qrImage} alt="Código QR para vincular el número" />
-              {secondsLeft === 0 ? (
-                <button type="button" className="ui-btn ui-btn--primary wa-qr__refresh" onClick={() => void request()}>
-                  Generar otro código
-                </button>
-              ) : null}
+            <div className="wa-qr">
+              {state.qrImage ? (
+                <img src={state.qrImage} alt="Código QR para vincular el número" />
+              ) : (
+                <span className="wa-qr__spinner" role="status" aria-label="Generando el código" />
+              )}
             </div>
             <div>
               <ol className="wa-steps">
@@ -92,8 +107,9 @@ export function LinkConnectionDialog({
                   <li key={step}>{step}</li>
                 ))}
               </ol>
-              <p className="wa-countdown" aria-live="polite">
-                {secondsLeft > 0 ? `El código caduca en ${secondsLeft} s` : "El código caducó"}
+              <p className="wa-waiting" aria-live="polite">
+                <span className="wa-waiting__dot" aria-hidden="true" />
+                Esperando que escanees el código… se renueva solo.
               </p>
             </div>
           </div>
@@ -102,8 +118,22 @@ export function LinkConnectionDialog({
         {state?.state === "connected" ? (
           <div className="wa-link__body wa-link__success" role="status">
             <span className="wa-link__success-icon" aria-hidden="true"><ChatPhoneGlyph /></span>
-            <p><strong>Número conectado</strong></p>
+            <p><strong>¡Número conectado!</strong></p>
             {state.connection.phoneNumber ? <p className="ui-muted">{formatPhone(state.connection.phoneNumber).text}</p> : null}
+            {state.connection.profileName ? <p className="ui-muted">{state.connection.profileName}</p> : null}
+          </div>
+        ) : null}
+
+        {state?.state === "disconnected" ? (
+          <div className="wa-link__body wa-link__body--split">
+            <div className="wa-qr wa-qr--preview" aria-hidden="true"><QrGlyph /></div>
+            <div>
+              <p className="wa-soon wa-soon--warning">
+                <strong>El código venció</strong>
+                <span>Pasó el tiempo para escanearlo. Genera otro y escanéalo desde tu celular.</span>
+              </p>
+              <button type="button" className="ui-btn ui-btn--primary" onClick={() => void request()}>Generar otro código</button>
+            </div>
           </div>
         ) : null}
 
@@ -131,8 +161,8 @@ export function LinkConnectionDialog({
           {view.kind === "error" ? (
             <button type="button" className="ui-btn ui-btn--ghost" onClick={() => void request()}>Reintentar</button>
           ) : null}
-          <button type="button" className="ui-btn ui-btn--primary" onClick={onClose}>
-            {state?.state === "qr" ? "Cerrar" : "Entendido"}
+          <button type="button" className={`ui-btn ${state?.state === "qr" ? "ui-btn--ghost" : "ui-btn--primary"}`} onClick={onClose}>
+            {state?.state === "qr" ? "Cancelar" : state?.state === "connected" ? "Listo" : "Entendido"}
           </button>
         </div>
       </div>
