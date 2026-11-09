@@ -73,6 +73,16 @@ export class UazapiLinker implements WhatsAppLinker {
     }
   }
 
+  /** Vuelve a registrar los avisos (conexión y mensajes) en la instancia. */
+  public async refresh(session: ProviderSession): Promise<void> {
+    if (!this.webhookUrl) return;
+    try {
+      await this.client.setWebhook(session.secret, this.webhookUrl, WEBHOOK_EVENTS);
+    } catch (error) {
+      asLinkerError(error);
+    }
+  }
+
   public async check(session: ProviderSession): Promise<SessionState> {
     try {
       return toState(await this.client.status(session.secret));

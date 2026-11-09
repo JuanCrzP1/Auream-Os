@@ -122,4 +122,10 @@ describe("UazapiLinker", () => {
     expect(await new UazapiLinker(api.client, null).restart({ ref: "r", secret: "inst-token" })).toEqual({ kind: "qr", qrImage: "data:image/png;base64,NUEVO" });
     expect(api.calls.map((c) => `${c.method} ${new URL(c.url).pathname}`)).toEqual(["POST /instance/disconnect", "POST /instance/connect"]);
   });
+
+  it("ver estado: vuelve a registrar los avisos de conexión y mensajes", async () => {
+    const api = server({ "POST /webhook": () => json(200, []) });
+    await new UazapiLinker(api.client, "https://auream-os.vercel.app/api/webhooks/uazapi").refresh({ ref: "r", secret: "inst-token" });
+    expect(api.calls[0]!.body).toMatchObject({ url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection", "messages"] });
+  });
 });

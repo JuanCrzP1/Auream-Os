@@ -191,9 +191,14 @@ export class LinkConnectionService {
 
   public async execute(tenantId: string, id: string, request: LinkConnectionRequest = {}): Promise<ConnectionLinkState> {
     const connection = await requireConnection(this.repository, tenantId, id);
-    if (connection.status === "connected") return { state: "connected", connection: toConnectionSummary(connection) };
-
     const session = sessionOf(connection, this.cipher);
+    if (connection.status === "connected") {
+      // «Ver estado» de un número conectado: pone al día su configuración en el
+      // proveedor (avisos de mensajes de versiones nuevas). Si falla, lo dice.
+      if (session) await this.linkers.for(connection.method).refresh(session).catch(upstream);
+      return { state: "connected", connection: toConnectionSummary(connection) };
+    }
+
     if (request.restart === true && session && connection.status === "connecting") {
       const state = await this.linkers.for(connection.method).restart(session).catch(upstream);
       const updated = applyState(connection, state, this.now().toISOString());

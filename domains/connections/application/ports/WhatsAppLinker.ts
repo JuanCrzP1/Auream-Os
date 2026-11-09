@@ -51,6 +51,11 @@ export interface WhatsAppLinker {
    * (reinicia el tiempo para escanear). Lanza `LinkerError` si el proveedor falla.
    */
   restart(session: ProviderSession): Promise<SessionState>;
+  /**
+   * Pone al día la configuración de una sesión ya conectada (p. ej. los avisos
+   * que manda el proveedor, si la versión de Auream pide nuevos). Idempotente.
+   */
+  refresh(session: ProviderSession): Promise<void>;
   /** Estado actual de la sesión. Lanza `LinkerError` si el proveedor falla. */
   check(session: ProviderSession): Promise<SessionState>;
   /** Cierra y borra la sesión en el proveedor. No falla si ya no existía. */

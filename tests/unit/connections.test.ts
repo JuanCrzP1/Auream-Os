@@ -36,6 +36,7 @@ function fakeLinker(start: StartOutcome, checks: SessionState[] = []) {
   return {
     start: vi.fn(async () => start),
     restart: vi.fn(async () => ({ kind: "qr", qrImage: "data:image/png;base64,NUEVO" }) as SessionState),
+    refresh: vi.fn(async () => undefined),
     check: vi.fn(async () => queue.shift() ?? ({ kind: "disconnected" } as SessionState)),
     unlink: vi.fn(async () => undefined)
   } satisfies WhatsAppLinker;
@@ -158,6 +159,18 @@ describe("vincular por QR", () => {
     const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
     await expect(s.link.execute(T, created.id)).rejects.toThrow(UpstreamError);
     expect((await s.list.execute(T))[0]!.status).toBe("pending");
+  });
+});
+
+describe("ver estado de un número conectado", () => {
+  it("pone al día los avisos del proveedor con la sesión guardada", async () => {
+    const linker = fakeLinker(qrOutcome, [{ kind: "connected", phoneNumber: "573013815302", profileName: null }]);
+    const s = setup(linker);
+    const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
+    await s.link.execute(T, created.id);
+    await s.check.execute(T, created.id);
+    expect((await s.link.execute(T, created.id)).state).toBe("connected");
+    expect(linker.refresh).toHaveBeenCalledWith({ ref: "inst-1", secret: TOKEN });
   });
 });
 
