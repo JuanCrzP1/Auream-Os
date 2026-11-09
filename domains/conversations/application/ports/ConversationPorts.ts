@@ -17,3 +17,8 @@ export interface ConversationSender {
 export interface FlowLauncher {
   launch(tenantId: string, conversation: { readonly id: string; readonly connectionId: string; readonly phone: string }, automationId: string): Promise<{ readonly flowName: string; readonly sent: number; readonly failed: number }>;
 }
+
+/** Pone las etiquetas del cliente del chat (Contactos: mismo catálogo que usan los flujos). */
+export interface ContactLabeler {
+  setLabels(tenantId: string, contactId: string, labelIds: ReadonlyArray<string>): Promise<void>;
+}

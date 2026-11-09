@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import {
+  CONVERSATION_FILTERS,
+  CONVERSATIONS_PAGE_SIZE,
   MAX_AGENT_MESSAGE_LENGTH,
+  MAX_LABEL_FILTERS,
   type ConversationFilter,
+  type ConversationListQuery,
+  type ConversationListResponse,
   type ConversationMessageKind,
   type ConversationMessagesResponse,
   type ConversationSummary,
@@ -12,16 +17,17 @@ import type { OutboundMessage } from "../../../contracts/RuntimeContracts";
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 import type { Conversation, StoredMessage } from "../domain/Conversation";
-import type { ConversationRepository } from "./ConversationRepository";
-import type { ConversationSender, FlowLauncher, SendResult } from "./ports/ConversationPorts";
+import type { ConversationRepository, InboxCursor, InboxQuery } from "./ConversationRepository";
+import type { ContactLabeler, ConversationSender, FlowLauncher, SendResult } from "./ports/ConversationPorts";
 
 // ---------------------------------------------------------------------------
 // La bandeja de Conversaciones.
 //
 //   ConversationRecorder  guarda cada mensaje del hilo (lo usa la mensajería:
 //                         lo que escribe el cliente y lo que responde el bot)
-//   ConversationInbox     lo que hace el equipo en la pantalla: listar, leer,
-//                         responder, pausar el bot y enviar un flujo a mano
+//   ConversationInbox     lo que hace el equipo en la pantalla: listar y
+//                         filtrar, leer, responder, pausar el bot, etiquetar
+//                         y enviar un flujo a mano
 // ---------------------------------------------------------------------------
 
 /** Qué guarda la bandeja de una salida del flujo o del asesor. */
@@ -37,6 +43,52 @@ function outboundRecord(result: SendResult): { kind: ConversationMessageKind; te
     return { kind: "menu", text: body, mediaUrl: null, mediaType: null, options: message.interactive.options.map((option) => option.title) };
   }
   return { kind: "text", text: message.content, mediaUrl: null, mediaType: null, options: [] };
+}
+
+/** El cursor viaja opaco (base64url): la web solo lo devuelve tal cual. */
+function encodeCursor(summary: ConversationSummary): string {
+  const cursor: InboxCursor = { activityAt: summary.lastMessageAt ?? summary.createdAt, id: summary.id };
+  return Buffer.from(JSON.stringify(cursor)).toString("base64url");
+}
+
+function decodeCursor(raw: string): InboxCursor {
+  try {
+    const value = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as Partial<InboxCursor>;
+    if (typeof value.activityAt === "string" && !Number.isNaN(Date.parse(value.activityAt)) && typeof value.id === "string" && value.id.length <= 64) {
+      return { activityAt: value.activityAt, id: value.id };
+    }
+  } catch {
+    // cae al error de abajo
+  }
+  throw new ValidationError("La página pedida no es válida. Vuelve a cargar la bandeja.");
+}
+
+function isoDate(value: string | undefined, label: string): string | undefined {
+  if (value === undefined || value === "") return undefined;
+  const time = Date.parse(value);
+  if (Number.isNaN(time)) throw new ValidationError(`La fecha «${label}» no es válida.`);
+  return new Date(time).toISOString();
+}
+
+/** Filtros de la bandeja validados (lo que llega de la URL es texto libre). */
+function inboxQuery(query: ConversationListQuery): Omit<InboxQuery, "limit"> {
+  const filter: ConversationFilter = query.filter && CONVERSATION_FILTERS.includes(query.filter) ? query.filter : "all";
+  const labelIds = [...new Set((query.labelIds ?? []).map((id) => id.trim()).filter(Boolean))];
+  if (labelIds.length > MAX_LABEL_FILTERS) throw new ValidationError(`Filtra por hasta ${MAX_LABEL_FILTERS} etiquetas a la vez.`);
+  if (labelIds.some((id) => id.length > 64)) throw new ValidationError("Una de las etiquetas no es válida.");
+  const from = isoDate(query.from, "desde");
+  const to = isoDate(query.to, "hasta");
+  if (from && to && from >= to) throw new ValidationError("La fecha «desde» debe ser anterior a «hasta».");
+  const search = query.search?.trim().slice(0, 80);
+  return {
+    filter,
+    ...(search ? { search } : {}),
+    ...(query.connectionId ? { connectionId: query.connectionId } : {}),
+    ...(labelIds.length ? { labelIds } : {}),
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+    ...(query.cursor ? { after: decodeCursor(query.cursor) } : {})
+  };
 }
 
 export class ConversationRecorder {
@@ -110,17 +162,16 @@ export class ConversationInbox {
     private readonly repository: ConversationRepository,
     private readonly recorder: ConversationRecorder,
     private readonly sender: ConversationSender,
-    private readonly flows: FlowLauncher
+    private readonly flows: FlowLauncher,
+    private readonly labeler: ContactLabeler
   ) {}
 
-  public async list(tenantId: string, query: { readonly filter?: ConversationFilter; readonly search?: string; readonly connectionId?: string }): Promise<ConversationSummary[]> {
-    const filter = query.filter && ["all", "unread", "bot_paused"].includes(query.filter) ? query.filter : "all";
-    return this.repository.inbox(tenantId, {
-      filter,
-      limit: 100,
-      ...(query.search?.trim() ? { search: query.search.trim().slice(0, 80) } : {}),
-      ...(query.connectionId ? { connectionId: query.connectionId } : {})
-    });
+  /** Una página de la bandeja con sus filtros; `nextCursor` trae la siguiente. */
+  public async list(tenantId: string, query: ConversationListQuery): Promise<ConversationListResponse> {
+    const rows = await this.repository.inbox(tenantId, { ...inboxQuery(query), limit: CONVERSATIONS_PAGE_SIZE + 1 });
+    const conversations = rows.slice(0, CONVERSATIONS_PAGE_SIZE);
+    const hasMore = rows.length > CONVERSATIONS_PAGE_SIZE;
+    return { conversations, nextCursor: hasMore ? encodeCursor(conversations.at(-1)!) : null };
   }
 
   public async get(tenantId: string, id: string): Promise<ConversationSummary> {
@@ -163,6 +214,20 @@ export class ConversationInbox {
     ]);
     await this.recorder.recordOutbound(tenantId, conversation.id, results, { author: "agent", agentId: agent.id, ...(agent.name ? { agentName: agent.name } : {}) });
     if (conversation.botEnabled) await this.repository.setBotEnabled(tenantId, id, false);
+    return this.get(tenantId, id);
+  }
+
+  /**
+   * Etiquetas del chat = las de su cliente (Contactos), las mismas que ponen
+   * los flujos: un solo catálogo. Un chat sin contacto no se puede etiquetar.
+   */
+  public async setLabels(tenantId: string, id: string, labelIds: unknown): Promise<ConversationSummary> {
+    if (!Array.isArray(labelIds) || !labelIds.every((labelId) => typeof labelId === "string")) {
+      throw new ValidationError("labelIds debe ser una lista de identificadores.");
+    }
+    const conversation = await this.require(tenantId, id);
+    if (!conversation.contactId) throw new ValidationError("Este chat no tiene un contacto asociado para etiquetar.");
+    await this.labeler.setLabels(tenantId, conversation.contactId, labelIds as string[]);
     return this.get(tenantId, id);
   }
 

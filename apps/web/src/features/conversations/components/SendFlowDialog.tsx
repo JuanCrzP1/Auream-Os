@@ -3,8 +3,9 @@ import { fetchFlowOptions, type FlowOption } from "@shared/automations/flowOptio
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 
 // ---------------------------------------------------------------------------
-// Enviar un flujo a mano a este cliente (como en Leona): corta lo que esté
-// haciendo y empieza el flujo elegido desde su inicio; el bot queda activo.
+// «Ejecutar flujo» en este chat (como en Leona): corta lo que el cliente esté
+// haciendo en otro flujo y empieza el elegido desde su inicio; el bot queda
+// activo.
 // ---------------------------------------------------------------------------
 
 export function SendFlowDialog({
@@ -37,7 +38,7 @@ export function SendFlowDialog({
       await onSend(flow.id);
       onClose();
     } catch (e) {
-      setError(apiErrorMessage(e, "No se pudo enviar el flujo. Inténtalo de nuevo."));
+      setError(apiErrorMessage(e, "No se pudo ejecutar el flujo. Inténtalo de nuevo."));
       setBusy(null);
     }
   };
@@ -45,8 +46,8 @@ export function SendFlowDialog({
   return (
     <div className="ui-overlay" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={busy ? undefined : onClose}>
       <div className="ui-dialog ios-flow-dialog" onClick={(event) => event.stopPropagation()}>
-        <h2 id={titleId}>Enviar un flujo a {contactName}</h2>
-        <p className="ui-muted">Termina lo que esté haciendo en otro flujo y empieza el que elijas desde el inicio.</p>
+        <h2 id={titleId}>Ejecutar flujo para {contactName}</h2>
+        <p className="ui-muted">Si está dentro de otro flujo, lo termina y empieza el que elijas desde el inicio. El bot queda activo en este chat.</p>
         <input className="ui-input" type="search" value={query} placeholder="Buscar flujo…" aria-label="Buscar flujo" autoFocus onChange={(event) => setQuery(event.target.value)} />
         {flows === null && !error ? <p className="ui-muted" role="status">Cargando flujos…</p> : null}
         {flows && visible.length === 0 ? <p className="ui-muted">{flows.length === 0 ? "Aún no tienes flujos." : "Ningún flujo con ese nombre."}</p> : null}
@@ -55,7 +56,7 @@ export function SendFlowDialog({
             <li key={flow.id}>
               <button type="button" className="ios-flow-option" disabled={busy !== null} onClick={() => void send(flow)}>
                 <span>{flow.name}</span>
-                <span className="ios-flow-option__cta">{busy === flow.id ? "Enviando…" : "Enviar"}</span>
+                <span className="ios-flow-option__cta">{busy === flow.id ? "Ejecutando…" : "Ejecutar"}</span>
               </button>
             </li>
           ))}

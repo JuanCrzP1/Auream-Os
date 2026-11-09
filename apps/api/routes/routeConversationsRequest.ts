@@ -5,6 +5,7 @@ import { ConversationPermissions } from "../../../platform/authorization/permiss
 import type {
   ConversationFilter,
   SendAgentMessageRequest,
+  SetConversationLabelsRequest,
   StartFlowRequest,
   UpdateConversationRequest
 } from "../../../contracts/ConversationContracts";
@@ -15,12 +16,15 @@ import { sendJson } from "../http/sendJson";
 // ---------------------------------------------------------------------------
 // routeConversationsRequest — `/conversations`: la bandeja.
 //
-//   GET    /conversations                     chats (filter, search, connectionId)
+//   GET    /conversations                     chats por páginas (filter, search,
+//                                             connectionId, labelIds=a,b, from,
+//                                             to, cursor)
 //   GET    /conversations/:id                 un chat
 //   GET    /conversations/:id/messages        hilo (?before=<id> para más antiguos)
 //   POST   /conversations/:id/read            marcar como leído
 //   PATCH  /conversations/:id                 { botEnabled }
 //   POST   /conversations/:id/messages        responder como asesor (pausa el bot)
+//   PUT    /conversations/:id/labels          etiquetas del cliente { labelIds }
 //   POST   /conversations/:id/flows           enviar un flujo a mano
 //
 // Ver exige conversations.read; todo lo demás, conversations.write. Marcar
@@ -31,6 +35,10 @@ const ITEM = /^\/conversations\/([^/]+)$/;
 const MESSAGES = /^\/conversations\/([^/]+)\/messages$/;
 const READ = /^\/conversations\/([^/]+)\/read$/;
 const FLOWS = /^\/conversations\/([^/]+)\/flows$/;
+const LABELS = /^\/conversations\/([^/]+)\/labels$/;
+
+/** Texto de la URL o nada (un parámetro vacío es como si no estuviera). */
+const textParam = (url: URL, name: string): string | undefined => url.searchParams.get(name)?.trim() || undefined;
 
 export async function routeConversationsRequest(
   request: IncomingMessage,
@@ -49,12 +57,18 @@ export async function routeConversationsRequest(
   const inbox = services.conversations;
 
   if (path === "/conversations" && method === "GET") {
-    const filter = (url.searchParams.get("filter") ?? "all") as ConversationFilter;
-    const search = url.searchParams.get("search") ?? undefined;
-    const connectionId = url.searchParams.get("connectionId") ?? undefined;
-    sendJson(response, 200, {
-      conversations: await inbox.list(tenantId, { filter, ...(search ? { search } : {}), ...(connectionId ? { connectionId } : {}) })
-    });
+    const labelIds = textParam(url, "labelIds")?.split(",").filter(Boolean);
+    const query = {
+      filter: (textParam(url, "filter") ?? "all") as ConversationFilter,
+      search: textParam(url, "search"),
+      connectionId: textParam(url, "connectionId"),
+      labelIds,
+      from: textParam(url, "from"),
+      to: textParam(url, "to"),
+      cursor: textParam(url, "cursor")
+    };
+    const defined = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined));
+    sendJson(response, 200, await inbox.list(tenantId, defined));
     return true;
   }
 
@@ -74,6 +88,13 @@ export async function routeConversationsRequest(
     await inbox.markRead(tenantId, read[1]!);
     response.statusCode = 204;
     response.end();
+    return true;
+  }
+
+  const labels = LABELS.exec(path);
+  if (labels && method === "PUT") {
+    const body = await parseJsonBody<Partial<SetConversationLabelsRequest>>(request);
+    sendJson(response, 200, await inbox.setLabels(tenantId, labels[1]!, body.labelIds));
     return true;
   }
 

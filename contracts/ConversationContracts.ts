@@ -50,6 +50,13 @@ export interface ConversationMessage {
   readonly createdAt: string;
 }
 
+/** Etiqueta del cliente del chat (catálogo de Contactos: la misma que ponen los flujos). */
+export interface ConversationLabel {
+  readonly id: string;
+  readonly name: string;
+  readonly color: string;
+}
+
 export interface ConversationSummary {
   readonly id: string;
   readonly connectionId: string;
@@ -66,13 +73,45 @@ export interface ConversationSummary {
   readonly lastMessageAt: string | null;
   /** Flujo en curso del cliente, si está dentro de uno. */
   readonly activeFlowName: string | null;
+  /** Etiquetas del cliente (vacío si el chat no tiene contacto). */
+  readonly labels: ReadonlyArray<ConversationLabel>;
   readonly createdAt: string;
 }
 
-export type ConversationFilter = "all" | "unread" | "bot_paused";
+/**
+ *   all          todos
+ *   unread       con mensajes sin leer
+ *   bot_active   los atiende el bot
+ *   bot_paused   los atiende un asesor (bot pausado)
+ */
+export type ConversationFilter = "all" | "unread" | "bot_active" | "bot_paused";
+export const CONVERSATION_FILTERS: ReadonlyArray<ConversationFilter> = ["all", "unread", "bot_active", "bot_paused"];
+
+/**
+ * Filtros de la bandeja (query string de `GET /conversations`).
+ * `from`/`to` acotan la fecha del último mensaje (ISO; `to` excluido): la web
+ * los calcula en la zona horaria de quien mira («hoy», «últimos 7 días»…).
+ */
+export interface ConversationListQuery {
+  readonly filter?: ConversationFilter;
+  readonly search?: string;
+  readonly connectionId?: string;
+  /** Chats cuyo cliente tenga AL MENOS UNA de estas etiquetas. */
+  readonly labelIds?: ReadonlyArray<string>;
+  readonly from?: string;
+  readonly to?: string;
+  /** `nextCursor` de la página anterior. */
+  readonly cursor?: string;
+}
 
 export interface ConversationListResponse {
   readonly conversations: ReadonlyArray<ConversationSummary>;
+  /** Hay más chats: pedirlos con `cursor`. */
+  readonly nextCursor: string | null;
+}
+
+export interface SetConversationLabelsRequest {
+  readonly labelIds: ReadonlyArray<string>;
 }
 
 export interface ConversationMessagesResponse {
@@ -95,5 +134,9 @@ export interface StartFlowRequest {
 }
 
 export const MAX_AGENT_MESSAGE_LENGTH = 4096;
+/** Chats por página de la bandeja. */
+export const CONVERSATIONS_PAGE_SIZE = 50;
+/** Etiquetas por las que se puede filtrar a la vez. */
+export const MAX_LABEL_FILTERS = 20;
 /** Cada cuánto consulta la bandeja si hay mensajes nuevos. */
 export const CONVERSATIONS_POLL_INTERVAL_MS = 4_000;

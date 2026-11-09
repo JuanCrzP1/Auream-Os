@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ConversationMessage, ConversationSummary, MessageAuthor } from "../../../contracts/ConversationContracts";
+import type { ConversationLabel, ConversationMessage, ConversationSummary, MessageAuthor } from "../../../contracts/ConversationContracts";
 import type { ConversationRepository, InboxQuery } from "../../../domains/conversations/application/ConversationRepository";
 import { previewOf, type Conversation, type StoredMessage } from "../../../domains/conversations/domain/Conversation";
 
@@ -9,10 +9,14 @@ interface Row extends Conversation {
   lastMessageAt: string | null;
 }
 
+const activity = (row: Row) => row.lastMessageAt ?? row.createdAt;
+
 /** Conversaciones en memoria (tests). Mismas reglas que la versión SQL; sin nombres de número ni de flujo. */
 export class InMemoryConversationRepository implements ConversationRepository {
   private readonly rows = new Map<string, Row>();
   public readonly stored: StoredMessage[] = [];
+  /** Etiquetas de cada contacto (en SQL vienen de Contactos). */
+  public readonly contactLabels = new Map<string, ConversationLabel[]>();
 
   public async findOrCreate(tenantId: string, connectionId: string, phone: string, contactId: string | null): Promise<Conversation> {
     const existing = [...this.rows.values()].find((row) => row.connectionId === connectionId && row.phone === phone);
@@ -54,12 +58,19 @@ export class InMemoryConversationRepository implements ConversationRepository {
   }
 
   public async inbox(tenantId: string, query: InboxQuery): Promise<ConversationSummary[]> {
+    const after = query.after;
     return [...this.rows.values()]
       .filter((row) => row.tenantId === tenantId)
       .filter((row) => query.filter !== "unread" || row.unreadCount > 0)
+      .filter((row) => query.filter !== "bot_active" || row.botEnabled)
       .filter((row) => query.filter !== "bot_paused" || !row.botEnabled)
+      .filter((row) => !query.connectionId || row.connectionId === query.connectionId)
+      .filter((row) => !query.labelIds?.length || this.labelsOf(row).some((label) => query.labelIds!.includes(label.id)))
+      .filter((row) => !query.from || activity(row) >= query.from)
+      .filter((row) => !query.to || activity(row) < query.to)
       .filter((row) => !query.search || row.phone.includes(query.search))
-      .sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""))
+      .sort((a, b) => activity(b).localeCompare(activity(a)) || b.id.localeCompare(a.id))
+      .filter((row) => !after || activity(row) < after.activityAt || (activity(row) === after.activityAt && row.id < after.id))
       .slice(0, query.limit)
       .map((row) => this.toSummary(row));
   }
@@ -81,11 +92,15 @@ export class InMemoryConversationRepository implements ConversationRepository {
     return { messages, hasMore: end - options.limit > 0 };
   }
 
+  private labelsOf(row: Row): ConversationLabel[] {
+    return row.contactId ? (this.contactLabels.get(row.contactId) ?? []) : [];
+  }
+
   private toSummary(row: Row): ConversationSummary {
     return {
       id: row.id, connectionId: row.connectionId, connectionName: "", contactId: row.contactId, contactName: null, phone: row.phone,
       botEnabled: row.botEnabled, unreadCount: row.unreadCount, lastMessageText: row.lastMessageText, lastMessageAuthor: row.lastMessageAuthor,
-      lastMessageAt: row.lastMessageAt, activeFlowName: null, createdAt: row.createdAt
+      lastMessageAt: row.lastMessageAt, activeFlowName: null, labels: this.labelsOf(row), createdAt: row.createdAt
     };
   }
 }

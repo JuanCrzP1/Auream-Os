@@ -38,7 +38,7 @@ import { SqlConversationRepository } from "../../../infrastructure/persistence/s
 
 export interface MessagingServices {
   readonly inbound: HandleInboundMessageService;
-  /** La bandeja de Conversaciones (lista, hilo, responder, pausar el bot, enviar flujos). */
+  /** La bandeja de Conversaciones (lista y filtros, hilo, responder, pausar el bot, etiquetar, enviar flujos). */
   readonly conversations: ConversationInbox;
 }
 
@@ -94,6 +94,11 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
       delivery,
       recorder
     ),
-    conversations: new ConversationInbox(conversations, recorder, delivery, launcher)
+    conversations: new ConversationInbox(conversations, recorder, delivery, launcher, {
+      // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).
+      setLabels: async (tenantId, contactId, labelIds) => {
+        await deps.contacts.setContactLabels.execute(tenantId, contactId, labelIds);
+      }
+    })
   };
 }

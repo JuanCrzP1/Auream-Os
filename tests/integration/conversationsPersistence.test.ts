@@ -76,4 +76,49 @@ describe("SqlConversationRepository", () => {
     expect(await repository.inbox(tenant, { filter: "all", search: "300111", limit: 10 })).toHaveLength(1);
     expect(await repository.inbox(tenant, { filter: "all", search: "laura", limit: 10 })).toHaveLength(0);
   });
+
+  it("etiquetas del cliente, filtros por etiqueta, bot y fecha, y páginas con cursor", async () => {
+    const tenant = await insertTenant("conv-b");
+    const other = await insertTenant("conv-b-otra");
+    const connection = await new CreateConnectionService(new SqlConnectionRepository(sql)).execute(tenant, { name: "Ventas", method: "qr" });
+    const repository = new SqlConversationRepository(sql);
+    const recorder = new ConversationRecorder(repository);
+
+    const contact = (await sql.query<{ id: string }>(
+      "insert into contacts (tenant_id, channel, external_key, name, phone) values ($1, 'whatsapp', '573001112233', 'Laura', '573001112233') returning id",
+      [tenant]
+    )).rows[0]!.id;
+    const label = async (owner: string, name: string, color: string) =>
+      (await sql.query<{ id: string }>("insert into contact_labels (tenant_id, name, color) values ($1, $2, $3) returning id", [owner, name, color])).rows[0]!.id;
+    const vip = await label(tenant, "VIP", "#f59e0b");
+    const pago = await label(tenant, "Pagó", "#16a34a");
+    const foreign = await label(other, "VIP", "#000000");
+    await sql.query("insert into contact_label_assignments (tenant_id, contact_id, label_id) values ($1, $2, $3), ($1, $2, $4)", [tenant, contact, vip, pago]);
+
+    const inbound = (id: string, phone: string, sentAt: string): InboundChannelMessage => ({
+      connectionId: connection.id, providerMessageId: id, phone, senderName: null, kind: "text", text: id,
+      replyId: null, media: null, fromAd: false, providerType: "Conversation", sentAt
+    });
+    const laura = await recorder.recordInbound(tenant, inbound("hoy", "573001112233", "2026-11-09T15:00:00.000Z"), contact);
+    await recorder.recordInbound(tenant, inbound("antes", "573005550000", "2026-11-02T15:00:00.000Z"), null);
+    await repository.setBotEnabled(tenant, laura.id, false);
+
+    const phones = async (query: Partial<Parameters<typeof repository.inbox>[1]>) =>
+      (await repository.inbox(tenant, { filter: "all", limit: 10, ...query })).map((c) => c.phone);
+
+    const [first] = await repository.inbox(tenant, { filter: "all", limit: 10 });
+    expect(first!.labels).toEqual([{ id: pago, name: "Pagó", color: "#16a34a" }, { id: vip, name: "VIP", color: "#f59e0b" }]);
+    expect(await phones({ labelIds: [vip] })).toEqual(["573001112233"]);
+    expect(await phones({ labelIds: [foreign] })).toEqual([]);
+    expect(await phones({ labelIds: ["no-es-uuid"] })).toEqual([]);
+    expect(await phones({ filter: "bot_active" })).toEqual(["573005550000"]);
+    expect(await phones({ filter: "bot_paused" })).toEqual(["573001112233"]);
+    expect(await phones({ from: "2026-11-09T00:00:00.000Z" })).toEqual(["573001112233"]);
+    expect(await phones({ from: "2026-11-01T00:00:00.000Z", to: "2026-11-03T00:00:00.000Z" })).toEqual(["573005550000"]);
+
+    const page = await repository.inbox(tenant, { filter: "all", limit: 1 });
+    const next = await repository.inbox(tenant, { filter: "all", limit: 1, after: { activityAt: page[0]!.lastMessageAt!, id: page[0]!.id } });
+    expect([page[0]!.phone, next[0]!.phone]).toEqual(["573001112233", "573005550000"]);
+    expect(await repository.inbox(tenant, { filter: "all", limit: 1, after: { activityAt: next[0]!.lastMessageAt!, id: next[0]!.id } })).toEqual([]);
+  });
 });

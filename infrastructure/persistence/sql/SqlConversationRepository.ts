@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ConversationMessage, ConversationSummary, MessageAuthor } from "../../../contracts/ConversationContracts";
+import type { ConversationLabel, ConversationMessage, ConversationSummary, MessageAuthor } from "../../../contracts/ConversationContracts";
 import type { ConversationRepository, InboxQuery } from "../../../domains/conversations/application/ConversationRepository";
 import { previewOf, type Conversation, type StoredMessage } from "../../../domains/conversations/domain/Conversation";
 import type { SqlClient } from "./SqlClient";
@@ -8,7 +8,9 @@ import { isUuid, toIso } from "./sqlValues";
 // ---------------------------------------------------------------------------
 // Conversaciones en PostgreSQL (`016_conversations.sql`). Todo filtra por
 // cuenta. La bandeja se arma con una consulta: chat + número + contacto +
-// flujo en curso (sesión viva de esa conversación).
+// etiquetas del contacto + flujo en curso (sesión viva de esa conversación).
+// Orden y páginas por la última actividad del chat y su id
+// (`017_conversations_activity_index.sql`).
 // ---------------------------------------------------------------------------
 
 interface ConversationRow {
@@ -29,6 +31,7 @@ interface InboxRow extends ConversationRow {
   last_message_author: MessageAuthor | null;
   last_message_at: Date | string | null;
   active_flow_name: string | null;
+  labels: ConversationLabel[] | null;
 }
 
 interface MessageRow {
@@ -72,16 +75,24 @@ const toSummary = (row: InboxRow): ConversationSummary => ({
   lastMessageAuthor: row.last_message_author,
   lastMessageAt: row.last_message_at === null ? null : toIso(row.last_message_at),
   activeFlowName: row.active_flow_name,
+  labels: row.labels ?? [],
   createdAt: toIso(row.created_at)
 });
 
 const CONVERSATION_COLUMNS = "id, tenant_id, connection_id, contact_id, phone, bot_enabled, unread_count, created_at";
 
-/** Chat + número + contacto + flujo en curso. Los filtros extra usan parámetros desde $2 ($1 = cuenta). */
+/** Última actividad del chat: su último mensaje o, si aún no tiene, su creación. Igual que el índice. */
+const ACTIVITY = "coalesce(c.last_message_at, c.created_at)";
+
+/** Chat + número + contacto + etiquetas + flujo en curso. Los filtros extra usan parámetros desde $2 ($1 = cuenta). */
 const INBOX_SELECT = `
   select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
          c.last_message_text, c.last_message_author, c.last_message_at,
-         w.name as connection_name, ct.name as contact_name, a.name as active_flow_name
+         w.name as connection_name, ct.name as contact_name, a.name as active_flow_name,
+         (select json_agg(json_build_object('id', l.id, 'name', l.name, 'color', l.color) order by lower(l.name))
+            from contact_label_assignments la
+            join contact_labels l on l.tenant_id = la.tenant_id and l.id = la.label_id
+           where la.tenant_id = c.tenant_id and la.contact_id = c.contact_id) as labels
     from conversations c
     join whatsapp_connections w on w.id = c.connection_id
     left join contacts ct on ct.id = c.contact_id
@@ -149,22 +160,42 @@ export class SqlConversationRepository implements ConversationRepository {
   public async inbox(tenantId: string, query: InboxQuery): Promise<ConversationSummary[]> {
     if (!isUuid(tenantId)) return [];
     const params: unknown[] = [tenantId];
+    const param = (value: unknown) => {
+      params.push(value);
+      return `$${params.length}`;
+    };
     const where: string[] = [];
     if (query.filter === "unread") where.push("c.unread_count > 0");
+    if (query.filter === "bot_active") where.push("c.bot_enabled = true");
     if (query.filter === "bot_paused") where.push("c.bot_enabled = false");
-    if (query.connectionId && isUuid(query.connectionId)) {
-      params.push(query.connectionId);
-      where.push(`c.connection_id = $${params.length}`);
+    if (query.connectionId) {
+      // Un número que no es un id no coincide con ningún chat.
+      if (!isUuid(query.connectionId)) return [];
+      where.push(`c.connection_id = ${param(query.connectionId)}`);
     }
+    if (query.labelIds?.length) {
+      const labelIds = query.labelIds.filter(isUuid);
+      if (labelIds.length === 0) return [];
+      where.push(
+        `exists (select 1 from contact_label_assignments fl
+                  where fl.tenant_id = c.tenant_id and fl.contact_id = c.contact_id and fl.label_id = any(${param(labelIds)}::uuid[]))`
+      );
+    }
+    if (query.from) where.push(`${ACTIVITY} >= ${param(query.from)}::timestamptz`);
+    if (query.to) where.push(`${ACTIVITY} < ${param(query.to)}::timestamptz`);
     if (query.search) {
-      params.push(`%${query.search.replace(/[%_\\]/g, (char) => `\\${char}`)}%`);
-      where.push(`(c.phone ilike $${params.length} or ct.name ilike $${params.length})`);
+      const pattern = param(`%${query.search.replace(/[%_\\]/g, (char) => `\\${char}`)}%`);
+      where.push(`(c.phone ilike ${pattern} or ct.name ilike ${pattern})`);
     }
-    params.push(query.limit);
+    if (query.after) {
+      if (!isUuid(query.after.id)) return [];
+      where.push(`(${ACTIVITY}, c.id) < (${param(query.after.activityAt)}::timestamptz, ${param(query.after.id)}::uuid)`);
+    }
+    const limit = param(query.limit);
     const result = await this.sql.query<InboxRow>(
       `${INBOX_SELECT}${where.map((clause) => ` and ${clause}`).join("")}
-       order by c.last_message_at desc nulls last, c.created_at desc
-       limit $${params.length}`,
+       order by ${ACTIVITY} desc, c.id desc
+       limit ${limit}`,
       params
     );
     return result.rows.map(toSummary);

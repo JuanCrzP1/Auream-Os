@@ -1,10 +1,11 @@
 import type { ConversationMessage } from "@contracts/ConversationContracts";
 import { messageTime } from "./chatTime";
-import { AlertGlyph, DocGlyph, TicksGlyph } from "./ChatGlyphs";
+import { AlertGlyph, DocGlyph, SentGlyph } from "./ChatGlyphs";
 
 // ---------------------------------------------------------------------------
 // Un mensaje del hilo como en WhatsApp iOS: el cliente a la izquierda, lo que
-// sale (bot o asesor) a la derecha, con hora y vistos; los menús enviados con
+// sale (bot o asesor) a la derecha, con hora y visto de enviado (la colita va
+// en el último de cada tanda); los menús enviados con
 // sus botones; las fotos y archivos con su vista previa. Un envío fallido lo
 // dice con su motivo.
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ function Media({ message }: { readonly message: ConversationMessage }) {
   );
 }
 
-export function MessageBubble({ message }: { readonly message: ConversationMessage }) {
+export function MessageBubble({ message, tail = true }: { readonly message: ConversationMessage; readonly tail?: boolean }) {
   if (message.kind === "reaction") {
     return <p className={`ios-reaction ios-reaction--${message.direction}`} aria-label={`Reacción ${message.text}`}>{message.text}</p>;
   }
@@ -40,7 +41,7 @@ export function MessageBubble({ message }: { readonly message: ConversationMessa
   const origin = message.author === "bot" ? (message.flowName ? `🤖 ${message.flowName}` : "🤖 Bot") : message.author === "agent" ? (message.agentName ?? "Asesor") : null;
 
   return (
-    <div className={`ios-msg ios-msg--${message.direction}`}>
+    <div className={`ios-msg ios-msg--${message.direction}${tail && message.options.length === 0 ? " has-tail" : ""}`}>
       <div className={`ios-bubble ios-bubble--${message.direction}${message.status === "failed" ? " is-failed" : ""}`}>
         {origin ? <span className="ios-bubble__origin">{origin}</span> : null}
         <Media message={message} />
@@ -48,7 +49,7 @@ export function MessageBubble({ message }: { readonly message: ConversationMessa
         {message.text ? <p className="ios-bubble__text">{message.text}</p> : null}
         <span className="ios-bubble__meta">
           {messageTime(message.createdAt)}
-          {outbound && message.status === "sent" ? <TicksGlyph /> : null}
+          {outbound && message.status === "sent" ? <span className="ios-sent" title="Enviado"><SentGlyph /></span> : null}
           {message.status === "failed" ? <AlertGlyph /> : null}
         </span>
       </div>

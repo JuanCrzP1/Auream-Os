@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CONVERSATIONS_POLL_INTERVAL_MS, type ConversationMessage, type ConversationSummary } from "@contracts/ConversationContracts";
-import { fetchConversation, fetchMessages, markConversationRead, sendAgentMessage, setConversationBot, startFlow } from "./conversationsApi";
+import { fetchConversation, fetchMessages, markConversationRead, sendAgentMessage, setConversationBot, setConversationLabels, startFlow } from "./conversationsApi";
 
 /**
  * Un chat abierto: su cabecera y su hilo al día. Al abrirlo (y al llegar
@@ -60,5 +60,9 @@ export function useConversationThread(id: string) {
     return result;
   }, [id, refresh]);
 
-  return { conversation, messages, hasMore, status, refresh, loadOlder, send, setBot, launchFlow };
+  const setLabels = useCallback(async (labelIds: ReadonlyArray<string>) => {
+    setConversation(await setConversationLabels(id, labelIds));
+  }, [id]);
+
+  return { conversation, messages, hasMore, status, refresh, loadOlder, send, setBot, launchFlow, setLabels };
 }

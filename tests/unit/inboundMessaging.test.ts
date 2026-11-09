@@ -97,13 +97,28 @@ async function setup() {
     delivery,
     recorder
   );
-  const inbox = new ConversationInbox(conversations, recorder, delivery, new StartFlowService(flows, lock, new RepositorySessionControl(sessionsRepo), engine, delivery, recorder));
+  // Etiquetar = etiquetar al contacto; aquí el catálogo es fijo y se guarda en el repositorio en memoria.
+  const catalog = [{ id: "l-vip", name: "VIP", color: "#f59e0b" }, { id: "l-pago", name: "Pagó", color: "#16a34a" }];
+  const labeled: Array<{ contactId: string; labelIds: ReadonlyArray<string> }> = [];
+  const labeler = {
+    setLabels: async (_tenantId: string, contactId: string, labelIds: ReadonlyArray<string>) => {
+      labeled.push({ contactId, labelIds });
+      conversations.contactLabels.set(contactId, catalog.filter((label) => labelIds.includes(label.id)));
+    }
+  };
+  const inbox = new ConversationInbox(
+    conversations,
+    recorder,
+    delivery,
+    new StartFlowService(flows, lock, new RepositorySessionControl(sessionsRepo), engine, delivery, recorder),
+    labeler
+  );
   let n = 0;
   const message = (text: string, over: Partial<InboundChannelMessage> = {}): InboundChannelMessage => ({
     connectionId: connection.id, providerMessageId: `m${++n}`, phone: "573001112233", senderName: "Laura Gómez", kind: "text",
     text, replyId: null, media: null, fromAd: false, providerType: "Conversation", sentAt: "2026-11-09T12:00:00.000Z", ...over
   });
-  return { service, sent, log, message, sessionsRepo, connectionId: connection.id, delivery, conversations, inbox };
+  return { service, sent, log, message, sessionsRepo, connectionId: connection.id, delivery, conversations, inbox, labeled };
 }
 
 describe("HandleInboundMessageService", () => {
@@ -176,7 +191,7 @@ describe("bandeja de Conversaciones", () => {
   it("guarda el hilo: lo del cliente y lo del bot, con no leídos y último mensaje", async () => {
     const s = await setup();
     await s.service.execute(T, s.message("Hola!"));
-    const [chat] = await s.inbox.list(T, {});
+    const { conversations: [chat] } = await s.inbox.list(T, {});
     expect(chat).toMatchObject({ phone: "573001112233", unreadCount: 1, lastMessageAuthor: "bot", botEnabled: true });
     const { messages } = await s.inbox.messages(T, chat!.id);
     expect(messages.map((m) => [m.author, m.text])).toEqual([["contact", "Hola!"], ["bot", "¡Hola Laura! ¿Qué producto buscas?"]]);
@@ -187,7 +202,7 @@ describe("bandeja de Conversaciones", () => {
   it("con el bot pausado, el mensaje queda en el chat pero no inicia flujos", async () => {
     const s = await setup();
     await s.service.execute(T, s.message("buenas"));
-    const [chat] = await s.inbox.list(T, {});
+    const { conversations: [chat] } = await s.inbox.list(T, {});
     await s.inbox.setBotEnabled(T, chat!.id, false);
     expect(await s.service.execute(T, s.message("hola"))).toMatchObject({ outcome: "bot_paused" });
     expect(s.sent).toHaveLength(0);
@@ -197,7 +212,7 @@ describe("bandeja de Conversaciones", () => {
   it("si un asesor responde, se envía, queda en el hilo y el bot se pausa", async () => {
     const s = await setup();
     await s.service.execute(T, s.message("buenas"));
-    const [chat] = await s.inbox.list(T, {});
+    const { conversations: [chat] } = await s.inbox.list(T, {});
     const updated = await s.inbox.sendAgentMessage(T, chat!.id, " Hola, soy Camilo ", { id: "u1", name: "Camilo" });
     expect(updated.botEnabled).toBe(false);
     expect(s.sent.at(-1)!.messages.map((m) => m.content)).toEqual(["Hola, soy Camilo"]);
@@ -209,7 +224,7 @@ describe("bandeja de Conversaciones", () => {
   it("si WhatsApp no acepta la respuesta del asesor, queda en el hilo como fallida con su motivo", async () => {
     const s = await setup();
     await s.service.execute(T, s.message("buenas"));
-    const [chat] = await s.inbox.list(T, {});
+    const { conversations: [chat] } = await s.inbox.list(T, {});
     (s.delivery.deliver as ReturnType<typeof vi.fn>).mockImplementationOnce(async (_t: string, _c: string, _p: string, messages: ReadonlyArray<OutboundMessage>) => ({
       sent: 0, failures: ["503"], results: messages.map((message) => ({ message, ok: false, error: "uazapi no está disponible (503)." }))
     }));
@@ -220,7 +235,7 @@ describe("bandeja de Conversaciones", () => {
   it("enviar un flujo a mano: corta el recorrido actual, lo empieza desde el inicio y reactiva el bot", async () => {
     const s = await setup();
     await s.service.execute(T, s.message("hola"));
-    const [chat] = await s.inbox.list(T, {});
+    const { conversations: [chat] } = await s.inbox.list(T, {});
     await s.inbox.setBotEnabled(T, chat!.id, false);
     const result = await s.inbox.startFlow(T, chat!.id, FLOW_ID);
     expect(result).toMatchObject({ flowName: "Ventas", sent: 1, failed: 0 });
@@ -233,9 +248,59 @@ describe("bandeja de Conversaciones", () => {
   it("otra cuenta no ve ni toca el chat", async () => {
     const s = await setup();
     await s.service.execute(T, s.message("hola"));
-    const [chat] = await s.inbox.list(T, {});
+    const { conversations: [chat] } = await s.inbox.list(T, {});
     const other = "99999999-9999-4999-8999-999999999999";
-    expect(await s.inbox.list(other, {})).toEqual([]);
+    expect((await s.inbox.list(other, {})).conversations).toEqual([]);
     await expect(s.inbox.messages(other, chat!.id)).rejects.toThrow(/no encontrada/);
+  });
+
+  it("etiquetar el chat etiqueta a su cliente; la bandeja filtra por etiquetas, bot, número y fecha", async () => {
+    const s = await setup();
+    // Sin disparador: el bot no responde y la fecha del chat es la del mensaje del cliente.
+    await s.service.execute(T, s.message("buenas tardes"));
+    await s.service.execute(T, s.message("buenas tardes", { phone: "573009998877", senderName: "Pedro", sentAt: "2026-11-01T12:00:00.000Z" }));
+    const { conversations: chats } = await s.inbox.list(T, {});
+    expect(chats.map((c) => c.phone)).toEqual(["573001112233", "573009998877"]);
+
+    const laura = chats[0]!;
+    const updated = await s.inbox.setLabels(T, laura.id, ["l-vip"]);
+    expect(updated.labels).toEqual([{ id: "l-vip", name: "VIP", color: "#f59e0b" }]);
+    expect(s.labeled).toEqual([{ contactId: laura.contactId, labelIds: ["l-vip"] }]);
+    await expect(s.inbox.setLabels(T, laura.id, "l-vip")).rejects.toThrow(/lista/);
+
+    const phones = async (query: Parameters<typeof s.inbox.list>[1]) => (await s.inbox.list(T, query)).conversations.map((c) => c.phone);
+    expect(await phones({ labelIds: ["l-vip", "l-pago"] })).toEqual(["573001112233"]);
+    expect(await phones({ labelIds: ["l-pago"] })).toEqual([]);
+    expect(await phones({ from: "2026-11-09T00:00:00.000Z", to: "2026-11-10T00:00:00.000Z" })).toEqual(["573001112233"]);
+    expect(await phones({ to: "2026-11-02T00:00:00.000Z" })).toEqual(["573009998877"]);
+    expect(await phones({ connectionId: s.connectionId })).toHaveLength(2);
+    expect(await phones({ connectionId: "otro" })).toEqual([]);
+    await s.inbox.setBotEnabled(T, laura.id, false);
+    expect(await phones({ filter: "bot_paused" })).toEqual(["573001112233"]);
+    expect(await phones({ filter: "bot_active" })).toEqual(["573009998877"]);
+
+    await expect(s.inbox.list(T, { from: "ayer" })).rejects.toThrow(/no es válida/);
+    await expect(s.inbox.list(T, { from: "2026-11-10T00:00:00.000Z", to: "2026-11-09T00:00:00.000Z" })).rejects.toThrow(/anterior/);
+    await expect(s.inbox.list(T, { cursor: "basura" })).rejects.toThrow(/página/);
+  });
+
+  it("la bandeja va por páginas de 50 con cursor, sin repetir ni saltar chats", async () => {
+    const s = await setup();
+    for (let i = 0; i < 53; i++) {
+      const at = new Date(Date.UTC(2026, 10, 1, 0, i)).toISOString();
+      const chat = await s.conversations.findOrCreate(T, s.connectionId, `57300${String(i).padStart(7, "0")}`, null);
+      await s.conversations.append({
+        id: `msg-${i}`, tenantId: T, conversationId: chat.id, direction: "inbound", author: "contact", kind: "text", text: `m${i}`,
+        mediaUrl: null, mediaType: null, options: [], status: "received", error: null, flowKey: null, agentId: null, agentName: null,
+        providerMessageId: null, createdAt: at
+      });
+    }
+    const first = await s.inbox.list(T, {});
+    expect(first.conversations).toHaveLength(50);
+    expect(first.conversations[0]!.lastMessageText).toBe("m52");
+    expect(first.nextCursor).toEqual(expect.any(String));
+    const second = await s.inbox.list(T, { cursor: first.nextCursor! });
+    expect(second.conversations.map((c) => c.lastMessageText)).toEqual(["m2", "m1", "m0"]);
+    expect(second.nextCursor).toBeNull();
   });
 });

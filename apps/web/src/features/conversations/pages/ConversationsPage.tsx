@@ -1,34 +1,39 @@
 import "../components/conversations.css";
 import "@shared/ui/controls/controls.css";
-import { useEffect, useState } from "react";
-import type { ConversationFilter } from "@contracts/ConversationContracts";
+import { useEffect, useMemo, useState } from "react";
 import { useConversations } from "@shared/conversations/useConversations";
 import { useConnections } from "@shared/connections/useConnections";
+import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
 import { StateCard, RetryButton } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 import { ConversationList } from "../components/ConversationList";
 import { ChatView } from "../components/ChatView";
 import { ChatsGlyph } from "../components/ChatGlyphs";
+import { EMPTY_FILTERS, toListQuery, type InboxFilters } from "../model/inboxFilters";
 
 /**
  * ConversationsPage — la bandeja: los chats de los números de WhatsApp de la
- * cuenta, al estilo WhatsApp iOS (claro y oscuro). Lista a la izquierda y el
- * chat abierto a la derecha; en el celular, uno a la vez.
+ * cuenta, al estilo WhatsApp iOS (claro y oscuro). Lista con filtros a la
+ * izquierda, el chat abierto en el centro y su info a la derecha; en el
+ * celular, una cosa a la vez.
  */
 export function ConversationsPage() {
-  const [filter, setFilter] = useState<ConversationFilter>("all");
-  const [search, setSearch] = useState("");
-  const [debounced, setDebounced] = useState("");
-  const [connectionId, setConnectionId] = useState("");
+  const [filters, setFilters] = useState<InboxFilters>(EMPTY_FILTERS);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
-  const inbox = useConversations({ filter, search: debounced, connectionId });
   const { connections } = useConnections();
+  const catalog = useLabelCatalog();
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebounced(search), 300);
+    const timer = setTimeout(() => setDebouncedSearch(filters.search), 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [filters.search]);
+
+  // «Hoy» / «últimos 7 días» se calculan al cambiar los filtros (no en cada sondeo).
+  const query = useMemo(() => toListQuery({ ...filters, search: debouncedSearch }), [filters, debouncedSearch]);
+  const inbox = useConversations(query);
 
   if (inbox.status === "forbidden") {
     return (
@@ -52,28 +57,45 @@ export function ConversationsPage() {
     );
   }
 
+  const layout = ["ios-inbox", selectedId ? "has-chat" : "", selectedId && infoOpen ? "has-info" : ""].filter(Boolean).join(" ");
+
   return (
-    <div className={`ios-inbox${selectedId ? " has-chat" : ""}`}>
+    <div className={layout}>
       <ConversationList
         conversations={inbox.conversations}
         connections={connections}
+        labels={catalog.labels}
+        labelsStatus={catalog.status}
         selectedId={selectedId}
-        filter={filter}
-        search={search}
-        connectionId={connectionId}
-        onFilter={setFilter}
-        onSearch={setSearch}
-        onConnection={setConnectionId}
+        filters={filters}
+        filtering={inbox.filtering}
+        hasMore={inbox.hasMore}
+        loadingMore={inbox.loadingMore}
+        onFilters={(next) => setFilters((current) => ({ ...current, ...next }))}
+        onClearFilters={() => setFilters(EMPTY_FILTERS)}
+        onLoadMore={() => void inbox.loadMore()}
         onSelect={setSelectedId}
       />
       {selectedId ? (
-        <ChatView conversationId={selectedId} onBack={() => setSelectedId(null)} />
+        <ChatView
+          key={selectedId}
+          conversationId={selectedId}
+          labels={catalog.labels}
+          labelsStatus={catalog.status}
+          infoOpen={infoOpen}
+          onInfo={setInfoOpen}
+          onBack={() => {
+            setSelectedId(null);
+            setInfoOpen(false);
+          }}
+          onCreateLabel={catalog.create}
+        />
       ) : (
         <section className="ios-chat ios-chat--empty">
           <div className="ios-welcome">
             <ChatsGlyph />
             <strong>Tus conversaciones de WhatsApp</strong>
-            <span>Elige un chat para ver lo que escribió el cliente y lo que respondió el bot, responder tú o enviarle un flujo.</span>
+            <span>Elige un chat para ver lo que escribió el cliente y lo que respondió el bot, responder tú, etiquetarlo o ejecutarle un flujo.</span>
           </div>
         </section>
       )}
