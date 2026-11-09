@@ -17,6 +17,7 @@ import { SqlRateLimiter } from "../../../infrastructure/persistence/sql/SqlRateL
 import { SqlFlowTurnJournal } from "../../../infrastructure/persistence/sql/SqlFlowTurnJournal";
 import { composeTurnJournal } from "../composition/composeTurnJournal";
 import { composeWebhookServices } from "../composition/composeWebhookServices";
+import { composeMcpServer } from "../mcp/composeMcpServer";
 import { TesseractDocumentReader } from "../../../infrastructure/documents/TesseractDocumentReader";
 import { createBackgroundTasks } from "../http/BackgroundTasks";
 import { StructuredLogger } from "../../../platform/observability/logging/StructuredLogger";
@@ -125,6 +126,16 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     },
     mediaServices: composeMediaServices(config, tenancy.sqlClient, rateLimiter),
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
+    mcpServer: composeMcpServer({
+      config,
+      sql: tenancy.sqlClient,
+      builder: services,
+      contacts: contactsServices,
+      connections: connectionsServices,
+      messaging: messagingServices,
+      // Cada acción de un agente queda en el registro (sin sus datos).
+      onToolCall: (access, report) => logger.info("mcp.tool_call", { tenantId: access.tenantId, credentialId: access.credentialId, ...report })
+    }),
     rateLimiter,
     meServices: {
       membershipRepository: tenancy.membershipRepository,

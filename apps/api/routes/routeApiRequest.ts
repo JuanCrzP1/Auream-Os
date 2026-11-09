@@ -14,6 +14,9 @@ import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
 import { routeInternalTasks, type InternalTasksDependencies } from "./routeInternalTasks";
 import { routeInboundWebhook } from "./routeInboundWebhook";
 import { routeWebhooksRequest } from "./routeWebhooksRequest";
+import { routeMcp } from "./routeMcp";
+import { routeMcpCredentialsRequest } from "./routeMcpCredentialsRequest";
+import type { McpServer } from "../mcp/composeMcpServer";
 import type { WebhookServices } from "../composition/composeWebhookServices";
 import { routeConversationsRequest } from "./routeConversationsRequest";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
@@ -58,6 +61,8 @@ export interface ApiRouterDependencies {
   readonly rateLimiter?: RateLimiter;
   /** Webhooks de entrada (`null`: sin cifrado configurado). */
   readonly webhookServices?: WebhookServices | null;
+  /** Servidor MCP para agentes de IA. */
+  readonly mcpServer?: McpServer;
 }
 
 export async function routeApiRequest(
@@ -79,6 +84,9 @@ export async function routeApiRequest(
 
   // Webhooks de entrada: los autoriza el secreto de su dirección, no una sesión.
   if (await routeInboundWebhook(request, response, url, dependencies.webhookServices, dependencies.background, dependencies.rateLimiter)) return;
+
+  // Servidor MCP: lo autoriza el token de la credencial del agente, no una sesión.
+  if (await routeMcp(request, response, url, dependencies.mcpServer, dependencies.rateLimiter)) return;
 
   // Trabajador de la cola: lo autoriza `CRON_SECRET`, no una sesión.
   if (await routeInternalTasks(request, response, url, dependencies.tasks)) return;
@@ -132,6 +140,7 @@ export async function routeApiRequest(
 
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
+  if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;
   if (await routeConnectionsRequest(request, response, url, connectionsServices, requestContext)) return;
   if (dependencies.messagingServices && (await routeConversationsRequest(request, response, url, dependencies.messagingServices, requestContext))) return;
   if (await routeMediaRequest(request, response, url, mediaServices, requestContext)) return;

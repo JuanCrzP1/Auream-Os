@@ -2,6 +2,7 @@ import { AI_PROVIDERS } from "@contracts/AiContracts";
 import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
 import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
 import { useWebhooks } from "@shared/webhooks/useWebhooks";
+import { useMcpCredentials } from "@shared/mcp/useMcpCredentials";
 import type { IntegrationSourceState } from "./integrationCatalog";
 
 // ---------------------------------------------------------------------------
@@ -26,4 +27,10 @@ export function usePixelSource(): IntegrationSourceState {
 export function useWebhookSource(): IntegrationSourceState {
   const webhooks = useWebhooks();
   return { status: webhooks.status, counts: { webhooks: webhooks.webhooks.length }, refresh: webhooks.refresh };
+}
+
+/** Agentes de IA: las credenciales MCP. */
+export function useMcpSource(): IntegrationSourceState {
+  const mcp = useMcpCredentials();
+  return { status: mcp.status, counts: { mcp: mcp.credentials.length }, refresh: mcp.refresh };
 }

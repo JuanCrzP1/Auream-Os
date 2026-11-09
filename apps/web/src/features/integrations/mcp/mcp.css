@@ -1,0 +1,169 @@
+/* ===== AGENTES DE IA (MCP) =====
+   Servidor, cómo conectar, permisos por área y credenciales. Las tarjetas,
+   direcciones y diálogos comunes son los de Integraciones y `shared/ui`. */
+
+.mcp-server {
+  padding-bottom: 0;
+}
+
+.mcp-server header h2 {
+  margin: 0 0 4px;
+}
+
+.mcp-server__note {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.mcp-snippets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcp-snippets p {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.mcp-snippets__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mcp-snippets__tab {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mcp-snippets__tab[aria-selected="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--text);
+}
+
+.mcp-snippets__code {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mcp-snippets__code pre {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.mcp-dialog {
+  width: min(620px, 100%);
+}
+
+.mcp-permissions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mcp-permissions legend {
+  margin-bottom: 6px;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.mcp-permissions__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.mcp-permissions__row strong {
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.mcp-permissions__row p {
+  margin: 2px 0 0;
+  font-size: 0.76rem;
+}
+
+.mcp-segmented {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--chip-bg);
+}
+
+.mcp-segmented__option {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mcp-segmented__option[aria-checked="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.mcp-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mcp-scopes li {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.mcp-revoke {
+  color: var(--status-danger);
+}
+
+@media (max-width: 560px) {
+  .mcp-permissions__row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

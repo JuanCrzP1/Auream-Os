@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { ApiConfig } from "../config/loadApiConfig";
+import { publicBaseUrlOf } from "../config/publicBaseUrl";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlWebhookRepository } from "../../../infrastructure/persistence/sql/SqlWebhookRepository";
 import { AesGcmSecretCipher } from "../../../platform/security/secrets/AesGcmSecretCipher";
@@ -63,7 +64,7 @@ export function composeWebhookServices(deps: WebhookDependencies): WebhookServic
       repository,
       connections,
       cipher,
-      publicBaseUrl: (deps.config.whatsappWebhookBaseUrl ?? deps.config.publicApiBaseUrl).replace(/\/+$/, ""),
+      publicBaseUrl: publicBaseUrlOf(deps.config),
       newId: randomUUID,
       newSecret: () => randomBytes(32).toString("base64url")
     }),

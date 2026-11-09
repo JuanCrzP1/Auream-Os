@@ -22,6 +22,7 @@ function stubApi() {
     }
     if (url.pathname === "/pixel-connections") return reply(200, { connections: [] });
     if (url.pathname === "/inbound-webhooks") return reply(200, { webhooks: [] });
+    if (url.pathname === "/mcp-credentials") return reply(200, { server: { url: "https://x/api/mcp" }, credentials: [] });
     return reply(404, { message: "no" });
   }));
 }
@@ -51,7 +52,7 @@ describe("centro de Integraciones", () => {
     const active = await screen.findByRole("region", { name: /Activas/ });
     expect(cardNames(active)).toEqual(["OpenAI"]);
     expect(within(active).getByText("1 conexión")).toBeInTheDocument();
-    expect(cardNames(group(/Disponibles/))).toEqual(["Google Gemini", "OpenRouter", "Píxel de Meta", "Webhooks de entrada"]);
+    expect(cardNames(group(/Disponibles/))).toEqual(["Agentes de IA (MCP)", "Google Gemini", "OpenRouter", "Píxel de Meta", "Webhooks de entrada"]);
   });
 
   it("filtra por categoría y por búsqueda", async () => {
@@ -63,7 +64,8 @@ describe("centro de Integraciones", () => {
 
     await userEvent.click(screen.getByRole("tab", { name: "Todas" }));
     await userEvent.type(screen.getByRole("searchbox", { name: "Buscar integración" }), "claude");
-    expect(cardNames(group(/Disponibles/))).toEqual(["OpenRouter"]);
+    // «claude»: OpenRouter (modelos de Claude) y el MCP (conectar Claude).
+    expect(cardNames(group(/Disponibles/))).toEqual(["Agentes de IA (MCP)", "OpenRouter"]);
     await userEvent.type(screen.getByRole("searchbox", { name: "Buscar integración" }), "xyz");
     expect(screen.getByText("Ninguna integración coincide")).toBeInTheDocument();
   });

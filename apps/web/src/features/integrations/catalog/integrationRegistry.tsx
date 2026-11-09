@@ -3,6 +3,7 @@ import { AiSection } from "../components/AiSection";
 import { PixelSection } from "../components/PixelSection";
 import { WebhooksPanel } from "../webhooks/WebhooksPanel";
 import { WebhookEditorPage } from "../webhooks/WebhookEditorPage";
+import { McpPanel } from "../mcp/McpPanel";
 import type { IntegrationDefinition } from "./integrationCatalog";
 
 // ---------------------------------------------------------------------------
@@ -59,6 +60,18 @@ export const INTEGRATIONS: ReadonlyArray<IntegrationModule> = [
     },
     Panel: WebhooksPanel,
     ItemPage: WebhookEditorPage
+  },
+  {
+    definition: {
+      id: "mcp",
+      category: "agents",
+      name: "Agentes de IA (MCP)",
+      mark: "mcp",
+      unit: { one: "credencial", many: "credenciales" },
+      tagline: "Conecta Claude, n8n o Cursor a tu cuenta con permisos por área: leen y actúan por ti.",
+      keywords: ["mcp", "claude", "cursor", "n8n", "agente", "ia", "api", "token"]
+    },
+    Panel: McpPanel
   }
 ];
 

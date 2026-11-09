@@ -51,6 +51,26 @@ Reglas:
 - **Límite:** 600 envíos por minuto por webhook (la cuenta compartida en Neon). Envíos de hasta 256 KB.
 - **Sin Kanban:** Auream no lo tiene.
 
-## Lo que viene: MCP
+## Agentes de IA (MCP)
 
-Credenciales para agentes de IA (Claude, n8n, Cursor) con **permisos por área** (Leona no los tiene), token fijo y OAuth, y un servidor MCP en `/api/mcp`. Entra al catálogo como una integración más de «Agentes de IA».
+`contracts/McpContracts.ts` · `domains/mcp` · `apps/api/mcp` · `apps/api/routes/routeMcp.ts` · `apps/api/routes/routeMcpCredentialsRequest.ts` · `025_mcp_credentials.sql`
+
+Un agente (Claude Code, Cursor, n8n…) se conecta a `POST /api/mcp` con `Authorization: Bearer <token>` y usa las herramientas que su credencial permite, dentro de SU cuenta.
+
+| Pieza | Responsabilidad | No sabe de |
+|---|---|---|
+| `domains/mcp` | Credencial: permisos por área (ver / ver y editar) traducidos a los permisos internos, huella del token, vencimiento; crear (el token se entrega una vez), listar, revocar, autenticar | HTTP, MCP |
+| `apps/api/mcp/McpProtocol.ts` | El protocolo (JSON-RPC 2.0, sin estado): `initialize` (negocia la versión), `ping`, `tools/list` (solo lo permitido), `tools/call` (vuelve a comprobar el permiso y valida los argumentos) | qué hace cada herramienta |
+| `apps/api/mcp/tools/*` | Las herramientas, como adaptadores sobre los MISMOS servicios de la app (flujos, contactos y etiquetas, conversaciones, números) | el protocolo |
+| `routeMcp` | Transporte HTTP («Streamable», sin flujo de eventos): token, límite, JSON-RPC simple o en lote | — |
+
+Reglas:
+
+- **Permisos por área** (Leona no los tiene): Flujos (ver), Contactos y etiquetas (ver / ver y editar), Conversaciones (ver / ver y responder o enviar flujos), Números de WhatsApp (ver). `tools/list` solo muestra lo permitido y `tools/call` lo vuelve a comprobar.
+- **El token** (`aur_mcp_` + 32 bytes aleatorios) se muestra una vez; se guarda su huella SHA-256 (única) y una pista. Vence a los 30, 90 o 365 días, o nunca; revocarlo corta el acceso al instante.
+- **Errores:** uno de negocio («ese contacto no existe») vuelve como resultado con `isError` para que el agente se corrija; uno interno, sin detalles.
+- **Registro:** cada acción (`mcp.tool_call`: credencial, herramienta, resultado, duración; sin los datos). Límite: 300 peticiones por minuto por credencial.
+- **Administrarlas** exige `credentials.write` (dueños y administradores).
+- **Responder como asesor** pausa el bot del chat, como en la bandeja; las herramientas que escriben al cliente piden confirmarlo antes.
+
+Siguiente: **OAuth** para Claude en la web y en la app de escritorio (pegas la dirección, inicias sesión en Auream y autorizas los permisos), y herramientas para **crear y editar flujos**.
