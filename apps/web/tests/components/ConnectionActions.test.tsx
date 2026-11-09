@@ -35,6 +35,7 @@ function stubApi() {
   vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
     const url = new URL(String(input), "http://api.test");
     const method = init?.method ?? "GET";
+    if (url.pathname === "/connections/verify") return reply(200, { verified: true, changed: 0 });
     if (method !== "GET") calls.push(`${method} ${url.pathname}`);
     if (url.pathname === "/connections" && method === "GET") return reply(200, { connections: [item] });
     if (url.pathname === "/connections/w1/disconnect") {

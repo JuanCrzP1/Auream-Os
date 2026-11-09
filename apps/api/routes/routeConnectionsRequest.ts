@@ -17,6 +17,7 @@ import { sendJson } from "../http/sendJson";
 //   DELETE /connections/:id        eliminar (cierra la sesión en el proveedor)
 //   POST   /connections/:id/link   vincular o reconectar: QR o conexión hecha ({ restart } = código nuevo)
 //   GET    /connections/:id/status cómo va la vinculación (QR renovado, conectada…)
+//   POST   /connections/verify       ¿siguen vivos los números conectados? (connections.read; 1 por minuto)
 //   POST   /connections/:id/disconnect   cerrar la sesión de WhatsApp (se reconecta con un QR nuevo)
 //   POST   /connections/:id/restart      retomar la conexión sin desvincular
 //   GET    /connections/:id/triggers              disparadores del número
@@ -44,7 +45,14 @@ export async function routeConnectionsRequest(
 
   const { tenantId } = context;
   const method = request.method ?? "GET";
-  requireScope(context, method === "GET" ? ConnectionPermissions.read : ConnectionPermissions.write, tenantId);
+  // Revisar el estado solo pone al día lo que ya se ve: basta con poder ver las conexiones.
+  const readOnly = method === "GET" || (path === "/connections/verify" && method === "POST");
+  requireScope(context, readOnly ? ConnectionPermissions.read : ConnectionPermissions.write, tenantId);
+
+  if (path === "/connections/verify" && method === "POST") {
+    sendJson(response, 200, await services.verify.execute(tenantId));
+    return true;
+  }
 
   if (path === "/connections" && method === "GET") {
     sendJson(response, 200, { connections: await services.list.execute(tenantId) });

@@ -173,8 +173,9 @@ describe("ver estado de un número conectado", () => {
     await s.link.execute(T, created.id);
     await s.check.execute(T, created.id);
     expect((await s.link.execute(T, created.id)).state).toBe("connected");
-    // Si al ver el estado el proveedor dice que se cerró la sesión, la tarjeta lo refleja.
-    expect((await s.link.execute(T, created.id)).connection.status).toBe("disconnected");
+    // Si al ver el estado el proveedor dice que se cerró la sesión, sigue a vincular: sale el QR.
+    const after = await s.link.execute(T, created.id);
+    expect([after.state, after.connection.status]).toEqual(["qr", "connecting"]);
     expect(linker.refresh).toHaveBeenCalledWith({ ref: "inst-1", secret: TOKEN });
   });
 });

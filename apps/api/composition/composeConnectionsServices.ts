@@ -1,3 +1,5 @@
+import { VerifyConnectionsService } from "../../../domains/connections/application/VerifyConnectionsService";
+import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
 import { DisconnectConnectionService, RestartConnectionService } from "../../../domains/connections/application/ConnectionSessionServices";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlConnectionRepository } from "../../../infrastructure/persistence/sql/SqlConnectionRepository";
@@ -51,6 +53,8 @@ export interface ConnectionsServices {
   readonly disconnect: DisconnectConnectionService;
   /** Retomar la conexión de un número vinculado sin desvincularlo. */
   readonly restart: RestartConnectionService;
+  /** ¿Siguen vivos los números conectados? (al abrir Conexiones; el proveedor no siempre avisa). */
+  readonly verify: VerifyConnectionsService;
   readonly providerEvents: HandleProviderEventService;
   /** Qué flujo arranca cada número (palabra clave, anuncio, primer mensaje…). */
   readonly triggers: ConnectionTriggerServices;
@@ -67,6 +71,8 @@ export interface ConnectionsOptions {
   readonly uazapi: { readonly baseUrl: string; readonly adminToken: string } | null;
   readonly webhookBaseUrl: string | null;
   readonly fetch?: FetchLike;
+  /** Límite de las revisiones de estado (compartido en Neon). Ausente: sin límite. */
+  readonly rateLimiter?: RateLimiter;
 }
 
 /** Sin clave maestra no hay sesiones que cifrar: cualquier uso es un error. */
@@ -117,6 +123,7 @@ export function composeConnectionsServicesWith(stores: ConnectionsStores | Conne
     check: new CheckConnectionService(repository, linkers, cipher),
     disconnect: new DisconnectConnectionService({ repository, linkers, cipher }),
     restart: new RestartConnectionService({ repository, linkers, cipher }),
+    verify: new VerifyConnectionsService({ repository, linkers, cipher, ...(options.rateLimiter ? { limiter: options.rateLimiter } : {}) }),
     providerEvents: new HandleProviderEventService(repository, cipher),
     triggers: new ConnectionTriggerServices(repository, triggers, flows),
     channel: new ConnectionChannelServices(repository, composeMessengers(options), cipher),

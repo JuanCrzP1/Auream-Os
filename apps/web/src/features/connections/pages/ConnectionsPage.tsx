@@ -46,8 +46,12 @@ export function ConnectionsPage() {
   /** Reiniciar no pide confirmación (no desvincula): se avisa cómo fue. */
   const restart = async (connection: ConnectionSummary) => {
     try {
-      await connections.restart(connection.id);
-      setNotice({ tone: "ok", text: `Reiniciando la conexión de «${connection.name}». En unos segundos vuelve a recibir y enviar.` });
+      const after = await connections.restart(connection.id);
+      setNotice(
+        after.status === "connected"
+          ? { tone: "ok", text: `Reiniciando la conexión de «${connection.name}». En unos segundos vuelve a recibir y enviar.` }
+          : { tone: "error", text: `La sesión de «${connection.name}» ya no existe en WhatsApp: usa «Reconectar» y escanea el código.` }
+      );
     } catch (error) {
       setNotice({ tone: "error", text: apiErrorMessage(error, "No se pudo reiniciar la conexión. Inténtalo de nuevo.") });
     }

@@ -17,7 +17,7 @@ import {
 } from "../domain/WhatsAppConnection";
 import type { ConnectionRepository } from "./ConnectionRepository";
 import type { ConnectionTriggerRepository } from "./ConnectionTriggerRepository";
-import type { ProviderSession, SessionState, WhatsAppLinkers } from "./ports/WhatsAppLinker";
+import { SessionGoneError, type ProviderSession, type SessionState, type WhatsAppLinkers } from "./ports/WhatsAppLinker";
 import { applyState, requireConnection, sessionOf, toConnectionSummary, toLinkState, upstream, withSession } from "./connectionSession";
 
 export { sessionOf, toConnectionSummary } from "./connectionSession";
@@ -126,20 +126,25 @@ export class LinkConnectionService {
   ) {}
 
   public async execute(tenantId: string, id: string, request: LinkConnectionRequest = {}): Promise<ConnectionLinkState> {
-    const connection = await requireConnection(this.repository, tenantId, id);
+    let connection = await requireConnection(this.repository, tenantId, id);
     const session = sessionOf(connection, this.cipher);
     if (connection.status === "connected" && session) {
-      // «Ver estado» de un número conectado: pone al día su configuración en el
-      // proveedor (avisos de mensajes de versiones nuevas) y trae lo que dice
-      // ahora (perfil, foto, si sigue conectado). Si falla, lo dice.
+      // «Ver estado»: PRIMERO lo que dice el proveedor ahora (perfil, foto, si
+      // sigue conectado). Si la sesión se cerró o ya no existe (el servidor
+      // gratuito de uazapi borra instancias sin avisar), pasa a desconectada y
+      // sigue abajo a vincular: sale el QR, sin quedar atascada en «Conectada».
       const linker = this.linkers.for(connection.method);
-      await linker.refresh(session).catch(upstream);
       const state = await linker.check(session).catch(upstream);
       const updated = applyState(connection, state, this.now().toISOString());
       if (updated.status !== connection.status || updated.profileName !== connection.profileName || updated.profilePictureUrl !== connection.profilePictureUrl) {
         await this.repository.save(updated);
       }
-      return toLinkState(updated, state);
+      if (state.kind === "connected") {
+        // Sigue conectado: avisos del proveedor al día (versiones nuevas de Auream).
+        await linker.refresh(session).catch((error: unknown) => (error instanceof SessionGoneError ? undefined : upstream(error)));
+        return toLinkState(updated, state);
+      }
+      connection = updated;
     }
     if (connection.status === "connected") return { state: "connected", connection: toConnectionSummary(connection) };
 

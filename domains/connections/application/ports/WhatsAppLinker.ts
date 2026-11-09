@@ -39,6 +39,13 @@ export type StartOutcome =
 /** Falla del proveedor (caído, credencial rechazada…). Mensaje sin secretos. */
 export class LinkerError extends Error {}
 
+/**
+ * El proveedor ya no tiene esta sesión (la borró, venció o su credencial dejó
+ * de valer; p. ej. el servidor gratuito de uazapi borra las instancias solo).
+ * Para Auream el número quedó DESCONECTADO: «Reconectar» crea una sesión nueva.
+ */
+export class SessionGoneError extends LinkerError {}
+
 export interface WhatsAppLinker {
   /**
    * Empieza o retoma la vinculación. Con `session` reutiliza la sesión que ya
@@ -54,6 +61,7 @@ export interface WhatsAppLinker {
   /**
    * Pone al día la configuración de una sesión ya conectada (p. ej. los avisos
    * que manda el proveedor, si la versión de Auream pide nuevos). Idempotente.
+   * Lanza `SessionGoneError` si la sesión ya no existe.
    */
   refresh(session: ProviderSession): Promise<void>;
   /** Estado actual de la sesión. Lanza `LinkerError` si el proveedor falla. */
@@ -61,12 +69,13 @@ export interface WhatsAppLinker {
   /**
    * Cierra la sesión de WhatsApp (el número deja de estar vinculado) pero
    * CONSERVA la sesión en el proveedor: reconectar pide un QR nuevo sobre ella.
-   * Lanza `LinkerError` si el proveedor falla.
+   * Lanza `SessionGoneError` si la sesión ya no existe; `LinkerError` si el proveedor falla.
    */
   disconnect(session: ProviderSession): Promise<void>;
   /**
    * Retoma la conexión de un número vinculado sin perder la vinculación (para
-   * cuando no recibe o no envía). Lanza `LinkerError` si el proveedor falla.
+   * cuando no recibe o no envía). Lanza `SessionGoneError` si la sesión ya no
+   * existe; `LinkerError` si el proveedor falla.
    */
   reset(session: ProviderSession): Promise<void>;
   /** Cierra y borra la sesión en el proveedor. No falla si ya no existía. */

@@ -69,7 +69,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const connectionsServices = composeConnectionsServices(tenancy.sqlClient, {
     keyRing: config.credentialsKeyRing,
     uazapi: config.uazapi,
-    webhookBaseUrl: config.whatsappWebhookBaseUrl
+    webhookBaseUrl: config.whatsappWebhookBaseUrl,
+    rateLimiter
   });
   const errorLogger = new ErrorLogger(logger);
   const background = createBackgroundTasks((error) => errorLogger.log(error instanceof Error ? error : new Error(String(error)), {}));

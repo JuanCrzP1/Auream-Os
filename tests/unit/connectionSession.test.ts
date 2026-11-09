@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { randomBytes } from "node:crypto";
 import { CheckConnectionService, CreateConnectionService, LinkConnectionService } from "../../domains/connections/application/ConnectionServices.js";
 import { DisconnectConnectionService, RestartConnectionService } from "../../domains/connections/application/ConnectionSessionServices.js";
-import type { SessionState, WhatsAppLinker } from "../../domains/connections/application/ports/WhatsAppLinker.js";
+import { SessionGoneError, type SessionState, type WhatsAppLinker } from "../../domains/connections/application/ports/WhatsAppLinker.js";
+import { VerifyConnectionsService } from "../../domains/connections/application/VerifyConnectionsService.js";
+import { InMemoryRateLimiter } from "../../platform/security/rate-limiting/application/InMemoryRateLimiter.js";
 import { InMemoryConnectionRepository } from "../../infrastructure/persistence/memory/InMemoryConnectionRepository.js";
 import { LinkersByMethod } from "../../infrastructure/whatsapp/LinkersByMethod.js";
 import { UnconfiguredWhatsAppLinker } from "../../infrastructure/whatsapp/UnconfiguredWhatsAppLinker.js";
@@ -35,11 +37,13 @@ function setup() {
   const deps = { repository, linkers, cipher };
   return {
     linker,
+    repository,
     create: new CreateConnectionService(repository),
     link: new LinkConnectionService(repository, linkers, cipher),
     check: new CheckConnectionService(repository, linkers, cipher),
     disconnect: new DisconnectConnectionService(deps),
-    restart: new RestartConnectionService(deps)
+    restart: new RestartConnectionService(deps),
+    verify: new VerifyConnectionsService({ ...deps, limiter: new InMemoryRateLimiter() })
   };
 }
 
@@ -87,5 +91,49 @@ describe("sesión de un número", () => {
     expect(s.linker.reset).toHaveBeenCalledTimes(1);
     await s.disconnect.execute(T, id);
     await expect(s.restart.execute(T, id)).rejects.toThrow(/Reconectar/);
+  });
+});
+
+describe("un número que el proveedor desconectó sin avisar (p. ej. el servidor gratuito de uazapi borró la instancia)", () => {
+  const dead: SessionState = { kind: "disconnected" };
+
+  it("«Ver estado» lo detecta, lo marca desconectado y sigue a vincular: sale el QR (no queda atascado en «Conectada»)", async () => {
+    const s = setup();
+    const { id } = await connected(s);
+    s.linker.check.mockResolvedValueOnce(dead);
+    const state = await s.link.execute(T, id);
+    expect([state.state, state.connection.status]).toEqual(["qr", "connecting"]);
+    expect(s.linker.refresh).not.toHaveBeenCalled();
+    expect(s.linker.start).toHaveBeenLastCalledWith(expect.objectContaining({ id }), { ref: "inst-1", secret: "tok" });
+  });
+
+  it("desconectar lo deja desconectado sin error; reiniciar avisa que quedó desconectado (se ve «Reconectar»)", async () => {
+    const s = setup();
+    const { id } = await connected(s);
+    s.linker.reset.mockRejectedValueOnce(new SessionGoneError("ya no existe"));
+    expect((await s.restart.execute(T, id)).status).toBe("disconnected");
+
+    const other = setup();
+    const second = await connected(other);
+    other.linker.disconnect.mockRejectedValueOnce(new SessionGoneError("ya no existe"));
+    expect((await other.disconnect.execute(T, second.id)).status).toBe("disconnected");
+  });
+
+  it("al abrir Conexiones se revisan los conectados con el proveedor, como mucho una vez por minuto", async () => {
+    const s = setup();
+    const { id } = await connected(s);
+    s.linker.check.mockResolvedValueOnce(dead);
+    expect(await s.verify.execute(T)).toEqual({ verified: true, changed: 1 });
+    expect((await s.repository.findById(T, id))?.status).toBe("disconnected");
+    expect(await s.verify.execute(T)).toEqual({ verified: false, changed: 0 });
+  });
+
+  it("si el proveedor falla con un número, ese se deja como está", async () => {
+    const s = setup();
+    const { id } = await connected(s);
+    s.linker.check.mockRejectedValueOnce(new Error("uazapi caído"));
+    expect(await s.verify.execute(T)).toEqual({ verified: true, changed: 0 });
+    s.linker.check.mockResolvedValueOnce({ kind: "connected", phoneNumber: "573013815302", profileName: "Ventas", profilePictureUrl: null });
+    expect((await s.link.execute(T, id)).connection.status).toBe("connected");
   });
 });

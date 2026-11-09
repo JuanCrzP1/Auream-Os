@@ -1,5 +1,6 @@
 import {
   LinkerError,
+  SessionGoneError,
   type LinkTarget,
   type ProviderSession,
   type SessionState,
@@ -37,6 +38,14 @@ function toState(info: UazapiInstanceInfo): SessionState {
 function asLinkerError(error: unknown): never {
   if (error instanceof UazapiError) throw new LinkerError(error.message);
   throw error;
+}
+
+/** Para operaciones con el token de UNA sesión: 401/404 = esa sesión ya no existe en uazapi. */
+function asSessionError(error: unknown): never {
+  if (error instanceof UazapiError && (error.reason === "unauthorized" || error.reason === "not_found")) {
+    throw new SessionGoneError("La sesión de este número ya no existe en uazapi.");
+  }
+  return asLinkerError(error);
 }
 
 export class UazapiLinker implements WhatsAppLinker {
@@ -81,7 +90,7 @@ export class UazapiLinker implements WhatsAppLinker {
     try {
       await this.client.setWebhook(session.secret, this.webhookUrl, WEBHOOK_EVENTS);
     } catch (error) {
-      asLinkerError(error);
+      asSessionError(error);
     }
   }
 
@@ -98,7 +107,7 @@ export class UazapiLinker implements WhatsAppLinker {
     try {
       await this.client.disconnect(session.secret);
     } catch (error) {
-      asLinkerError(error);
+      asSessionError(error);
     }
   }
 
@@ -106,7 +115,7 @@ export class UazapiLinker implements WhatsAppLinker {
     try {
       await this.client.reset(session.secret);
     } catch (error) {
-      asLinkerError(error);
+      asSessionError(error);
     }
   }
 

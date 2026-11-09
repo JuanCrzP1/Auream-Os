@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionSummary, CreateConnectionRequest } from "@contracts/ConnectionContracts";
 import { RequestError } from "@shared/http/RequestError";
-import { checkConnection, createConnection, deleteConnection, disconnectConnection, fetchConnections, linkConnection, renameConnection, restartConnection } from "./connectionsApi";
+import { checkConnection, createConnection, deleteConnection, disconnectConnection, fetchConnections, linkConnection, renameConnection, restartConnection, verifyConnections } from "./connectionsApi";
 
 /**
  *   loading · ready · error
@@ -23,8 +23,18 @@ export function useConnections() {
     }
   }, []);
 
+  // Al abrir: la lista enseguida y, detrás, una revisión con el proveedor (un
+  // número que el proveedor desconectó sin avisar deja de verse «Conectado»).
   useEffect(() => {
-    void refresh();
+    let cancelled = false;
+    void (async () => {
+      await refresh();
+      const result = await verifyConnections().catch(() => null);
+      if (!cancelled && result && result.changed > 0) await refresh();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [refresh]);
 
   const create = useCallback(
@@ -85,9 +95,15 @@ export function useConnections() {
     [refresh]
   );
 
-  const restart = useCallback(async (id: string) => {
-    await restartConnection(id);
-  }, []);
+  /** Devuelve cómo quedó: si la sesión ya no existía, «Desconectada» (se ve «Reconectar»). */
+  const restart = useCallback(
+    async (id: string) => {
+      const after = await restartConnection(id);
+      if (after.status !== "connected") await refresh();
+      return after;
+    },
+    [refresh]
+  );
 
   return { connections, status, refresh, create, rename, remove, link, check, disconnect, restart };
 }

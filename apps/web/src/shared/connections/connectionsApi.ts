@@ -43,3 +43,8 @@ export function disconnectConnection(id: string): Promise<ConnectionSummary> {
 export function restartConnection(id: string): Promise<ConnectionSummary> {
   return builderApiClient.post<ConnectionSummary>(`/connections/${encodeURIComponent(id)}/restart`, {});
 }
+
+/** ¿Siguen vivos los números conectados? (el servidor lo limita a una revisión por minuto). */
+export function verifyConnections(): Promise<{ readonly verified: boolean; readonly changed: number }> {
+  return builderApiClient.post<{ verified: boolean; changed: number }>("/connections/verify", {});
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { UazapiClient, UazapiError, type FetchLike } from "../../infrastructure/whatsapp/uazapi/UazapiClient.js";
 import { instanceNameFor, UazapiLinker } from "../../infrastructure/whatsapp/uazapi/UazapiLinker.js";
-import { LinkerError } from "../../domains/connections/application/ports/WhatsAppLinker.js";
+import { LinkerError, SessionGoneError } from "../../domains/connections/application/ports/WhatsAppLinker.js";
 
 // ---------------------------------------------------------------------------
 // Cliente de uazapi contra un servidor falso con las respuestas de su
@@ -127,5 +127,21 @@ describe("UazapiLinker", () => {
     const api = server({ "POST /webhook": () => json(200, []) });
     await new UazapiLinker(api.client, "https://auream-os.vercel.app/api/webhooks/uazapi").refresh({ ref: "r", secret: "inst-token" });
     expect(api.calls[0]!.body).toMatchObject({ url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection", "messages", "messages_update"] });
+  });
+});
+
+describe("UazapiLinker · sesión que uazapi ya no tiene", () => {
+  it("desconectar, reiniciar y poner al día con un token que uazapi rechaza (401/404) dicen que la sesión ya no existe; un 500 es otra falla", async () => {
+    const session = { ref: "r", secret: "muerto" };
+    const gone = new UazapiLinker(
+      server({ "POST /instance/disconnect": () => json(401, { error: "Invalid token" }), "POST /instance/reset": () => json(404, {}), "POST /webhook": () => json(401, {}) }).client,
+      "https://auream.test/api/webhooks/uazapi"
+    );
+    await expect(gone.disconnect(session)).rejects.toBeInstanceOf(SessionGoneError);
+    await expect(gone.reset(session)).rejects.toBeInstanceOf(SessionGoneError);
+    await expect(gone.refresh(session)).rejects.toBeInstanceOf(SessionGoneError);
+    const down = new UazapiLinker(server({ "POST /instance/reset": () => json(500, {}) }).client, null);
+    const failure = await down.reset(session).catch((error: unknown) => error);
+    expect([failure instanceof LinkerError, failure instanceof SessionGoneError]).toEqual([true, false]);
   });
 });
