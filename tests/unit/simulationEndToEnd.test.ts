@@ -91,10 +91,21 @@ describe("simulación — Menú, Condicional y Distribuidor juntos", () => {
     };
   }
 
+  /** «Otra respuesta» vuelve al mismo Menú (como en Leona). */
+  function menuLoopFlow(): PersistedBuilderWorkspace {
+    const base = flow();
+    const menuEdges = base.draft.edgesBySource["menu"]!.map((edge) => (edge.fromOutput === "menu-other" ? { ...edge, toNodeId: "menu" } : edge));
+    return { ...base, draft: { ...base.draft, edgesBySource: { ...base.draft.edgesBySource, menu: menuEdges } } };
+  }
+
   async function chat(service: SimulateDraftService, conversation: string, ...messages: string[]) {
+    return chatWith(service, flow, conversation, ...messages);
+  }
+
+  async function chatWith(service: SimulateDraftService, build: () => PersistedBuilderWorkspace, conversation: string, ...messages: string[]) {
     const replies: string[][] = [];
     for (const message of messages) {
-      const result = await service.simulate(flow(), { message, conversationKey: conversation, userKey: conversation });
+      const result = await service.simulate(build(), { message, conversationKey: conversation, userKey: conversation });
       replies.push(result.outputMessages.map((m) => m.content));
     }
     return replies;
@@ -109,5 +120,17 @@ describe("simulación — Menú, Condicional y Distribuidor juntos", () => {
     expect((await chat(service, "c4", "hola", "3"))[1]).toEqual(["Te atiende Ana"]);
     expect((await chat(service, "c5", "hola", "Asesor"))[1]).toEqual(["Te atiende Beto"]);
     expect((await chat(service, "c6", "hola", "3"))[1]).toEqual(["Te atiende Ana"]);
+  });
+
+  it("«Otra respuesta» conectada al mismo Menú lo vuelve a enviar y espera; luego una opción válida sigue su camino", async () => {
+    const service = new SimulateDraftService(new BuilderSimulationRuntimeFactory(composeNodeRuntime(), "America/Bogota"));
+    const replies = await chatWith(service, menuLoopFlow, "loop", "hola", "quiero otra cosa", "tampoco sé", "1");
+
+    const menuText = replies[0]!.join("\n");
+    expect(menuText).toContain("¿En qué te ayudo?");
+    // Cada respuesta que no es opción vuelve a mostrar el menú, una sola vez (sin dar vueltas).
+    expect(replies[1]).toEqual(replies[0]);
+    expect(replies[2]).toEqual(replies[0]);
+    expect(replies[3]).toEqual(["El plan cuesta $50.000"]);
   });
 });

@@ -1,12 +1,15 @@
 import {
+  BaseEdge,
   BezierEdge,
   EdgeLabelRenderer,
   getBezierPath,
+  useInternalNode,
   useReactFlow,
   type EdgeProps
 } from "@xyflow/react";
 import { TrashIcon } from "@features/automations/shared/TrashIcon";
 import type { CanvasEdge } from "@features/automations/builder/types/canvas";
+import { selfLoopPath } from "./selfLoopPath";
 
 /**
  * La conexión del lienzo, con su única acción contextual: eliminarla.
@@ -34,6 +37,12 @@ import type { CanvasEdge } from "@features/automations/builder/types/canvas";
  * hereda el pan y el zoom del viewport, así que el botón no se despega al
  * mover o acercar. Su contenedor no recibe puntero —para no robar clics al
  * lienzo—, y por eso el botón se lo devuelve a sí mismo en la hoja de estilos.
+ *
+ * LA CONEXIÓN QUE VUELVE A SU BLOQUE («Otra respuesta» del Menú → el mismo
+ * Menú, como en Leona) es la única excepción al bézier: una curva de la salida
+ * a la entrada del mismo bloque lo atravesaría. Se dibuja como un lazo por
+ * debajo del bloque (`selfLoopPath`) con `BaseEdge`, el mismo trazo base de
+ * React Flow, así que conserva estilo, etiqueta y selección.
  */
 /** Trazo de la conexión seleccionada: más grueso que el normal (2.3) y con halo. */
 const SELECTED_STROKE_WIDTH = 3.6;
@@ -41,9 +50,21 @@ const SELECTED_GLOW = "drop-shadow(0 0 6px var(--primary-soft))";
 
 export function DeletableEdge(props: EdgeProps<CanvasEdge>) {
   const { deleteElements } = useReactFlow();
-  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, selected } = props;
+  const { id, source, target, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, selected } = props;
+  const loopNode = useInternalNode(source);
+  const selfLoop = source === target;
+  const strokeStyle = selected ? { ...props.style, strokeWidth: SELECTED_STROKE_WIDTH, filter: SELECTED_GLOW } : props.style;
 
-  const [, labelX, labelY] = getBezierPath({
+  const loop = selfLoop
+    ? selfLoopPath({
+        sourceX,
+        sourceY,
+        targetX,
+        targetY,
+        bottom: loopNode ? loopNode.internals.positionAbsolute.y + (loopNode.measured.height ?? 0) : Math.max(sourceY, targetY)
+      })
+    : null;
+  const [, bezierLabelX, bezierLabelY] = getBezierPath({
     sourceX,
     sourceY,
     targetX,
@@ -51,16 +72,34 @@ export function DeletableEdge(props: EdgeProps<CanvasEdge>) {
     sourcePosition,
     targetPosition
   });
+  const labelX = loop ? loop.labelX : bezierLabelX;
+  const labelY = loop ? loop.labelY : bezierLabelY;
 
   return (
     <>
       {/* Seleccionada (B14): trazo más grueso y con halo. Se decide aquí, en la
           presentación de la arista, porque su `style` en línea gana a cualquier
           hoja de estilos. */}
-      <BezierEdge
-        {...props}
-        style={selected ? { ...props.style, strokeWidth: SELECTED_STROKE_WIDTH, filter: SELECTED_GLOW } : props.style}
-      />
+      {loop ? (
+        <BaseEdge
+          id={id}
+          path={loop.path}
+          labelX={loop.labelX}
+          labelY={loop.labelY}
+          {...(props.label !== undefined ? { label: props.label } : {})}
+          {...(props.labelStyle ? { labelStyle: props.labelStyle } : {})}
+          {...(props.labelShowBg !== undefined ? { labelShowBg: props.labelShowBg } : {})}
+          {...(props.labelBgStyle ? { labelBgStyle: props.labelBgStyle } : {})}
+          {...(props.labelBgPadding ? { labelBgPadding: props.labelBgPadding } : {})}
+          {...(props.labelBgBorderRadius !== undefined ? { labelBgBorderRadius: props.labelBgBorderRadius } : {})}
+          {...(props.markerEnd ? { markerEnd: props.markerEnd } : {})}
+          {...(props.markerStart ? { markerStart: props.markerStart } : {})}
+          {...(props.interactionWidth !== undefined ? { interactionWidth: props.interactionWidth } : {})}
+          {...(strokeStyle ? { style: strokeStyle } : {})}
+        />
+      ) : (
+        <BezierEdge {...props} {...(strokeStyle ? { style: strokeStyle } : {})} />
+      )}
       {selected && (
         <EdgeLabelRenderer>
           <button

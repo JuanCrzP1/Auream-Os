@@ -1,3 +1,4 @@
+import { canConnectToItself } from "@contracts/FlowConnectionRules";
 import { isValidSourceHandle } from "./nodeOutputs";
 import type { CanvasEdge, CanvasNode } from "../types/canvas";
 
@@ -7,7 +8,8 @@ import type { CanvasEdge, CanvasNode } from "../types/canvas";
 //
 //   · De cada salida sale como mucho UNA conexión (también la del bloque de
 //     entrada, que tiene una sola).
-//   · Un bloque no se conecta consigo mismo.
+//   · Un bloque no se conecta consigo mismo, salvo «Otra respuesta» del Menú
+//     (vuelve a mostrar el menú, como en Leona).
 //   · Al bloque de entrada no llega ninguna conexión.
 //   · La salida debe existir en la configuración actual del bloque.
 //
@@ -28,7 +30,7 @@ export interface ProposedConnection {
 
 const MESSAGES: Readonly<Record<ConnectionRejection, string>> = {
   "unknown-node": "No se puede conectar con un bloque que ya no existe.",
-  self: "Un bloque no puede conectarse consigo mismo.",
+  self: "Un bloque no puede conectarse consigo mismo. Solo «Otra respuesta» del Menú puede volver al mismo Menú.",
   "into-entry": "El bloque de inicio no recibe conexiones: es donde empieza el flujo.",
   "invalid-output": "Esa salida ya no existe en la configuración del bloque.",
   "output-taken": "Esa salida ya está conectada. Elimina la conexión actual para cambiar su destino."
@@ -48,7 +50,7 @@ export function checkConnection(
   const target = nodes.find((node) => node.id === connection.target);
 
   if (!source || !target) return reject("unknown-node");
-  if (source.id === target.id) return reject("self");
+  if (source.id === target.id && !canConnectToItself(source.data.nodeType, connection.sourceHandle)) return reject("self");
   if (target.data.isEntry) return reject("into-entry");
 
   if (!source.data.isEntry && !isValidSourceHandle(source.data.nodeType, source.data.config, connection.sourceHandle)) {

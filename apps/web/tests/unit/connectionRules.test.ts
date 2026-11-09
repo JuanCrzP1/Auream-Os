@@ -50,6 +50,20 @@ describe("reglas al conectar", () => {
 
   it("un bloque no se conecta consigo mismo", () => {
     expect(checkConnection(NODES, [], { source: "msg", target: "msg" })).toMatchObject({ ok: false, reason: "self" });
+    expect(checkConnection(NODES, [], { source: "wait", target: "wait", sourceHandle: "tiempo-agotado" })).toMatchObject({ ok: false, reason: "self" });
+  });
+
+  it("solo «Otra respuesta» del Menú puede volver al mismo Menú (como en Leona)", () => {
+    const menu = node("menu", "menu", { options: [{ id: "precios", title: "Precios", description: "" }], timeoutEnabled: true });
+    const optionId = "precios";
+    const nodes = [...NODES, menu];
+
+    expect(checkConnection(nodes, [], { source: "menu", target: "menu", sourceHandle: "menu-other" })).toEqual({ ok: true });
+    expect(checkConnection(nodes, [], { source: "menu", target: "menu", sourceHandle: optionId })).toMatchObject({ ok: false, reason: "self" });
+    expect(checkConnection(nodes, [], { source: "menu", target: "menu", sourceHandle: "menu-timeout" })).toMatchObject({ ok: false, reason: "self" });
+    // Sigue siendo una salida: si ya vuelve al Menú, no se conecta a otro bloque.
+    const loop = edge("menu", "menu", "menu-other");
+    expect(checkConnection(nodes, [loop], { source: "menu", target: "msg", sourceHandle: "menu-other" })).toMatchObject({ ok: false, reason: "output-taken" });
   });
 
   it("al inicio no llega ninguna conexión", () => {

@@ -21,7 +21,7 @@ Cada bloque tiene **salidas**. Una conexión dice de qué bloque sale, **por cu�
 | **Una conexión por salida** | De cada salida sale como mucho una conexión. Para llevar el flujo a dos sitios se usa un bloque con varias salidas (Distribuidor, Condicional, Menú…). |
 | **Entradas ilimitadas** | A un bloque pueden llegar todas las conexiones que se quiera. |
 | **Inicio** | Bloque de sistema `start`, uno por flujo. No recibe conexiones y tiene una sola salida, hacia el primer paso. Ver [El bloque de inicio](#el-bloque-de-inicio). |
-| **Sin auto-conexión** | Un bloque no se conecta consigo mismo. |
+| **Sin auto-conexión** | Un bloque no se conecta consigo mismo. **Única excepción, como en Leona:** «Otra respuesta» del Menú puede volver al mismo Menú para mostrarlo de nuevo cuando el cliente escribe algo que no es una opción (`canConnectToItself`). «Tiempo agotado» no, porque reenviaría el menú sin fin a quien no contesta. |
 | **La salida debe existir** | Solo se puede conectar desde una salida que la configuración actual del bloque ofrece. Si una salida desaparece (se borra una opción del Menú, se activa «sin límite»…), sus conexiones se eliminan solas. |
 | **Ciclos** | Se permiten si pasan por un bloque que **espera** (Esperar respuesta, Menú, Programador): cada vuelta se detiene. Un ciclo sin ninguno de ellos sería infinito y se rechaza. |
 
@@ -50,7 +50,7 @@ Los ids son **datos persistidos**: cambiar uno desconecta las aristas guardadas.
 | Inicio con una sola salida | `checkConnection` | `findOvercrowdedOutputs` | `validateOutgoingLimits` (`ENTRY_TOO_MANY_OUTGOING`) |
 | Nada entra a Inicio | `checkConnection` (y el nodo no tiene punto de entrada) | `reviewFlow` | `validateStartBlock` (`ENTRY_HAS_INCOMING`) |
 | El flujo empieza en un `start`, y solo hay uno | — (no está en la paleta, no se borra ni se duplica) | `reviewFlow` | `validateStartBlock` (`ENTRY_NODE_NOT_START`, `START_NODE_NOT_ENTRY`) |
-| Sin auto-conexión | `checkConnection` | — | — |
+| Sin auto-conexión (salvo «Otra respuesta» del Menú) | `checkConnection` + `canConnectToItself` | — | — (el ciclo pasa por un bloque que espera) |
 | La salida existe | `checkConnection` + poda automática (`pruneCanvasEdges`) | — | — |
 | Ciclos solo a través de bloques que esperan | — | aviso | `detectCycles` (`INFINITE_CYCLE`) |
 
@@ -58,6 +58,7 @@ Las listas compartidas viven en `contracts/FlowConnectionRules.ts`:
 
 - `SINGLE_OUTPUT_NODE_TYPES`: bloques de salida única. Un test de contrato comprueba que coincide con las herramientas sin `outputs()`.
 - `PAUSING_NODE_TYPES`: bloques que esperan.
+- `canConnectToItself(tipo, salida)`: qué salida puede volver a su propio bloque (hoy solo `menu` / `menu-other`).
 
 Los escenarios compartidos de `tests/fixtures/validation/scenarios.ts` comprueban que el builder y el backend dan el mismo veredicto.
 
@@ -86,6 +87,8 @@ La aplica `UpgradingBuilderWorkspaceRepository`, un decorador del repositorio de
 - **Al soltar** sobre un destino no permitido, aparece un aviso breve con el motivo. Por ejemplo: «Esa salida ya está conectada. Elimina la conexión actual para cambiar su destino.»
 - `useBuilderController` vuelve a comprobar la regla antes de crear la arista: nada entra al grafo sin pasar por `checkConnection`.
 - Las conexiones se dibujan como curvas **sin punta de flecha**. La dirección la dan los puntos de salida (derecha) y entrada (izquierda) de cada bloque.
+- La conexión que **vuelve al mismo bloque** se dibuja como un lazo por debajo del bloque (`selfLoopPath`): sale por la derecha, pasa por debajo y entra por la izquierda, sin atravesarlo.
+- En el motor, al volver al Menú la sesión queda activa (`moveToNode(..., "active")`): el Menú se envía otra vez y espera; el mismo mensaje no cuenta dos veces como respuesta.
 
 ## Decisiones
 

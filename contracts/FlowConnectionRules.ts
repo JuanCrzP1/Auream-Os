@@ -1,4 +1,5 @@
 import type { NodeType } from "./FlowSnapshot";
+import { MENU_OUTPUT } from "./MenuConfig";
 
 // ---------------------------------------------------------------------------
 // Reglas de conexión entre bloques, compartidas por el builder (al conectar y
@@ -30,6 +31,23 @@ export const SINGLE_OUTPUT_NODE_TYPES: ReadonlySet<NodeType> = new Set<NodeType>
  * al mismo Menú.
  */
 export const PAUSING_NODE_TYPES: ReadonlySet<NodeType> = new Set<NodeType>(["question", "menu", "delay"]);
+
+/**
+ * Salidas que pueden volver a su PROPIO bloque, como en Leona: «Otra
+ * respuesta» del Menú vuelve a mostrar el menú cuando el cliente escribe algo
+ * que no es una opción. Es la única: el Menú espera la respuesta en cada
+ * vuelta, así que no es un bucle infinito (ver `PAUSING_NODE_TYPES`). Volver
+ * al mismo bloque por cualquier otra salida se rechaza; «Tiempo agotado»
+ * tampoco, porque reenviaría el menú sin fin a quien no contesta.
+ */
+const SELF_LOOP_OUTPUTS: Readonly<Partial<Record<NodeType, ReadonlyArray<string>>>> = {
+  menu: [MENU_OUTPUT.other]
+};
+
+/** ¿Esa salida de ese bloque puede conectarse con el mismo bloque? */
+export function canConnectToItself(nodeType: NodeType, output: string | null | undefined): boolean {
+  return output != null && (SELF_LOOP_OUTPUTS[nodeType]?.includes(output) ?? false);
+}
 
 /** El bloque de entrada siempre tiene una sola salida, sea del tipo que sea. */
 export const ENTRY_MAX_OUTGOING = 1;
