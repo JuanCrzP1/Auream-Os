@@ -50,3 +50,25 @@ export function isRealDate(year: number, month: number, day: number): boolean {
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
+
+/** Reloj de pared de `timezone` en ese instante, con el día de la semana (0 = domingo). Zona inválida → UTC. */
+export function instantToZoned(instant: Date, timezone: string): WallClock & { readonly weekday: number } {
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23"
+    }).formatToParts(instant);
+  } catch {
+    return instantToZoned(instant, "UTC");
+  }
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
+  const clock = { year: get("year"), month: get("month"), day: get("day"), hour: get("hour"), minute: get("minute"), second: get("second") };
+  return { ...clock, weekday: new Date(Date.UTC(clock.year, clock.month - 1, clock.day)).getUTCDay() };
+}

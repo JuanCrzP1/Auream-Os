@@ -10,6 +10,23 @@ import { composeApiApplication, type ApiApplication } from "./bootstrap/composeA
 // En Vercel no se usa: allí la sirve la función `api/index.ts`.
 // ---------------------------------------------------------------------------
 
+/**
+ * Rondas de la cola en el proceso local, una tras otra, sin solaparse. La
+ * ronda dura más que la reserva del trabajador (25 s): si no, no tomaría nada.
+ */
+function startLocalTaskLoop(app: ApiApplication, roundMs = 30_000): void {
+  const loop = async () => {
+    try {
+      await app.tasks.run({ budgetMs: roundMs, waitForUpcoming: true });
+    } catch (error) {
+      console.error("[tareas]", error instanceof Error ? error.message : error);
+    } finally {
+      setTimeout(() => void loop(), 1_000).unref();
+    }
+  };
+  setTimeout(() => void loop(), 2_000).unref();
+}
+
 function start(): void {
   let app: ApiApplication;
 
@@ -27,6 +44,10 @@ function start(): void {
   createServer((request, response) => void app.listener(request, response)).listen(app.config.port, () => {
     console.log(`API escuchando en http://localhost:${app.config.port}`);
   });
+
+  // Fuera de Vercel no hay tarea programada: el servidor local corre él mismo
+  // una ronda de la cola cada pocos segundos (Programador, tiempos de espera).
+  startLocalTaskLoop(app);
 }
 
 start();

@@ -2,7 +2,8 @@ import { NotFoundError } from "../../../platform/observability/errors/NotFoundEr
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 import type { FlowCatalog } from "../../connections/application/ports/FlowCatalog";
 import { conversationKeyFor, WHATSAPP_CHANNEL } from "./HandleInboundMessageService";
-import type { ConversationLock, ConversationLog, FlowRunner, OutboundDelivery, SessionControl } from "./ports/MessagingPorts";
+import type { FlowTurn } from "./FlowTurn";
+import type { ConversationLock, SessionControl } from "./ports/MessagingPorts";
 
 // ---------------------------------------------------------------------------
 // Enviar un flujo a mano desde la bandeja (como en Leona): termina el
@@ -16,9 +17,7 @@ export class StartFlowService {
     private readonly flows: FlowCatalog,
     private readonly lock: ConversationLock,
     private readonly sessions: SessionControl,
-    private readonly runner: FlowRunner,
-    private readonly delivery: OutboundDelivery,
-    private readonly conversations: Pick<ConversationLog, "recordOutbound">,
+    private readonly turn: FlowTurn,
     private readonly now: () => Date = () => new Date()
   ) {}
 
@@ -35,18 +34,19 @@ export class StartFlowService {
     return this.lock.withLock(`${tenantId}:${conversationKey}`, async () => {
       await this.sessions.endLive(tenantId, conversationKey);
       const at = this.now().toISOString();
-      const result = await this.runner.handle({
-        tenantId,
-        flowKey: flow.key,
-        channel: WHATSAPP_CHANNEL,
-        conversationKey,
-        userKey: conversation.phone,
-        messageId: `manual:${conversation.id}:${at}`,
-        payload: { text: "", manual: true },
-        receivedAt: at
-      });
-      const report = await this.delivery.deliver(tenantId, conversation.connectionId, conversation.phone, result.outputMessages);
-      await this.conversations.recordOutbound(tenantId, conversation.id, report.results, { author: "bot", flowKey: flow.key });
+      const { report } = await this.turn.run(
+        { tenantId, connectionId: conversation.connectionId, phone: conversation.phone, conversationKey, flowKey: flow.key, conversationId: conversation.id },
+        {
+          tenantId,
+          flowKey: flow.key,
+          channel: WHATSAPP_CHANNEL,
+          conversationKey,
+          userKey: conversation.phone,
+          messageId: `manual:${conversation.id}:${at}`,
+          payload: { text: "", manual: true },
+          receivedAt: at
+        }
+      );
       return { flowName: flow.name, sent: report.sent, failed: report.results.filter((r) => !r.ok).length };
     });
   }

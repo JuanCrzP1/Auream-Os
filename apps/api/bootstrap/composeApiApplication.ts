@@ -9,6 +9,9 @@ import { composeIntegrationsServices } from "../composition/composeIntegrationsS
 import { composeConnectionsServices } from "../composition/composeConnectionsServices";
 import { composeMediaServices } from "../composition/composeMediaServices";
 import { composeMessagingServices } from "../composition/composeMessagingServices";
+import { composeSchedulingServices } from "../composition/composeSchedulingServices";
+import { FlowTimerTaskHandler } from "../composition/flowTimerAdapters";
+import type { TaskRunner } from "../../../domains/scheduling/application/TaskRunner";
 import { createSqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { TesseractDocumentReader } from "../../../infrastructure/documents/TesseractDocumentReader";
 import { createBackgroundTasks } from "../http/BackgroundTasks";
@@ -30,6 +33,8 @@ import { createApiRequestListener, type ApiRequestListener } from "./createApiSe
 export interface ApiApplication {
   readonly config: ApiConfig;
   readonly listener: ApiRequestListener;
+  /** Trabajador de la cola de tareas (lo despiertan el endpoint interno o `apps/worker`). */
+  readonly tasks: TaskRunner;
 }
 
 export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): ApiApplication {
@@ -50,6 +55,17 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     webhookBaseUrl: config.whatsappWebhookBaseUrl
   });
   const errorLogger = new ErrorLogger(logger);
+  const background = createBackgroundTasks((error) => errorLogger.log(error instanceof Error ? error : new Error(String(error)), {}));
+  // Cola de tareas (FASE C6): primero el programador (lo usan los flujos), después el trabajador.
+  const scheduling = composeSchedulingServices(config, tenancy.sqlClient, background, (task, error) =>
+    logger.warn("tasks.attempt_failed", {
+      taskId: task.id,
+      kind: task.kind,
+      tenantId: task.tenantId,
+      attempt: task.attempts,
+      error: error instanceof Error ? error.message : String(error)
+    })
+  );
   const messagingServices = composeMessagingServices({
     config,
     sql: tenancy.sqlClient,
@@ -59,8 +75,10 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     contacts: contactsServices,
     integrations,
     connections: connectionsServices,
-    documents
+    documents,
+    scheduler: scheduling.scheduler
   });
+  const runner = scheduling.attachHandlers([new FlowTimerTaskHandler(messagingServices.timers)]);
 
   const listener = createApiRequestListener(config, {
     services,
@@ -68,7 +86,17 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     integrationsServices: integrations,
     connectionsServices,
     messagingServices,
-    background: createBackgroundTasks((error) => errorLogger.log(error instanceof Error ? error : new Error(String(error)), {})),
+    background,
+    tasks: {
+      runner,
+      cronSecret: config.tasks.cronSecret,
+      budgetMs: config.tasks.runnerBudgetMs,
+      background,
+      chain: { horizonMs: config.tasks.chainHorizonMs, continueIfSoon: (horizonMs) => scheduling.scheduler.continueIfSoon(horizonMs) },
+      onReport: (report) => {
+        if (report.claimed > 0) logger.info("tasks.round", { ...report });
+      }
+    },
     mediaServices: composeMediaServices(config, tenancy.sqlClient),
     meServices: {
       membershipRepository: tenancy.membershipRepository,
@@ -79,5 +107,5 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     errorLogger
   });
 
-  return { config, listener };
+  return { config, listener, tasks: runner };
 }

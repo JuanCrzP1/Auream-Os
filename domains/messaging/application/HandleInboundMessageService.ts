@@ -1,15 +1,7 @@
 import type { InboundChannelMessage, InboundOutcome } from "../../../contracts/InboundMessageContracts";
 import type { InboundEnvelope } from "../../../contracts/RuntimeContracts";
-import type {
-  ConversationLog,
-  ConversationLock,
-  FlowRunner,
-  InboundContacts,
-  InboundMessageLog,
-  LiveSessions,
-  OutboundDelivery,
-  TriggerRouter
-} from "./ports/MessagingPorts";
+import type { FlowTurn } from "./FlowTurn";
+import type { ConversationLog, ConversationLock, InboundContacts, InboundMessageLog, LiveSessions, TriggerRouter } from "./ports/MessagingPorts";
 
 // ---------------------------------------------------------------------------
 // HandleInboundMessageService — un mensaje de un cliente a un número de la
@@ -20,9 +12,9 @@ import type {
 //   3. contacto: se identifica (o se crea con su nombre de WhatsApp)
 //   4. bandeja: el mensaje queda en su chat; si un asesor pausó el bot, aquí termina
 //   5. flujo: si está dentro de uno, lo continúa; si no, el disparador decide
-//   6. motor: corre el flujo con la sesión guardada
-//   7. respuestas: se envían por el mismo número y quedan en el chat
-//   8. registro: queda qué pasó (flujo, enviados, error)
+//   6. turno (`FlowTurn`): el motor corre el flujo, las respuestas salen por
+//      el mismo número, quedan en el chat y se programa su despertador
+//   7. registro: queda qué pasó (flujo, enviados, error)
 //
 // Cada paso es un puerto: este servicio solo coordina. Nunca lanza: un fallo
 // queda en el registro y no tumba al resto.
@@ -49,9 +41,8 @@ export class HandleInboundMessageService {
     private readonly contacts: InboundContacts,
     private readonly sessions: LiveSessions,
     private readonly triggers: TriggerRouter,
-    private readonly runner: FlowRunner,
-    private readonly delivery: OutboundDelivery,
-    private readonly conversations: ConversationLog
+    private readonly turn: FlowTurn,
+    private readonly conversations: Pick<ConversationLog, "recordInbound">
   ) {}
 
   public async execute(tenantId: string, message: InboundChannelMessage): Promise<InboundResult> {
@@ -76,9 +67,10 @@ export class HandleInboundMessageService {
         const flowKey = liveFlow ?? route?.flowKey ?? null;
         if (!flowKey) return finish("no_trigger");
 
-        const result = await this.runner.handle(toEnvelope(tenantId, flowKey, conversationKey, message));
-        const report = await this.delivery.deliver(tenantId, message.connectionId, message.phone, result.outputMessages);
-        await this.conversations.recordOutbound(tenantId, conversation.id, report.results, { author: "bot", flowKey });
+        const { result, report } = await this.turn.run(
+          { tenantId, connectionId: message.connectionId, phone: message.phone, conversationKey, flowKey, conversationId: conversation.id },
+          toEnvelope(tenantId, flowKey, conversationKey, message)
+        );
         return finish(liveFlow ? "flow_continued" : "flow_started", {
           flowKey,
           sent: report.sent,

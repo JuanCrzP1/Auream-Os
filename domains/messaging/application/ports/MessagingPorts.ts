@@ -1,6 +1,7 @@
 import type { InboundChannelMessage, InboundOutcome } from "../../../../contracts/InboundMessageContracts";
 import type { InboundTriggerFacts } from "../../../../contracts/ConnectionTriggerContracts";
 import type { OutboundMessage } from "../../../../contracts/RuntimeContracts";
+import type { FlowRunResult } from "../../../../contracts/FlowTimerContracts";
 
 // ---------------------------------------------------------------------------
 // Lo que la mensajería entrante necesita del resto de la plataforma. Cada
@@ -65,6 +66,8 @@ export interface OutboundDelivery {
 /** El chat de la bandeja: guarda cada mensaje y dice si el bot lo atiende. */
 export interface ConversationLog {
   recordInbound(tenantId: string, message: InboundChannelMessage, contactId: string | null): Promise<{ readonly id: string; readonly botEnabled: boolean }>;
+  /** El chat de ese cliente en ese número, si existe (para los despertadores). */
+  findChat(tenantId: string, connectionId: string, phone: string): Promise<{ readonly id: string; readonly botEnabled: boolean; readonly connectionDeleted: boolean } | null>;
   recordOutbound(
     tenantId: string,
     conversationId: string,
@@ -76,4 +79,22 @@ export interface ConversationLog {
 /** Terminar el recorrido en curso de una conversación (al enviar otro flujo a mano). */
 export interface SessionControl {
   endLive(tenantId: string, conversationKey: string): Promise<void>;
+}
+
+/** A quién pertenece un turno de flujo: la conversación y el flujo. */
+export interface FlowTurnTarget {
+  readonly tenantId: string;
+  readonly connectionId: string;
+  readonly phone: string;
+  readonly conversationKey: string;
+  readonly flowKey: string;
+}
+
+/**
+ * Despertadores de los flujos (FASE C6): tras cada turno, deja programado el
+ * que pidió el motor (Programador, tiempo máximo de una espera, pausa larga)
+ * y cancela los que ya no aplican. Lo cumple la cola de tareas.
+ */
+export interface FlowTimers {
+  afterTurn(target: FlowTurnTarget, result: FlowRunResult): Promise<void>;
 }

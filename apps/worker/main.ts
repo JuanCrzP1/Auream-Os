@@ -1,17 +1,39 @@
+import { loadEnvFile } from "../api/config/loadEnvFile";
+import { ApiConfigError } from "../api/config/loadApiConfig";
+import { composeApiApplication } from "../api/bootstrap/composeApiApplication";
+
 // ---------------------------------------------------------------------------
-// Worker — entrypoint.
+// Worker — trabajador de la cola de tareas (FASE C6) como proceso aparte.
 //
-// Estado: NO IMPLEMENTADO. Este proceso todavía no procesa nada.
-//
-// Cuando exista `infrastructure/queue`, el worker será responsable de reanudar
-// las sesiones en estado `delayed` y de reintentar entregas fallidas. Hoy no
-// hay cola, así que un flow que llega a un nodo de tipo `delay` queda detenido
-// y nada lo retoma.
-//
-// No se anuncian capacidades que no existen: arrancar este proceso no habilita
-// delays ni reintentos.
+// En Vercel no se usa: allí lo despiertan la tarea programada y la propia API
+// (`/internal/tasks/run`). Sirve para un servidor propio o para correr la cola
+// sin la API. Usa la MISMA composición que la API: los mismos manejadores,
+// el mismo programador, la misma base. Rondas seguidas, sin solaparse; se
+// detiene limpio con Ctrl+C.
 // ---------------------------------------------------------------------------
 
-console.warn(
-  "[worker] NO IMPLEMENTADO: no hay cola configurada. Este proceso no reanuda delays ni reintenta entregas."
-);
+async function main(): Promise<void> {
+  loadEnvFile();
+  const app = composeApiApplication();
+  let stopping = false;
+  process.on("SIGINT", () => (stopping = true));
+  process.on("SIGTERM", () => (stopping = true));
+  console.log("[worker] cola de tareas en marcha");
+
+  while (!stopping) {
+    try {
+      const report = await app.tasks.run({ budgetMs: 50_000, waitForUpcoming: true });
+      if (report.claimed > 0) console.log("[worker]", JSON.stringify(report));
+    } catch (error) {
+      console.error("[worker]", error instanceof Error ? error.message : error);
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+    }
+  }
+  console.log("[worker] detenido");
+  process.exit(0);
+}
+
+main().catch((error) => {
+  console.error(`[FATAL] ${error instanceof ApiConfigError ? error.message : String(error)}`);
+  process.exit(1);
+});

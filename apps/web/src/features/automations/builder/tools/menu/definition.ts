@@ -8,7 +8,7 @@ import { validateMenu } from "./validateMenu";
  * «Otra respuesta» y, con límite, «Tiempo agotado».
  *
  * Se ejecuta (`MenuNodeHandler`): envía el menú, reconoce la opción por botón,
- * número o texto y sale por ella. «Tiempo agotado» llega con la cola (C6).
+ * número o texto y sale por ella. «Tiempo agotado» lo dispara la cola de tareas (C6).
  */
 export const menuTool: ToolDefinition = {
   type: "menu",

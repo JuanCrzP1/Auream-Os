@@ -20,14 +20,11 @@ import { ConversationTemplates } from "../../templates/ConversationTemplates";
 //   2ª  llega la respuesta   → se guarda en contexto si hay campo destino, se
 //       reacciona si se configuró, y el flujo sigue.
 //
-// LO QUE ESTE HANDLER NO PUEDE HACER HOY, Y NO FINGE:
+//   vence   con tiempo máximo, la 1ª pasada declara `waitDeadlineAt`; el motor
+//           lo devuelve como despertador y la cola de tareas (FASE C6) lo
+//           dispara: llega `input.timer = "timeout"` y sale por «Tiempo agotado».
 //
-//   · Vencer la espera. `config.timeout` se calcula y se DECLARA en
-//     `nodeResult.waitTimeoutMs` / `waitDeadlineAt`, igual que `DelayNodeHandler`
-//     declara su `resumeAt`, pero nada lo dispara: no hay cola —`apps/worker`
-//     lo dice en su propia cabecera— y una sesión en `waiting_input` solo
-//     despierta con un mensaje del cliente. El dato queda listo para el día que
-//     exista el planificador; el comportamiento, no.
+// LO QUE ESTE HANDLER NO PUEDE HACER HOY, Y NO FINGE:
 //
 //   · Agrupar mensajes. Exige retener el primer mensaje unos segundos por si
 //     llegan más, y esa capa de entrada no existe: el loop recibe UN envelope y
@@ -68,6 +65,22 @@ export class QuestionNodeHandler implements NodeHandler {
       ...(config.groupMessages ? { groupMessages: true } : {})
     };
 
+    // Venció el tiempo máximo sin respuesta. Sin límite configurado no hay
+    // vencimiento posible: un despertador así (de una versión anterior) no la saca.
+    if (input.timer === "timeout") {
+      if (timeoutMs === null) {
+        return { executionStatus: "waiting_input", outputMessages: [], contextPatch: {}, nodeResult: declaracionDeEspera, domainEvents: [`question_timeout_ignored:${node.id}`] };
+      }
+      return {
+        executionStatus: "success",
+        output: WAIT_RESPONSE_OUTPUT.timeout,
+        outputMessages: [],
+        contextPatch: {},
+        nodeResult: { timedOut: true, ...declaracionDeEspera },
+        domainEvents: [`question_timed_out:${node.id}`]
+      };
+    }
+
     if (input.isWaitingInput && answer !== null) {
       // Guardar la respuesta en contexto es opcional y lo decide `config.targetKey`.
       // Esta capacidad venía del retirado nodo `capture`: una pregunta que no
@@ -90,8 +103,7 @@ export class QuestionNodeHandler implements NodeHandler {
 
       return {
         executionStatus: "success",
-        // Sale por «Respuesta» (C14). «Tiempo agotado» lo dispara el
-        // vencimiento de la espera cuando exista la cola de tareas (C6).
+        // Sale por «Respuesta» (C14); «Tiempo agotado» lo dispara el despertador (C6).
         output: WAIT_RESPONSE_OUTPUT.answer,
         outputMessages: reaccion,
         contextPatch: contextKey ? { [contextKey]: answer } : {},

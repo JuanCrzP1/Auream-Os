@@ -122,6 +122,12 @@ export class ConversationRecorder {
     return conversation;
   }
 
+  /** El chat de ese cliente en ese número (para los despertadores de los flujos). */
+  public async findChat(tenantId: string, connectionId: string, phone: string) {
+    const conversation = await this.repository.findByPhone(tenantId, connectionId, phone);
+    return conversation ? { id: conversation.id, botEnabled: conversation.botEnabled, connectionDeleted: conversation.connectionDeleted } : null;
+  }
+
   /** Guarda lo que salió (o no) hacia el cliente: del bot o de un asesor. */
   public async recordOutbound(
     tenantId: string,

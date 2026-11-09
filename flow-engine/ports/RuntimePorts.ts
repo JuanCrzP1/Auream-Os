@@ -24,6 +24,8 @@ import type {
  */
 export interface SessionStore {
   getOrCreateActive(tenantId: string, envelope: InboundEnvelope, snapshot: FlowSnapshot): Promise<Session>;
+  /** La sesión EN CURSO de esa conversación en ese flujo, sin crear ninguna (despertadores). */
+  findLive(tenantId: string, conversationKey: string, flowId: string): Promise<Session | null>;
   moveToNode(session: Session, nextNodeId: string, status: SessionStatus): Promise<Session>;
   updateStatus(session: Session, status: SessionStatus): Promise<Session>;
 }

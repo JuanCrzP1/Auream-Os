@@ -36,6 +36,11 @@ export class InMemoryConversationRepository implements ConversationRepository {
     return row && row.tenantId === tenantId ? { ...row, connectionDeleted: this.deletedConnections.has(row.connectionId) } : null;
   }
 
+  public async findByPhone(tenantId: string, connectionId: string, phone: string): Promise<Conversation | null> {
+    const row = [...this.rows.values()].find((item) => item.tenantId === tenantId && item.connectionId === connectionId && item.phone === phone);
+    return row ? { ...row, connectionDeleted: this.deletedConnections.has(row.connectionId) } : null;
+  }
+
   public async append(message: StoredMessage): Promise<void> {
     this.stored.push(message);
     const row = this.rows.get(message.conversationId);

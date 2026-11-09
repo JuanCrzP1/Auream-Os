@@ -72,7 +72,7 @@ Los nombres de directorio coinciden exactamente con los valores del tipo `NodeTy
 | `condition` | `IMPLEMENTADO` (C10) — `evaluateCondition`: día, hora y fecha en la zona del negocio (`RuntimeInput.timezone`), ventana de 24 h, datos y campos del contacto; «todas»/«cualquiera». Las etiquetas se leen del contacto real (Contactos). Atención, asesor y variables globales se reportan como no disponibles (regla no cumplida) hasta que existan Conversaciones. Sale por `true`/`false`. |
 | `menu` | `IMPLEMENTADO` (C10) — encabezado, mensaje y pie con variables; envía el menú (texto numerado + `OutboundMessage.interactive` para botones/lista nativos) y espera; reconoce la opción por id nativo, número o texto (`matchMenuReply`) y sale por ella o por `menu-other`. |
 | `distributor` | `IMPLEMENTADO` (C10) — turnos por cuenta, flujo y bloque con el puerto `RoundRobinCounter` (memoria en simulación; `SqlRoundRobinCounter` atómico en producción). |
-| `delay` | `PARCIAL` — pausa el flujo (`delayed`); reanudarlo es de la cola de tareas (C6). |
+| `delay` | `REAL` — calcula cuándo seguir (espera, fecha y horario en la zona del negocio: `resolveResumeAt`), deja la sesión `delayed` y la cola de tareas la despierta a su hora (C6, [task-queue.md](task-queue.md)). |
 | `tags` | `IMPLEMENTADO` (C10) — resuelve (o crea) el contacto que escribe por canal e identificador y le agrega o quita etiquetas a través del puerto `ContactDirectory`; al agregar, crea en el catálogo las que falten. Salida única. |
 | `integration` | `IMPLEMENTADO` (C10) — petición HTTP con variables codificadas según dónde caen (URL, cabecera, JSON) vía el puerto `HttpRequester`; 2xx sale por `success` y guarda los datos mapeados en el contacto (`ContactDirectory.setFields`) y en la conversación; cualquier otra cosa sale por `failure` con el motivo. El resultado no incluye cabeceras ni cuerpo enviados (pueden llevar credenciales). |
 | `ai` | `IMPLEMENTADO` (C9/C10) — `runAiStep`: instrucciones y mensaje con variables, memoria de la conversación (en la sesión, últimos N intercambios), clasificación de intención (`{intent, reply}` en JSON; una salida por intención + respaldo + error), envío opcional de la respuesta y guardado en variable. Con el puerto `AiGateway`: el motor nunca ve una clave. Archivos (audio/imagen/PDF): se declaran pendientes hasta que el canal los entregue (FASE D). |
@@ -120,7 +120,7 @@ uazapi ─POST /webhooks/uazapi─▶ routeWhatsAppWebhooks  (verifica el token;
 - Una sesión por conversación (`<tenant>:<conexión>:<teléfono>`). Si el flujo terminó o falló, el siguiente mensaje empieza uno nuevo (`SessionService.getOrCreateActive`).
 - Mientras un cliente está dentro de un flujo, sus mensajes lo continúan: los disparadores no lo interrumpen.
 - El candado de conversación usa un pool de conexiones propio: nunca compite con el trabajo.
-- Pendiente (C6): Programador, tiempo agotado de «Esperar respuesta» y pausas de más de 20 s necesitan la cola de tareas.
+- Despertadores (C6, [task-queue.md](task-queue.md)): Programador, «Tiempo agotado» de Esperar respuesta y Menú, y pausas que no caben en un turno (más de 20 s sumadas) los retoma la cola de tareas.
 
 ### Comprobantes (lectura sin IA)
 

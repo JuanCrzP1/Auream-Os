@@ -1,4 +1,5 @@
-import type { InboundEnvelope, NodeExecutionResult } from "../../contracts/RuntimeContracts";
+import type { InboundEnvelope } from "../../contracts/RuntimeContracts";
+import type { FlowRunResult } from "../../contracts/FlowTimerContracts";
 
 // ---------------------------------------------------------------------------
 // FlowExecutor
@@ -14,5 +15,6 @@ import type { InboundEnvelope, NodeExecutionResult } from "../../contracts/Runti
 // ---------------------------------------------------------------------------
 
 export interface FlowExecutor {
-  handle(envelope: InboundEnvelope): Promise<NodeExecutionResult>;
+  /** Un turno: avanza la sesión con el mensaje (o el despertador) y dice dónde quedó y cuándo despertarla. */
+  handle(envelope: InboundEnvelope): Promise<FlowRunResult>;
 }

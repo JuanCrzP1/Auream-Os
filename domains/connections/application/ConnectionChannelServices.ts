@@ -16,7 +16,11 @@ import { MessengerError, type WhatsAppMessengers } from "./ports/WhatsAppMesseng
 // La credencial de la sesión solo se descifra aquí, en memoria.
 // ---------------------------------------------------------------------------
 
-/** Pausa más larga que se espera en línea; más, necesita la cola de tareas (C6). */
+/**
+ * Pausa más larga que se espera en línea. El motor ya reparte las pausas para
+ * que un turno no pase de 20 s (las demás las retoma la cola de tareas, C6):
+ * esto es solo un tope de seguridad.
+ */
 export const MAX_INLINE_PAUSE_MS = 20_000;
 
 export type Sleep = (ms: number) => Promise<void>;
@@ -72,7 +76,7 @@ export class ConnectionChannelServices {
     for (const message of messages) {
       if (message.kind === "pause") {
         const wait = message.delayMs ?? 0;
-        if (wait > MAX_INLINE_PAUSE_MS) failures.push(`Pausa de ${Math.round(wait / 1000)} s acortada a ${MAX_INLINE_PAUSE_MS / 1000} s (las pausas largas llegan con la cola de tareas).`);
+        if (wait > MAX_INLINE_PAUSE_MS) failures.push(`Pausa de ${Math.round(wait / 1000)} s acortada a ${MAX_INLINE_PAUSE_MS / 1000} s.`);
         await this.sleep(Math.min(wait, MAX_INLINE_PAUSE_MS));
         continue;
       }

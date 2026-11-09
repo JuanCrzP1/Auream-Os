@@ -25,6 +25,8 @@ export interface ConversationRepository {
   /** El chat de ese cliente en ese número; si no existe, se crea. */
   findOrCreate(tenantId: string, connectionId: string, phone: string, contactId: string | null): Promise<Conversation>;
   findById(tenantId: string, id: string): Promise<Conversation | null>;
+  /** El chat de ese cliente en ese número, sin crearlo. */
+  findByPhone(tenantId: string, connectionId: string, phone: string): Promise<Conversation | null>;
   /** Guarda el mensaje y actualiza el chat (último mensaje y no leídos) en una sola operación. */
   append(message: StoredMessage): Promise<void>;
   setBotEnabled(tenantId: string, id: string, enabled: boolean): Promise<void>;

@@ -1,6 +1,7 @@
 import type { FlowSnapshot } from "../../contracts/FlowSnapshot";
-import type { InboundEnvelope, NodeExecutionResult, RuntimeInput } from "../../contracts/RuntimeContracts";
-import type { Session } from "../../contracts/RuntimeContracts";
+import type { InboundEnvelope, NodeExecutionResult, RuntimeInput, Session } from "../../contracts/RuntimeContracts";
+import { WAKE_CONTEXT_KEY, timerOf, type FlowRunResult } from "../../contracts/FlowTimerContracts";
+import { pausedMs, stateOf, wakeUpOf } from "./turnState";
 
 import type { SessionStore, ContextWriter } from "../ports/RuntimePorts";
 import { NodeRuntime } from "../nodes/NodeRuntime";
@@ -18,6 +19,22 @@ import { ExecutionEventTracker } from "./ExecutionEventTracker";
 //
 // Diseño inmutable: `session` es una variable local que se REASIGNA en cada
 // transición. Nunca se muta el objeto original.
+//
+// DESPERTADORES (FASE C6). El motor no espera: un bloque que debe seguir más
+// tarde lo declara (`resumeAt` de Programador o de una pausa larga del
+// Mensaje, `waitDeadlineAt` de Esperar respuesta y Menú) y el turno devuelve
+// `wakeUp` para que quien lo ejecuta lo programe. Al vencer llega un envelope
+// con `payload.timer`:
+//
+//   · vale solo si la sesión sigue EXACTAMENTE donde lo pidió (mismo bloque y
+//     misma revisión); si avanzó, es un despertador vencido y no toca nada.
+//   · el bloque lo recibe en `input.timer` y decide (seguir, «Tiempo agotado»).
+//
+// Mientras la sesión está `delayed`, un mensaje del cliente no la mueve: el
+// Programador sigue esperando su hora (no se reinicia ni se duplica). La
+// sesión recuerda esa hora (`WAKE_CONTEXT_KEY`): si un mensaje llega cuando ya
+// pasó (el despertador no corrió, p. ej. con el bot pausado), el flujo sigue
+// ahí mismo. Nada se queda atascado si se pierde un despertador.
 // ---------------------------------------------------------------------------
 
 /** Zona por defecto si quien ejecuta no indica la del negocio. */
@@ -42,10 +59,35 @@ export class ExecutionLoop {
     initialSession: Session,
     envelope: InboundEnvelope,
     options: { readonly timezone?: string } = {}
-  ): Promise<NodeExecutionResult> {
+  ): Promise<FlowRunResult> {
     let session = initialSession;
     const now = this.clock().toISOString();
     const timezone = options.timezone ?? DEFAULT_TIMEZONE;
+    const timer = timerOf(envelope);
+    const untouched = (event: string): FlowRunResult => ({
+      executionStatus: session.status === "active" ? "success" : session.status === "paused" ? "waiting_input" : session.status,
+      outputMessages: [],
+      contextPatch: {},
+      nodeResult: {},
+      domainEvents: [event],
+      session: stateOf(session),
+      untouched: true
+    });
+    const overdueWake = (): boolean => {
+      const wake = session.context[WAKE_CONTEXT_KEY] as { nodeId?: unknown; at?: unknown } | undefined;
+      return wake?.nodeId === session.currentNodeId && typeof wake.at === "string" && Date.parse(wake.at) <= Date.parse(now);
+    };
+    // Un mensaje con el Programador ya vencido lo retoma, igual que su despertador.
+    const resumeOverdue = !timer && session.status === "delayed" && overdueWake();
+
+    if (timer) {
+      const expected = timer.reason === "resume" ? "delayed" : "waiting_input";
+      if (timer.nodeId !== session.currentNodeId || timer.revision !== session.revision || session.status !== expected) {
+        return untouched(`timer_stale:${timer.nodeId}:${timer.revision}`);
+      }
+    } else if (session.status === "delayed" && !resumeOverdue) {
+      return untouched(`delayed_message_ignored:${session.currentNodeId}`);
+    }
 
     const aggregate = {
       executionStatus: "success" as NodeExecutionResult["executionStatus"],
@@ -55,11 +97,15 @@ export class ExecutionLoop {
       domainEvents: [] as string[]
     };
 
-    const finish = async (status: "completed" | "failed" | "waiting_input" | "delayed", event?: string) => {
+    const finish = async (status: "completed" | "failed" | "waiting_input" | "delayed", event?: string, lastResult?: Readonly<Record<string, unknown>>): Promise<FlowRunResult> => {
+      const pending = lastResult ? wakeUpOf(status, lastResult, session) : undefined;
+      if (pending) session = this.contextService.applyPatch(session, { [WAKE_CONTEXT_KEY]: { reason: pending.reason, at: pending.at, nodeId: pending.nodeId } });
       session = await this.sessionService.updateStatus(session, status);
       aggregate.executionStatus = status;
       if (event) aggregate.domainEvents.push(event);
-      return aggregate;
+      // La revisión del despertador es la que quedó guardada.
+      const wakeUp = pending ? { ...pending, revision: session.revision } : undefined;
+      return { ...aggregate, session: stateOf(session), ...(wakeUp ? { wakeUp } : {}) };
     };
 
     for (let hop = 0; hop < ExecutionLoop.MAX_HOPS; hop += 1) {
@@ -74,7 +120,10 @@ export class ExecutionLoop {
         sessionContext: session.context,
         isWaitingInput: session.status === "waiting_input",
         now,
-        timezone
+        timezone,
+        // El despertador es solo para el bloque que lo pidió (el primero del turno).
+        ...(hop === 0 && (timer || resumeOverdue) ? { timer: timer ? timer.reason : ("resume" as const) } : {}),
+        inlinePauseUsedMs: pausedMs(aggregate.outputMessages)
       };
 
       const execution = await this.nodeRuntime.execute(currentNode, runtimeInput, session);
@@ -89,7 +138,7 @@ export class ExecutionLoop {
       this.eventTracker.trackNodeExecuted(session, currentNode.id, execution.executionStatus);
 
       if (execution.executionStatus !== "success") {
-        return finish(execution.executionStatus);
+        return finish(execution.executionStatus, undefined, execution.nodeResult);
       }
 
       const outgoingEdges = snapshot.edgesBySource[currentNode.id] ?? [];
@@ -120,7 +169,8 @@ export class ExecutionLoop {
       outputMessages: aggregate.outputMessages,
       contextPatch: aggregate.contextPatch,
       nodeResult: aggregate.nodeResult,
-      domainEvents: [...aggregate.domainEvents, "max_hops_exceeded"]
+      domainEvents: [...aggregate.domainEvents, "max_hops_exceeded"],
+      session: stateOf(session)
     };
   }
 }

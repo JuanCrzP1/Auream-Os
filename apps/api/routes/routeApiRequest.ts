@@ -9,6 +9,7 @@ import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
 import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
+import { routeInternalTasks, type InternalTasksDependencies } from "./routeInternalTasks";
 import { routeConversationsRequest } from "./routeConversationsRequest";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
 import type { MessagingServices } from "../composition/composeMessagingServices";
@@ -42,6 +43,8 @@ export interface ApiRouterDependencies {
   readonly messagingServices?: MessagingServices;
   /** Trabajo después de responder (procesar mensajes). */
   readonly background?: BackgroundTasks;
+  /** Trabajador de la cola de tareas (`/internal/tasks/run`, con `CRON_SECRET`). */
+  readonly tasks?: InternalTasksDependencies;
   /** `null` si no hay almacén de medios configurado. */
   readonly mediaServices: MediaServices | null;
   readonly authService: AuthService;
@@ -64,6 +67,9 @@ export async function routeApiRequest(
 
   // Avisos de los proveedores de WhatsApp: los autentica el token de la instancia, no una sesión.
   if (await routeWhatsAppWebhooks(request, response, url, connectionsServices, dependencies.messagingServices, dependencies.background)) return;
+
+  // Trabajador de la cola: lo autoriza `CRON_SECRET`, no una sesión.
+  if (await routeInternalTasks(request, response, url, dependencies.tasks)) return;
 
   // Almacén local de medios (solo desarrollo): autoriza el permiso firmado, no la sesión.
   if (await routeLocalMediaRequest(request, response, url, mediaServices)) return;

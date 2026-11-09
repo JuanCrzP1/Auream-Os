@@ -67,6 +67,12 @@ export class SessionService {
     return session;
   }
 
+  /** La sesión en curso de la conversación en ese flujo; `null` si terminó, es de otro flujo o no existe. */
+  public async findLive(tenantId: string, conversationKey: string, flowId: string): Promise<Session | null> {
+    const existing = await this.repository.find(sessionIdFor(tenantId, conversationKey));
+    return existing && existing.flowId === flowId && LIVE_SESSION_STATUSES.includes(existing.status) ? existing : null;
+  }
+
   public async moveToNode(session: Session, nextNodeId: string, status: SessionStatus): Promise<Session> {
     const next: Session = {
       ...session,

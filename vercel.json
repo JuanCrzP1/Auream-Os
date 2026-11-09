@@ -11,6 +11,9 @@
       "includeFiles": "{node_modules/tesseract.js/**,node_modules/tesseract.js-core/index.js,node_modules/tesseract.js-core/package.json,node_modules/tesseract.js-core/*lstm*,node_modules/@tesseract.js-data/spa/package.json,node_modules/@tesseract.js-data/spa/4.0.0_best_int/**}"
     }
   },
+  "crons": [
+    { "path": "/api/internal/tasks/run", "schedule": "0 11 * * *" }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }

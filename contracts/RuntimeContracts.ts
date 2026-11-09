@@ -1,3 +1,5 @@
+import type { FlowTimerReason } from "./FlowTimerContracts";
+
 /**
  * Contratos del runtime de ejecución.
  *
@@ -139,7 +141,18 @@ export interface RuntimeInput {
   readonly now: string;
   /** Zona horaria IANA del negocio (ver `TenantContext.timezone`). */
   readonly timezone: string;
+  /**
+   * El bloque se ejecuta porque venció su despertador (FASE C6), no por un
+   * mensaje: el Programador sigue, una espera sale por «Tiempo agotado», un
+   * Mensaje retoma tras una pausa larga. Solo llega al bloque que lo pidió.
+   */
+  readonly timer?: FlowTimerReason;
+  /** Pausas ya acumuladas en este turno (ms): las que no caben esperan con la cola. */
+  readonly inlinePauseUsedMs?: number;
 }
+
+// Despertadores de los flujos (FASE C6): `contracts/FlowTimerContracts.ts`.
+
 
 // ---------------------------------------------------------------------------
 // La entidad Conversation NO vive aquí.

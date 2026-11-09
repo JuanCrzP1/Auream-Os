@@ -24,6 +24,10 @@ import { DefaultTimezoneTenantResolver } from "../../../platform/tenancy/applica
 import { HandleInboundMessageService } from "../../../domains/messaging/application/HandleInboundMessageService";
 import { ConnectionTriggerRouter, DirectoryInboundContacts, RepositorySessionControl, SessionLiveSessions } from "../../../domains/messaging/application/adapters";
 import { StartFlowService } from "../../../domains/messaging/application/StartFlowService";
+import { FlowTurn } from "../../../domains/messaging/application/FlowTurn";
+import { FlowTimerService } from "../../../domains/messaging/application/FlowTimerService";
+import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
+import { SchedulerFlowTimers } from "./flowTimerAdapters";
 import { ConversationInbox, ConversationRecorder } from "../../../domains/conversations/application/ConversationServices";
 import { SqlConversationRepository } from "../../../infrastructure/persistence/sql/SqlConversationRepository";
 
@@ -37,9 +41,12 @@ import { SqlConversationRepository } from "../../../infrastructure/persistence/s
 // ---------------------------------------------------------------------------
 
 export interface MessagingServices {
-  readonly inbound: HandleInboundMessageService;
+  /** Mensajes entrantes (`HandleInboundMessageService`, más la revisión de despertadores vencidos). */
+  readonly inbound: Pick<HandleInboundMessageService, "execute">;
   /** La bandeja de Conversaciones (lista y filtros, hilo, responder, pausar el bot, etiquetar, enviar flujos). */
   readonly conversations: ConversationInbox;
+  /** Despertadores vencidos de los flujos (los ejecuta la cola de tareas). */
+  readonly timers: FlowTimerService;
 }
 
 export interface MessagingDependencies {
@@ -52,6 +59,8 @@ export interface MessagingDependencies {
   readonly integrations: IntegrationsServices;
   readonly connections: ConnectionsServices;
   readonly documents: DocumentTextReader;
+  /** Cola de tareas: los despertadores de los flujos (Programador, tiempos de espera, pausas largas). */
+  readonly scheduler: TaskScheduler;
 }
 
 export function composeMessagingServices(deps: MessagingDependencies): MessagingServices {
@@ -81,19 +90,30 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
   const conversations = new SqlConversationRepository(deps.sql);
   const recorder = new ConversationRecorder(conversations);
   const delivery = deps.connections.channel;
-  const launcher = new StartFlowService(deps.connections.flows, lock, new RepositorySessionControl(sessionRepository), engine, delivery, recorder);
+  // Un solo «turno de flujo» para los tres orígenes: mensaje, envío a mano y despertador.
+  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(deps.scheduler));
+  const launcher = new StartFlowService(deps.connections.flows, lock, new RepositorySessionControl(sessionRepository), turn);
 
-  return {
-    inbound: new HandleInboundMessageService(
+  const inbound = new HandleInboundMessageService(
       new SqlInboundMessageLog(deps.sql),
       lock,
       new DirectoryInboundContacts(deps.contacts.directory),
       new SessionLiveSessions(sessionRepository, deps.connections.flows),
       new ConnectionTriggerRouter(deps.connections.triggers),
-      engine,
-      delivery,
+      turn,
       recorder
-    ),
+    );
+
+  return {
+    // Cada mensaje entrante revisa, de paso, si quedaron despertadores vencidos.
+    inbound: {
+      execute: async (tenantId, message) => {
+        const result = await inbound.execute(tenantId, message);
+        await deps.scheduler.nudgeIfDue();
+        return result;
+      }
+    },
+    timers: new FlowTimerService(lock, recorder, turn),
     conversations: new ConversationInbox(conversations, recorder, delivery, launcher, {
       // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).
       setLabels: async (tenantId, contactId, labelIds) => {

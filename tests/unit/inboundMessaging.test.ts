@@ -25,6 +25,12 @@ import { ConversationInbox, ConversationRecorder } from "../../domains/conversat
 import { InMemoryConversationRepository } from "../../infrastructure/persistence/memory/InMemoryConversationRepository.js";
 import { StartFlowService } from "../../domains/messaging/application/StartFlowService.js";
 import { RepositorySessionControl } from "../../domains/messaging/application/adapters.js";
+import { FlowTurn } from "../../domains/messaging/application/FlowTurn.js";
+import { FlowTimerService } from "../../domains/messaging/application/FlowTimerService.js";
+import { TaskScheduler } from "../../domains/scheduling/application/TaskScheduler.js";
+import { TaskRunner } from "../../domains/scheduling/application/TaskRunner.js";
+import { InMemoryTaskRepository } from "../../infrastructure/persistence/memory/InMemoryTaskRepository.js";
+import { FlowTimerTaskHandler, SchedulerFlowTimers } from "../../apps/api/composition/flowTimerAdapters.js";
 
 // ---------------------------------------------------------------------------
 // Mensajería entrante de punta a punta con el motor REAL (en memoria): un
@@ -56,17 +62,20 @@ const FLOW: FlowSnapshot = {
   edgesBySource: { start: [edge("start", "hola")], hola: [edge("hola", "pregunta")], pregunta: [edge("pregunta", "gracias", "respuesta")] }
 } as unknown as FlowSnapshot;
 
-async function setup() {
+async function setup(options: { readonly flow?: FlowSnapshot } = {}) {
+  // Reloj controlado: los despertadores se prueban adelantando el tiempo.
+  const clock = { ms: Date.parse("2026-11-09T12:00:00.000Z") };
+  const now = () => new Date(clock.ms);
   const sessionsRepo = new InMemorySessionRepository();
   const sessions = new SessionService(sessionsRepo);
   const registry = new InMemoryFlowRegistry();
-  await registry.publish(FLOW);
+  await registry.publish(options.flow ?? FLOW);
   const deps = simulationDependencies();
   const engine = new ExecutionOrchestrator(
     new DefaultTimezoneTenantResolver("America/Bogota"),
     registry,
     sessions,
-    new ExecutionLoop(sessions, new ContextService(), composeNodeRuntime(deps), new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService()))
+    new ExecutionLoop(sessions, new ContextService(), composeNodeRuntime(deps), new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService()), now)
   );
 
   const connections = new InMemoryConnectionRepository();
@@ -87,14 +96,19 @@ async function setup() {
   const conversations = new InMemoryConversationRepository();
   const recorder = new ConversationRecorder(conversations);
   const lock = new InMemoryConversationLock();
+  // Cola de tareas en memoria con el mismo reloj (despertadores de los flujos).
+  const tasks = new InMemoryTaskRepository();
+  const scheduler = new TaskScheduler(tasks, { kick: () => undefined }, { now });
+  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(scheduler));
+  const timers = new FlowTimerService(lock, recorder, turn, now);
+  const runner = new TaskRunner(tasks, [new FlowTimerTaskHandler(timers)], { reserveMs: 0 }, { now }, async () => undefined);
   const service = new HandleInboundMessageService(
     log,
     lock,
     new DirectoryInboundContacts(deps.contacts as never),
     new SessionLiveSessions(sessionsRepo, flows),
     new ConnectionTriggerRouter(triggers),
-    engine,
-    delivery,
+    turn,
     recorder
   );
   // Etiquetar = etiquetar al contacto; aquí el catálogo es fijo y se guarda en el repositorio en memoria.
@@ -110,15 +124,21 @@ async function setup() {
     conversations,
     recorder,
     delivery,
-    new StartFlowService(flows, lock, new RepositorySessionControl(sessionsRepo), engine, delivery, recorder),
+    new StartFlowService(flows, lock, new RepositorySessionControl(sessionsRepo), turn, now),
     labeler
   );
   let n = 0;
   const message = (text: string, over: Partial<InboundChannelMessage> = {}): InboundChannelMessage => ({
     connectionId: connection.id, providerMessageId: `m${++n}`, phone: "573001112233", senderName: "Laura Gómez", kind: "text",
-    text, replyId: null, media: null, fromAd: false, providerType: "Conversation", sentAt: "2026-11-09T12:00:00.000Z", ...over
+    text, replyId: null, media: null, fromAd: false, providerType: "Conversation", sentAt: now().toISOString(), ...over
   });
-  return { service, sent, log, message, sessionsRepo, connectionId: connection.id, delivery, conversations, inbox, labeled };
+  /** Adelanta el reloj y corre una ronda del trabajador (sin esperar tareas futuras). */
+  const advance = async (ms: number) => {
+    clock.ms += ms;
+    return runner.run({ budgetMs: 60_000, waitForUpcoming: false });
+  };
+  const pending = () => [...tasks.tasks.values()].filter((task) => task.status === "pending");
+  return { service, sent, log, message, sessionsRepo, connectionId: connection.id, delivery, conversations, inbox, labeled, advance, pending, tasks };
 }
 
 describe("HandleInboundMessageService", () => {
@@ -318,5 +338,111 @@ describe("bandeja de Conversaciones", () => {
     await expect(s.inbox.startFlow(T, chat!.id, FLOW_ID)).rejects.toThrow(/fue eliminado/);
     await expect(s.inbox.setBotEnabled(T, chat!.id, false)).rejects.toThrow(/fue eliminado/);
     expect(s.delivery.deliver).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FASE C6 — despertadores con la cola de tareas: pausa larga de un Mensaje,
+// Programador, «Tiempo agotado» de una espera; un mensaje durante el
+// Programador no lo mueve; responder a tiempo cancela el vencimiento; con el
+// bot pausado no se mueve nada y el flujo sigue al reactivarlo.
+// ---------------------------------------------------------------------------
+
+const TIMED_FLOW: FlowSnapshot = {
+  ...FLOW,
+  nodes: {
+    start: node("start", "start"),
+    bienvenida: node("bienvenida", "message", { items: [
+      { id: "t1", kind: "text", text: "Hola" },
+      { id: "p1", kind: "interval", amount: 30, unit: "seconds" },
+      { id: "t2", kind: "text", text: "Seguimos" }
+    ] }),
+    programador: node("programador", "delay", { trigger: "interval", wait: { amount: 3, unit: "minutes" }, moment: null, scheduleEnabled: false }),
+    pregunta: node("pregunta", "question", { waitIndefinitely: false, timeout: { amount: 30, unit: "minutes" }, targetKey: "resp" }),
+    gracias: node("gracias", "message", { items: [{ id: "t", kind: "text", text: "Gracias por responder" }] }),
+    recordatorio: node("recordatorio", "message", { items: [{ id: "t", kind: "text", text: "¿Sigues ahí?" }] })
+  },
+  edgesBySource: {
+    start: [edge("start", "bienvenida")],
+    bienvenida: [edge("bienvenida", "programador")],
+    programador: [edge("programador", "pregunta")],
+    pregunta: [edge("pregunta", "gracias", "respuesta"), edge("pregunta", "recordatorio", "tiempo-agotado")]
+  }
+} as unknown as FlowSnapshot;
+
+const texts = (sent: ReadonlyArray<{ messages: ReadonlyArray<OutboundMessage> }>) => sent.flatMap((s) => s.messages.filter((m) => m.kind !== "pause").map((m) => m.content));
+const MIN = 60_000;
+
+describe("despertadores de los flujos (cola de tareas)", () => {
+  it("pausa larga, Programador y «Tiempo agotado»: cada parte sale a su hora, en orden", async () => {
+    const s = await setup({ flow: TIMED_FLOW });
+    await s.service.execute(T, s.message("hola"));
+    // La pausa de 30 s no cabe en el turno: sale «Hola» y el resto espera a la cola.
+    expect(texts(s.sent)).toEqual(["Hola"]);
+    expect(s.pending()).toHaveLength(1);
+    expect(s.pending()[0]!.dueAt).toBe("2026-11-09T12:00:30.000Z");
+
+    await s.advance(29_000);
+    expect(texts(s.sent)).toEqual(["Hola"]);
+    await s.advance(1_000);
+    expect(texts(s.sent)).toEqual(["Hola", "Seguimos"]);
+    // Ahora el Programador: un único despertador, a los 3 minutos.
+    expect(s.pending().map((task) => task.dueAt)).toEqual(["2026-11-09T12:03:30.000Z"]);
+
+    // Escribir durante el Programador no lo mueve ni lo duplica.
+    await s.service.execute(T, s.message("¿ya?"));
+    expect(texts(s.sent)).toEqual(["Hola", "Seguimos"]);
+    expect(s.pending()).toHaveLength(1);
+
+    await s.advance(3 * MIN);
+    expect(s.pending().map((task) => task.dueAt)).toEqual(["2026-11-09T12:33:30.000Z"]);
+    await s.advance(30 * MIN);
+    expect(texts(s.sent)).toEqual(["Hola", "Seguimos", "¿Sigues ahí?"]);
+    expect(s.pending()).toEqual([]);
+    expect((await s.sessionsRepo.find(`${T}:${conversationKeyFor(s.connectionId, "573001112233")}`))!.status).toBe("completed");
+    // Todo quedó en el chat.
+    expect(s.conversations.stored.filter((m) => m.author === "bot").map((m) => m.text)).toEqual(["Hola", "Seguimos", "¿Sigues ahí?"]);
+  });
+
+  it("responder a tiempo sigue por «Respuesta» y cancela el vencimiento", async () => {
+    const s = await setup({ flow: TIMED_FLOW });
+    await s.service.execute(T, s.message("hola"));
+    await s.advance(30_000);
+    await s.advance(3 * MIN);
+    await s.service.execute(T, s.message("aquí estoy"));
+    expect(texts(s.sent).at(-1)).toBe("Gracias por responder");
+    expect(s.pending()).toEqual([]);
+    await s.advance(40 * MIN);
+    expect(texts(s.sent)).not.toContain("¿Sigues ahí?");
+  });
+
+  it("con el bot pausado el despertador no mueve el flujo; al reactivarlo, el próximo mensaje lo retoma", async () => {
+    const s = await setup({ flow: TIMED_FLOW });
+    await s.service.execute(T, s.message("hola"));
+    await s.advance(30_000);
+    const { conversations: [chat] } = await s.inbox.list(T, {});
+    await s.inbox.setBotEnabled(T, chat!.id, false);
+    const report = await s.advance(3 * MIN);
+    expect(report.completed).toBe(1);
+    expect(texts(s.sent)).toEqual(["Hola", "Seguimos"]);
+
+    await s.inbox.setBotEnabled(T, chat!.id, true);
+    await s.service.execute(T, s.message("volví"));
+    // El Programador ya había vencido: el mensaje lo retoma y el flujo sigue a la pregunta.
+    expect((await s.sessionsRepo.find(`${T}:${conversationKeyFor(s.connectionId, "573001112233")}`))!.currentNodeId).toBe("pregunta");
+    expect(s.pending()).toHaveLength(1);
+  });
+
+  it("un despertador vencido (la sesión ya avanzó) no hace nada", async () => {
+    const s = await setup({ flow: TIMED_FLOW });
+    await s.service.execute(T, s.message("hola"));
+    const stale = s.pending()[0]!;
+    await s.advance(30_000);
+    // Se vuelve a poner el despertador viejo, como si una ronda lo repitiera.
+    s.tasks.tasks.set("viejo", { ...stale, id: "viejo", dedupeKey: "viejo", status: "pending" });
+    const before = s.sent.length;
+    await s.advance(1_000);
+    expect(s.sent.slice(before).flatMap((x) => x.messages)).toEqual([]);
+    expect(s.tasks.tasks.get("viejo")!.status).toBe("done");
   });
 });

@@ -134,6 +134,19 @@ export class SqlConversationRepository implements ConversationRepository {
     return result.rows[0] ? toConversation(result.rows[0]) : null;
   }
 
+  public async findByPhone(tenantId: string, connectionId: string, phone: string): Promise<Conversation | null> {
+    if (!isUuid(tenantId) || !isUuid(connectionId)) return null;
+    const result = await this.sql.query<ConversationRow>(
+      `select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
+              w.deleted_at is not null as connection_deleted
+         from conversations c
+         join whatsapp_connections w on w.id = c.connection_id
+        where c.tenant_id = $1 and c.connection_id = $2 and c.phone = $3`,
+      [tenantId, connectionId, phone]
+    );
+    return result.rows[0] ? toConversation(result.rows[0]) : null;
+  }
+
   public async append(message: StoredMessage): Promise<void> {
     await this.sql.transaction(async (tx) => {
       await tx.query(

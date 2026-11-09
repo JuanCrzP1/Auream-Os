@@ -1,3 +1,5 @@
+import { ApiConfigError } from "./ApiConfigError";
+import { loadTasksConfig, type TasksConfig } from "./loadTasksConfig";
 import { join } from "node:path";
 import { readSecretKeyRing, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
 
@@ -80,6 +82,8 @@ export interface ApiConfig {
    * `null` en desarrollo: la pantalla consulta el estado por su cuenta.
    */
   readonly whatsappWebhookBaseUrl: string | null;
+  /** Cola de tareas (FASE C6): ver `loadTasksConfig`. */
+  readonly tasks: TasksConfig;
 }
 
 /** ¿Es una zona IANA que el motor sabe usar? */
@@ -94,18 +98,11 @@ function isValidTimezone(value: string): boolean {
 
 export type AutomationsStore = "json" | "sql";
 
-export class ApiConfigError extends Error {}
+// La clase vive aparte para que los lectores de configuración la usen sin ciclos de importación.
+export { ApiConfigError } from "./ApiConfigError";
 
-function readOrigins(raw: string | undefined): string[] {
-  if (!raw) {
-    return [];
-  }
-
-  return raw
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter((origin) => origin.length > 0);
-}
+/** «a, b,,c» → ["a", "b", "c"]. */
+const readOrigins = (raw: string | undefined): string[] => (raw ?? "").split(",").map((origin) => origin.trim()).filter((origin) => origin.length > 0);
 
 export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   const isProduction = env["NODE_ENV"] === "production";
@@ -195,6 +192,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`,
     metaGraphVersion,
     uazapi: uazapiUrl ? { baseUrl: uazapiUrl, adminToken: uazapiToken } : null,
-    whatsappWebhookBaseUrl
+    whatsappWebhookBaseUrl,
+    tasks: loadTasksConfig(env, productionHost)
   };
 }

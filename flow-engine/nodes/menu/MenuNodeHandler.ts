@@ -14,8 +14,9 @@ import { matchMenuReply, renderMenuText } from "./matchMenuReply";
 //   Respuesta   reconoce la opción (`matchMenuReply`) y sale por ella; si no
 //               coincide con ninguna, por «Otra respuesta». Con «guardar en»,
 //               deja el título elegido en el contexto.
-//   Tiempo      «Tiempo agotado» lo dispara el vencimiento de la espera cuando
-//               exista la cola de tareas (C6); aquí se declara el vencimiento.
+//   Tiempo      con límite, la 1ª vez declara `waitDeadlineAt`; al vencer, la
+//               cola de tareas (C6) lo despierta (`input.timer = "timeout"`) y
+//               sale por «Tiempo agotado».
 // ---------------------------------------------------------------------------
 
 const UNIT_MS = { minutes: 60_000, hours: 3_600_000, days: 86_400_000 } as const;
@@ -56,6 +57,20 @@ export class MenuNodeHandler implements NodeHandler {
   public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const config = readMenuConfig(node.config);
     const payload = input.envelope.payload;
+
+    if (input.timer === "timeout") {
+      if (!config.timeoutEnabled) {
+        return { executionStatus: "waiting_input", outputMessages: [], contextPatch: {}, nodeResult: {}, domainEvents: [`menu_timeout_ignored:${node.id}`] };
+      }
+      return {
+        executionStatus: "success",
+        output: MENU_OUTPUT.timeout,
+        outputMessages: [],
+        contextPatch: {},
+        nodeResult: { timedOut: true },
+        domainEvents: [`menu_timed_out:${node.id}`]
+      };
+    }
     const replied = input.isWaitingInput && (typeof payload["optionId"] === "string" || (typeof payload["text"] === "string" && payload["text"].trim() !== ""));
 
     if (replied) {
