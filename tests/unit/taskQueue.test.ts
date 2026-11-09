@@ -56,7 +56,7 @@ describe("TaskRunner", () => {
     await h.scheduler.schedule(h.task({ dedupeKey: "ok", payload: { ok: true } }));
     await h.scheduler.schedule(h.task({ dedupeKey: "mal", maxAttempts: 2 }));
 
-    expect(await runner.run({ budgetMs: 60_000, waitForUpcoming: false })).toMatchObject({ claimed: 2, completed: 1, retried: 1 });
+    expect(await runner.run({ budgetMs: 60_000, waitForUpcoming: false })).toMatchObject({ claimed: 2, completed: 1, retried: 1, maxLateMs: 0 });
     const failing = [...h.repo.tasks.values()].find((task) => task.dedupeKey === "mal")!;
     expect(failing).toMatchObject({ status: "pending", attempts: 1, lastError: "uazapi caído", dueAt: new Date(START + retryDelayMs(1)).toISOString() });
 
@@ -108,7 +108,8 @@ describe("TaskRunner", () => {
     const runner = new TaskRunner(h.repo, [{ kind: "demo", handle }], { reserveMs: 0 }, { now: h.now }, h.sleep);
     expect(await runner.run({ budgetMs: 60_000, waitForUpcoming: false })).toMatchObject({ claimed: 0 });
     h.clock.ms += 61_000;
-    expect(await runner.run({ budgetMs: 60_000, waitForUpcoming: false })).toMatchObject({ claimed: 1, completed: 1 });
+    // Corrió 61 s tarde: el informe de la ronda lo dice (el registro avisa `tasks.late`).
+    expect(await runner.run({ budgetMs: 60_000, waitForUpcoming: false })).toMatchObject({ claimed: 1, completed: 1, maxLateMs: 61_000 });
   });
 
   it("borra las terminadas viejas", async () => {

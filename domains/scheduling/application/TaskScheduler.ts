@@ -8,7 +8,9 @@ import type { Clock, TaskAlarm, TaskKicker } from "./ports/TaskPorts";
 // a futuro. Idempotente por `dedupeKey`. Quién despierta al trabajador:
 //
 //   · vence pronto (`kickHorizonMs`): lo despierta ya (la ronda lo espera)
-//   · vence más tarde: arma un DESPERTADOR a esa hora (`TaskAlarm`); al
+//   · vence más tarde: arma un DESPERTADOR que suena `alarmLeadMs` ANTES de
+//     la hora (`TaskAlarm`); la ronda que despierta espera la hora exacta, así
+//     ni la demora de la cola ni el arranque de las funciones atrasan nada. Al
 //     terminar cada ronda se arma el de la siguiente pendiente (`armNext`):
 //     así se cubren reintentos, alarmas perdidas y esperas de más de una semana
 //
@@ -18,8 +20,20 @@ import type { Clock, TaskAlarm, TaskKicker } from "./ports/TaskPorts";
 // tarea con clave única por tramo de 30 s.
 // ---------------------------------------------------------------------------
 
-/** Lo que vence dentro de este margen se atiende enseguida (no espera la ronda). */
-export const KICK_HORIZON_MS = 45_000;
+/**
+ * Lo que vence dentro de este margen despierta ya al trabajador: la ronda lo
+ * espera. Debe quedar por debajo de lo que una ronda puede esperar (su tiempo
+ * menos la reserva para terminar: 50 − 25 = 25 s por defecto); si no, la ronda
+ * termina sin atenderlo y despierta otra en vano. Lo demás, su despertador.
+ */
+export const KICK_HORIZON_MS = 20_000;
+
+/**
+ * El despertador suena este tiempo ANTES de la hora: la ronda que despierta
+ * llega con margen y espera la hora exacta. Nunca más que `kickHorizonMs`
+ * (lo que una ronda puede esperar).
+ */
+export const ALARM_LEAD_MS = 15_000;
 
 export const systemClock: Clock = { now: () => new Date() };
 
@@ -30,11 +44,14 @@ export interface TaskSchedulerOptions {
   /** Lo que vence dentro de este margen despierta al trabajador (o arranca la cadena). */
   readonly kickHorizonMs?: number;
   readonly alarm?: TaskAlarm;
+  /** Cuánto antes de la hora suena el despertador (por defecto `ALARM_LEAD_MS`). */
+  readonly alarmLeadMs?: number;
 }
 
 export class TaskScheduler {
   private readonly kickHorizonMs: number;
   private readonly alarm: TaskAlarm;
+  private readonly alarmLeadMs: number;
 
   public constructor(
     private readonly repository: TaskRepository,
@@ -45,6 +62,7 @@ export class TaskScheduler {
   ) {
     this.kickHorizonMs = options.kickHorizonMs ?? KICK_HORIZON_MS;
     this.alarm = options.alarm ?? NO_ALARM;
+    this.alarmLeadMs = Math.min(options.alarmLeadMs ?? ALARM_LEAD_MS, this.kickHorizonMs);
   }
 
   /** Programa la tarea. `false` si ya estaba programada (misma `dedupeKey`). */
@@ -103,9 +121,9 @@ export class TaskScheduler {
     if (next && next.dueAt.getTime() <= this.clock.now().getTime()) this.kicker.kick();
   }
 
-  /** Pronto: despertar ya. Más tarde: el despertador a esa hora. */
+  /** Pronto: despertar ya. Más tarde: el despertador, con margen antes de la hora. */
   private async wakeFor(dueAt: Date): Promise<void> {
     if (dueAt.getTime() - this.clock.now().getTime() <= this.kickHorizonMs) this.kicker.kick();
-    else await this.alarm.ringAt(dueAt);
+    else await this.alarm.ringAt(new Date(dueAt.getTime() - this.alarmLeadMs));
   }
 }

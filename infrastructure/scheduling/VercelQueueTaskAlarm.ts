@@ -13,9 +13,11 @@ import type { TaskAlarm } from "../../domains/scheduling/application/ports/TaskP
 // despertador armado por un despliegue viejo (Vercel lo entrega al mismo
 // despliegue que lo envió) nunca corre código viejo.
 //
-// Varias tareas en el mismo tramo de 5 s comparten despertador (clave de
-// idempotencia). Una espera de más de 6 días se arma a 6 días: esa ronda arma
-// la siguiente (`TaskScheduler.armNext`).
+// Suena a la hora pedida o un instante antes (nunca después): el programador
+// ya pide la hora con margen y la ronda espera la exacta. Varias tareas en el
+// mismo tramo de 5 s comparten despertador (clave de idempotencia). Una espera
+// de más de 6 días se arma a 6 días: esa ronda arma la siguiente
+// (`TaskScheduler.armNext`).
 // ---------------------------------------------------------------------------
 
 export const TASK_ALARM_TOPIC = "auream-task-alarms";
@@ -25,8 +27,6 @@ const MAX_RETENTION_S = 604_800;
 const MAX_DELAY_S = 6 * 86_400;
 /** El mensaje sigue vivo una hora después de sonar: el consumidor puede reintentar. */
 const RETRY_WINDOW_S = 3_600;
-/** Suena un segundo después de la hora: la tarea ya está vencida al llegar. */
-const SLACK_S = 1;
 const BUCKET_MS = 5_000;
 
 export interface AlarmSendOptions {
@@ -47,7 +47,8 @@ export class VercelQueueTaskAlarm implements TaskAlarm {
 
   public async ringAt(at: Date): Promise<boolean> {
     const now = this.now();
-    const delaySeconds = Math.min(Math.max(0, Math.ceil((at.getTime() - now) / 1000)) + SLACK_S, MAX_DELAY_S);
+    // Segundos enteros hacia abajo: suena a la hora pedida o un instante antes.
+    const delaySeconds = Math.min(Math.max(0, Math.floor((at.getTime() - now) / 1000)), MAX_DELAY_S);
     const ringsAt = now + delaySeconds * 1000;
     try {
       await this.send(TASK_ALARM_TOPIC, { at: new Date(ringsAt).toISOString() }, {

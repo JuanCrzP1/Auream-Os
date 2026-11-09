@@ -9,6 +9,7 @@ import {
 } from "../../../contracts/WaitResponseConfig";
 import type { NodeHandler } from "../NodeHandler";
 import { ConversationTemplates } from "../../templates/ConversationTemplates";
+import { waitStartsAt } from "../../scheduling/waitStartsAt";
 
 // ---------------------------------------------------------------------------
 // Nodo `question` — la herramienta «Esperar respuesta».
@@ -153,7 +154,8 @@ export class QuestionNodeHandler implements NodeHandler {
     // lo que no se puede decir es a qué instante concreto vence. Decir «espera
     // 30 minutos» sin poder fechar el final es exacto; inventar la fecha desde
     // el reloj del proceso habría sido mentir sobre cuándo empezó la espera.
-    const recepcion = new Date(input.envelope.receivedAt).getTime();
+    // Cuenta desde que sale la pregunta: tras las pausas que ya puso el turno.
+    const recepcion = waitStartsAt(new Date(input.envelope.receivedAt).getTime(), input);
     const vencimiento =
       timeoutMs !== null && Number.isFinite(recepcion)
         ? new Date(recepcion + timeoutMs).toISOString()
@@ -165,7 +167,8 @@ export class QuestionNodeHandler implements NodeHandler {
       contextPatch: {},
       nodeResult: {
         ...declaracionDeEspera,
-        ...(vencimiento !== null ? { waitDeadlineAt: vencimiento } : {})
+        // Relativa: cuenta desde que sale la pregunta (`waitFrom`; la entrega la corrige).
+        ...(vencimiento !== null ? { waitDeadlineAt: vencimiento, waitFrom: new Date(recepcion).toISOString() } : {})
       },
       domainEvents: [`question_prompted:${node.id}`]
     };

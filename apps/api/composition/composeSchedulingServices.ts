@@ -1,4 +1,5 @@
 import type { ApiConfig } from "../config/loadApiConfig";
+import type { TasksConfig } from "../config/loadTasksConfig";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import type { BackgroundTasks } from "../http/BackgroundTasks";
 import { SqlTaskRepository } from "../../../infrastructure/persistence/sql/SqlTaskRepository";
@@ -7,7 +8,7 @@ import { VercelQueueTaskAlarm } from "../../../infrastructure/scheduling/VercelQ
 import { KICK_HORIZON_MS, NO_ALARM, systemClock, TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { randomUUID } from "node:crypto";
 import { send } from "@vercel/queue";
-import { TaskRunner } from "../../../domains/scheduling/application/TaskRunner";
+import { DEFAULT_RUNNER_OPTIONS, TaskRunner } from "../../../domains/scheduling/application/TaskRunner";
 import type { TaskHandler } from "../../../domains/scheduling/application/ports/TaskPorts";
 import type { ScheduledTask } from "../../../domains/scheduling/domain/ScheduledTask";
 
@@ -30,6 +31,17 @@ export interface SchedulingServices {
   attachHandlers(handlers: ReadonlyArray<TaskHandler>): TaskRunner;
 }
 
+/**
+ * Hasta dónde se despierta «ya» al trabajador en vez de armar un despertador.
+ * Con cadena de rondas, todo su margen (la ronda se sostiene). Sin ella, solo
+ * lo que una ronda alcanza a esperar (su tiempo menos la reserva), para que la
+ * ronda que se despierta lo atienda y no despierte otra en vano.
+ */
+export function kickHorizonFor(tasks: Pick<TasksConfig, "runnerBudgetMs" | "chainHorizonMs">): number {
+  if (tasks.chainHorizonMs > 0) return Math.max(KICK_HORIZON_MS, tasks.chainHorizonMs);
+  return Math.min(KICK_HORIZON_MS, Math.max(0, tasks.runnerBudgetMs - DEFAULT_RUNNER_OPTIONS.reserveMs));
+}
+
 export function composeSchedulingServices(
   config: ApiConfig,
   sql: SqlClient,
@@ -49,11 +61,7 @@ export function composeSchedulingServices(
   const alarm = config.tasks.alarms ? new VercelQueueTaskAlarm((topic, payload, options) => send(topic, payload, options), onAlarmError) : NO_ALARM;
 
   return {
-    // Con cadena de rondas, lo que vence dentro de su margen la arranca enseguida.
-    scheduler: new TaskScheduler(repository, kicker, systemClock, randomUUID, {
-      kickHorizonMs: Math.max(KICK_HORIZON_MS, config.tasks.chainHorizonMs),
-      alarm
-    }),
+    scheduler: new TaskScheduler(repository, kicker, systemClock, randomUUID, { kickHorizonMs: kickHorizonFor(config.tasks), alarm }),
     attachHandlers(handlers) {
       if (runner) throw new Error("La cola ya tiene su trabajador.");
       runner = new TaskRunner(repository, handlers, {}, systemClock, undefined, onTaskError);

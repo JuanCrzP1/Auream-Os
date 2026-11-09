@@ -102,7 +102,7 @@ async function setup(options: { readonly flow?: FlowSnapshot } = {}) {
   // Cola de tareas en memoria con el mismo reloj (despertadores de los flujos).
   const tasks = new InMemoryTaskRepository();
   const scheduler = new TaskScheduler(tasks, { kick: () => undefined }, { now });
-  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(scheduler));
+  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(scheduler), now);
   const timers = new FlowTimerService(lock, recorder, turn, now);
   const runner = new TaskRunner(tasks, [new FlowTimerTaskHandler(timers)], { reserveMs: 0 }, { now }, async () => undefined);
   const service = new HandleInboundMessageService(

@@ -1,8 +1,9 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
 import type { NodeExecutionResult, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
-import { readIntervalConfig } from "../../../contracts/IntervalConfig";
+import { intervalWaitMs, readIntervalConfig } from "../../../contracts/IntervalConfig";
 import { resolveResumeAt } from "../../scheduling/resolveResumeAt";
+import { waitStartsAt } from "../../scheduling/waitStartsAt";
 import type { NodeHandler } from "../NodeHandler";
 
 // ---------------------------------------------------------------------------
@@ -29,9 +30,11 @@ export class DelayNodeHandler implements NodeHandler {
       return { executionStatus: "success", outputMessages: [], contextPatch: {}, nodeResult: { resumed: true }, domainEvents: [`delay_resumed:${node.id}`] };
     }
 
-    const now = new Date(input.now);
-    const resumeAt = resolveResumeAt(readIntervalConfig(node.config), now, input.timezone);
-    if (resumeAt === null || resumeAt.getTime() <= now.getTime()) {
+    // La espera cuenta desde que sale el último mensaje del turno (tras sus pausas).
+    const config = readIntervalConfig(node.config);
+    const startsAt = new Date(waitStartsAt(Date.parse(input.now), input));
+    const resumeAt = resolveResumeAt(config, startsAt, input.timezone);
+    if (resumeAt === null || resumeAt.getTime() <= startsAt.getTime()) {
       return {
         executionStatus: "success",
         outputMessages: [],
@@ -41,11 +44,16 @@ export class DelayNodeHandler implements NodeHandler {
       };
     }
 
+    // «Espera 3 minutos» es relativa: si la entrega real tarda más de lo
+    // planeado, la mensajería la corre (`waitFrom`). Una fecha fija, o el
+    // inicio de una franja del horario, no se mueve.
+    const wait = intervalWaitMs(config);
+    const relative = wait !== null && resumeAt.getTime() === startsAt.getTime() + wait;
     return {
       executionStatus: "delayed",
       outputMessages: [],
       contextPatch: {},
-      nodeResult: { resumeAt: resumeAt.toISOString() },
+      nodeResult: { resumeAt: resumeAt.toISOString(), ...(relative ? { waitFrom: startsAt.toISOString() } : {}) },
       domainEvents: [`delay_node_scheduled:${node.id}`]
     };
   }

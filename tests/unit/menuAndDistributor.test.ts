@@ -82,7 +82,8 @@ describe("MenuNodeHandler", () => {
 
   it("con límite de tiempo declara el vencimiento de la espera", async () => {
     const result = await new MenuNodeHandler().execute(node("menu", { ...MENU_CONFIG, timeoutEnabled: true, timeoutAmount: 2, timeoutUnit: "hours" }), input({ text: "hola" }, false), session);
-    expect(result.nodeResult).toEqual({ waitDeadlineAt: "2026-11-08T21:30:00.000Z" });
+    // Relativo: cuenta desde que sale el menú (`waitFrom`; la entrega lo corrige si tarda).
+    expect(result.nodeResult).toEqual({ waitDeadlineAt: "2026-11-08T21:30:00.000Z", waitFrom: "2026-11-08T19:30:00.000Z" });
   });
 });
 

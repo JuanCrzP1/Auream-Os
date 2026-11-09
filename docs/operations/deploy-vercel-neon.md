@@ -35,7 +35,7 @@ Cada push a `main` despliega solo. El build (`scripts/vercel/build.mjs`):
 | `VITE_NEON_AUTH_URL` | El mismo valor que `NEON_AUTH_URL` | No |
 | `CORS_ALLOWED_ORIGINS` | `https://<dominio>` (p. ej. `https://auream-os.vercel.app`) | No |
 | `CREDENTIALS_ENCRYPTION_KEY` | Genera una en tu terminal: `openssl rand -base64 32` | Sí |
-| `NODEJS_HELPERS` | `0` (la API lee el cuerpo de las peticiones ella misma) | No |
+| `NODEJS_HELPERS` | `0` (la API lee el cuerpo de las peticiones ella misma; vale para **todas** las funciones: una función que use un manejador web de una librería lo sirve con `webHandlerOnNode`, como el consumidor de los despertadores) | No |
 
 - **`CREDENTIALS_ENCRYPTION_KEY`** cifra las claves de IA de tus clientes. Guárdala también en tu gestor de contraseñas: si se pierde, las conexiones de IA guardadas ya no se pueden leer y cada cliente tendría que volver a pegar su clave.
 - **No** agregues en Production: `DEV_API_KEY`, `VITE_DEV_API_KEY` ni `INTEGRATIONS_ALLOW_PRIVATE_NETWORK`.

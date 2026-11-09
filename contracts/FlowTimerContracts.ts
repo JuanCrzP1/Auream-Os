@@ -58,6 +58,27 @@ export interface FlowWakeUp {
   readonly at: string;
   readonly nodeId: string;
   readonly revision: number;
+  /**
+   * Solo en esperas RELATIVAS (Intervalo de X minutos, pausa de un Mensaje,
+   * tiempo máximo de Esperar respuesta y del Menú): el instante en que el
+   * motor calculó que empieza la espera (tras las pausas del turno). Quien
+   * entrega corre `at` lo que la entrega real se pase de ahí
+   * (`alignWakeUpToDelivery`). Las horas fijas (una fecha, el inicio de una
+   * franja del horario) no lo llevan y no se mueven.
+   */
+  readonly from?: string;
+}
+
+/**
+ * Una espera relativa cuenta desde que el cliente recibió el último mensaje,
+ * no desde que el motor la planeó: si la entrega (envíos, red) terminó
+ * después de `from`, el despertador se corre exactamente eso.
+ */
+export function alignWakeUpToDelivery(wakeUp: FlowWakeUp, deliveredAt: Date): FlowWakeUp {
+  if (!wakeUp.from) return wakeUp;
+  const overrun = deliveredAt.getTime() - Date.parse(wakeUp.from);
+  if (!Number.isFinite(overrun) || overrun <= 0) return wakeUp;
+  return { ...wakeUp, at: new Date(Date.parse(wakeUp.at) + overrun).toISOString() };
 }
 
 /** Resultado de un turno completo del motor. */

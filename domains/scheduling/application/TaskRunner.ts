@@ -7,14 +7,15 @@ import { systemClock } from "./TaskScheduler";
 // TaskRunner — el trabajador de la cola. Una RONDA con tiempo limitado (una
 // función de Vercel vive hasta `maxDuration`):
 //
-//   1. reserva las tareas vencidas (de a lotes, atómico entre procesos)
-//   2. las ejecuta con su manejador, varias a la vez
-//   3. bien → hecha · error → otro intento más tarde (30 s, 2 min, 8 min…)
+//   1. reserva cada tarea EN SU HORA (atómico entre procesos) y la arranca sin
+//      esperar a las que ya corren: un turno largo (pausas de «escribiendo…»)
+//      no atrasa el intervalo de otro chat. Hasta `concurrency` a la vez
+//   2. bien → hecha · error → otro intento más tarde (30 s, 2 min, 8 min…)
 //      · sin intentos o error definitivo → fallida, con su motivo
-//   4. si no hay vencidas pero alguna vence antes de que acabe la ronda, la
-//      espera (así una pausa de 30 s no aguarda a la próxima ronda). Con
-//      `holdWithinMs`, se queda hasta el final de la ronda si algo vence dentro
-//      de ese margen (cadena de rondas: la siguiente la despierta el programador)
+//   3. si no hay vencidas pero alguna vence antes de que acabe la ronda, la
+//      espera hasta el milisegundo de su hora. Con `holdWithinMs`, se queda
+//      hasta el final de la ronda si algo vence dentro de ese margen (cadena de
+//      rondas: la siguiente la despierta el programador)
 //
 // Solo toma tareas nuevas si queda tiempo para terminarlas (`reserveMs`). Si
 // el proceso muere a mitad, la reserva caduca y otra ronda la retoma.
@@ -37,7 +38,8 @@ export interface RunnerOptions {
 
 export const DEFAULT_RUNNER_OPTIONS: RunnerOptions = {
   batchSize: 10,
-  concurrency: 4,
+  // Los turnos casi solo esperan (pausas, red): muchos caben a la vez.
+  concurrency: 16,
   leaseMs: 120_000,
   reserveMs: 25_000,
   pollMs: 2_000,
@@ -50,8 +52,16 @@ export interface RunReport {
   readonly retried: number;
   readonly failed: number;
   readonly purged: number;
+  /** Lo más tarde que corrió una tarea de la ronda (ms tras su hora). Muy alto = algo no la despertó. */
+  readonly maxLateMs: number;
   readonly durationMs: number;
 }
+
+/** Respiro cuando lo vencido está reservado por otra ronda (o no hay lugar libre). */
+const BUSY_RETRY_MS = 250;
+
+type Outcome = "completed" | "retried" | "failed";
+type Totals = Record<Outcome | "claimed" | "purged" | "maxLateMs", number>;
 
 const realSleep: TaskSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -82,29 +92,40 @@ export class TaskRunner {
   }: { readonly budgetMs: number; readonly waitForUpcoming?: boolean; readonly holdWithinMs?: number }): Promise<RunReport> {
     const started = this.clock.now().getTime();
     const deadline = started + budgetMs;
-    const totals = { claimed: 0, completed: 0, retried: 0, failed: 0, purged: 0 };
+    const totals: Totals = { claimed: 0, completed: 0, retried: 0, failed: 0, purged: 0, maxLateMs: 0 };
     const remaining = () => deadline - this.clock.now().getTime();
     // Una ronda más corta que la reserva igual toma su primer lote (si no, nunca haría nada).
     const reserveMs = Math.min(this.options.reserveMs, budgetMs);
+    const running = new Set<Promise<void>>();
 
     while (remaining() >= reserveMs) {
-      const tasks = await this.repository.claimDue(this.clock.now(), this.options.batchSize, this.options.leaseMs);
-      if (tasks.length > 0) {
-        totals.claimed += tasks.length;
-        for (const outcome of await this.executeAll(tasks)) totals[outcome] += 1;
-        continue;
+      const free = this.options.concurrency - running.size;
+      if (free > 0) {
+        const tasks = await this.repository.claimDue(this.clock.now(), Math.min(free, this.options.batchSize), this.options.leaseMs);
+        if (tasks.length > 0) {
+          this.start(tasks, running, totals);
+          continue;
+        }
       }
-      if (!waitForUpcoming) break;
       const peek = await this.repository.peekNext();
       const next = peek?.dueAt.getTime() ?? null;
       const now = this.clock.now().getTime();
-      const dueInRound = next !== null && next <= deadline - reserveMs;
+      const dueInRound = waitForUpcoming && next !== null && next <= deadline - reserveMs;
       const holding = next !== null && holdWithinMs > 0 && next - now <= holdWithinMs;
-      // Nada que vaya a vencer mientras quede tiempo útil en la ronda (ni que sostener): termina.
-      if (!dueInRound && !holding) break;
-      // Mínimo 250 ms: si otra ronda tiene reservada la vencida, no se gira en vacío.
-      await this.sleep(Math.min(Math.max(next! - now, 250), this.options.pollMs));
+      if (!dueInRound && !holding) {
+        // Nada que vaya a vencer con tiempo útil (ni que sostener): termina cuando acaben las que corren.
+        if (running.size === 0) break;
+        await Promise.race(running);
+        continue;
+      }
+      // Hasta la hora EXACTA (de a `pollMs` como mucho, por si llega algo antes), o
+      // hasta que se libere un lugar. Ya vencida pero reservada por otra ronda, o
+      // sin lugar libre: un respiro para no girar en vacío.
+      const untilDue = next! - now;
+      const pause = this.sleep(untilDue > 0 ? Math.min(untilDue, this.options.pollMs) : BUSY_RETRY_MS);
+      await (running.size > 0 ? Promise.race([pause, ...running]) : pause);
     }
+    await Promise.all(running);
 
     totals.purged = await this.repository
       .purgeFinished(new Date(this.clock.now().getTime() - this.options.retentionMs), 500)
@@ -112,21 +133,22 @@ export class TaskRunner {
     return { ...totals, durationMs: this.clock.now().getTime() - started };
   }
 
-  /** Ejecuta un lote con concurrencia limitada. */
-  private async executeAll(tasks: ReadonlyArray<ScheduledTask>): Promise<Array<"completed" | "retried" | "failed">> {
-    const outcomes: Array<"completed" | "retried" | "failed"> = [];
-    let next = 0;
-    const worker = async () => {
-      while (next < tasks.length) {
-        const task = tasks[next++]!;
-        outcomes.push(await this.execute(task));
-      }
-    };
-    await Promise.all(Array.from({ length: Math.min(this.options.concurrency, tasks.length) }, worker));
-    return outcomes;
+  /** Arranca las reservadas sin esperarlas (las sigue `running`) y anota cuán tarde se tomaron. */
+  private start(tasks: ReadonlyArray<ScheduledTask>, running: Set<Promise<void>>, totals: Totals): void {
+    totals.claimed += tasks.length;
+    const claimedAt = this.clock.now().getTime();
+    for (const task of tasks) {
+      totals.maxLateMs = Math.max(totals.maxLateMs, claimedAt - Date.parse(task.dueAt));
+      const job: Promise<void> = this.execute(task)
+        .then((outcome) => void (totals[outcome] += 1))
+        // Si ni siquiera se pudo anotar el resultado, la reserva caduca y otra ronda la retoma.
+        .catch((error: unknown) => this.onError(task, error))
+        .finally(() => running.delete(job));
+      running.add(job);
+    }
   }
 
-  private async execute(task: ScheduledTask): Promise<"completed" | "retried" | "failed"> {
+  private async execute(task: ScheduledTask): Promise<Outcome> {
     const handler = this.handlers.get(task.kind);
     try {
       // Eslabón de la cadena de rondas: no tiene trabajo.

@@ -69,6 +69,34 @@ describe("bloques al despertar", () => {
     expect(await handler.execute(past, input(), session())).toMatchObject({ executionStatus: "success", domainEvents: ["delay_elapsed:n1"] });
   });
 
+  it("las esperas relativas dicen desde cuándo cuentan (la entrega las corrige); las horas fijas no", async () => {
+    const delay = new DelayNodeHandler();
+    const afterPauses = input({ inlinePauseUsedMs: 18_000 });
+    const relative = await delay.execute(node("delay", { trigger: "interval", wait: { amount: 3, unit: "minutes" } }), afterPauses, session());
+    expect(relative.nodeResult).toEqual({ resumeAt: "2026-11-09T12:03:18.000Z", waitFrom: "2026-11-09T12:00:18.000Z" });
+    const fixed = await delay.execute(node("delay", { trigger: "date", moment: { date: "2026-11-10", time: "08:00" } }), input(), session());
+    expect(fixed.nodeResult).toEqual({ resumeAt: "2026-11-10T13:00:00.000Z" });
+    // Un sábado a las 10:00 fuera del horario: sigue el lunes a la hora de la franja (fija).
+    const window = config({ trigger: "interval", wait: { amount: 5, unit: "minutes" }, scheduleEnabled: true, schedule: week({ monday: [{ start: "08:00", end: "18:00" }] }) });
+    const pushed = await delay.execute(node("delay", window as unknown as Record<string, unknown>), input({ now: "2026-11-07T15:00:00.000Z" }), session());
+    expect(pushed.nodeResult).toEqual({ resumeAt: "2026-11-09T13:00:00.000Z" });
+
+    const message = node("message", { items: [{ id: "a", kind: "text", text: "Uno" }, { id: "p1", kind: "interval", amount: 6, unit: "seconds" }, { id: "p2", kind: "interval", amount: 20, unit: "seconds" }, { id: "b", kind: "text", text: "Dos" }] });
+    expect((await new MessageNodeHandler().execute(message, input(), session())).nodeResult).toMatchObject({ resumeAt: "2026-11-09T12:00:26.000Z", waitFrom: "2026-11-09T12:00:06.000Z" });
+    const question = node("question", { waitIndefinitely: false, timeout: { amount: 30, unit: "minutes" } });
+    expect((await new QuestionNodeHandler().execute(question, input(), session())).nodeResult).toMatchObject({ waitDeadlineAt: "2026-11-09T12:30:00.000Z", waitFrom: "2026-11-09T12:00:00.000Z" });
+  });
+
+  it("las esperas cuentan desde que sale el último mensaje del turno, no desde que empezó (pausas de «escribiendo…» antes)", async () => {
+    const afterPauses = input({ inlinePauseUsedMs: 18_000 });
+    const delay = node("delay", { trigger: "interval", wait: { amount: 1, unit: "minutes" } });
+    expect(await new DelayNodeHandler().execute(delay, afterPauses, session())).toMatchObject({ nodeResult: { resumeAt: "2026-11-09T12:01:18.000Z" } });
+    const question = node("question", { waitIndefinitely: false, timeout: { amount: 30, unit: "minutes" } });
+    expect(await new QuestionNodeHandler().execute(question, afterPauses, session())).toMatchObject({ nodeResult: { waitDeadlineAt: "2026-11-09T12:30:18.000Z" } });
+    const menu = node("menu", { options: [{ id: "a", title: "A" }], timeoutEnabled: true, timeoutAmount: 2, timeoutUnit: "hours" });
+    expect(await new MenuNodeHandler().execute(menu, afterPauses, session())).toMatchObject({ nodeResult: { waitDeadlineAt: "2026-11-09T14:00:18.000Z" } });
+  });
+
   it("Esperar respuesta: al vencer sale por «tiempo-agotado»; sin límite, un despertador no la saca", async () => {
     const handler = new QuestionNodeHandler();
     const timed = node("question", { waitIndefinitely: false, timeout: { amount: 30, unit: "minutes" } });

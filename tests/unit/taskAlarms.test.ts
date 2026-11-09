@@ -3,6 +3,7 @@ import { TaskScheduler } from "../../domains/scheduling/application/TaskSchedule
 import type { NewTask } from "../../domains/scheduling/domain/ScheduledTask.js";
 import { InMemoryTaskRepository } from "../../infrastructure/persistence/memory/InMemoryTaskRepository.js";
 import { ringTaskWorker, TASK_ALARM_TOPIC, VercelQueueTaskAlarm, type AlarmSend } from "../../infrastructure/scheduling/VercelQueueTaskAlarm.js";
+import { kickHorizonFor } from "../../apps/api/composition/composeSchedulingServices.js";
 
 // ---------------------------------------------------------------------------
 // Despertadores de la cola (plan Hobby de Vercel, sin cron frecuente): lo que
@@ -29,7 +30,7 @@ function harness() {
 }
 
 describe("TaskScheduler con despertador", () => {
-  it("lo que vence en segundos despierta ya; lo que vence en minutos u horas arma su despertador a esa hora", async () => {
+  it("lo que vence en segundos despierta ya; lo que vence en minutos u horas arma su despertador 15 s antes (la ronda espera la hora exacta)", async () => {
     const h = harness();
     await h.scheduler.schedule(h.task("pausa", 20_000));
     await h.scheduler.schedule(h.task("programador", 3 * MIN));
@@ -37,14 +38,26 @@ describe("TaskScheduler con despertador", () => {
     // Repetida (misma clave): ni despierta ni arma otro.
     await h.scheduler.schedule(h.task("espera", 2 * 60 * MIN));
     expect(h.kicks.count).toBe(1);
-    expect(h.rings.map((at) => at.toISOString())).toEqual(["2026-11-09T12:03:00.000Z", "2026-11-09T14:00:00.000Z"]);
+    expect(h.rings.map((at) => at.toISOString())).toEqual(["2026-11-09T12:02:45.000Z", "2026-11-09T13:59:45.000Z"]);
+  });
+
+  it("el margen del despertador nunca supera lo que la ronda alcanza a esperar", async () => {
+    const repo = new InMemoryTaskRepository();
+    const rings: Date[] = [];
+    const scheduler = new TaskScheduler(repo, { kick: () => undefined }, { now: () => new Date(START) }, () => "id", {
+      kickHorizonMs: 10_000,
+      alarmLeadMs: 15_000,
+      alarm: { ringAt: async (at) => (rings.push(at), true) }
+    });
+    await scheduler.schedule({ tenantId: T, kind: "demo", groupKey: "g", dedupeKey: "d", payload: {}, dueAt: new Date(START + 60_000) });
+    expect(rings.map((at) => at.toISOString())).toEqual(["2026-11-09T12:00:50.000Z"]);
   });
 
   it("al terminar una ronda arma el despertador de la siguiente pendiente (o despierta ya si vence pronto)", async () => {
     const h = harness();
     await h.repo.enqueue("a", h.task("reintento", 8 * MIN));
     await h.scheduler.armNext();
-    expect(h.rings.map((at) => at.toISOString())).toEqual(["2026-11-09T12:08:00.000Z"]);
+    expect(h.rings.map((at) => at.toISOString())).toEqual(["2026-11-09T12:07:45.000Z"]);
     await h.repo.enqueue("b", h.task("ya", 10_000));
     await h.scheduler.armNext();
     expect(h.kicks.count).toBe(1);
@@ -55,6 +68,14 @@ describe("TaskScheduler con despertador", () => {
   });
 });
 
+describe("kickHorizonFor", () => {
+  it("con despertadores despierta ya solo lo que una ronda alcanza a esperar (si no, despertaría otras en vano); con cadena, todo su margen", () => {
+    expect(kickHorizonFor({ runnerBudgetMs: 50_000, chainHorizonMs: 0 })).toBe(20_000);
+    expect(kickHorizonFor({ runnerBudgetMs: 30_000, chainHorizonMs: 0 })).toBe(5_000);
+    expect(kickHorizonFor({ runnerBudgetMs: 50_000, chainHorizonMs: 900_000 })).toBe(900_000);
+  });
+});
+
 describe("VercelQueueTaskAlarm", () => {
   const capture = () => {
     const sent: Array<{ topic: string; payload: { at: string }; options: Parameters<AlarmSend>[2] }> = [];
@@ -62,15 +83,15 @@ describe("VercelQueueTaskAlarm", () => {
     return { sent, send };
   };
 
-  it("suena un segundo después de la hora, vive una hora más para reintentos y comparte despertador por tramo de 5 s", async () => {
+  it("suena a la hora pedida (nunca después), vive una hora más para reintentos y comparte despertador por tramo de 5 s", async () => {
     const { sent, send } = capture();
     const alarm = new VercelQueueTaskAlarm(send, undefined, () => START);
     expect(await alarm.ringAt(new Date(START + 3 * MIN))).toBe(true);
     await alarm.ringAt(new Date(START + 3 * MIN + 2_000));
     expect(sent[0]).toEqual({
       topic: TASK_ALARM_TOPIC,
-      payload: { at: "2026-11-09T12:03:01.000Z" },
-      options: { delaySeconds: 181, retentionSeconds: 3_781, idempotencyKey: `ring-${Math.floor((START + 181_000) / 5_000)}` }
+      payload: { at: "2026-11-09T12:03:00.000Z" },
+      options: { delaySeconds: 180, retentionSeconds: 3_780, idempotencyKey: `ring-${Math.floor((START + 180_000) / 5_000)}` }
     });
     expect(sent[1]!.options.idempotencyKey).toBe(sent[0]!.options.idempotencyKey);
   });
@@ -80,7 +101,7 @@ describe("VercelQueueTaskAlarm", () => {
     const alarm = new VercelQueueTaskAlarm(send, undefined, () => START);
     await alarm.ringAt(new Date(START + 30 * 86_400_000));
     await alarm.ringAt(new Date(START - MIN));
-    expect(sent.map((item) => [item.options.delaySeconds, item.options.retentionSeconds])).toEqual([[518_400, 522_000], [1, 3_601]]);
+    expect(sent.map((item) => [item.options.delaySeconds, item.options.retentionSeconds])).toEqual([[518_400, 522_000], [0, 3_600]]);
   });
 
   it("si Vercel Queues falla, avisa y responde `false` sin lanzar", async () => {

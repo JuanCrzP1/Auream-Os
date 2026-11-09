@@ -30,6 +30,16 @@ import { createApiRequestListener, type ApiRequestListener } from "./createApiSe
 // fallar (salir del proceso, o responder 500 sin filtrar detalles).
 // ---------------------------------------------------------------------------
 
+/** Una tarea que corre más tarde que esto queda avisada en el registro (`tasks.late`). */
+const LATE_TASK_WARNING_MS = 60_000;
+
+/**
+ * Candados por conversación a la vez en una instancia. Cada turno ocupa uno
+ * mientras dura (con sus pausas): cabe lo que el trabajador corre a la vez
+ * (`DEFAULT_RUNNER_OPTIONS.concurrency`) más los mensajes que van llegando.
+ */
+const CONVERSATION_LOCKS_PER_INSTANCE = 20;
+
 export interface ApiApplication {
   readonly config: ApiConfig;
   readonly listener: ApiRequestListener;
@@ -76,7 +86,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     config,
     sql: tenancy.sqlClient,
     // Pool aparte para los candados por conversación: nunca compite con el trabajo.
-    lockSql: createSqlClient(databaseConfig.connectionString, { max: 4, idleTimeoutMs: databaseConfig.idleTimeoutMs }),
+    lockSql: createSqlClient(databaseConfig.connectionString, { max: CONVERSATION_LOCKS_PER_INSTANCE, idleTimeoutMs: databaseConfig.idleTimeoutMs }),
     workspaces: services.workspaceRepository,
     contacts: contactsServices,
     integrations,
@@ -102,6 +112,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       armNext: () => scheduling.scheduler.armNext(),
       onReport: (report) => {
         if (report.claimed > 0) logger.info("tasks.round", { ...report });
+        // Más de un minuto tarde: algo no la despertó a su hora (revisar los despertadores).
+        if (report.maxLateMs > LATE_TASK_WARNING_MS) logger.warn("tasks.late", { maxLateMs: report.maxLateMs, claimed: report.claimed });
       }
     },
     mediaServices: composeMediaServices(config, tenancy.sqlClient),
@@ -114,5 +126,23 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     errorLogger
   });
 
-  return { config, listener, tasks: runner };
+  // Con la primera petición de cada instancia (dentro de una petición: ahí
+  // está la credencial de Vercel Queues), asegura quién despierta para la
+  // próxima tarea pendiente: ya, o su despertador en ESTE despliegue. Recupera
+  // los despertadores perdidos (un envío fallido, un despliegue anterior).
+  let armed = false;
+  const armOnFirstRequest = () => {
+    if (armed) return;
+    armed = true;
+    background.run(() => scheduling.scheduler.armNext());
+  };
+
+  return {
+    config,
+    listener: async (request, response) => {
+      armOnFirstRequest();
+      await listener(request, response);
+    },
+    tasks: runner
+  };
 }

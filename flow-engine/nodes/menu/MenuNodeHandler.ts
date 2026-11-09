@@ -5,6 +5,7 @@ import { MENU_OUTPUT, readMenuConfig, type MenuConfig } from "../../../contracts
 import type { NodeHandler } from "../NodeHandler";
 import { ConversationTemplates } from "../../templates/ConversationTemplates";
 import { matchMenuReply, renderMenuText } from "./matchMenuReply";
+import { waitStartsAt } from "../../scheduling/waitStartsAt";
 
 // ---------------------------------------------------------------------------
 // MenuNodeHandler — ofrece opciones y sigue por la que elija el cliente.
@@ -21,10 +22,15 @@ import { matchMenuReply, renderMenuText } from "./matchMenuReply";
 
 const UNIT_MS = { minutes: 60_000, hours: 3_600_000, days: 86_400_000 } as const;
 
-function deadline(config: MenuConfig, receivedAt: string): string | null {
+/**
+ * El tiempo máximo cuenta desde que sale el menú (tras las pausas que ya puso
+ * el turno). Es relativo: `waitFrom` deja que la entrega lo corrija.
+ */
+function deadline(config: MenuConfig, input: RuntimeInput): { readonly waitDeadlineAt: string; readonly waitFrom: string } | null {
   if (!config.timeoutEnabled) return null;
-  const start = new Date(receivedAt).getTime();
-  return Number.isFinite(start) ? new Date(start + config.timeoutAmount * UNIT_MS[config.timeoutUnit]).toISOString() : null;
+  const start = waitStartsAt(new Date(input.envelope.receivedAt).getTime(), input);
+  if (!Number.isFinite(start)) return null;
+  return { waitDeadlineAt: new Date(start + config.timeoutAmount * UNIT_MS[config.timeoutUnit]).toISOString(), waitFrom: new Date(start).toISOString() };
 }
 
 function menuMessage(config: MenuConfig, input: RuntimeInput): OutboundMessage {
@@ -85,14 +91,14 @@ export class MenuNodeHandler implements NodeHandler {
       };
     }
 
-    const waitDeadlineAt = deadline(config, input.envelope.receivedAt);
+    const timeout = deadline(config, input);
     // Encabezado, mensaje y pie admiten variables; las opciones no (son lo que el cliente elige).
     const [title, message, footer] = await this.templates.render([config.title, config.message, config.footer], input, session);
     return {
       executionStatus: "waiting_input",
       outputMessages: [menuMessage({ ...config, title: title!, message: message!, footer: footer! }, input)],
       contextPatch: {},
-      nodeResult: waitDeadlineAt ? { waitDeadlineAt } : {},
+      nodeResult: timeout ?? {},
       domainEvents: [`menu_prompted:${node.id}`]
     };
   }

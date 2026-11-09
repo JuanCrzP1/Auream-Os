@@ -17,7 +17,15 @@ export const stateOf = (session: Session): FlowSessionState => ({
 export function wakeUpOf(status: string, nodeResult: Readonly<Record<string, unknown>>, session: Session): FlowWakeUp | undefined {
   const at = status === "delayed" ? nodeResult["resumeAt"] : status === "waiting_input" ? nodeResult["waitDeadlineAt"] : undefined;
   if (typeof at !== "string" || Number.isNaN(Date.parse(at))) return undefined;
-  return { reason: status === "delayed" ? "resume" : "timeout", at, nodeId: session.currentNodeId, revision: session.revision };
+  // Esperas relativas: desde cuándo cuentan según el plan (la entrega la corrige).
+  const from = nodeResult["waitFrom"];
+  return {
+    reason: status === "delayed" ? "resume" : "timeout",
+    at,
+    nodeId: session.currentNodeId,
+    revision: session.revision,
+    ...(typeof from === "string" && !Number.isNaN(Date.parse(from)) ? { from } : {})
+  };
 }
 
 /** Suma de las pausas ya puestas en el turno. */

@@ -89,12 +89,14 @@ export class MessageNodeHandler implements NodeHandler {
         if (pausedMs + ms > INLINE_PAUSE_BUDGET_MS) {
           // No cabe en este turno: sigue después de la pausa, con la cola de tareas.
           // El cliente ve «escribiendo…» o «grabando audio…» mientras tanto.
-          const resumeAt = new Date(new Date(input.now).getTime() + pausedMs + ms).toISOString();
+          const pauseStartsAt = new Date(input.now).getTime() + pausedMs;
+          const resumeAt = new Date(pauseStartsAt + ms).toISOString();
           return {
             executionStatus: "delayed",
             outputMessages: presence ? [...outputMessages, { ...base, kind: "presence", content: "", presence, delayMs: ms }] : outputMessages,
             contextPatch: { ...contextPatch, [cursorKey]: index + 1 },
-            nodeResult: { resumeAt, pausedAtItem: index },
+            // La pausa es relativa: cuenta desde que sale lo anterior (`waitFrom`).
+            nodeResult: { resumeAt, pausedAtItem: index, waitFrom: new Date(pauseStartsAt).toISOString() },
             domainEvents: [...domainEvents, `message_paused:${node.id}:${index}`]
           };
         }
