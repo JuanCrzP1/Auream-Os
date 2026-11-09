@@ -384,7 +384,8 @@ describe("Escape con el selector de unidades abierto", () => {
 // ahí se caería.
 // ---------------------------------------------------------------------------
 
-const dialogo = () => screen.queryByRole("dialog");
+// El editor también es un diálogo: la confirmación se busca por su título.
+const dialogo = () => screen.queryByRole("dialog", { name: "No has guardado tus cambios" });
 const cerrarEditor = () => screen.getByRole("button", { name: /^Cerrar Saludo inicial/ });
 const seguirEditando = () => screen.getByRole("button", { name: "Seguir editando" });
 const cerrarSinGuardar = () => screen.getByRole("button", { name: "Cerrar sin guardar" });

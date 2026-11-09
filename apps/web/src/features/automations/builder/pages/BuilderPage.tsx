@@ -12,6 +12,7 @@ import { BuilderEditingProvider } from "../context/BuilderEditingContext";
 import { BuilderResourcesProvider } from "../context/BuilderResourcesContext";
 import { useBuilderWorkspace } from "../hooks/useBuilderWorkspace";
 import { resolveToolUi } from "../tools/ui-registry";
+import { freeCanvasPosition } from "../services/freeCanvasPosition";
 import type { CanvasNode } from "../types/canvas";
 import type { NodeType } from "@contracts/FlowSnapshot";
 
@@ -39,9 +40,11 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
     (nodeType: NodeType) => {
       const center = viewportCenter.current?.();
       if (!center) return builder.handleAddNode(nodeType);
-      builder.handleDropNode(nodeType, { x: center.x - NODE_HALF_SIZE.x, y: center.y - NODE_HALF_SIZE.y });
+      // Varios seguidos no se apilan en el mismo punto: van en cascada.
+      const desired = { x: center.x - NODE_HALF_SIZE.x, y: center.y - NODE_HALF_SIZE.y };
+      builder.handleDropNode(nodeType, freeCanvasPosition(desired, builder.nodes.map((node: CanvasNode) => node.position)));
     },
-    [builder.handleAddNode, builder.handleDropNode]
+    [builder.handleAddNode, builder.handleDropNode, builder.nodes]
   );
 
   /**

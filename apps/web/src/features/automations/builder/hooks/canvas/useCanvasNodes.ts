@@ -85,13 +85,13 @@ export function useCanvasNodes(initialNodes: CanvasNode[], selectedNodeId: strin
    */
   function addNode(nodeType: NodeType): string {
     const nextNode = createNodeDraft(nodeType, nodes.length + 1);
-    setNodes((current) => [...current, nextNode]);
+    setNodes((current) => withNewSelected(current, nextNode));
     return nextNode.id;
   }
 
   function dropNode(nodeType: NodeType, position: { x: number; y: number }): void {
     const nextNode: CanvasNode = { ...createNodeDraft(nodeType, nodes.length + 1), position };
-    setNodes((current) => [...current, nextNode]);
+    setNodes((current) => withNewSelected(current, nextNode));
   }
 
   /**
@@ -162,4 +162,12 @@ export function useCanvasNodes(initialNodes: CanvasNode[], selectedNodeId: strin
     toggleNodeExpanded,
     collapseNodes
   };
+}
+
+/**
+ * El bloque recién añadido queda seleccionado (y por eso encima): si cae junto
+ * a uno grande que estaba seleccionado, no queda tapado por él.
+ */
+function withNewSelected(current: ReadonlyArray<CanvasNode>, added: CanvasNode): CanvasNode[] {
+  return [...current.map((node) => (node.selected ? { ...node, selected: false } : node)), { ...added, selected: true }];
 }

@@ -1,6 +1,6 @@
 import "./node-expanded.css";
 import "../toolbar-button.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { VALID, type ToolDefinition } from "@features/automations/builder/tools/ToolDefinition";
 import type { ToolDraft, ToolUi } from "@features/automations/builder/tools/ToolUi";
 import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
@@ -90,6 +90,7 @@ export function NodeExpandedFrame({
   // igual que hereda la barra de «Cancelar» y «Guardar».
   const [confirmingExit, setConfirmingExit] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
 
   /**
    * INTENTO de salir: la X y Escape.
@@ -136,12 +137,22 @@ export function NodeExpandedFrame({
   }, [requestClose]);
 
   return (
-    <article className="node-expanded" style={{ borderColor: tool.colors.header }}>
+    // Es una ventana de edición encima del lienzo: los lectores de pantalla la
+    // anuncian como diálogo, con el nombre del bloque.
+    <article
+      className="node-expanded"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      style={{ borderColor: tool.colors.header }}
+    >
       <header className="node-expanded__header" style={{ background: tool.colors.header }}>
         <span className="node-expanded__icon" aria-hidden="true">
           <ui.Icon />
         </span>
-        <span className="node-expanded__title">{data.title}</span>
+        <span id={titleId} className="node-expanded__title">
+          {data.title}
+        </span>
         <button
           ref={closeButtonRef}
           type="button"
