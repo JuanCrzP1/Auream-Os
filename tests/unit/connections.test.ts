@@ -166,12 +166,15 @@ describe("vincular por QR", () => {
 
 describe("ver estado de un número conectado", () => {
   it("pone al día los avisos del proveedor con la sesión guardada", async () => {
-    const linker = fakeLinker(qrOutcome, [{ kind: "connected", phoneNumber: "573013815302", profileName: null, profilePictureUrl: null }]);
+    const online = { kind: "connected", phoneNumber: "573013815302", profileName: null, profilePictureUrl: null } as const;
+    const linker = fakeLinker(qrOutcome, [online, online, { kind: "disconnected" }]);
     const s = setup(linker);
     const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
     await s.link.execute(T, created.id);
     await s.check.execute(T, created.id);
     expect((await s.link.execute(T, created.id)).state).toBe("connected");
+    // Si al ver el estado el proveedor dice que se cerró la sesión, la tarjeta lo refleja.
+    expect((await s.link.execute(T, created.id)).connection.status).toBe("disconnected");
     expect(linker.refresh).toHaveBeenCalledWith({ ref: "inst-1", secret: TOKEN });
   });
 });

@@ -58,6 +58,14 @@ describe("sesión de un número", () => {
     expect((await s.check.execute(T, id)).connection.profilePictureUrl).toBe(FOTO);
   });
 
+  it("«Ver estado» de un número ya conectado trae su foto y perfil actuales (los que se conectaron antes también la reciben)", async () => {
+    const s = setup();
+    const { id } = await connected(s);
+    s.linker.check.mockResolvedValueOnce({ kind: "connected", phoneNumber: "573013815302", profileName: "Ventas Nuevo", profilePictureUrl: "https://pps.whatsapp.net/v/nueva.jpg" });
+    const state = await s.link.execute(T, id);
+    expect([state.state, state.connection.profileName, state.connection.profilePictureUrl]).toEqual(["connected", "Ventas Nuevo", "https://pps.whatsapp.net/v/nueva.jpg"]);
+  });
+
   it("desconectar cierra la sesión de WhatsApp sin borrar la conexión; reconectar pide un QR sobre la misma sesión", async () => {
     const s = setup();
     const { id } = await connected(s);
