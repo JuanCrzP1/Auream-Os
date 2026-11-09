@@ -38,20 +38,29 @@ export function MessageBubble({ message, tail = true }: { readonly message: Conv
     return <p className={`ios-reaction ios-reaction--${message.direction}`} aria-label={`Reacción ${message.text}`}>{message.text}</p>;
   }
   const outbound = message.direction === "outbound";
-  const origin = message.author === "bot" ? (message.flowName ? `🤖 ${message.flowName}` : "🤖 Bot") : message.author === "agent" ? (message.agentName ?? "Asesor") : null;
+  // Quién lo envió no se pinta (como en un chat normal): queda como ayuda al pasar el cursor.
+  const sender = message.author === "bot" ? `Bot${message.flowName ? ` · ${message.flowName}` : ""}` : message.author === "agent" ? (message.agentName ?? "Asesor") : undefined;
+  const meta = (
+    <span className={`ios-bubble__meta${message.text ? "" : " is-static"}`}>
+      {messageTime(message.createdAt)}
+      {outbound && message.status === "sent" ? <span className="ios-sent" title="Enviado"><SentGlyph /></span> : null}
+      {message.status === "failed" ? <AlertGlyph /> : null}
+    </span>
+  );
 
   return (
     <div className={`ios-msg ios-msg--${message.direction}${tail && message.options.length === 0 ? " has-tail" : ""}`}>
-      <div className={`ios-bubble ios-bubble--${message.direction}${message.status === "failed" ? " is-failed" : ""}`}>
-        {origin ? <span className="ios-bubble__origin">{origin}</span> : null}
+      <div className={`ios-bubble ios-bubble--${message.direction}${message.status === "failed" ? " is-failed" : ""}`} title={sender}>
         <Media message={message} />
         {message.kind === "button_reply" || message.kind === "list_reply" ? <span className="ios-bubble__reply-tag">Eligió una opción</span> : null}
-        {message.text ? <p className="ios-bubble__text">{message.text}</p> : null}
-        <span className="ios-bubble__meta">
-          {messageTime(message.createdAt)}
-          {outbound && message.status === "sent" ? <span className="ios-sent" title="Enviado"><SentGlyph /></span> : null}
-          {message.status === "failed" ? <AlertGlyph /> : null}
-        </span>
+        {message.text ? (
+          <p className="ios-bubble__text">
+            {message.text}
+            {/* Reserva el sitio de la hora al final de la última línea (como WhatsApp). */}
+            <span className="ios-bubble__meta-space" aria-hidden="true" />
+          </p>
+        ) : null}
+        {meta}
       </div>
       {message.options.length > 0 ? (
         <div className="ios-options" aria-label="Opciones enviadas">

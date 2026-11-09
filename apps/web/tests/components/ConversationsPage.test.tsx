@@ -105,7 +105,9 @@ describe("ConversationsPage", () => {
 
     const chat = await screen.findByRole("region", { name: "Chat con Laura Gómez" });
     expect(await within(chat).findByText("Hola")).toBeInTheDocument();
-    expect(within(chat).getByText("🤖 Ventas")).toBeInTheDocument();
+    // Sin el nombre del flujo encima de la burbuja (chat normal); queda como ayuda al pasar el cursor.
+    expect(within(chat).queryByText(/🤖/)).not.toBeInTheDocument();
+    expect(within(chat).getByText("¿Qué buscas?").closest(".ios-bubble")).toHaveAttribute("title", "Bot · Ventas");
     expect(within(chat).getByLabelText("Opciones enviadas")).toHaveTextContent("Ver precios");
     expect(within(chat).getByText("No se envió: uazapi no disponible (503)")).toBeInTheDocument();
     expect(within(chat).getByText("En el flujo «Ventas»")).toBeInTheDocument();
