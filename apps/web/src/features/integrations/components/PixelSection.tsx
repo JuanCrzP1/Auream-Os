@@ -5,10 +5,10 @@ import { StateIcons } from "@shared/ui/state/stateIcons";
 import { ConnectionCard } from "./ConnectionCard";
 import { ConnectPixelDialog } from "./ConnectPixelDialog";
 import { EditConnectionDialog } from "./EditConnectionDialog";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
 import { MetaMark } from "./ProviderMark";
 import { IntegrationSection } from "./IntegrationSection";
-import { formatDateTime } from "./formatDate";
+import { formatDateTime } from "@shared/format/formatDate";
 
 type Dialog = { readonly kind: "connect" } | { readonly kind: "rename" | "secret" | "delete"; readonly connection: PixelConnectionSummary } | null;
 

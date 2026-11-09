@@ -7,6 +7,8 @@ import { routeMeRequest, type MeServices } from "./routeMeRequest";
 import { routeContactsRequest } from "./routeContactsRequest";
 import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
+import { routeConnectionsRequest } from "./routeConnectionsRequest";
+import type { ConnectionsServices } from "../composition/composeConnectionsServices";
 import { routeLocalMediaRequest, routeMediaRequest } from "./routeMediaRequest";
 import type { MediaServices } from "../composition/composeMediaServices";
 import type { IntegrationsServices } from "../composition/composeIntegrationsServices";
@@ -31,6 +33,7 @@ export interface ApiRouterDependencies {
   readonly meServices: MeServices;
   readonly contactsServices: ContactsServices;
   readonly integrationsServices: IntegrationsServices;
+  readonly connectionsServices: ConnectionsServices;
   /** `null` si no hay almacén de medios configurado. */
   readonly mediaServices: MediaServices | null;
   readonly authService: AuthService;
@@ -43,7 +46,7 @@ export async function routeApiRequest(
   url: URL,
   dependencies: ApiRouterDependencies
 ): Promise<void> {
-  const { services, meServices, contactsServices, integrationsServices, mediaServices, authService, requestLogger } = dependencies;
+  const { services, meServices, contactsServices, integrationsServices, connectionsServices, mediaServices, authService, requestLogger } = dependencies;
   const method = request.method ?? "GET";
 
   if (url.pathname === "/health") {
@@ -96,6 +99,7 @@ export async function routeApiRequest(
   }
 
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
+  if (await routeConnectionsRequest(request, response, url, connectionsServices, requestContext)) return;
   if (await routeMediaRequest(request, response, url, mediaServices, requestContext)) return;
 
   const handledByAutomations = await routeAutomationsRequest(

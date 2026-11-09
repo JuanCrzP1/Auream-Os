@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 
-/** Confirmación de una acción destructiva. */
+/** Confirmación de una acción destructiva (eliminar). Compartida por los módulos. */
 export function ConfirmDialog({
   title,
   message,

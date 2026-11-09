@@ -139,7 +139,8 @@ describe("manipulación de la petición", () => {
     expect(result.outcome === "resolved" && result.context.scopes).toEqual([
       "flows.read",
       "analytics.read",
-      "contacts.read"
+      "contacts.read",
+      "connections.read"
     ]);
   });
 

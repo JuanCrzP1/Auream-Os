@@ -86,8 +86,8 @@ describe("requireTenantAccess (guard)", () => {
 // ---------------------------------------------------------------------------
 
 describe("requireRole (guard)", () => {
-  it("viewer satisfecho cuando tiene flows.read, analytics.read y contacts.read", () => {
-    const context = makeContext({ scopes: ["flows.read", "analytics.read", "contacts.read"] });
+  it("viewer satisfecho cuando tiene flows.read, analytics.read, contacts.read y connections.read", () => {
+    const context = makeContext({ scopes: ["flows.read", "analytics.read", "contacts.read", "connections.read"] });
     expect(() => requireRole(context, "viewer")).not.toThrow();
   });
 
@@ -118,7 +118,7 @@ describe("requireRole (guard)", () => {
 
   it("tenant_owner satisfecho con todos los scopes", () => {
     const context = makeContext({
-      scopes: ["flows.read", "flows.write", "flows.publish", "runtime.execute", "analytics.read", "contacts.read", "contacts.write", "credentials.read", "credentials.write", "tenant.manage"]
+      scopes: ["flows.read", "flows.write", "flows.publish", "runtime.execute", "analytics.read", "contacts.read", "contacts.write", "credentials.read", "credentials.write", "connections.read", "connections.write", "tenant.manage"]
     });
     expect(() => requireRole(context, "tenant_owner")).not.toThrow();
   });

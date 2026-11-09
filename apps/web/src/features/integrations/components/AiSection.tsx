@@ -4,10 +4,10 @@ import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
 import { ConnectionCard } from "./ConnectionCard";
 import { ConnectAiDialog } from "./ConnectAiDialog";
 import { EditConnectionDialog } from "./EditConnectionDialog";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
 import { ProviderMark } from "./ProviderMark";
 import { IntegrationSection } from "./IntegrationSection";
-import { formatDateTime } from "./formatDate";
+import { formatDateTime } from "@shared/format/formatDate";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 
 type Dialog = { readonly kind: "connect" } | { readonly kind: "rename" | "secret" | "delete"; readonly credential: AiCredentialSummary } | null;

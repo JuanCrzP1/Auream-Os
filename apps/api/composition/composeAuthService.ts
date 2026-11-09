@@ -26,7 +26,9 @@ const DEV_SCOPES = [
   "contacts.read",
   "contacts.write",
   "credentials.read",
-  "credentials.write"
+  "credentials.write",
+  "connections.read",
+  "connections.write"
 ];
 
 export function composeAuthService(config: ApiConfig, authConfig: NeonAuthConfig): AuthService {

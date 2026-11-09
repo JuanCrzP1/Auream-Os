@@ -8,4 +8,6 @@ export type Scope =
   | "contacts.write"
   | "credentials.read"
   | "credentials.write"
+  | "connections.read"
+  | "connections.write"
   | "tenant.manage";

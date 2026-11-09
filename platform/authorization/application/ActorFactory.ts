@@ -13,6 +13,8 @@ const KNOWN_SCOPES: ReadonlySet<string> = new Set<Scope>([
   "contacts.write",
   "credentials.read",
   "credentials.write",
+  "connections.read",
+  "connections.write",
   "tenant.manage"
 ]);
 
