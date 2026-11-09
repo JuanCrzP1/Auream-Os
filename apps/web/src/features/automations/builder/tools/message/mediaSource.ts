@@ -1,22 +1,13 @@
 import type { MessageItem } from "./types";
+import { isUsableMediaUrl as isUsableUrl } from "@contracts/blocks/validation/message";
 
 // ---------------------------------------------------------------------------
 // Reglas sobre las fuentes de un medio (enlace o archivo del dispositivo),
 // compartidas por la validación y el preview para que no puedan divergir.
 // ---------------------------------------------------------------------------
 
-/** Solo `http:`/`https:` cuentan como fuente. */
-export function isUsableUrl(url: string): boolean {
-  const trimmed = url.trim();
-  if (trimmed.length === 0) return false;
-
-  try {
-    const { protocol } = new URL(trimmed);
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+/** Solo `http:`/`https:` cuentan como fuente (la misma regla que valida el bloque). */
+export { isUsableMediaUrl as isUsableUrl } from "@contracts/blocks/validation/message";
 
 /** ¿El archivo del bloque está subido (tiene su URL guardada)? */
 export function isUploaded(item: MessageItem): boolean {

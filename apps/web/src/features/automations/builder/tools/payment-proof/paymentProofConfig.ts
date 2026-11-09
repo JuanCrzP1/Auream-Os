@@ -1,5 +1,3 @@
-import type { ToolData, ToolOutput } from "../ToolDefinition";
-import { PAYMENT_PROOF_OUTPUT, readPaymentProofConfig } from "@contracts/PaymentProofConfig";
 
 // La forma de la configuración, sus salidas y los datos que extrae son el
 // contrato compartido con el motor (`contracts/PaymentProofConfig.ts`).
@@ -21,28 +19,7 @@ export {
  * Salidas del bloque. Lo normal son dos —válido y rechazado—, como en Leona;
  * con «Una salida por cada motivo» cada verificación activa abre la suya.
  */
-export function paymentProofOutputs(config: ToolData): ReadonlyArray<ToolOutput> {
-  const read = readPaymentProofConfig(config);
-  const O = PAYMENT_PROOF_OUTPUT;
-
-  if (!read.splitRejections) {
-    return [
-      { id: O.valid, label: "Comprobante válido" },
-      { id: O.rejected, label: "Comprobante rechazado" }
-    ];
-  }
-
-  return [
-    { id: O.valid, label: "Comprobante válido" },
-    ...(read.matchAccount ? [{ id: O.wrongAccount, label: "Cuenta no registrada" }] : []),
-    ...(read.matchHolder ? [{ id: O.wrongHolder, label: "Titular incorrecto" }] : []),
-    ...(read.amountCheck !== "off" ? [{ id: O.wrongAmount, label: "Monto incorrecto" }] : []),
-    ...(read.maxAgeEnabled ? [{ id: O.tooOld, label: "Comprobante antiguo" }] : []),
-    ...(read.rejectDuplicates ? [{ id: O.duplicate, label: "Comprobante repetido" }] : []),
-    { id: O.invalid, label: "No es un comprobante" },
-    { id: O.failure, label: "Error" }
-  ];
-}
+export { paymentProofOutputs } from "@contracts/blocks/outputs";
 
 /** «••••4567» para números de cuenta; alias, correos y llaves se muestran tal cual. */
 export function maskNumber(number: string): string {

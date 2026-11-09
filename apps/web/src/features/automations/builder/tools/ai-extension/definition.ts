@@ -1,7 +1,6 @@
+import { AI_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
-import { AI_DEFAULT_CONFIG, aiOutputs } from "./aiConfig";
 import { summarizeAi } from "./summarizeAi";
-import { validateAi } from "./validateAi";
 
 /**
  * Extensión IA — llama a un modelo (OpenAI, Gemini u OpenRouter) con una
@@ -12,19 +11,12 @@ import { validateAi } from "./validateAi";
  * No es un agente ni el AI Sales Engine. Lo ejecuta `AiNodeHandler`.
  */
 export const aiExtensionTool: ToolDefinition = {
-  type: "ai",
-  label: "Extensión IA",
+  ...AI_BLOCK,
   description: "Procesamiento inteligente",
   defaultContentText: "Nodo encapsulado opcional",
   editorTitle: "Editar extensión encapsulada",
-  availableInPalette: true,
-  terminal: false,
   executable: true,
-  defaultContent: {},
-  defaultConfig: { ...AI_DEFAULT_CONFIG },
-  outputs: aiOutputs,
   summarize: summarizeAi,
-  validate: validateAi,
   colors: {
     header: "#7c3aed",
     body: "#6d28d9",

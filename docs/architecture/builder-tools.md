@@ -6,11 +6,25 @@
 
 Cada tipo de nodo del lienzo (Mensaje, Esperar respuesta, Programador, Distribuidor…) es una **herramienta**: un módulo autocontenido que el núcleo del builder descubre por contrato. El núcleo (lienzo, paleta, marco del editor, adaptadores) **no conoce ninguna herramienta concreta**.
 
+## Reglas compartidas (`contracts/blocks/`)
+
+Lo que NO es visual de cada bloque vive una sola vez en `contracts/blocks/` y lo comparten el editor web y el servidor MCP (los agentes de IA editan flujos con las mismas reglas que una persona):
+
+| Archivo | Qué decide |
+|---|---|
+| `BlockRules.ts` | El contrato: tipo, nombre, contenido y configuración con que nace, si se ofrece en la paleta, si cierra una rama, sus salidas, si está listo (`validate`) y su forma canónica (`normalizeConfig`, con los lectores de `contracts/*Config.ts`) |
+| `blockCatalog.ts` | Las reglas de los 14 tipos (`MENU_BLOCK`, `MESSAGE_BLOCK`…), `findBlockRules`, `blockOutputs` |
+| `outputs.ts` · `validation/*` | Salidas con nombre y validación de cada bloque |
+| `connectionRules.ts` | ¿Se puede trazar esta conexión? (una por salida, nada llega al inicio, salidas que existan) |
+| `reviewFlow.ts` | «Revisión del flujo»: errores y avisos, bloque a bloque |
+
+Una herramienta del editor es `{ ...X_BLOCK, <lo visual> }`; `tests/contract/blockCatalogParity.test.ts` impide que declare reglas propias. Los `validate*.ts`, `connectionRules.ts`, `reviewFlow.ts` y `nodeOutputs.ts` del editor solo adaptan el lienzo al grafo de `contracts/blocks/FlowGraph.ts`.
+
 ## Estructura
 
 ```
 tools/
-├── ToolDefinition.ts     contrato PURO (sin React)
+├── ToolDefinition.ts     reglas compartidas (BlockRules) + lo visual puro (sin React)
 ├── ToolUi.ts             contrato VISUAL (React)
 ├── registry.ts           catálogo puro — única frontera para el núcleo
 ├── ui-registry.tsx       catálogo visual
@@ -31,7 +45,7 @@ tools/
     ├── definition.ts     su ToolDefinition
     ├── ui.tsx            su ToolUi
     ├── read*.ts          lector defensivo de la config
-    ├── validate*.ts      ¿puede guardarse?
+    ├── validate*.ts      ¿puede guardarse? (reexporta contracts/blocks/validation)
     ├── summarize*.ts     resumen de una línea
     ├── *CompactBody.tsx  nodo cerrado
     ├── *Editor.tsx       editor
@@ -99,6 +113,7 @@ Las reglas para conectar salidas (una conexión por salida, inicio, ciclos…) y
 1. `contracts/FlowSnapshot.ts` → el tipo en `NodeType`.
 2. `flow-engine/nodes/<tipo>/` → handler (puede fallar con `*_not_implemented`).
 3. `apps/api/composition/composeNodeRuntime.ts` → registrar el handler.
-4. `tools/<herramienta>/definition.ts` + `ui.tsx`.
-5. Añadirlas a `registry.ts` y a `ui-registry.tsx`.
-6. Reutilizar `_kit/` antes de escribir una primitiva nueva. Si una primitiva aparece en una segunda herramienta, se sube al kit.
+4. `contracts/blocks/` → sus reglas en `blockCatalog.ts` (y salidas/validación si tiene), y su guía para agentes en `apps/api/mcp/blocks/blockGuides.ts`.
+5. `tools/<herramienta>/definition.ts` (`{ ...X_BLOCK, … }`) + `ui.tsx`.
+6. Añadirlas a `registry.ts` y a `ui-registry.tsx`.
+7. Reutilizar `_kit/` antes de escribir una primitiva nueva. Si una primitiva aparece en una segunda herramienta, se sube al kit.

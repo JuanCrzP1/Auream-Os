@@ -39,7 +39,7 @@ const LEVELS: ReadonlyArray<McpAccessLevel> = ["none", "read", "write"];
 
 /** Qué permisos internos da cada área en cada nivel (ver o ver y editar). */
 const SCOPES: Readonly<Record<McpAreaId, { readonly read: ReadonlyArray<Scope>; readonly write: ReadonlyArray<Scope> }>> = {
-  flows: { read: ["flows.read"], write: ["flows.read"] },
+  flows: { read: ["flows.read"], write: ["flows.read", "flows.write"] },
   contacts: { read: ["contacts.read"], write: ["contacts.read", "contacts.write"] },
   conversations: { read: ["conversations.read"], write: ["conversations.read", "conversations.write"] },
   connections: { read: ["connections.read"], write: ["connections.read"] }

@@ -1,7 +1,6 @@
+import { PIXEL_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
-import { PIXEL_DEFAULT_CONFIG } from "./pixelConfig";
 import { summarizePixel } from "./summarizePixel";
-import { validatePixel } from "./validatePixel";
 
 /**
  * Pixel — registra una conversión (Lead o Compra) en la API de Conversiones
@@ -10,18 +9,12 @@ import { validatePixel } from "./validatePixel";
  * Lo ejecuta `PixelNodeHandler`; si Meta falla, el flujo sigue.
  */
 export const pixelTool: ToolDefinition = {
-  type: "pixel",
-  label: "Pixel",
+  ...PIXEL_BLOCK,
   description: "Registra eventos de conversión",
   defaultContentText: "Evento de conversión",
   editorTitle: "Editar pixel",
-  availableInPalette: true,
-  terminal: false,
   executable: true,
-  defaultContent: {},
-  defaultConfig: { ...PIXEL_DEFAULT_CONFIG },
   summarize: summarizePixel,
-  validate: validatePixel,
   colors: {
     header: "#9d174d",
     body: "#831843",

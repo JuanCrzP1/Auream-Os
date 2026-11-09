@@ -1,7 +1,6 @@
+import { CONDITION_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
-import { CONDITION_DEFAULT_CONFIG, conditionOutputs } from "./conditionConfig";
 import { summarizeCondition } from "./summarizeCondition";
-import { validateCondition } from "./validateCondition";
 
 /**
  * Condicional — evalúa reglas (etiquetas, día, hora, fecha, ventana de 24 h,
@@ -13,19 +12,12 @@ import { validateCondition } from "./validateCondition";
  * hasta que existan Contactos y Conversaciones.
  */
 export const conditionalTool: ToolDefinition = {
-  type: "condition",
-  label: "Condicional",
+  ...CONDITION_BLOCK,
   description: "Bifurca según condición",
   defaultContentText: "Preprocesamiento y flags",
   editorTitle: "Editar condición",
-  availableInPalette: true,
-  terminal: false,
   executable: true,
-  defaultContent: {},
-  defaultConfig: { ...CONDITION_DEFAULT_CONFIG },
-  outputs: conditionOutputs,
   summarize: summarizeCondition,
-  validate: validateCondition,
   colors: {
     header: "#a21caf",
     body: "#86198f",

@@ -8,7 +8,6 @@ import { McpCredentialServices } from "../../../domains/mcp/application/McpCrede
 import { McpOAuthServices } from "../../../domains/mcp/application/McpOAuthServices";
 import type { McpCredentialRepository } from "../../../domains/mcp/application/McpCredentialRepository";
 import type { McpOAuthRepository } from "../../../domains/mcp/application/McpOAuthRepository";
-import type { ApiServices } from "../composition/composeBuilderServices";
 import type { ContactsServices } from "../composition/composeContactsServices";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
 import type { MessagingServices } from "../composition/composeMessagingServices";
@@ -17,6 +16,9 @@ import type { OAuthAddresses } from "./oauthMetadata";
 import type { McpTool } from "./McpTool";
 import type { McpAccess } from "../../../domains/mcp/domain/McpCredential";
 import { flowTools } from "./tools/flowTools";
+import { flowEditTools } from "./tools/flowEditTools";
+import { composeFlowEditingService, type FlowEditingBuilderServices } from "../composition/composeFlowEditingService";
+import type { IntegrationsServices } from "../composition/composeIntegrationsServices";
 import { contactTools } from "./tools/contactTools";
 import { conversationTools } from "./tools/conversationTools";
 import { connectionTools } from "./tools/connectionTools";
@@ -46,7 +48,9 @@ export interface McpDependencies {
   readonly sql?: SqlClient;
   readonly repository?: McpCredentialRepository;
   readonly oauthRepository?: McpOAuthRepository;
-  readonly builder: Pick<ApiServices, "listAutomationsService" | "getWorkspaceService">;
+  readonly builder: FlowEditingBuilderServices;
+  /** Conexiones de IA y píxeles (para configurar esos bloques). */
+  readonly integrations?: Pick<IntegrationsServices, "aiCredentials" | "pixelConnections">;
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
@@ -65,8 +69,10 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     newId: randomUUID,
     newSecret
   });
+  const editing = composeFlowEditingService(deps.builder);
   const tools: McpTool[] = [
-    ...flowTools(deps.builder),
+    ...flowTools({ builder: deps.builder, editing, ...(deps.integrations ? { integrations: deps.integrations } : {}) }),
+    ...flowEditTools(editing),
     ...contactTools(deps.contacts),
     ...(deps.messaging ? conversationTools(deps.messaging.conversations) : []),
     ...connectionTools(deps.connections)

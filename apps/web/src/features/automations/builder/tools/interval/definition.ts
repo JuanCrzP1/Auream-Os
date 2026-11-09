@@ -1,7 +1,6 @@
-import { INTERVAL_DEFAULT_CONFIG } from "@contracts/IntervalConfig";
+import { DELAY_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
 import { summarizeInterval } from "./summarizeInterval";
-import { validateInterval } from "./validateInterval";
 
 /**
  * Programador — decide cuándo continúa la conversación.
@@ -14,17 +13,12 @@ import { validateInterval } from "./validateInterval";
  * `readIntervalConfig`/`intervalWaitMs` en lugar de `resumeAt`/`delayMs`.
  */
 export const intervalTool: ToolDefinition = {
-  type: "delay",
-  label: "Programador",
+  ...DELAY_BLOCK,
   description: "Define cuándo continuar",
   defaultContentText: "Continuar más tarde",
   editorTitle: "Programador",
-  availableInPalette: true,
-  terminal: false,
   executable: true,
-  defaultConfig: { ...INTERVAL_DEFAULT_CONFIG },
   summarize: summarizeInterval,
-  validate: validateInterval,
   // Cyan aprobado por producto. El editor lo repite en `--iv-cyan`/`--iv-deep`.
   colors: {
     header: "#0891b2",

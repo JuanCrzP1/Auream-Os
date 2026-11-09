@@ -1,5 +1,3 @@
-import type { NodeType } from "@contracts/FlowSnapshot";
-
 /**
  * Mitad PURA del contrato de una herramienta: todo lo que el builder necesita
  * para ofrecer, resumir, validar y conectar un tipo de nodo.
@@ -14,56 +12,32 @@ import type { NodeType } from "@contracts/FlowSnapshot";
  * Ver docs/architecture/builder-tools.md.
  */
 
+import type { BlockData, BlockOutput, BlockCheck, BlockRules } from "@contracts/blocks/BlockRules";
+
+export { VALID, invalid } from "@contracts/blocks/BlockRules";
+
 /** Configuración o contenido de un nodo, tal como llega de disco o del editor. */
-export type ToolData = Readonly<Record<string, unknown>>;
+export type ToolData = BlockData;
 
 /** Una salida con nombre de un nodo con varios caminos posibles. */
-export interface ToolOutput {
-  /** Identidad persistida como `fromOutput` en la arista. Nunca se reutiliza. */
-  readonly id: string;
-  /** Rótulo visible junto al punto de conexión. */
-  readonly label: string;
-}
+export type ToolOutput = BlockOutput;
 
-export interface ValidationResult {
-  readonly valid: boolean;
-  /** Mensaje para el usuario cuando `valid` es `false`. */
-  readonly reason: string | null;
-}
+export type ValidationResult = BlockCheck;
 
-export const VALID: ValidationResult = { valid: true, reason: null };
-
-export function invalid(reason: string): ValidationResult {
-  return { valid: false, reason };
-}
-
-export interface ToolDefinition {
-  /** Tipo canónico del contrato compartido. Clave del registry. */
-  readonly type: NodeType;
-
-  /** Nombre en la paleta y título por defecto de un nodo nuevo. */
-  readonly label: string;
-
+/**
+ * Una herramienta del builder = las REGLAS del bloque (compartidas con el
+ * servidor: `contracts/blocks/blockCatalog.ts`) + lo que solo necesita el
+ * editor: textos de la paleta y del editor, resumen, copia, recursos y colores.
+ */
+export interface ToolDefinition extends BlockRules {
   /** Subtítulo de la paleta, en una línea. */
   readonly description: string;
 
-  /** Texto inicial de `content.text` cuando no se declara `defaultContent`. */
+  /** Texto de respaldo del preview cuando el nodo no tiene contenido propio. */
   readonly defaultContentText: string;
-
-  /** Contenido con el que nace el nodo. Ausente: `{ text: defaultContentText }`. */
-  readonly defaultContent?: ToolData;
-
-  /** Configuración mínima válida con la que nace el nodo. */
-  readonly defaultConfig: ToolData;
 
   /** Título del editor del nodo. */
   readonly editorTitle: string;
-
-  /** `false` para nodos de sistema, que existen en el modelo pero no se ofrecen. */
-  readonly availableInPalette: boolean;
-
-  /** Cierra una rama: no exige aristas salientes. */
-  readonly terminal: boolean;
 
   /**
    * `false` si el motor reconoce el tipo pero su handler falla con
@@ -71,22 +45,8 @@ export interface ToolDefinition {
    */
   readonly executable: boolean;
 
-  /**
-   * Salidas con nombre que la configuración ofrece.
-   *
-   * Ausente: el nodo tiene UNA salida implícita y el cascarón pinta su punto.
-   * Presente: el nodo tiene exactamente estas salidas (cero incluido); la
-   * herramienta las pinta en su `CompactBody` con `OutputHandle`, y el núcleo
-   * del builder usa esta lista para descartar aristas que salgan de una salida
-   * que ya no existe.
-   */
-  readonly outputs?: (config: ToolData) => ReadonlyArray<ToolOutput>;
-
   /** Resumen de una línea para la tarjeta. Ausente: se usa `content.text`. */
   readonly summarize?: (content: ToolData, config: ToolData) => string;
-
-  /** ¿Puede guardarse lo configurado? Ausente: siempre se puede. */
-  readonly validate?: (content: ToolData, config: ToolData) => ValidationResult;
 
   /** Copia de `config` para un duplicado, renovando identidades internas. */
   readonly duplicateConfig?: (config: ToolData) => Record<string, unknown>;

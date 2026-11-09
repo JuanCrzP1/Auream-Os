@@ -1,7 +1,6 @@
+import { MENU_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
-import { MENU_DEFAULT_CONFIG, menuOutputs } from "./menuConfig";
 import { summarizeMenu } from "./summarizeMenu";
-import { validateMenu } from "./validateMenu";
 
 /**
  * Menú — lista o botones interactivos de WhatsApp. Una salida por opción, más
@@ -11,19 +10,12 @@ import { validateMenu } from "./validateMenu";
  * número o texto y sale por ella. «Tiempo agotado» lo dispara la cola de tareas (C6).
  */
 export const menuTool: ToolDefinition = {
-  type: "menu",
-  label: "Menú",
+  ...MENU_BLOCK,
   description: "Ofrece opciones al usuario",
   defaultContentText: "Opciones para el usuario",
   editorTitle: "Editar menú",
-  availableInPalette: true,
-  terminal: false,
   executable: true,
-  defaultContent: {},
-  defaultConfig: { ...MENU_DEFAULT_CONFIG },
-  outputs: menuOutputs,
   summarize: summarizeMenu,
-  validate: validateMenu,
   colors: {
     header: "#854d0e",
     body: "#713f12",

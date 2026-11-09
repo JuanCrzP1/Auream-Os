@@ -66,7 +66,10 @@ const UNKNOWN_TOOL_FALLBACK: Omit<ToolDefinition, "type"> = {
   availableInPalette: false,
   terminal: false,
   executable: false,
+  defaultContent: {},
   defaultConfig: {},
+  // Un tipo desconocido se conserva tal cual: no se sabe leerlo.
+  normalizeConfig: (config) => config,
   colors: {
     header: "#64748b",
     body: "#475569",

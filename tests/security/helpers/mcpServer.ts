@@ -8,8 +8,9 @@ import { InMemoryContactRepository, InMemoryContactsStore, InMemoryLabelReposito
 import { CreateContactService, GetContactService, ListContactsService, UpdateContactService } from "../../../domains/contacts/application/ContactServices.js";
 import { ListLabelsService } from "../../../domains/contacts/application/LabelCatalogServices.js";
 import { ContactDirectoryService } from "../../../domains/contacts/application/ContactDirectoryService.js";
+import { createInMemoryBuilder, type InMemoryWorkspaces } from "../../helpers/inMemoryBuilder.js";
 
-// El servidor MCP real (credenciales y OAuth en memoria, contactos en memoria)
+// El servidor MCP real (credenciales, OAuth, contactos y flujos en memoria)
 // y un cliente HTTP mínimo para llamar sus rutas como lo haría un agente.
 
 export interface HttpReply {
@@ -26,7 +27,8 @@ export interface HttpCall {
   readonly headers?: Record<string, string>;
 }
 
-export function createMcpServer(): { server: McpServer; oauth: InMemoryMcpOAuthRepository; credentials: InMemoryMcpCredentialRepository } {
+export function createMcpServer(): { server: McpServer; oauth: InMemoryMcpOAuthRepository; credentials: InMemoryMcpCredentialRepository; workspaces: InMemoryWorkspaces } {
+  const builder = createInMemoryBuilder();
   const store = new InMemoryContactsStore();
   const contacts = new InMemoryContactRepository(store);
   const labels = new InMemoryLabelRepository(store);
@@ -36,7 +38,7 @@ export function createMcpServer(): { server: McpServer; oauth: InMemoryMcpOAuthR
     config: { whatsappWebhookBaseUrl: "https://auream-os.vercel.app/api", publicApiBaseUrl: "http://localhost:3001", publicAppOrigin: "https://auream-os.vercel.app" } as ApiConfig,
     repository: credentials,
     oauthRepository: oauth,
-    builder: { listAutomationsService: { execute: async () => ({ flows: [], folders: [] }) }, getWorkspaceService: { execute: async () => null } } as never,
+    builder: builder.services,
     contacts: {
       listContacts: new ListContactsService(contacts),
       getContact: new GetContactService(contacts),
@@ -48,7 +50,7 @@ export function createMcpServer(): { server: McpServer; oauth: InMemoryMcpOAuthR
     connections: { list: { execute: async () => [] } } as never,
     messaging: undefined
   });
-  return { server, oauth, credentials };
+  return { server, oauth, credentials, workspaces: builder.workspaces };
 }
 
 /** Llama una ruta (`route(request, response, url)`) con un cuerpo JSON, de formulario (texto) o vacío. */

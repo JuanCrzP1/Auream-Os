@@ -130,6 +130,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       config,
       sql: tenancy.sqlClient,
       builder: services,
+      integrations,
       contacts: contactsServices,
       connections: connectionsServices,
       messaging: messagingServices,

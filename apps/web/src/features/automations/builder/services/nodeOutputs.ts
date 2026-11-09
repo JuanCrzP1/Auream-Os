@@ -1,4 +1,5 @@
-import { findTool } from "../tools/registry";
+import { blockOutputs } from "@contracts/blocks/blockCatalog";
+import { isValidOutput } from "@contracts/blocks/connectionRules";
 import type { ToolData, ToolOutput } from "../tools/ToolDefinition";
 import type { CanvasNode } from "../types/canvas";
 
@@ -9,26 +10,11 @@ import type { CanvasNode } from "../types/canvas";
  * Lista  = el nodo tiene exactamente esas salidas con nombre.
  */
 export function listNodeOutputs(type: string, config: ToolData): ReadonlyArray<ToolOutput> | null {
-  const outputs = findTool(type)?.outputs;
-  return outputs ? outputs(config) : null;
+  return blockOutputs(type, config);
 }
 
-/**
- * ¿Puede una arista arrancar de `sourceHandle` en este nodo?
- *
- * Sin `sourceHandle` en un nodo con salidas con nombre es una arista guardada
- * antes de que existiera `fromOutput`: es válida mientras haya alguna salida
- * (React Flow la dibuja desde la primera) y `assignLegacyOutputs` la fija.
- */
-export function isValidSourceHandle(
-  type: string,
-  config: ToolData,
-  sourceHandle: string | null | undefined
-): boolean {
-  const outputs = listNodeOutputs(type, config);
-  if (outputs === null) return !sourceHandle;
-  if (!sourceHandle) return outputs.length > 0;
-  return outputs.some((output) => output.id === sourceHandle);
+export function isValidSourceHandle(type: string, config: ToolData, sourceHandle: string | null | undefined): boolean {
+  return isValidOutput(type, config, sourceHandle);
 }
 
 /**

@@ -1,3 +1,4 @@
+import { END_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
 
 /**
@@ -14,15 +15,11 @@ import type { ToolDefinition } from "../ToolDefinition";
  * terminación del flujo (candidata: Notificación).
  */
 export const endTool: ToolDefinition = {
-  type: "end",
-  label: "Finalizar",
+  ...END_BLOCK,
   description: "Cierra el flujo",
   defaultContentText: "Cerrar rama del flujo",
   editorTitle: "Editar cierre",
-  availableInPalette: false,
-  terminal: true,
   executable: true,
-  defaultConfig: {},
   colors: {
     header: "#3f6212",
     body: "#365314",

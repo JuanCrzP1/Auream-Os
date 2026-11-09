@@ -1,10 +1,16 @@
-import { canConnectToItself } from "@contracts/FlowConnectionRules";
-import { isValidSourceHandle } from "./nodeOutputs";
+import {
+  checkConnection as checkGraphConnection,
+  findOvercrowdedOutputs as findGraphOvercrowdedOutputs,
+  type ConnectionCheck,
+  type ConnectionRejection
+} from "@contracts/blocks/connectionRules";
 import type { CanvasEdge, CanvasNode } from "../types/canvas";
+import { toGraphEdge, toGraphNode } from "./canvasGraph";
 
 // ---------------------------------------------------------------------------
-// Reglas al CONECTAR dos bloques en el lienzo. Puras: reciben el grafo y la
-// conexión propuesta y dicen si se permite y por qué no.
+// Reglas al CONECTAR dos bloques en el lienzo. Son las compartidas
+// (`contracts/blocks/connectionRules.ts`, las mismas que aplica el servidor MCP
+// cuando un agente conecta bloques); aquí solo se traducen desde el lienzo.
 //
 //   · De cada salida sale como mucho UNA conexión (también la del bloque de
 //     entrada, que tiene una sola).
@@ -12,15 +18,9 @@ import type { CanvasEdge, CanvasNode } from "../types/canvas";
 //     (vuelve a mostrar el menú, como en Leona).
 //   · Al bloque de entrada no llega ninguna conexión.
 //   · La salida debe existir en la configuración actual del bloque.
-//
-// Mismo modelo que valida el backend: docs/architecture/flow-connections.md.
 // ---------------------------------------------------------------------------
 
-export type ConnectionRejection = "unknown-node" | "self" | "into-entry" | "invalid-output" | "output-taken";
-
-export type ConnectionCheck =
-  | { readonly ok: true }
-  | { readonly ok: false; readonly reason: ConnectionRejection; readonly message: string };
+export type { ConnectionCheck, ConnectionRejection };
 
 export interface ProposedConnection {
   readonly source: string | null;
@@ -28,57 +28,15 @@ export interface ProposedConnection {
   readonly sourceHandle?: string | null;
 }
 
-const MESSAGES: Readonly<Record<ConnectionRejection, string>> = {
-  "unknown-node": "No se puede conectar con un bloque que ya no existe.",
-  self: "Un bloque no puede conectarse consigo mismo. Solo «Otra respuesta» del Menú puede volver al mismo Menú.",
-  "into-entry": "El bloque de inicio no recibe conexiones: es donde empieza el flujo.",
-  "invalid-output": "Esa salida ya no existe en la configuración del bloque.",
-  "output-taken": "Esa salida ya está conectada. Elimina la conexión actual para cambiar su destino."
-};
-
-const reject = (reason: ConnectionRejection): ConnectionCheck => ({ ok: false, reason, message: MESSAGES[reason] });
-
-/** Salida normalizada: `null`/`undefined`/«» son la salida única implícita. */
-const handleKey = (handle: string | null | undefined): string => handle ?? "";
-
-export function checkConnection(
-  nodes: ReadonlyArray<CanvasNode>,
-  edges: ReadonlyArray<CanvasEdge>,
-  connection: ProposedConnection
-): ConnectionCheck {
-  const source = nodes.find((node) => node.id === connection.source);
-  const target = nodes.find((node) => node.id === connection.target);
-
-  if (!source || !target) return reject("unknown-node");
-  if (source.id === target.id && !canConnectToItself(source.data.nodeType, connection.sourceHandle)) return reject("self");
-  if (target.data.isEntry) return reject("into-entry");
-
-  if (!source.data.isEntry && !isValidSourceHandle(source.data.nodeType, source.data.config, connection.sourceHandle)) {
-    return reject("invalid-output");
-  }
-
-  const taken = edges.some(
-    (edge) => edge.source === source.id && handleKey(edge.sourceHandle) === handleKey(connection.sourceHandle)
-  );
-  if (taken) return reject("output-taken");
-
-  return { ok: true };
+export function checkConnection(nodes: ReadonlyArray<CanvasNode>, edges: ReadonlyArray<CanvasEdge>, connection: ProposedConnection): ConnectionCheck {
+  return checkGraphConnection(nodes.map(toGraphNode), edges.map(toGraphEdge), {
+    source: connection.source,
+    target: connection.target,
+    output: connection.sourceHandle ?? null
+  });
 }
 
-/**
- * Salidas con más de una conexión en un grafo ya construido (p. ej. un flujo
- * guardado antes de estas reglas). Devuelve el id de cada bloque afectado.
- */
+/** Bloques con dos o más conexiones saliendo de la MISMA salida. */
 export function findOvercrowdedOutputs(edges: ReadonlyArray<CanvasEdge>): ReadonlyArray<string> {
-  const counts = new Map<string, number>();
-  for (const edge of edges) {
-    const key = `${edge.source}\u0000${handleKey(edge.sourceHandle)}`;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-
-  const sources = new Set<string>();
-  for (const [key, count] of counts) {
-    if (count > 1) sources.add(key.split("\u0000")[0]);
-  }
-  return [...sources];
+  return findGraphOvercrowdedOutputs(edges.map(toGraphEdge));
 }

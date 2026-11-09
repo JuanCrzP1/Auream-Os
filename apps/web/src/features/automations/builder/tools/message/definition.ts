@@ -1,7 +1,7 @@
+import { MESSAGE_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
 import { summarizeMessage } from "./summarizeMessage";
 import { releaseMessageResources } from "./releaseMessageResources";
-import { validateMessageContent } from "./validateMessageContent";
 import { duplicateMessageConfig } from "./duplicateMessageConfig";
 
 /**
@@ -12,19 +12,12 @@ import { duplicateMessageConfig } from "./duplicateMessageConfig";
  * `OutboundMessage` que los transporte).
  */
 export const messageTool: ToolDefinition = {
-  type: "message",
-  label: "Mensaje",
+  ...MESSAGE_BLOCK,
   description: "Envía texto o media",
   defaultContentText: "Mensaje al usuario",
-  // Nace sin `content.text`: su contenido es `config.items`.
-  defaultContent: {},
   editorTitle: "Editar mensaje",
-  availableInPalette: true,
-  terminal: false,
   executable: true,
-  defaultConfig: { items: [] },
   summarize: summarizeMessage,
-  validate: validateMessageContent,
   duplicateConfig: duplicateMessageConfig,
   releaseResources: releaseMessageResources,
   colors: {

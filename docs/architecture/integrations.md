@@ -71,7 +71,7 @@ Un agente se conecta a `POST /api/mcp` con `Authorization: Bearer <token>` y usa
 
 Reglas:
 
-- **Permisos por área** (Leona no los tiene): Flujos (ver), Contactos y etiquetas (ver / ver y editar), Conversaciones (ver / ver y responder o enviar flujos), Números de WhatsApp (ver). `tools/list` solo muestra lo permitido y `tools/call` lo vuelve a comprobar.
+- **Permisos por área** (Leona no los tiene): Flujos (ver / ver y editar), Contactos y etiquetas (ver / ver y editar), Conversaciones (ver / ver y responder o enviar flujos), Números de WhatsApp (ver). `tools/list` solo muestra lo permitido y `tools/call` lo vuelve a comprobar.
 - **El token** (`aur_mcp_` + 32 bytes aleatorios) se muestra una vez; se guarda su huella SHA-256 (única) y una pista. Vence a los 30, 90 o 365 días, o nunca; revocarlo corta el acceso al instante.
 - **Errores:** uno de negocio («ese contacto no existe») vuelve como resultado con `isError` para que el agente se corrija; uno interno, sin detalles.
 - **Registro:** cada acción (`mcp.tool_call`: credencial, herramienta, resultado, duración; sin los datos). Límite: 300 peticiones por minuto por credencial.
@@ -89,4 +89,18 @@ Reglas:
 
 Todo se guarda como huella SHA-256; códigos y tokens se TOMAN con `delete … returning` (un solo uso aunque lleguen dos peticiones a la vez) y se borran con su credencial: revocarla en Integraciones corta el acceso al instante. Los errores tienen el formato de OAuth (`error`, `error_description`) y van sin caché.
 
-Siguiente: herramientas para **crear y editar flujos**.
+### Editar flujos (permiso «Flujos: ver y editar»)
+
+`domains/automations/editing` · `apps/api/mcp/tools/flowTools.ts` · `apps/api/mcp/tools/flowEditTools.ts` · `apps/api/mcp/blocks/blockGuides.ts`
+
+| Pieza | Responsabilidad |
+|---|---|
+| `editing/domain/FlowDraftEditor.ts` | Operaciones PURAS sobre el borrador, como en el lienzo: agregar (y conectar después de un bloque; si esa salida ya llevaba a otro, el nuevo se inserta en medio), configurar, borrar, conectar y desconectar. Con las reglas de `contracts/blocks` |
+| `editing/domain/prepareBlockConfig.ts` | La configuración que manda el agente: se fusiona con la actual, cada elemento de lista sin `id` recibe uno (las opciones de un Menú son sus salidas) y se lleva a la forma canónica; lo desconocido se informa en `ignoredFields` |
+| `editing/domain/blockPlacement.ts` | Dónde va un bloque nuevo en el lienzo (a la derecha del anterior, sin tapar otro) |
+| `editing/application/FlowEditingService.ts` | Lee y guarda con los casos de uso del builder (`GetBuilderWorkspaceService`, `SaveDraftService`, bloqueo optimista); si alguien guardó a la vez, relee y reaplica una vez; devuelve la revisión del flujo |
+| `mcp/blocks/blockGuides.ts` | Documentación para el agente de cada bloque (campos, salidas, ejemplo). Solo documenta: las reglas son las de `contracts/blocks` |
+
+Herramientas: `list_flows`, `get_flow` (bloques, salidas y a dónde lleva cada una, y la revisión), `list_block_types`, `get_block_type`, `list_flow_resources` (conexiones de IA y píxeles, sin claves) con «ver»; `create_flow`, `rename_flow`, `add_block`, `update_block`, `delete_block`, `connect_blocks`, `disconnect_blocks` con «ver y editar».
+
+Los flujos no se publican: cada cambio se guarda y queda activo al instante; por eso cada operación se valida entera antes de guardar (un error no guarda nada) y su respuesta trae la revisión del flujo, la misma que ve el usuario en el editor.

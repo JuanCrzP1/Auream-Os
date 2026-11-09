@@ -22,7 +22,12 @@ export interface McpAreaDefinition {
 
 /** Las áreas y lo que cada nivel deja hacer (las ve quien crea la credencial). */
 export const MCP_AREAS: ReadonlyArray<McpAreaDefinition> = [
-  { id: "flows", label: "Flujos", read: "Ver tus flujos y sus bloques." },
+  {
+    id: "flows",
+    label: "Flujos",
+    read: "Ver tus flujos y sus bloques.",
+    write: "Crear flujos y agregar, configurar, conectar o borrar sus bloques. Los cambios quedan activos al instante."
+  },
   { id: "contacts", label: "Contactos y etiquetas", read: "Ver contactos, sus datos y etiquetas.", write: "Crear y editar contactos y ponerles o quitarles etiquetas." },
   { id: "conversations", label: "Conversaciones", read: "Ver los chats y sus mensajes.", write: "Responder como asesor y enviar flujos a un chat." },
   { id: "connections", label: "Números de WhatsApp", read: "Ver tus números y si están conectados." }

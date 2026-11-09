@@ -1,8 +1,6 @@
+import { DISTRIBUTOR_BLOCK } from "@contracts/blocks/blockCatalog";
 import type { ToolDefinition } from "../ToolDefinition";
-import { DISTRIBUTOR_DEFAULT_CONFIG } from "./distributorOutputs";
-import { readDistributorOutputs } from "./readDistributorConfig";
 import { summarizeDistributor } from "./summarizeDistributor";
-import { validateDistributor } from "./validateDistributor";
 
 /**
  * Distribuidor — reparte la conversación entre varias salidas sin mirar el
@@ -15,18 +13,12 @@ import { validateDistributor } from "./validateDistributor";
  * que un duplicado puede conservarlos.
  */
 export const distributorTool: ToolDefinition = {
-  type: "distributor",
-  label: "Distribuidor",
+  ...DISTRIBUTOR_BLOCK,
   description: "Reparte entre varias salidas",
   defaultContentText: "Reparto entre salidas",
   editorTitle: "Editar distribuidor",
-  availableInPalette: true,
-  terminal: false,
   executable: true,
-  defaultConfig: { ...DISTRIBUTOR_DEFAULT_CONFIG },
-  outputs: readDistributorOutputs,
   summarize: summarizeDistributor,
-  validate: validateDistributor,
   // Acero: cabecera más clara que el cuerpo, título blanco a 3.93:1.
   colors: {
     header: "#748199",

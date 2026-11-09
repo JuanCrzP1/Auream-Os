@@ -1,7 +1,5 @@
-import type { ToolOutput } from "../ToolDefinition";
 import type { Option } from "../_kit/fields";
 import {
-  CONDITION_OUTPUT,
   categoryHasField,
   operatorNeedsValue,
   ruleOperators,
@@ -99,12 +97,7 @@ export const CONTACT_FIELD_OPTIONS: ReadonlyArray<Option<string>> = [
   { value: "email", label: "Correo" }
 ];
 
-export function conditionOutputs(): ReadonlyArray<ToolOutput> {
-  return [
-    { id: CONDITION_OUTPUT.met, label: "Se cumple" },
-    { id: CONDITION_OUTPUT.unmet, label: "No se cumple" }
-  ];
-}
+export { conditionOutputs } from "@contracts/blocks/outputs";
 
 function optionLabel(options: ReadonlyArray<Option<string>>, value: string): string {
   return options.find((option) => option.value === value)?.label ?? value;
