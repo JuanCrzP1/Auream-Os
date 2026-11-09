@@ -1,7 +1,8 @@
 import type { ToolEditorProps } from "../ToolUi";
-import { Field, InlineSelect, TextAreaField, TextField, VariableHint } from "../_kit/fields";
+import { Field, TextAreaField, TextField, VariableHint } from "../_kit/fields";
 import { CardSection, ChatPreview, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
-import { CONTACT_VARIABLES, COUNTRY_CODES } from "../_kit/catalogs";
+import { CONTACT_VARIABLES } from "../_kit/catalogs";
+import { CountryDialPicker } from "../_kit/CountryDialPicker";
 import { readNotificationConfig, type NotificationConfig } from "./notificationConfig";
 import { notificationTool } from "./definition";
 import { NotificationIcon } from "./NotificationIcon";
@@ -24,12 +25,7 @@ export function NotificationEditor({ draft, onChange }: ToolEditorProps) {
           {(id) => (
             <div className="kit-row">
               <div className="kit-fixed">
-                <InlineSelect
-                  value={config.countryCode}
-                  options={COUNTRY_CODES}
-                  ariaLabel="Prefijo del país"
-                  onChange={(countryCode) => update({ countryCode })}
-                />
+                <CountryDialPicker value={config.countryCode} onChange={(countryCode) => update({ countryCode })} />
               </div>
               <input
                 id={id}

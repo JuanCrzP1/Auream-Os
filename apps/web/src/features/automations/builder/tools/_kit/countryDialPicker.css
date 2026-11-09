@@ -1,0 +1,137 @@
+/* Prefijo telefónico con bandera (CountryDialPicker). Mismo lenguaje que los
+   campos del kit; la lista hereda tema y acento de `.kit-editor`. */
+
+.kit-dial {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--kit-field, var(--surface-alt));
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out), background var(--speed-fast) var(--ease-out);
+}
+
+.kit-editor--cards .kit-dial {
+  border-radius: 10px;
+}
+
+.kit-dial:hover {
+  background: var(--kit-field-hover, var(--surface-alt));
+}
+
+.kit-dial:focus-visible,
+.kit-dial[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--kit-accent, var(--primary));
+  box-shadow: 0 0 0 3px var(--kit-accent-soft);
+}
+
+.kit-dial__flag {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.kit-dial__code {
+  flex: 1;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.kit-dial__caret {
+  width: 7px;
+  height: 7px;
+  margin-top: -3px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+}
+
+.kit-dial__menu {
+  position: fixed;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.kit-dial__search {
+  margin-bottom: 6px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+}
+
+.kit-dial__search:focus-visible {
+  outline: none;
+  border-color: var(--kit-accent, var(--primary));
+}
+
+.kit-dial__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.kit-dial__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kit-dial__option--active {
+  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 12%, transparent);
+}
+
+.kit-dial__option--selected {
+  font-weight: 600;
+}
+
+.kit-dial__name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kit-dial__option-code {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.kit-dial__option--selected .kit-dial__option-code {
+  color: var(--kit-accent, var(--primary));
+}
+
+.kit-dial__empty {
+  margin: 8px 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
