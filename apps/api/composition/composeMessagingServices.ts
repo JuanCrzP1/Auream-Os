@@ -24,6 +24,7 @@ import { DefaultTimezoneTenantResolver } from "../../../platform/tenancy/applica
 import { HandleInboundMessageService } from "../../../domains/messaging/application/HandleInboundMessageService";
 import { ConnectionTriggerRouter, DirectoryInboundContacts, RepositorySessionControl, SessionLiveSessions } from "../../../domains/messaging/application/adapters";
 import { StartFlowService } from "../../../domains/messaging/application/StartFlowService";
+import type { TurnJournal } from "../../../domains/messaging/application/FlowTurnJournal";
 import { FlowTurn } from "../../../domains/messaging/application/FlowTurn";
 import { FlowTimerService } from "../../../domains/messaging/application/FlowTimerService";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
@@ -63,6 +64,8 @@ export interface MessagingDependencies {
   readonly documents: DocumentTextReader;
   /** Cola de tareas: los despertadores de los flujos (Programador, tiempos de espera, pausas largas). */
   readonly scheduler: TaskScheduler;
+  /** Historial interno de los turnos (Neon + registro). Ausente: no se anota. */
+  readonly journal?: TurnJournal;
 }
 
 export function composeMessagingServices(deps: MessagingDependencies): MessagingServices {
@@ -93,7 +96,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
   const recorder = new ConversationRecorder(conversations);
   const delivery = deps.connections.channel;
   // Un solo «turno de flujo» para los tres orígenes: mensaje, envío a mano y despertador.
-  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(deps.scheduler));
+  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(deps.scheduler), undefined, deps.journal);
   const launcher = new StartFlowService(deps.connections.flows, lock, new RepositorySessionControl(sessionRepository), turn);
 
   const inbound = new HandleInboundMessageService(

@@ -69,7 +69,7 @@ export class CreateMediaUploadService {
       throw new ValidationError(`${KIND_LABEL[input.kind]} supera el máximo de WhatsApp (${readableSize(rule.maxBytes)}).`);
     }
 
-    const limit = this.rateLimiter.check(`media-upload:${tenantId}`, MEDIA_UPLOAD_POLICY);
+    const limit = await this.rateLimiter.check(`media-upload:${tenantId}`, MEDIA_UPLOAD_POLICY);
     if (!limit.allowed) throw new TooManyRequestsError("Demasiadas subidas seguidas. Espera un momento.", limit.retryAfterMs);
 
     return this.storage.createUploadTicket({

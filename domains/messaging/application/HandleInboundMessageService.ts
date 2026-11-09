@@ -56,7 +56,7 @@ export class HandleInboundMessageService {
 
     try {
       return await this.lock.withLock(`${tenantId}:${conversationKey}`, async () => {
-        const contact = await this.contacts.identify(tenantId, message.phone, message.senderName);
+        const contact = await this.contacts.identify(tenantId, message.phone, message.senderName, message.ad);
         const conversation = await this.conversations.recordInbound(tenantId, message, contact.contactId);
         if (!conversation.botEnabled) return finish("bot_paused");
 

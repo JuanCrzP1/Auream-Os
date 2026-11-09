@@ -107,3 +107,16 @@ Al conectar un dominio propio (p. ej. `app.auream.com`) en Vercel como dominio d
 
 - **Funciones efímeras.** Los límites de uso («Probar» integración o IA) cuentan por instancia de función, no globalmente. Suficiente para empezar; si hace falta exactitud, se mueven a la base.
 - **WhatsApp (FASE D).** La API oficial de Meta (Cloud API, webhooks) encaja con Vercel. Conectar por **QR / WhatsApp Web** necesita un proceso siempre encendido con un socket abierto, y eso **no** es posible en funciones de Vercel. Se decidirá al llegar a la FASE D.
+
+## Límite de peticiones
+
+La API limita las peticiones con una cuenta compartida en Neon (`rate_limit_counters`, `022_rate_limits.sql`): la misma para todas las instancias de Vercel.
+
+| Qué | Límite |
+|---|---|
+| Cada cuenta (con sesión válida) | 1.200 por minuto |
+| Intentos sin sesión válida, por IP | 300 por minuto |
+| Botones de prueba (IA, Integración, Pixel, Comprobante) y subidas | Los de cada servicio, ahora con la misma cuenta compartida |
+
+Al pasarlo responde 429 con `Retry-After`. No se limitan los avisos de WhatsApp (todos los de uazapi llegan desde la misma IP) ni el trabajador de la cola (lo protege `CRON_SECRET`). Si la base del contador falla, deja pasar y lo avisa (`rate_limit.store_failed`).
+

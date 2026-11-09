@@ -2,10 +2,11 @@ import type { RateLimitPolicy } from "../contracts/RateLimitPolicy";
 import type { RateLimitResult } from "../contracts/RateLimitResult";
 import type { RateLimiter } from "./RateLimiter";
 
+/** Una instancia, en memoria: desarrollo y pruebas (en producción, `SqlRateLimiter`). */
 export class InMemoryRateLimiter implements RateLimiter {
   private readonly windows = new Map<string, number[]>();
 
-  public check(key: string, policy: RateLimitPolicy): RateLimitResult {
+  public async check(key: string, policy: RateLimitPolicy): Promise<RateLimitResult> {
     const now = Date.now();
     const windowStart = now - policy.windowMs;
 

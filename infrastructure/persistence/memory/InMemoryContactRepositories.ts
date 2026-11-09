@@ -1,3 +1,4 @@
+import type { AdOrigin } from "../../../contracts/AdOrigin";
 import type { ContactQuery, ContactRepository, ContactWithLabels, LabelRepository } from "../../../domains/contacts/application/ContactRepository";
 import type { Contact } from "../../../domains/contacts/domain/Contact";
 import { labelKey, type Label } from "../../../domains/contacts/domain/Label";
@@ -52,6 +53,11 @@ export class InMemoryContactRepository implements ContactRepository {
     if (existing) return existing;
     this.store.contacts.set(contact.id, contact);
     return this.withLabels(contact);
+  }
+
+  public async setAdOrigin(tenantId: string, contactId: string, ad: AdOrigin) {
+    const contact = this.store.contacts.get(contactId);
+    if (contact && contact.tenantId === tenantId) this.store.contacts.set(contactId, { ...contact, adOrigin: ad, updatedAt: new Date().toISOString() });
   }
 
   public async update(contact: Contact) {

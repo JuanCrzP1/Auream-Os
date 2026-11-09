@@ -1,3 +1,4 @@
+import { adVariable } from "../../contracts/AdOrigin";
 import type { ContactProfile } from "../../contracts/ContactContracts";
 import type { RuntimeInput } from "../../contracts/RuntimeContracts";
 import type { VariableResolver } from "../../contracts/TemplateVariables";
@@ -9,7 +10,10 @@ import type { VariableResolver } from "../../contracts/TemplateVariables";
 //      el flujo guardó en la conversación completa lo que falte.
 //   2. Campos personalizados del contacto.
 //   3. Datos guardados en la conversación (p. ej. por «Esperar respuesta»).
-//   4. El reloj, en la zona del negocio: `{fecha}` (09/11/2026) y `{hora}`
+//   4. El anuncio de clic a WhatsApp por el que entró el contacto, con los
+//      nombres de Leona: `{source_id}`, `{source_url}`, `{media_url}`,
+//      `{thumbnail_url}` y `{ctwa_clid}` (el Pixel lo usa para atribuir).
+//   5. El reloj, en la zona del negocio: `{fecha}` (09/11/2026) y `{hora}`
 //      (14:35); `{data}` es la fecha con el nombre de Leona. Van al final: un
 //      campo que un flujo ya llame «fecha» sigue valiendo lo suyo.
 //
@@ -55,6 +59,6 @@ export function templateResolver(input: RuntimeInput, profile: ContactProfile | 
     if (name in builtIns && builtIns[name] !== undefined && builtIns[name] !== null) return builtIns[name];
     if (profile && name in profile.fields) return profile.fields[name];
     if (context[name] !== undefined && context[name] !== null) return context[name];
-    return clock[name];
+    return adVariable(profile?.ad ?? null, name) ?? clock[name];
   };
 }

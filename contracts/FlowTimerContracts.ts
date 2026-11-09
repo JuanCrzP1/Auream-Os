@@ -1,4 +1,4 @@
-import type { InboundEnvelope, NodeExecutionResult, SessionStatus } from "./RuntimeContracts";
+import type { ExecutionStatus, InboundEnvelope, NodeExecutionResult, SessionStatus } from "./RuntimeContracts";
 
 // ---------------------------------------------------------------------------
 // Despertadores (FASE C6)
@@ -81,9 +81,20 @@ export function alignWakeUpToDelivery(wakeUp: FlowWakeUp, deliveredAt: Date): Fl
   return { ...wakeUp, at: new Date(Date.parse(wakeUp.at) + overrun).toISOString() };
 }
 
+/** Un bloque por el que pasó el turno, con su resultado (historial interno). */
+export interface FlowStep {
+  readonly nodeId: string;
+  readonly type: string;
+  readonly status: ExecutionStatus;
+  /** Salida por la que siguió (Menú, Condicional…), si la declaró. */
+  readonly output?: string;
+}
+
 /** Resultado de un turno completo del motor. */
 export interface FlowRunResult extends NodeExecutionResult {
   readonly session?: FlowSessionState;
+  /** Los bloques por los que pasó, en orden. */
+  readonly steps?: ReadonlyArray<FlowStep>;
   readonly wakeUp?: FlowWakeUp;
   /**
    * El turno no cambió la sesión (despertador vencido, mensaje durante un

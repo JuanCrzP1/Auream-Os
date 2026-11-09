@@ -3,6 +3,7 @@ import { DEFAULT_LABEL_COLOR } from "../../../contracts/ContactContracts";
 import type { ContactRepository, ContactWithLabels, LabelRepository } from "./ContactRepository";
 import { isValidCustomFieldValue, normalizeExternalKey, type Contact } from "../domain/Contact";
 import { labelKey, normalizeLabelName } from "../domain/Label";
+import type { AdOrigin } from "../../../contracts/AdOrigin";
 
 // ---------------------------------------------------------------------------
 // ContactDirectoryService — lo que el MOTOR necesita de Contactos mientras
@@ -16,6 +17,10 @@ import { labelKey, normalizeLabelName } from "../domain/Label";
 //                se rompa porque alguien la borró; queda en el catálogo.
 //   removeTags   por nombre; las que no tiene se ignoran.
 //   setFields    guarda campos personalizados (los usan Integración, IA…).
+//
+// Si el mensaje vino de un anuncio de clic a WhatsApp, `identify` guarda ese
+// anuncio en la ficha (el último reemplaza al anterior: es al que se le
+// atribuye lo que pase después).
 // ---------------------------------------------------------------------------
 
 function toProfile({ contact, labels }: ContactWithLabels): ContactProfile {
@@ -25,8 +30,13 @@ function toProfile({ contact, labels }: ContactWithLabels): ContactProfile {
     phone: contact.phone,
     email: contact.email,
     tags: labels.map((label) => label.name),
-    fields: contact.customFields
+    fields: contact.customFields,
+    ad: contact.adOrigin ?? null
   };
+}
+
+function sameAd(a: AdOrigin | null, b: AdOrigin): boolean {
+  return a !== null && a.sourceId === b.sourceId && a.sourceUrl === b.sourceUrl && a.mediaUrl === b.mediaUrl && a.thumbnailUrl === b.thumbnailUrl && a.ctwaClid === b.ctwaClid;
 }
 
 export class ContactDirectoryService {
@@ -44,7 +54,19 @@ export class ContactDirectoryService {
    * disparadores de «primer mensaje»). Un contacto nuevo nace con el nombre
    * de su perfil de WhatsApp, si llega; uno existente sin nombre lo recibe.
    */
-  public async identify(tenantId: string, identity: ContactIdentity, displayName: string | null): Promise<{ readonly profile: ContactProfile; readonly isNew: boolean }> {
+  public async identify(
+    tenantId: string,
+    identity: ContactIdentity,
+    displayName: string | null,
+    ad: AdOrigin | null = null
+  ): Promise<{ readonly profile: ContactProfile; readonly isNew: boolean }> {
+    const found = await this.findOrCreate(tenantId, identity, displayName);
+    if (!ad || sameAd(found.profile.ad ?? null, ad)) return found;
+    await this.contacts.setAdOrigin(tenantId, found.profile.id, ad);
+    return { ...found, profile: { ...found.profile, ad } };
+  }
+
+  private async findOrCreate(tenantId: string, identity: ContactIdentity, displayName: string | null): Promise<{ readonly profile: ContactProfile; readonly isNew: boolean }> {
     const externalKey = normalizeExternalKey(identity.channel, identity.externalKey);
     const name = displayName?.trim().slice(0, 120) || null;
     const existing = await this.contacts.findByIdentity(tenantId, identity.channel, externalKey);

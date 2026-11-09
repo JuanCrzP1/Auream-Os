@@ -26,6 +26,7 @@ import { BuilderSimulationRuntimeFactory } from "./BuilderSimulationRuntimeFacto
 import { buildInitialBuilderWorkspace } from "./buildInitialBuilderWorkspace";
 import { SafeHttpRequester } from "../../../infrastructure/http/SafeHttpRequester";
 import { InMemoryRateLimiter } from "../../../platform/security/rate-limiting/application/InMemoryRateLimiter";
+import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
 import { TestIntegrationRequestService } from "../../../domains/automations/builder/application/TestIntegrationRequestService";
 import { EngineIntegrationRequestTester } from "./EngineIntegrationRequestTester";
 import { EngineAiStepTester } from "./EngineAiStepTester";
@@ -122,7 +123,9 @@ export function composeBuilderServices(
   ai: AiGateway = new DisabledAiGateway(),
   conversions: ConversionTracker = new DisabledConversionTracker(),
   /** Lector de comprobantes compartido (un motor de OCR por instancia). */
-  documents: DocumentTextReader = new TesseractDocumentReader()
+  documents: DocumentTextReader = new TesseractDocumentReader(),
+  /** Límite de los botones de prueba (en producción, compartido en Neon). */
+  rateLimiter: RateLimiter = new InMemoryRateLimiter()
 ): ApiServices {
   const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
     composeAutomationsPersistence(config, sqlClient);
@@ -141,12 +144,12 @@ export function composeBuilderServices(
     simulateDraftService: new SimulateDraftService(
       new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http, ai, conversions, media: http, documents })), config.defaultTimezone)
     ),
-    testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), new InMemoryRateLimiter()),
-    testAiService: new TestAiStepService(new EngineAiStepTester(ai), new InMemoryRateLimiter()),
-    testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), new InMemoryRateLimiter()),
+    testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), rateLimiter),
+    testAiService: new TestAiStepService(new EngineAiStepTester(ai), rateLimiter),
+    testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), rateLimiter),
     testPaymentProofService: new TestPaymentProofService(
       new EnginePaymentProofTester(documents, receipts, config.defaultTimezone),
-      new InMemoryRateLimiter()
+      rateLimiter
     ),
     deleteAutomationService: new DeleteAutomationService(unitOfWork),
     createAutomationService: new CreateAutomationService(unitOfWork, buildInitialBuilderWorkspace),

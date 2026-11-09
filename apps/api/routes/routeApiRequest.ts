@@ -1,6 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { authenticateRequest } from "../middleware/authenticateRequest";
 import { resolveRequestContext } from "../middleware/resolveRequestContext";
+import { clientIp, enforceRateLimit, TENANT_API_POLICY, UNAUTHENTICATED_POLICY } from "../middleware/limitRequests";
+import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
 import { routeAutomationsRequest } from "./routeAutomationsRequest";
 import { routeBuilderApiRequest } from "./routeBuilderApiRequest";
 import { routeMeRequest, type MeServices } from "./routeMeRequest";
@@ -49,6 +51,8 @@ export interface ApiRouterDependencies {
   readonly mediaServices: MediaServices | null;
   readonly authService: AuthService;
   readonly requestLogger: RequestLogger;
+  /** Límite de peticiones (`limitRequests`). Ausente: sin límite (pruebas). */
+  readonly rateLimiter?: RateLimiter;
 }
 
 export async function routeApiRequest(
@@ -78,6 +82,8 @@ export async function routeApiRequest(
 
   if (!principal) {
     requestLogger.logUnauthenticated(method, url.pathname, "unknown");
+    // Solo cuentan los intentos sin sesión válida: frena credenciales falsas.
+    await enforceRateLimit(dependencies.rateLimiter, `api:anon:${clientIp(request)}`, UNAUTHENTICATED_POLICY);
     sendJson(response, 401, { message: "Authentication required" });
     return;
   }
@@ -110,6 +116,7 @@ export async function routeApiRequest(
 
   const requestContext = resolution.context;
   requestLogger.logReceived(requestContext, method, url.pathname);
+  await enforceRateLimit(dependencies.rateLimiter, `api:tenant:${requestContext.tenantId}`, TENANT_API_POLICY);
 
   if (url.pathname.startsWith("/contacts") || url.pathname.startsWith("/labels")) {
     if (await routeContactsRequest(request, response, url, contactsServices, requestContext)) return;

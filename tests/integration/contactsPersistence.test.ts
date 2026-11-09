@@ -122,4 +122,15 @@ describe("contactos", () => {
     expect(updated.fields).toEqual({ ciudad: "Medellín", presupuesto: 1500 });
     expect((await s.directory.removeTags(tenant, contact.id, ["lead"])).tags).toEqual(["Campaña Navidad"]);
   });
+
+  it("el anuncio de clic a WhatsApp queda en la ficha y el último reemplaza al anterior (`021_contact_ad_origin.sql`)", async () => {
+    const tenant = await insertTenant("anuncio");
+    const s = stack();
+    const identity = { channel: "whatsapp", externalKey: "584121112233" };
+    const ad = { sourceId: "120244", sourceUrl: "https://fb.me/abc", mediaUrl: null, thumbnailUrl: null, ctwaClid: "Afiq" };
+    await s.directory.identify(tenant, identity, "Laura", ad);
+    expect((await s.directory.resolve(tenant, identity)).ad).toEqual(ad);
+    await s.directory.identify(tenant, identity, "Laura", { ...ad, sourceId: "999" });
+    expect((await s.directory.resolve(tenant, identity)).ad?.sourceId).toBe("999");
+  });
 });

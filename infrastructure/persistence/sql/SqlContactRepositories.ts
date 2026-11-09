@@ -1,3 +1,4 @@
+import { readAdOrigin, type AdOrigin } from "../../../contracts/AdOrigin";
 import type { ContactQuery, ContactRepository, ContactWithLabels, LabelRepository } from "../../../domains/contacts/application/ContactRepository";
 import type { Contact } from "../../../domains/contacts/domain/Contact";
 import type { Label } from "../../../domains/contacts/domain/Label";
@@ -20,6 +21,7 @@ interface ContactRow {
   readonly phone: string | null;
   readonly email: string | null;
   readonly custom_fields: Record<string, ContactFieldValue>;
+  readonly ad_origin: unknown;
   readonly created_at: Date;
   readonly updated_at: Date;
   /** Etiquetas agregadas en la consulta (json). */
@@ -36,7 +38,7 @@ interface LabelRow {
 }
 
 const CONTACT_SELECT = `
-  select c.id, c.tenant_id, c.channel, c.external_key, c.name, c.phone, c.email, c.custom_fields,
+  select c.id, c.tenant_id, c.channel, c.external_key, c.name, c.phone, c.email, c.custom_fields, c.ad_origin,
          c.created_at, c.updated_at,
          coalesce(json_agg(json_build_object('id', l.id, 'name', l.name, 'color', l.color, 'created_at', l.created_at)
                   order by lower(l.name)) filter (where l.id is not null), '[]') as labels
@@ -55,6 +57,7 @@ function toContact(row: ContactRow): ContactWithLabels {
       phone: row.phone,
       email: row.email,
       customFields: row.custom_fields,
+      adOrigin: readAdOrigin(row.ad_origin),
       createdAt: toIso(row.created_at),
       updatedAt: toIso(row.updated_at)
     },
@@ -123,6 +126,10 @@ export class SqlContactRepository implements ContactRepository {
         JSON.stringify(contact.customFields), contact.createdAt, contact.updatedAt]
     );
     return (await this.findByIdentity(contact.tenantId, contact.channel, contact.externalKey))!;
+  }
+
+  public async setAdOrigin(tenantId: string, contactId: string, ad: AdOrigin): Promise<void> {
+    await this.sql.query("update contacts set ad_origin = $3::jsonb, updated_at = now() where tenant_id = $1 and id = $2", [tenantId, contactId, JSON.stringify(ad)]);
   }
 
   public async update(contact: Contact): Promise<void> {

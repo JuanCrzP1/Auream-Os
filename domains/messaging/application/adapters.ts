@@ -1,3 +1,4 @@
+import type { AdOrigin } from "../../../contracts/AdOrigin";
 import { LIVE_SESSION_STATUSES, sessionIdFor } from "../../sessions/application/SessionService";
 import type { SessionRepository } from "../../sessions/application/SessionRepository";
 import type { ConnectionTriggerServices } from "../../connections/application/ConnectionTriggerServices";
@@ -14,8 +15,8 @@ import { WHATSAPP_CHANNEL } from "./HandleInboundMessageService";
 export class DirectoryInboundContacts implements InboundContacts {
   public constructor(private readonly directory: ContactDirectoryService) {}
 
-  public async identify(tenantId: string, phone: string, displayName: string | null) {
-    const { profile, isNew } = await this.directory.identify(tenantId, { channel: WHATSAPP_CHANNEL, externalKey: phone }, displayName);
+  public async identify(tenantId: string, phone: string, displayName: string | null, ad: AdOrigin | null = null) {
+    const { profile, isNew } = await this.directory.identify(tenantId, { channel: WHATSAPP_CHANNEL, externalKey: phone }, displayName, ad);
     return { contactId: profile.id, isNew };
   }
 }

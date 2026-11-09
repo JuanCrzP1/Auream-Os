@@ -1,3 +1,4 @@
+import type { AdOrigin } from "./AdOrigin";
 // ---------------------------------------------------------------------------
 // Contactos y etiquetas — contratos compartidos por la API, el frontend y el
 // motor de flujos. El tenant NUNCA viaja al cliente: lo decide el servidor.
@@ -89,6 +90,8 @@ export interface ContactProfile {
   readonly email: string | null;
   readonly tags: ReadonlyArray<string>;
   readonly fields: Readonly<Record<string, ContactFieldValue>>;
+  /** El último anuncio de clic a WhatsApp por el que entró (`{source_url}`, `{ctwa_clid}`…). */
+  readonly ad?: AdOrigin | null;
 }
 
 /** Cómo llega un contacto al motor: por canal y su identificador en él. */

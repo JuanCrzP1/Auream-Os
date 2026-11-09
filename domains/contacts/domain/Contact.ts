@@ -1,3 +1,4 @@
+import type { AdOrigin } from "../../../contracts/AdOrigin";
 import { CONTACT_FIELD_KEY_PATTERN, MAX_CONTACT_FIELD_TEXT, type ContactFieldValue } from "../../../contracts/ContactContracts";
 
 /** Un contacto de una cuenta. Su identidad es (canal, clave externa). */
@@ -10,6 +11,8 @@ export interface Contact {
   readonly phone: string | null;
   readonly email: string | null;
   readonly customFields: Readonly<Record<string, ContactFieldValue>>;
+  /** El último anuncio de clic a WhatsApp por el que entró (uso interno: variables, Pixel). */
+  readonly adOrigin?: AdOrigin | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

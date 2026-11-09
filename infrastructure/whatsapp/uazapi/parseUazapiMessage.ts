@@ -1,4 +1,5 @@
 import type { InboundChannelMessage, InboundMessageKind } from "../../../contracts/InboundMessageContracts";
+import { readAdOrigin, type AdOrigin } from "../../../contracts/AdOrigin";
 
 // ---------------------------------------------------------------------------
 // Evento `messages` de uazapi → mensaje entrante de Auream. Puro.
@@ -58,6 +59,31 @@ function fromAd(message: Json): boolean {
   const context = record(content["contextInfo"] ?? message["contextInfo"]);
   const reply = record(context["externalAdReply"]);
   return Boolean(str(reply["sourceId"]) || str(reply["sourceID"]) || str(context["conversionSource"]).toLowerCase().includes("ad") || str(context["ctwaClid"]) || message["referral"]);
+}
+
+/** El valor de la primera clave que exista, sin distinguir mayúsculas (`sourceID`, `sourceId`, `source_id`…). */
+function pick(object: Json, ...names: ReadonlyArray<string>): string {
+  const wanted = new Set(names.map((name) => name.toLowerCase().replace(/_/g, "")));
+  for (const [key, value] of Object.entries(object)) {
+    if (wanted.has(key.toLowerCase().replace(/_/g, "")) && (typeof value === "string" || typeof value === "number")) return String(value);
+  }
+  return "";
+}
+
+/** Los datos del anuncio de clic a WhatsApp (`externalAdReply` de WhatsApp, o `referral`), si vinieron. */
+function adOf(message: Json): AdOrigin | null {
+  const content = record(message["content"]);
+  const context = record(content["contextInfo"] ?? message["contextInfo"]);
+  const reply = record(context["externalAdReply"]);
+  const referral = record(message["referral"]);
+  const first = (...values: ReadonlyArray<string>) => values.find((value) => value.length > 0) ?? null;
+  return readAdOrigin({
+    sourceId: first(pick(reply, "sourceId"), pick(referral, "sourceId")),
+    sourceUrl: first(pick(reply, "sourceUrl"), pick(referral, "sourceUrl")),
+    mediaUrl: first(pick(reply, "mediaUrl"), pick(referral, "mediaUrl", "videoUrl", "imageUrl")),
+    thumbnailUrl: first(pick(reply, "thumbnailUrl"), pick(referral, "thumbnailUrl")),
+    ctwaClid: first(pick(reply, "ctwaClid"), pick(context, "ctwaClid"), pick(referral, "ctwaClid"))
+  });
 }
 
 export function parseUazapiMessage(body: unknown): UazapiParse {
@@ -123,6 +149,7 @@ export function parseUazapiMessage(body: unknown): UazapiParse {
         replyId,
         media: isMedia && /^https:\/\//.test(fileUrl) ? { url: fileUrl, mimeType } : null,
         fromAd: fromAd(message),
+        ad: adOf(message),
         providerType: messageType || "desconocido",
         sentAt
       }

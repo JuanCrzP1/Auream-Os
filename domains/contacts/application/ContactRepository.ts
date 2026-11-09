@@ -1,3 +1,4 @@
+import type { AdOrigin } from "../../../contracts/AdOrigin";
 import type { Contact } from "../domain/Contact";
 import type { Label } from "../domain/Label";
 
@@ -24,6 +25,8 @@ export interface ContactRepository {
   /** Inserta; si (canal, clave) ya existe en la cuenta devuelve el existente. */
   create(contact: Contact): Promise<ContactWithLabels>;
   update(contact: Contact): Promise<void>;
+  /** Guarda el anuncio por el que entró (reemplaza el anterior). */
+  setAdOrigin(tenantId: string, contactId: string, ad: AdOrigin): Promise<void>;
   /** Reemplaza las etiquetas del contacto por exactamente estas (atómico). */
   setLabels(tenantId: string, contactId: string, labelIds: ReadonlyArray<string>): Promise<void>;
   /** Añade y quita etiquetas sin tocar las demás (atómico). */

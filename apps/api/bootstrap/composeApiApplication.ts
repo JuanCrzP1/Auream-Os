@@ -13,6 +13,9 @@ import { composeSchedulingServices } from "../composition/composeSchedulingServi
 import { FlowTimerTaskHandler } from "../composition/flowTimerAdapters";
 import type { TaskRunner } from "../../../domains/scheduling/application/TaskRunner";
 import { createSqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
+import { SqlRateLimiter } from "../../../infrastructure/persistence/sql/SqlRateLimiter";
+import { SqlFlowTurnJournal } from "../../../infrastructure/persistence/sql/SqlFlowTurnJournal";
+import { composeTurnJournal } from "../composition/composeTurnJournal";
 import { TesseractDocumentReader } from "../../../infrastructure/documents/TesseractDocumentReader";
 import { createBackgroundTasks } from "../http/BackgroundTasks";
 import { StructuredLogger } from "../../../platform/observability/logging/StructuredLogger";
@@ -57,7 +60,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const integrations = composeIntegrationsServices(tenancy.sqlClient, config.credentialsKeyRing, undefined, { metaGraphVersion: config.metaGraphVersion });
   // Un solo lector de comprobantes por instancia (simulación, «Probar» y flujos reales).
   const documents = new TesseractDocumentReader();
-  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents);
+  // Límite de peticiones compartido por todas las instancias (Neon). Si la base falla, deja pasar y lo avisa.
+  const rateLimiter = new SqlRateLimiter(tenancy.sqlClient, undefined, (error) => logger.warn("rate_limit.store_failed", { error: error instanceof Error ? error.message : String(error) }));
+  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter);
   const contactsServices = composeContactsServices(tenancy.sqlClient);
   const connectionsServices = composeConnectionsServices(tenancy.sqlClient, {
     keyRing: config.credentialsKeyRing,
@@ -92,7 +97,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     integrations,
     connections: connectionsServices,
     documents,
-    scheduler: scheduling.scheduler
+    scheduler: scheduling.scheduler,
+    journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger)
   });
   const runner = scheduling.attachHandlers([new FlowTimerTaskHandler(messagingServices.timers)]);
 
@@ -116,7 +122,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
         if (report.maxLateMs > LATE_TASK_WARNING_MS) logger.warn("tasks.late", { maxLateMs: report.maxLateMs, claimed: report.claimed });
       }
     },
-    mediaServices: composeMediaServices(config, tenancy.sqlClient),
+    mediaServices: composeMediaServices(config, tenancy.sqlClient, rateLimiter),
+    rateLimiter,
     meServices: {
       membershipRepository: tenancy.membershipRepository,
       onboarding: tenancy.onboarding

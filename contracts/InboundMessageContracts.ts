@@ -1,3 +1,5 @@
+import type { AdOrigin } from "./AdOrigin";
+
 // ---------------------------------------------------------------------------
 // Un mensaje que un cliente le escribió a un número de la cuenta, ya
 // traducido del formato del proveedor (uazapi, Meta…) a uno solo. Es lo que
@@ -35,6 +37,8 @@ export interface InboundChannelMessage {
   readonly media: { readonly url: string; readonly mimeType: string | null } | null;
   /** Llegó desde un anuncio de clic a WhatsApp. */
   readonly fromAd: boolean;
+  /** Los datos de ese anuncio, si vinieron (ver `AdOrigin`). */
+  readonly ad: AdOrigin | null;
   /** Tipo original del proveedor (para el registro y el diagnóstico). */
   readonly providerType: string;
   readonly sentAt: string;

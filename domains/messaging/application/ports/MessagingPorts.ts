@@ -1,3 +1,4 @@
+import type { AdOrigin } from "../../../../contracts/AdOrigin";
 import type { InboundChannelMessage, InboundOutcome } from "../../../../contracts/InboundMessageContracts";
 import type { InboundTriggerFacts } from "../../../../contracts/ConnectionTriggerContracts";
 import type { OutboundMessage } from "../../../../contracts/RuntimeContracts";
@@ -29,7 +30,8 @@ export interface ConversationLock {
 
 /** El contacto que escribe: lo crea (con su nombre de WhatsApp) si es nuevo. */
 export interface InboundContacts {
-  identify(tenantId: string, phone: string, displayName: string | null): Promise<{ readonly contactId: string; readonly isNew: boolean }>;
+  /** Con `ad`, guarda en la ficha el anuncio de clic a WhatsApp por el que escribió. */
+  identify(tenantId: string, phone: string, displayName: string | null, ad?: AdOrigin | null): Promise<{ readonly contactId: string; readonly isNew: boolean }>;
 }
 
 /** ¿El cliente está dentro de un flujo en esta conversación? */

@@ -1,6 +1,6 @@
 import type { FlowSnapshot } from "../../contracts/FlowSnapshot";
 import type { InboundEnvelope, NodeExecutionResult, RuntimeInput, Session } from "../../contracts/RuntimeContracts";
-import { WAKE_CONTEXT_KEY, timerOf, type FlowRunResult } from "../../contracts/FlowTimerContracts";
+import { WAKE_CONTEXT_KEY, timerOf, type FlowRunResult, type FlowStep } from "../../contracts/FlowTimerContracts";
 import { pausedMs, stateOf, wakeUpOf } from "./turnState";
 
 import type { SessionStore, ContextWriter } from "../ports/RuntimePorts";
@@ -98,7 +98,8 @@ export class ExecutionLoop {
       outputMessages: [] as Array<NodeExecutionResult["outputMessages"][number]>,
       contextPatch: {} as Record<string, unknown>,
       nodeResult: {} as Record<string, unknown>,
-      domainEvents: [] as string[]
+      domainEvents: [] as string[],
+      steps: [] as FlowStep[]
     };
 
     const finish = async (status: "completed" | "failed" | "waiting_input" | "delayed", event?: string, lastResult?: Readonly<Record<string, unknown>>): Promise<FlowRunResult> => {
@@ -138,6 +139,7 @@ export class ExecutionLoop {
       aggregate.contextPatch = { ...aggregate.contextPatch, ...execution.contextPatch };
       aggregate.nodeResult = { ...aggregate.nodeResult, ...execution.nodeResult };
       aggregate.domainEvents.push(...execution.domainEvents);
+      aggregate.steps.push({ nodeId: currentNode.id, type: currentNode.type, status: execution.executionStatus, ...(execution.output ? { output: execution.output } : {}) });
 
       this.eventTracker.trackNodeExecuted(session, currentNode.id, execution.executionStatus);
 
@@ -174,6 +176,7 @@ export class ExecutionLoop {
       contextPatch: aggregate.contextPatch,
       nodeResult: aggregate.nodeResult,
       domainEvents: [...aggregate.domainEvents, "max_hops_exceeded"],
+      steps: aggregate.steps,
       session: stateOf(session)
     };
   }

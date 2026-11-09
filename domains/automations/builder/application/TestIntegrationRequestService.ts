@@ -45,7 +45,7 @@ export class TestIntegrationRequestService {
       }
     }
 
-    const limit = this.rateLimiter.check(`integration-test:${tenantId}`, this.policy);
+    const limit = await this.rateLimiter.check(`integration-test:${tenantId}`, this.policy);
     if (!limit.allowed) {
       throw new TooManyRequestsError("Demasiadas pruebas seguidas. Espera un momento y vuelve a intentarlo.", limit.retryAfterMs);
     }

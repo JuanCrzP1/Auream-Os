@@ -42,7 +42,7 @@ export class TestAiStepService {
       }
     }
 
-    const limit = this.rateLimiter.check(`ai-test:${tenantId}`, this.policy);
+    const limit = await this.rateLimiter.check(`ai-test:${tenantId}`, this.policy);
     if (!limit.allowed) {
       throw new TooManyRequestsError("Demasiadas pruebas de IA seguidas. Espera un momento y vuelve a intentarlo.", limit.retryAfterMs);
     }

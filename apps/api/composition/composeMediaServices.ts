@@ -4,6 +4,7 @@ import { SqlMediaRepository } from "../../../infrastructure/persistence/sql/SqlM
 import { VercelBlobMediaStorage } from "../../../infrastructure/media/VercelBlobMediaStorage";
 import { LocalMediaStorage, defaultLocalMediaDirectory } from "../../../infrastructure/media/LocalMediaStorage";
 import { InMemoryRateLimiter } from "../../../platform/security/rate-limiting/application/InMemoryRateLimiter";
+import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
 import { CreateMediaUploadService, RegisterMediaService } from "../../../domains/media/application/MediaServices";
 
 // ---------------------------------------------------------------------------
@@ -22,13 +23,13 @@ export interface MediaServices {
   readonly local: LocalMediaStorage | null;
 }
 
-export function composeMediaServices(config: ApiConfig, sqlClient: SqlClient): MediaServices | null {
+export function composeMediaServices(config: ApiConfig, sqlClient: SqlClient, rateLimiter: RateLimiter = new InMemoryRateLimiter()): MediaServices | null {
   const local = !config.blobReadWriteToken && !config.isProduction ? new LocalMediaStorage(defaultLocalMediaDirectory(), config.publicApiBaseUrl) : null;
   const storage = config.blobReadWriteToken ? new VercelBlobMediaStorage(config.blobReadWriteToken) : local;
   if (!storage) return null;
 
   return {
-    createUpload: new CreateMediaUploadService(storage, new InMemoryRateLimiter()),
+    createUpload: new CreateMediaUploadService(storage, rateLimiter),
     register: new RegisterMediaService(new SqlMediaRepository(sqlClient), storage),
     local
   };

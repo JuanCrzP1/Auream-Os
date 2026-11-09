@@ -42,7 +42,7 @@ export class TestPixelEventService {
       }
     }
 
-    const limit = this.rateLimiter.check(`pixel-test:${tenantId}`, this.policy);
+    const limit = await this.rateLimiter.check(`pixel-test:${tenantId}`, this.policy);
     if (!limit.allowed) throw new TooManyRequestsError("Demasiadas pruebas seguidas. Espera un momento.", limit.retryAfterMs);
     return this.tester.test(tenantId, input.config, code, variables);
   }

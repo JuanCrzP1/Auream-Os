@@ -19,6 +19,8 @@ describe("ExecutionLoop — hop-by-hop execution", () => {
 
     expect(result.executionStatus).toBe("waiting_input");
     expect(result.outputMessages.length).toBeGreaterThan(0);
+    // Historial interno: los bloques por los que pasó el turno, en orden y con su resultado.
+    expect(result.steps?.map((step) => `${step.type}:${step.status}`)).toEqual(["message:success", "question:waiting_input"]);
   });
 
   it("cuando ya está en waiting_input con mensaje, avanza a capture → end → completed", async () => {
