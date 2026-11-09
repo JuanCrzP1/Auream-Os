@@ -15,6 +15,7 @@ import {
   type PaymentProofConfig
 } from "./paymentProofConfig";
 import { PaymentAccountCard } from "./editor/PaymentAccountCard";
+import { PaymentProofTestPanel } from "./PaymentProofTestPanel";
 import { paymentProofTool } from "./definition";
 import { PaymentProofIcon } from "./PaymentProofIcon";
 
@@ -27,7 +28,7 @@ const MAX_AGE_OPTIONS = [
   { value: "720", label: "30 días" }
 ];
 
-export function PaymentProofEditor({ draft, onChange }: ToolEditorProps) {
+export function PaymentProofEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readPaymentProofConfig(draft.config);
   const update = (patch: Partial<PaymentProofConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
   const patchAccount = (id: string, patch: Partial<PaymentAccount>) => update({ accounts: replaceById(config.accounts, id, patch) });
@@ -50,14 +51,14 @@ export function PaymentProofEditor({ draft, onChange }: ToolEditorProps) {
       outputs={paymentProofOutputs({ ...draft.config, ...config })}
       Icon={PaymentProofIcon}
       title="Comprobante automático"
-      description="Lee el comprobante de pago que envía el cliente y comprueba que el dinero llegó a una de tus cuentas."
+      description="Lee la imagen o el PDF del pago que envía el cliente y comprueba que el dinero llegó a una de tus cuentas. Sin IA: la lectura corre en Auream."
     >
       <CardSection step={1} title="Comprobante" description="Dónde está la imagen o el PDF que envió el cliente.">
         <TextField
           label="Variable con el comprobante"
           value={config.source}
           monospace
-          hint="Normalmente la guarda un bloque «Esperar respuesta» anterior."
+          hint="Normalmente la guarda un bloque «Esperar respuesta» anterior. Acepta imágenes (JPG, PNG, WebP) y PDF."
           onChange={(source) => update({ source: source.trim() })}
         />
       </CardSection>
@@ -124,7 +125,7 @@ export function PaymentProofEditor({ draft, onChange }: ToolEditorProps) {
         ) : null}
         <SwitchField
           label="Rechazar comprobantes repetidos"
-          hint="Si la referencia ya se usó en otra conversación, sale por «Comprobante repetido»."
+          hint="Si la referencia del pago ya se aceptó antes en tu cuenta, sale por «Comprobante repetido»."
           checked={config.rejectDuplicates}
           onChange={(rejectDuplicates) => update({ rejectDuplicates })}
         />
@@ -170,6 +171,10 @@ export function PaymentProofEditor({ draft, onChange }: ToolEditorProps) {
           />
         </div>
         <VariableHint variables={PAYMENT_PROOF_FIELDS.map((field) => `{${config.resultVariable || "comprobante"}.${field}}`)} />
+      </CardSection>
+
+      <CardSection step={6} title="Probar" description="Sube un comprobante real y mira qué lee Auream y por qué salida seguiría el flujo.">
+        <PaymentProofTestPanel config={config} rawConfig={{ ...draft.config, ...config }} test={resources?.testPaymentProof} />
       </CardSection>
 
       <OutputsPreview outputs={paymentProofOutputs({ ...draft.config, ...config })} />

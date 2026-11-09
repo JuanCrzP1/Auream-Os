@@ -23,6 +23,11 @@ import type { AiGateway } from "../../../flow-engine/ports/AiGateway";
 import { DisabledAiGateway } from "../../../infrastructure/ai/DisabledAiGateway";
 import type { ConversionTracker } from "../../../flow-engine/ports/ConversionTracker";
 import { DisabledConversionTracker } from "../../../infrastructure/meta/DisabledConversionTracker";
+import type { DocumentTextReader } from "../../../flow-engine/ports/DocumentTextReader";
+import type { MediaFetcher } from "../../../flow-engine/ports/MediaFetcher";
+import type { ReceiptRegistry } from "../../../flow-engine/ports/ReceiptRegistry";
+import { DisabledDocumentReader } from "../../../infrastructure/documents/DisabledDocumentReader";
+import { InMemoryReceiptRegistry } from "../../../infrastructure/persistence/memory/InMemoryReceiptRegistry";
 import { ContactDirectoryService } from "../../../domains/contacts/application/ContactDirectoryService";
 import {
   InMemoryContactRepository,
@@ -42,21 +47,33 @@ export interface NodeRuntimeDependencies {
   readonly ai: AiGateway;
   /** Conversiones del Pixel con los píxeles de la cuenta. Producción: `VaultConversionTracker`. */
   readonly conversions: ConversionTracker;
+  /** Descarga del archivo del Comprobante. Producción: `SafeHttpRequester`. */
+  readonly media: MediaFetcher;
+  /** Texto del comprobante (OCR / PDF). Producción: `TesseractDocumentReader`. */
+  readonly documents: DocumentTextReader;
+  /** Comprobantes ya aceptados. Simulación: en memoria; producción: PostgreSQL. */
+  readonly receipts: ReceiptRegistry;
 }
 
 /**
  * Dependencias aisladas para simular: no tocan turnos ni contactos reales.
- * Sin red ni IA por defecto; la API inyecta el cliente HTTP protegido y la
+ * Sin red, IA ni lectura de documentos por defecto; la API inyecta el cliente HTTP protegido y la
  * pasarela de IA de la cuenta para que la simulación del builder llame de verdad.
  */
-export function simulationDependencies(overrides: Partial<Pick<NodeRuntimeDependencies, "http" | "ai" | "conversions">> = {}): NodeRuntimeDependencies {
+export function simulationDependencies(
+  overrides: Partial<Pick<NodeRuntimeDependencies, "http" | "ai" | "conversions" | "media" | "documents">> = {}
+): NodeRuntimeDependencies {
   const store = new InMemoryContactsStore();
   return {
     roundRobin: new InMemoryRoundRobinCounter(),
     contacts: new ContactDirectoryService(new InMemoryContactRepository(store), new InMemoryLabelRepository(store)),
     http: overrides.http ?? new DisabledHttpRequester(),
     ai: overrides.ai ?? new DisabledAiGateway(),
-    conversions: overrides.conversions ?? new DisabledConversionTracker()
+    conversions: overrides.conversions ?? new DisabledConversionTracker(),
+    media: overrides.media ?? new DisabledHttpRequester(),
+    documents: overrides.documents ?? new DisabledDocumentReader(),
+    // Una simulación nunca gasta comprobantes reales.
+    receipts: new InMemoryReceiptRegistry()
   };
 }
 
@@ -82,7 +99,10 @@ export function composeNodeRuntime(
     new MessageNodeHandler(templates),
     new QuestionNodeHandler(templates),
     new TagsNodeHandler(dependencies.contacts),
-    new PaymentProofNodeHandler(),
+    new PaymentProofNodeHandler(
+      { fetcher: dependencies.media, reader: dependencies.documents, receipts: dependencies.receipts },
+      dependencies.contacts
+    ),
     new ConditionNodeHandler(dependencies.contacts),
     new DistributorNodeHandler(dependencies.roundRobin),
     new PixelNodeHandler(dependencies.conversions, dependencies.contacts),

@@ -7,9 +7,9 @@ import type {
   HttpFailureReason,
   HttpRequester,
   HttpSendResult,
-  OutboundHttpRequest,
-  OutboundHttpResponse
+  OutboundHttpRequest
 } from "../../flow-engine/ports/HttpRequester";
+import type { FetchMediaRequest, FetchMediaResult, MediaFetcher } from "../../flow-engine/ports/MediaFetcher";
 import { isBlockedAddress } from "./blockedAddresses";
 
 // ---------------------------------------------------------------------------
@@ -23,6 +23,9 @@ import { isBlockedAddress } from "./blockedAddresses";
 //     cambiar de origen no viajan `Authorization` ni `Cookie`.
 //   · Un plazo total (conexión + redirecciones + lectura) y un tope de tamaño
 //     de respuesta, también tras descomprimir.
+//
+// También descarga archivos (`fetch`: la foto del comprobante) con las mismas
+// garantías y su propio tope de tamaño.
 //
 // `allowPrivateNetworks` existe solo para desarrollo y tests (servicios en
 // localhost); la configuración de la API lo prohíbe en producción.
@@ -47,6 +50,13 @@ class RequestFailure extends Error {
   }
 }
 
+/** Respuesta con el cuerpo en bytes (ya descomprimido). */
+interface RawResponse {
+  readonly status: number;
+  readonly headers: Readonly<Record<string, string>>;
+  readonly body: Buffer;
+}
+
 interface Hop {
   readonly method: string;
   readonly url: URL;
@@ -54,7 +64,7 @@ interface Hop {
   readonly body?: string;
 }
 
-export class SafeHttpRequester implements HttpRequester {
+export class SafeHttpRequester implements HttpRequester, MediaFetcher {
   private readonly allowPrivate: boolean;
   private readonly maxRedirects: number;
   private readonly maxResponseBytes: number;
@@ -66,6 +76,28 @@ export class SafeHttpRequester implements HttpRequester {
   }
 
   public async send(request: OutboundHttpRequest): Promise<HttpSendResult> {
+    const result = await this.perform(request, this.maxResponseBytes);
+    if (!result.ok) return result;
+    const { status, headers, body } = result.response;
+    return { ok: true, response: { status, headers, body: body.toString("utf8") }, durationMs: result.durationMs };
+  }
+
+  /** Descarga un archivo (GET) como bytes. Un estado 4xx/5xx es `not_found`. */
+  public async fetch(request: FetchMediaRequest): Promise<FetchMediaResult> {
+    const result = await this.perform({ method: "GET", url: request.url, headers: { accept: "*/*" }, timeoutMs: request.timeoutMs }, request.maxBytes);
+    if (!result.ok) return { ok: false, reason: result.reason, message: result.message };
+    const { status, headers, body } = result.response;
+    if (status < 200 || status >= 300) {
+      return { ok: false, reason: "not_found", message: `El servidor respondió ${status}: el archivo no está disponible.` };
+    }
+    const contentType = (headers["content-type"] ?? "").split(";")[0]!.trim().toLowerCase();
+    return { ok: true, media: { bytes: new Uint8Array(body.buffer, body.byteOffset, body.byteLength), contentType } };
+  }
+
+  private async perform(
+    request: OutboundHttpRequest,
+    maxBytes: number
+  ): Promise<{ ok: true; response: RawResponse; durationMs: number } | { ok: false; reason: HttpFailureReason; message: string; durationMs: number }> {
     const started = Date.now();
     const deadline = started + request.timeoutMs;
     const elapsed = () => Date.now() - started;
@@ -84,7 +116,7 @@ export class SafeHttpRequester implements HttpRequester {
 
     try {
       for (let redirects = 0; ; redirects++) {
-        const response = await this.exchange(hop, deadline);
+        const response = await this.exchange(hop, deadline, maxBytes);
         const location = response.headers["location"];
         if (!isRedirect(response.status) || !location) return { ok: true, response, durationMs: elapsed() };
         if (redirects >= this.maxRedirects) {
@@ -99,7 +131,7 @@ export class SafeHttpRequester implements HttpRequester {
   }
 
   /** Una petición y su respuesta, sin seguir redirecciones. */
-  private exchange(hop: Hop, deadline: number): Promise<OutboundHttpResponse> {
+  private exchange(hop: Hop, deadline: number, maxBytes: number): Promise<RawResponse> {
     const { url } = hop;
     if (url.protocol !== "http:" && url.protocol !== "https:") {
       return Promise.reject(new RequestFailure("blocked_destination", "Solo se permiten direcciones http:// o https://."));
@@ -112,7 +144,7 @@ export class SafeHttpRequester implements HttpRequester {
     const remaining = deadline - Date.now();
     if (remaining <= 0) return Promise.reject(new RequestFailure("timeout", "El servicio no respondió a tiempo."));
 
-    return new Promise<OutboundHttpResponse>((resolve, reject) => {
+    return new Promise<RawResponse>((resolve, reject) => {
       const send = url.protocol === "https:" ? httpsRequest : httpRequest;
       const req = send(
         url,
@@ -123,7 +155,7 @@ export class SafeHttpRequester implements HttpRequester {
           agent: false
         },
         (res) => {
-          readBody(res, this.maxResponseBytes)
+          readBody(res, maxBytes)
             .then((body) => resolve({ status: res.statusCode ?? 0, headers: flatHeaders(res), body }))
             .catch(reject)
             .finally(() => clearTimeout(timer));
@@ -178,7 +210,7 @@ function flatHeaders(res: IncomingMessage): Record<string, string> {
   return headers;
 }
 
-function readBody(res: IncomingMessage, maxBytes: number): Promise<string> {
+function readBody(res: IncomingMessage, maxBytes: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
@@ -194,7 +226,7 @@ function readBody(res: IncomingMessage, maxBytes: number): Promise<string> {
     res.on("error", reject);
     res.on("end", () => {
       try {
-        resolve(decode(Buffer.concat(chunks), res.headers["content-encoding"], maxBytes).toString("utf8"));
+        resolve(decode(Buffer.concat(chunks), res.headers["content-encoding"], maxBytes));
       } catch (error) {
         reject(error instanceof RequestFailure ? error : new RequestFailure("network_error", "No se pudo leer la respuesta comprimida."));
       }
@@ -223,7 +255,8 @@ function decode(raw: Buffer, encoding: string | undefined, maxBytes: number): Bu
 }
 
 function tooLarge(maxBytes: number): RequestFailure {
-  return new RequestFailure("response_too_large", `La respuesta supera ${Math.round(maxBytes / 1024)} KB.`);
+  const limit = maxBytes >= 1024 * 1024 ? `${Math.round(maxBytes / (1024 * 1024))} MB` : `${Math.round(maxBytes / 1024)} KB`;
+  return new RequestFailure("response_too_large", `La respuesta supera ${limit}.`);
 }
 
 const NETWORK_MESSAGES: Readonly<Record<string, string>> = {

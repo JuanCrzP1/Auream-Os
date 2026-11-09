@@ -6,7 +6,10 @@
   "outputDirectory": "apps/web/dist",
   "regions": ["cle1"],
   "functions": {
-    "api/index.ts": { "maxDuration": 60 }
+    "api/index.ts": {
+      "maxDuration": 60,
+      "includeFiles": "{node_modules/tesseract.js/**,node_modules/tesseract.js-core/index.js,node_modules/tesseract.js-core/package.json,node_modules/tesseract.js-core/*lstm*,node_modules/@tesseract.js-data/spa/package.json,node_modules/@tesseract.js-data/spa/4.0.0_best_int/**}"
+    }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },

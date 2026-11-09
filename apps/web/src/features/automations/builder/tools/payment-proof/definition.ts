@@ -4,10 +4,9 @@ import { summarizePaymentProof } from "./summarizePaymentProof";
 import { validatePaymentProof } from "./validatePaymentProof";
 
 /**
- * Comprobante automático — lee el comprobante de pago del cliente, extrae sus
- * datos y verifica cuenta y titular. Una salida por resultado.
- *
- * `executable: false`: faltan el almacenamiento de media y el extractor.
+ * Comprobante automático — lee la imagen o el PDF del pago (OCR propio, sin
+ * IA), extrae sus datos y verifica cuenta, titular, monto, fecha y repetidos.
+ * Una salida por resultado. Lo ejecuta `PaymentProofNodeHandler`.
  */
 export const paymentProofTool: ToolDefinition = {
   type: "payment-proof",
@@ -17,7 +16,7 @@ export const paymentProofTool: ToolDefinition = {
   editorTitle: "Editar comprobante automático",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultContent: {},
   defaultConfig: { ...PAYMENT_PROOF_DEFAULT_CONFIG },
   outputs: paymentProofOutputs,

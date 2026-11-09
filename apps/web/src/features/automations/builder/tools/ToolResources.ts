@@ -3,6 +3,7 @@ import type { AiCredentialSummary, AiModelOption, CreateAiCredentialRequest } fr
 import type { AiTestRequest, AiTestResult } from "@contracts/AiTestContracts";
 import type { MediaAssetSummary, MediaKind } from "@contracts/MediaContracts";
 import type { CreatePixelConnectionRequest, PixelConnectionSummary } from "@contracts/PixelContracts";
+import type { PaymentProofTestResult } from "@contracts/PaymentProofTestContracts";
 import type { PixelTestRequest, PixelTestResult } from "@contracts/PixelTestContracts";
 
 // ---------------------------------------------------------------------------
@@ -62,6 +63,12 @@ export interface ToolCapabilities {
   readonly createPixelConnection?: (request: CreatePixelConnectionRequest) => Promise<ToolOutcome<PixelConnectionSummary>>;
   /** Envía el evento de un bloque Pixel con el código de prueba de Meta. */
   readonly testPixel?: (request: PixelTestRequest) => Promise<ToolOutcome<PixelTestResult>>;
+  /** Revisa un comprobante de ejemplo con un bloque Comprobante (no lo registra como usado). */
+  readonly testPaymentProof?: (
+    config: Readonly<Record<string, unknown>>,
+    file: File,
+    variables: Readonly<Record<string, string>>
+  ) => Promise<ToolOutcome<PaymentProofTestResult>>;
   /** Crea una etiqueta en el catálogo de la cuenta (queda para todos los flujos). */
   readonly createLabel?: (input: { readonly name: string; readonly color: string }) => Promise<CreateLabelOutcome>;
   /** Envía una vez la petición de un bloque Integración y devuelve la respuesta. */

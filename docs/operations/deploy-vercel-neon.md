@@ -81,6 +81,10 @@ Imágenes, videos, audios y documentos de los bloques no pasan por la API (las f
 
 Si se crea un almacén nuevo: Vercel → *Storage* → *Blob* → crear y conectar al proyecto en el entorno que corresponda (o `vercel blob create-store <nombre> --access public --environment production`). En desarrollo, sin token, la API guarda en `data/media` y sirve los archivos ella misma.
 
+## Lectura de comprobantes (OCR)
+
+El bloque «Comprobante automático» lee las imágenes en la propia función, sin servicios externos: `sharp` (binario de Linux que instala `npm ci` en el build) y Tesseract en WebAssembly con el modelo de español del paquete `@tesseract.js-data/spa`. Como Tesseract carga sus archivos por ruta, `vercel.json` los añade a la función con `includeFiles` (solo las variantes LSTM, ~25 MB). No hay variables que configurar. La primera lectura de una instancia tarda un poco más (arranca el motor); las siguientes, ~0,3 s.
+
 ## Una sola dirección oficial
 
 Cada despliegue de Vercel responde en varias direcciones (la oficial, la del equipo, la de la rama y la propia del despliegue). Neon Auth solo acepta iniciar sesión desde la oficial. Por eso el build de producción le da a la web su dirección oficial (`VITE_APP_URL`, sacada de `VERCEL_PROJECT_PRODUCTION_URL`) y la web lleva ahí, antes de pintar nada, a quien entre por cualquier otra, conservando la ruta.

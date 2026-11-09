@@ -36,6 +36,11 @@ import type { ConversionTracker } from "../../../flow-engine/ports/ConversionTra
 import { DisabledConversionTracker } from "../../../infrastructure/meta/DisabledConversionTracker";
 import { TestPixelEventService } from "../../../domains/automations/builder/application/TestPixelEventService";
 import { EnginePixelEventTester } from "./EnginePixelEventTester";
+import { TestPaymentProofService } from "../../../domains/automations/builder/application/TestPaymentProofService";
+import { EnginePaymentProofTester } from "./EnginePaymentProofTester";
+import { TesseractDocumentReader } from "../../../infrastructure/documents/TesseractDocumentReader";
+import { SqlReceiptRegistry } from "../../../infrastructure/persistence/sql/SqlReceiptRegistry";
+import { InMemoryReceiptRegistry } from "../../../infrastructure/persistence/memory/InMemoryReceiptRegistry";
 import { composeNodeRuntime, simulationDependencies } from "./composeNodeRuntime";
 import type { ApiConfig } from "../config/loadApiConfig";
 
@@ -55,6 +60,7 @@ export interface ApiServices {
   readonly testIntegrationService: TestIntegrationRequestService;
   readonly testAiService: TestAiStepService;
   readonly testPixelService: TestPixelEventService;
+  readonly testPaymentProofService: TestPaymentProofService;
   readonly saveDraftService: SaveDraftService;
   readonly simulateDraftService: SimulateDraftService;
   readonly deleteAutomationService: DeleteAutomationService;
@@ -120,6 +126,9 @@ export function composeBuilderServices(
   // Un único cliente HTTP protegido (SSRF, plazos, tamaños) para la simulación
   // y para «Probar» del bloque Integración.
   const http = new SafeHttpRequester({ allowPrivateNetworks: config.integrationsAllowPrivateNetwork });
+  // Un solo lector de comprobantes (un motor de OCR por instancia).
+  const documents = new TesseractDocumentReader();
+  const receipts = config.automationsStore === "sql" ? new SqlReceiptRegistry(sqlClient) : new InMemoryReceiptRegistry();
 
   return {
     getWorkspaceService: new GetBuilderWorkspaceService(
@@ -129,11 +138,15 @@ export function composeBuilderServices(
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
     simulateDraftService: new SimulateDraftService(
-      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http, ai, conversions })), config.defaultTimezone)
+      new BuilderSimulationRuntimeFactory(composeNodeRuntime(simulationDependencies({ http, ai, conversions, media: http, documents })), config.defaultTimezone)
     ),
     testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), new InMemoryRateLimiter()),
     testAiService: new TestAiStepService(new EngineAiStepTester(ai), new InMemoryRateLimiter()),
     testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), new InMemoryRateLimiter()),
+    testPaymentProofService: new TestPaymentProofService(
+      new EnginePaymentProofTester(documents, receipts, config.defaultTimezone),
+      new InMemoryRateLimiter()
+    ),
     deleteAutomationService: new DeleteAutomationService(unitOfWork),
     createAutomationService: new CreateAutomationService(unitOfWork, buildInitialBuilderWorkspace),
     duplicateAutomationService: new DuplicateAutomationService(unitOfWork, buildInitialBuilderWorkspace),

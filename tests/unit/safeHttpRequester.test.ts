@@ -48,6 +48,9 @@ beforeAll(async () => {
       case "/slow":
         setTimeout(() => res.end("tarde"), 500);
         return;
+      case "/image.png":
+        res.writeHead(200, { "content-type": "image/png; charset=binary" }).end(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff, 0x10]));
+        return;
       case "/big":
         res.end("x".repeat(2048));
         return;
@@ -140,4 +143,22 @@ describe("con la red privada permitida (desarrollo)", () => {
     const result = await open.send(req("http://no-existe.invalid/", { timeoutMs: 15_000 }));
     expect(result.ok ? null : [result.reason, result.message]).toEqual(["network_error", "No se encontró el dominio."]);
   }, 20_000);
+
+  it("descarga archivos binarios intactos, con su tipo", async () => {
+    const result = await open.fetch({ url: `${main.base}/image.png`, maxBytes: 1024, timeoutMs: 2000 });
+    expect(result.ok && [...result.media.bytes]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff, 0x10]);
+    expect(result.ok && result.media.contentType).toBe("image/png");
+  });
+
+  it("descargar: un 404 es «not_found» y el tope de tamaño se respeta", async () => {
+    expect(await open.fetch({ url: `${main.base}/nada`, maxBytes: 1024, timeoutMs: 2000 })).toMatchObject({ ok: false, reason: "not_found" });
+    expect(await open.fetch({ url: `${main.base}/big`, maxBytes: 10, timeoutMs: 2000 })).toMatchObject({ ok: false, reason: "response_too_large" });
+  });
+});
+
+describe("descargas (SSRF por defecto)", () => {
+  it("no descarga de la red interna", async () => {
+    const result = await new SafeHttpRequester().fetch({ url: `${main.base}/image.png`, maxBytes: 1024, timeoutMs: 2000 });
+    expect(result).toMatchObject({ ok: false, reason: "blocked_destination" });
+  });
 });

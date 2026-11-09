@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createHash, randomBytes } from "node:crypto";
-import { parseAmount } from "../../flow-engine/nodes/pixel/parseAmount.js";
+import { parseAmount } from "../../flow-engine/values/parseAmount.js";
 import { buildConversionEvent } from "../../flow-engine/nodes/pixel/buildConversionEvent.js";
 import { PixelNodeHandler } from "../../flow-engine/nodes/pixel/PixelNodeHandler.js";
 import { readPixelConfig } from "../../contracts/PixelConfig.js";

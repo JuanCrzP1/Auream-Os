@@ -46,7 +46,7 @@ flow-engine/
 ├── nodes/        NodeRuntime · NodeHandler + un directorio por tipo de nodo
 ├── registry/     FlowRegistry · ActiveFlowVersion
 ├── triggers/     TriggerResolver · toInboundEnvelope
-└── ports/        RuntimePorts · FlowExecutor · AiGateway · ConversionTracker · HttpRequester · ContactDirectory · RoundRobinCounter
+└── ports/        RuntimePorts · FlowExecutor · AiGateway · ConversionTracker · HttpRequester · MediaFetcher · DocumentTextReader · ReceiptRegistry · ContactDirectory · RoundRobinCounter
 ```
 
 Estructura plana, sin `domain/` ni `application/`. Esa separación sirve a dominios con entidades y reglas de negocio; aquí solo añadiría un nivel sin significado.
@@ -77,7 +77,8 @@ Los nombres de directorio coinciden exactamente con los valores del tipo `NodeTy
 | `integration` | `IMPLEMENTADO` (C10) — petición HTTP con variables codificadas según dónde caen (URL, cabecera, JSON) vía el puerto `HttpRequester`; 2xx sale por `success` y guarda los datos mapeados en el contacto (`ContactDirectory.setFields`) y en la conversación; cualquier otra cosa sale por `failure` con el motivo. El resultado no incluye cabeceras ni cuerpo enviados (pueden llevar credenciales). |
 | `ai` | `IMPLEMENTADO` (C9/C10) — `runAiStep`: instrucciones y mensaje con variables, memoria de la conversación (en la sesión, últimos N intercambios), clasificación de intención (`{intent, reply}` en JSON; una salida por intención + respaldo + error), envío opcional de la respuesta y guardado en variable. Con el puerto `AiGateway`: el motor nunca ve una clave. Archivos (audio/imagen/PDF): se declaran pendientes hasta que el canal los entregue (FASE D). |
 | `pixel` | `IMPLEMENTADO` (C10) — `runPixelStep`: arma el evento (Lead/Compra, valor tal como se escribe en Latinoamérica: «$ 49.900», «1.234,50»; atribución al anuncio de clic a WhatsApp si el contacto trae `ctwa_clid` y el bloque la página: `LeadSubmitted`/`business_messaging`) y lo envía por el puerto `ConversionTracker`. Datos del cliente cifrados con SHA-256 en el adaptador; el motor nunca ve el token. Si Meta falla, el flujo SIGUE y el motivo queda en el resultado. |
-| `payment-proof`, `notification` | `NO IMPLEMENTADO` — fallan explícitamente con `*_not_implemented` en lugar de simular un resultado. |
+| `payment-proof` | `IMPLEMENTADO` (C10) — `runPaymentProofStep`, **sin IA**: descarga el archivo de la variable (`MediaFetcher`, con la misma protección SSRF), lee su texto (`DocumentTextReader`: OCR propio para imágenes, capa de texto para PDF), extrae valor, moneda, fecha, referencia y pagador (`extractReceipt`) y verifica contra las cuentas de recaudo (`verifyReceipt`): cuenta completa o enmascarada (esta solo con la entidad o el titular visibles), titular y sus variantes con tolerancia a errores del OCR, monto exacto o mínimo, antigüedad en la zona del negocio y repetidos (`ReceiptRegistry`, atómico; solo se registra lo que pasa todo lo demás). Una salida por resultado; los datos quedan en `<variable>.valor`, `.referencia`… y el motivo en la variable de error. |
+| `notification` | `NO IMPLEMENTADO` — falla explícitamente con `*_not_implemented` en lugar de simular un resultado (necesita el canal, FASE D). |
 
 La forma de la configuración de cada bloque es un contrato compartido con el builder (`contracts/*Config.ts`, lectores en `contracts/ConfigReaders.ts`): los dos lados leen lo mismo.
 
@@ -101,6 +102,21 @@ El motor declara `ports/HttpRequester.ts`; la composición inyecta `infrastructu
 - Sin red (tests): `DisabledHttpRequester`, que el bloque trata como un fallo más.
 
 «Probar» del editor (`POST /api/builder/integrations/test`, permiso `flows.write`, 20 pruebas por minuto y cuenta) recorre el mismo código que el bloque (`runIntegrationRequest` + `mapResponseFields`) con valores de ejemplo, y devuelve las rutas de la respuesta para elegir qué guardar.
+
+### Comprobantes (lectura sin IA)
+
+```
+PaymentProofNodeHandler → runPaymentProofStep
+   ├── ports/MediaFetcher        → SafeHttpRequester.fetch (SSRF, 10 MB, 15 s)
+   ├── ports/DocumentTextReader  → TesseractDocumentReader
+   │       imagen: sharp (enderezar, gris, invertir modo oscuro, ~2000 px) → Tesseract (spa, LSTM)
+   │       PDF:    capa de texto (unpdf); un PDF escaneado es «ilegible»
+   └── ports/ReceiptRegistry     → SqlReceiptRegistry (`010_payment_proof_receipts.sql`)
+```
+
+- Todo corre en el servidor: sin claves ni coste por uso. El modelo de español viaja en el paquete `@tesseract.js-data/spa` (sin descargas al arrancar); un motor de OCR por instancia, reutilizado mientras la función siga caliente.
+- El texto leído no se guarda: solo la huella del comprobante (referencia, o un resumen sha-256 de sus datos) para detectar repetidos.
+- «Probar» (`POST /api/builder/payment-proof/test`, `flows.write`, 10 por minuto y cuenta, archivo ≤ 2,5 MB que el editor reduce antes de enviar) recorre el mismo código sin registrar el comprobante: solo consulta si ya se usó.
 
 ### Nodo de IA y proveedores
 

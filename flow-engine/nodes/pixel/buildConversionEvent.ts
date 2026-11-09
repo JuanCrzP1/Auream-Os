@@ -1,7 +1,7 @@
 import type { PixelConfig } from "../../../contracts/PixelConfig";
 import { renderTemplate, type VariableResolver } from "../../../contracts/TemplateVariables";
 import type { ConversionEvent } from "../../ports/ConversionTracker";
-import { parseAmount } from "./parseAmount";
+import { parseAmount } from "../../values/parseAmount";
 
 // ---------------------------------------------------------------------------
 // De la configuración del bloque Pixel a un evento de conversión. Pura.

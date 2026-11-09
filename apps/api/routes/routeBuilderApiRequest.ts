@@ -12,6 +12,8 @@ import { TestAiStepService } from "../../../domains/automations/builder/applicat
 import type { AiTestRequest } from "../../../contracts/AiTestContracts";
 import { TestPixelEventService } from "../../../domains/automations/builder/application/TestPixelEventService";
 import type { PixelTestRequest } from "../../../contracts/PixelTestContracts";
+import { TestPaymentProofService } from "../../../domains/automations/builder/application/TestPaymentProofService";
+import { PAYMENT_PROOF_TEST_MAX_BYTES, type PaymentProofTestRequest } from "../../../contracts/PaymentProofTestContracts";
 import { parseJsonBody } from "../http/parseJsonBody";
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
@@ -25,7 +27,11 @@ export interface BuilderApiServices {
   readonly testIntegrationService: TestIntegrationRequestService;
   readonly testAiService: TestAiStepService;
   readonly testPixelService: TestPixelEventService;
+  readonly testPaymentProofService: TestPaymentProofService;
 }
+
+/** El archivo viaja en base64 (≈ 4/3 de su tamaño) dentro del JSON. */
+const PAYMENT_PROOF_TEST_BODY_BYTES = Math.ceil(PAYMENT_PROOF_TEST_MAX_BYTES * 1.4) + 64 * 1024;
 
 /** Ids de flujo: uuid u otros identificadores seguros para URL. */
 const FLOW_KEY_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
@@ -76,6 +82,18 @@ export async function routeBuilderApiRequest(
     requireScope(requestContext, FlowPermissions.write, tenantId);
     const body = await parseJsonBody<Partial<PixelTestRequest>>(request);
     sendJson(response, 200, await services.testPixelService.execute(tenantId, body));
+    return;
+  }
+
+  // «Probar» del Comprobante: lee la imagen subida; no la guarda ni la registra.
+  if (url.pathname === "/api/builder/payment-proof/test") {
+    if (request.method !== "POST") {
+      sendJson(response, 405, { message: "Method not allowed" });
+      return;
+    }
+    requireScope(requestContext, FlowPermissions.write, tenantId);
+    const body = await parseJsonBody<Partial<PaymentProofTestRequest>>(request, PAYMENT_PROOF_TEST_BODY_BYTES);
+    sendJson(response, 200, await services.testPaymentProofService.execute(tenantId, body));
     return;
   }
 

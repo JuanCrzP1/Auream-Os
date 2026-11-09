@@ -7,6 +7,7 @@ import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
 import { connectAi, listAiModels, testAiStep } from "@features/automations/builder/services/aiCapabilities";
 import { uploadMediaForTool } from "@features/automations/builder/services/mediaCapabilities";
 import { connectPixel, testPixelEvent } from "@features/automations/builder/services/pixelCapabilities";
+import { testPaymentProof } from "@features/automations/builder/services/paymentProofCapabilities";
 import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
 
 // ---------------------------------------------------------------------------
@@ -51,7 +52,8 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       pixelConnections: pixels.connections,
       pixelConnectionsStatus: pixels.status,
       createPixelConnection: connectPixel(createPixel),
-      testPixel: testPixelEvent
+      testPixel: testPixelEvent,
+      testPaymentProof
     }),
     [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, createPixel]
   );
