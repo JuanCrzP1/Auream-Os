@@ -25,5 +25,9 @@ export class UnconfiguredWhatsAppLinker implements WhatsAppLinker {
     return { kind: "disconnected" };
   }
 
+  public async disconnect(): Promise<void> {}
+
+  public async reset(): Promise<void> {}
+
   public async unlink(): Promise<void> {}
 }

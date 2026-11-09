@@ -73,6 +73,8 @@ export interface ConversationSummary {
   readonly connectionName: string;
   readonly contactId: string | null;
   readonly contactName: string | null;
+  /** Foto de perfil de WhatsApp del cliente (enlace temporal); `null`: se muestran sus iniciales. */
+  readonly contactAvatarUrl: string | null;
   /** Teléfono del cliente, solo dígitos. */
   readonly phone: string;
   /** El bot (flujos y disparadores) atiende este chat. */

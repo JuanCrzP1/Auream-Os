@@ -29,7 +29,7 @@ export function instanceNameFor(connectionId: string): string {
 }
 
 function toState(info: UazapiInstanceInfo): SessionState {
-  if (info.status === "connected" && info.phoneNumber) return { kind: "connected", phoneNumber: info.phoneNumber, profileName: info.profileName };
+  if (info.status === "connected" && info.phoneNumber) return { kind: "connected", phoneNumber: info.phoneNumber, profileName: info.profileName, profilePictureUrl: info.profilePictureUrl };
   if (info.status === "connecting") return { kind: "qr", qrImage: info.qrcode };
   return { kind: "disconnected" };
 }
@@ -91,6 +91,22 @@ export class UazapiLinker implements WhatsAppLinker {
     } catch (error) {
       if (error instanceof UazapiError && (error.reason === "not_found" || error.reason === "unauthorized")) return { kind: "disconnected" };
       return asLinkerError(error);
+    }
+  }
+
+  public async disconnect(session: ProviderSession): Promise<void> {
+    try {
+      await this.client.disconnect(session.secret);
+    } catch (error) {
+      asLinkerError(error);
+    }
+  }
+
+  public async reset(session: ProviderSession): Promise<void> {
+    try {
+      await this.client.reset(session.secret);
+    } catch (error) {
+      asLinkerError(error);
     }
   }
 

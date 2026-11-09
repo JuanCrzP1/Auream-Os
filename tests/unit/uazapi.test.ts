@@ -38,7 +38,7 @@ function server(routes: Record<string, (call: Call) => Response>) {
 
 const created = () => json(200, { response: "Instance created successfully", instance: { id: "r1a2b3", token: "inst-token", name: "auream-c1", status: "disconnected" }, token: "inst-token" });
 const connecting = (qrcode = "data:image/png;base64,iVBORw0KGgo") => json(200, { connected: false, loggedIn: false, jid: null, instance: { id: "r1a2b3", status: "connecting", qrcode }, response: "Connecting" });
-const online = () => json(200, { instance: { id: "r1a2b3", status: "connected", profileName: "Dilo Cantando", qrcode: "" }, status: { connected: true, loggedIn: true, jid: { user: "573013815302", agent: 0, device: 0, server: "s.whatsapp.net" } } });
+const online = () => json(200, { instance: { id: "r1a2b3", status: "connected", profileName: "Dilo Cantando", profilePicUrl: "https://pps.whatsapp.net/v/foto.jpg", qrcode: "" }, status: { connected: true, loggedIn: true, jid: { user: "573013815302", agent: 0, device: 0, server: "s.whatsapp.net" } } });
 
 describe("UazapiClient", () => {
   it("crea la instancia con admintoken en la cabecera y devuelve su id y token", async () => {
@@ -112,7 +112,7 @@ describe("UazapiLinker", () => {
 
   it("consultar: conectada con número; sin instancia, desconectada; uazapi caído, error", async () => {
     const linker = (route: () => Response) => new UazapiLinker(server({ "GET /instance/status": route }).client, null);
-    expect(await linker(online).check({ ref: "r", secret: "t" })).toEqual({ kind: "connected", phoneNumber: "573013815302", profileName: "Dilo Cantando" });
+    expect(await linker(online).check({ ref: "r", secret: "t" })).toEqual({ kind: "connected", phoneNumber: "573013815302", profileName: "Dilo Cantando", profilePictureUrl: "https://pps.whatsapp.net/v/foto.jpg" });
     expect(await linker(() => json(404, {})).check({ ref: "r", secret: "t" })).toEqual({ kind: "disconnected" });
     await expect(linker(() => json(500, {})).check({ ref: "r", secret: "t" })).rejects.toThrow(LinkerError);
   });

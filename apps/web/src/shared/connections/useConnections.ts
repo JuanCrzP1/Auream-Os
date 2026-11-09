@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionSummary, CreateConnectionRequest } from "@contracts/ConnectionContracts";
 import { RequestError } from "@shared/http/RequestError";
-import { checkConnection, createConnection, deleteConnection, fetchConnections, linkConnection, renameConnection } from "./connectionsApi";
+import { checkConnection, createConnection, deleteConnection, disconnectConnection, fetchConnections, linkConnection, renameConnection, restartConnection } from "./connectionsApi";
 
 /**
  *   loading · ready · error
@@ -77,5 +77,17 @@ export function useConnections() {
     []
   );
 
-  return { connections, status, refresh, create, rename, remove, link, check };
+  const disconnect = useCallback(
+    async (id: string) => {
+      await disconnectConnection(id);
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const restart = useCallback(async (id: string) => {
+    await restartConnection(id);
+  }, []);
+
+  return { connections, status, refresh, create, rename, remove, link, check, disconnect, restart };
 }

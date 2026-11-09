@@ -80,6 +80,14 @@ export class ConnectionChannelServices {
     return messenger.inboundMedia(session, providerMessageId).catch(() => null);
   }
 
+  /** Foto de perfil de un contacto por el número que lo atiende; `null` si no hay o el proveedor falla. */
+  public async profilePicture(connection: WhatsAppConnection, phone: string): Promise<string | null> {
+    const session = this.sessionOf(connection);
+    const messenger = this.messengers.for(connection.method);
+    if (!session || !messenger || connection.status !== "connected") return null;
+    return messenger.profilePicture(session, phone);
+  }
+
   /**
    * Envía en orden. Un fallo en una salida no detiene las siguientes; queda en
    * el informe. `onResult` se llama apenas sale (o falla) cada mensaje: así la

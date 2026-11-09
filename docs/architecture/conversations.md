@@ -48,6 +48,7 @@ bandeja web ── cada 1,5–4 s: /conversations/:id/live?since=<marca> ──>
 - **Aviso antes de tiempo.** Si un aviso llega antes de que su mensaje quede guardado, se reintenta a los 1,5 s y a los 5 s.
 - **La marca es opaca.** `cursor` es el `updated_at` de PostgreSQL como texto: la web lo devuelve tal cual (codificado en la URL).
 - **Presencia, un detalle.** Si falla, el mensaje igual sale.
+- **Fotos de perfil (como Leona).** Al escribir un cliente, si su foto no se revisó en el último día, se pide a uazapi (`POST /chat/avatar`, miniatura) y se guarda en `contacts.avatar_url` (`027_profile_pictures.sql`, `ContactAvatarService`). Son enlaces TEMPORALES de WhatsApp: si uno vence, la bandeja muestra las iniciales (`Avatar`). Sin foto se guarda vacía; si uazapi falla, se reintenta otro día. La foto del número conectado llega con su estado (`instance.profilePicUrl`) y se guarda en `whatsapp_connections.profile_picture_url`.
 
 ## Consumo
 

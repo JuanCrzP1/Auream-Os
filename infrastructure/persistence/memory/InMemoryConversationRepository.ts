@@ -137,7 +137,7 @@ export class InMemoryConversationRepository implements ConversationRepository {
 
   private toSummary(row: Row): ConversationSummary {
     return {
-      id: row.id, connectionId: row.connectionId, connectionName: "", contactId: row.contactId, contactName: null, phone: row.phone,
+      id: row.id, connectionId: row.connectionId, connectionName: "", contactId: row.contactId, contactName: null, contactAvatarUrl: null, phone: row.phone,
       botEnabled: row.botEnabled, unreadCount: row.unreadCount, lastMessageText: row.lastMessageText, lastMessageAuthor: row.lastMessageAuthor,
       lastMessageAt: row.lastMessageAt, activeFlowName: null, labels: this.labelsOf(row),
       connectionDeleted: this.deletedConnections.has(row.connectionId), createdAt: row.createdAt

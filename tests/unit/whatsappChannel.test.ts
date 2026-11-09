@@ -159,22 +159,26 @@ describe("routeWhatsAppWebhooks · mensajes", () => {
     return response;
   };
 
-  it("responde enseguida y procesa después, con la conexión verificada y el archivo descargado", async () => {
+  it("responde enseguida y procesa después, con la conexión verificada, el archivo descargado y la foto del contacto al día", async () => {
     const tasks: Array<() => Promise<unknown>> = [];
     const execute = vi.fn(async () => ({ outcome: "flow_started" }));
+    const refreshIfStale = vi.fn(async (_t: string, _p: string, fetch: () => Promise<string | null>) => (await fetch(), true));
+    const profilePicture = vi.fn(async () => "https://pps.whatsapp.net/v/cliente.jpg");
     const connection = { id: CONNECTION, tenantId: T };
     const connections = {
       providerEvents: { execute: vi.fn() },
       webhooks: { ensureCurrent: vi.fn(async () => undefined) },
-      channel: { authenticate: vi.fn(async (_id: string, token: string) => (token === TOKEN ? connection : null)), inboundMedia: vi.fn(async () => ({ url: "https://cdn/x.jpg", mimeType: "image/jpeg" })) }
+      channel: { authenticate: vi.fn(async (_id: string, token: string) => (token === TOKEN ? connection : null)), inboundMedia: vi.fn(async () => ({ url: "https://cdn/x.jpg", mimeType: "image/jpeg" })), profilePicture }
     } as unknown as ConnectionsServices;
     const response = recorder();
-    await routeWhatsAppWebhooks(req(uazapiMessage({ messageType: "ImageMessage", text: "" })), response as never, new URL("http://x/webhooks/uazapi"), connections, { inbound: { execute } } as unknown as MessagingServices, { run: (task) => tasks.push(task) });
+    await routeWhatsAppWebhooks(req(uazapiMessage({ messageType: "ImageMessage", text: "" })), response as never, new URL("http://x/webhooks/uazapi"), connections, { inbound: { execute }, avatars: { refreshIfStale } } as unknown as MessagingServices, { run: (task) => tasks.push(task) });
 
     expect(response.statusCode).toBe(200);
     expect(execute).not.toHaveBeenCalled();
     await tasks[0]!();
     expect(execute).toHaveBeenCalledWith(T, expect.objectContaining({ connectionId: CONNECTION, kind: "image", media: { url: "https://cdn/x.jpg", mimeType: "image/jpeg" } }));
+    expect(refreshIfStale).toHaveBeenCalledWith(T, expect.stringMatching(/^\d+$/), expect.any(Function));
+    expect(profilePicture).toHaveBeenCalledWith(connection, refreshIfStale.mock.calls[0]![1]);
   });
 
   it("un aviso con otro token no procesa nada", async () => {

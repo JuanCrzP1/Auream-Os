@@ -1,3 +1,4 @@
+import { DisconnectConnectionService, RestartConnectionService } from "../../../domains/connections/application/ConnectionSessionServices";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlConnectionRepository } from "../../../infrastructure/persistence/sql/SqlConnectionRepository";
 import { UnconfiguredWhatsAppLinker } from "../../../infrastructure/whatsapp/UnconfiguredWhatsAppLinker";
@@ -46,6 +47,10 @@ export interface ConnectionsServices {
   readonly remove: DeleteConnectionService;
   readonly link: LinkConnectionService;
   readonly check: CheckConnectionService;
+  /** Cerrar la sesión de WhatsApp conservando la conexión (se reconecta con un QR nuevo). */
+  readonly disconnect: DisconnectConnectionService;
+  /** Retomar la conexión de un número vinculado sin desvincularlo. */
+  readonly restart: RestartConnectionService;
   readonly providerEvents: HandleProviderEventService;
   /** Qué flujo arranca cada número (palabra clave, anuncio, primer mensaje…). */
   readonly triggers: ConnectionTriggerServices;
@@ -110,6 +115,8 @@ export function composeConnectionsServicesWith(stores: ConnectionsStores | Conne
     remove: new DeleteConnectionService(repository, linkers, cipher),
     link: new LinkConnectionService(repository, linkers, cipher),
     check: new CheckConnectionService(repository, linkers, cipher),
+    disconnect: new DisconnectConnectionService({ repository, linkers, cipher }),
+    restart: new RestartConnectionService({ repository, linkers, cipher }),
     providerEvents: new HandleProviderEventService(repository, cipher),
     triggers: new ConnectionTriggerServices(repository, triggers, flows),
     channel: new ConnectionChannelServices(repository, composeMessengers(options), cipher),

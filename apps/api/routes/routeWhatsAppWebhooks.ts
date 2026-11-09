@@ -80,6 +80,9 @@ export async function routeWhatsAppWebhooks(
         // Archivo sin enlace en el aviso: se pide a uazapi (válido 2 días).
         const media = event.needsMediaDownload ? await connections.channel.inboundMedia(connection, event.message.providerMessageId) : event.message.media;
         await messaging.inbound.execute(connection.tenantId, { ...event.message, connectionId: connection.id, media });
+        // Su foto de perfil de WhatsApp, si toca renovarla (como mucho una vez al día).
+        const phone = event.message.phone;
+        await messaging.avatars.refreshIfStale(connection.tenantId, phone, () => connections.channel.profilePicture(connection, phone)).catch(() => false);
         // Después de atender al cliente: su configuración de avisos al día (entregado/leído…).
         await connections.webhooks.ensureCurrent(connection);
       });

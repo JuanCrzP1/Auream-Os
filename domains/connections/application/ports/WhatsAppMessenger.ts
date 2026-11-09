@@ -24,6 +24,8 @@ export interface WhatsAppMessenger {
   presence(session: ProviderSession, phone: string, presence: ChatPresence, durationMs: number): Promise<void>;
   /** Enlace para descargar un archivo que envió el cliente. */
   inboundMedia(session: ProviderSession, providerMessageId: string): Promise<{ readonly url: string; readonly mimeType: string | null }>;
+  /** Foto de perfil de un contacto (enlace temporal, miniatura); `null` si no tiene o no se puede ver. */
+  profilePicture(session: ProviderSession, phone: string): Promise<string | null>;
 }
 
 export interface WhatsAppMessengers {

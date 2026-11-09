@@ -13,6 +13,7 @@ interface Row {
   status: ConnectionStatus;
   phone_number: string | null;
   profile_name: string | null;
+  profile_picture_url: string | null;
   provider_ref: string | null;
   provider_secret: string | null;
   last_connected_at: Date | string | null;
@@ -20,7 +21,7 @@ interface Row {
   updated_at: Date | string;
 }
 
-const COLUMNS = "id, tenant_id, name, method, status, phone_number, profile_name, provider_ref, provider_secret, last_connected_at, created_at, updated_at";
+const COLUMNS = "id, tenant_id, name, method, status, phone_number, profile_name, profile_picture_url, provider_ref, provider_secret, last_connected_at, created_at, updated_at";
 
 function toConnection(row: Row): WhatsAppConnection {
   return {
@@ -31,6 +32,7 @@ function toConnection(row: Row): WhatsAppConnection {
     status: row.status,
     phoneNumber: row.phone_number,
     profileName: row.profile_name,
+    profilePictureUrl: row.profile_picture_url,
     providerRef: row.provider_ref,
     providerSecret: row.provider_secret,
     lastConnectedAt: row.last_connected_at === null ? null : toIso(row.last_connected_at),
@@ -69,15 +71,15 @@ export class SqlConnectionRepository implements ConnectionRepository {
     try {
       await this.sql.query(
         `insert into whatsapp_connections (${COLUMNS})
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          on conflict (id) do update set
            name = excluded.name, status = excluded.status, phone_number = excluded.phone_number,
-           profile_name = excluded.profile_name, provider_ref = excluded.provider_ref, provider_secret = excluded.provider_secret,
+           profile_name = excluded.profile_name, profile_picture_url = excluded.profile_picture_url, provider_ref = excluded.provider_ref, provider_secret = excluded.provider_secret,
            last_connected_at = excluded.last_connected_at, updated_at = excluded.updated_at
          where whatsapp_connections.tenant_id = excluded.tenant_id and whatsapp_connections.deleted_at is null`,
         [
           connection.id, connection.tenantId, connection.name, connection.method, connection.status, connection.phoneNumber,
-          connection.profileName, connection.providerRef, connection.providerSecret, connection.lastConnectedAt, connection.createdAt, connection.updatedAt
+          connection.profileName, connection.profilePictureUrl, connection.providerRef, connection.providerSecret, connection.lastConnectedAt, connection.createdAt, connection.updatedAt
         ]
       );
     } catch (error) {

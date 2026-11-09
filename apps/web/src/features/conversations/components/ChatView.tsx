@@ -103,7 +103,7 @@ export function ChatView({
             <BackGlyph />
           </button>
           <button type="button" className="ios-chat__who" aria-label={`Ver info. de ${name}`} onClick={() => onInfo(!infoOpen)}>
-            <Avatar name={conversation.contactName} phone={conversation.phone} size={38} />
+            <Avatar name={conversation.contactName} phone={conversation.phone} photoUrl={conversation.contactAvatarUrl} size={38} />
             <span className="ios-chat__who-text">
               <strong>{name}</strong>
               <span>

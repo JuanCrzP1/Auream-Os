@@ -17,6 +17,8 @@ import { sendJson } from "../http/sendJson";
 //   DELETE /connections/:id        eliminar (cierra la sesión en el proveedor)
 //   POST   /connections/:id/link   vincular o reconectar: QR o conexión hecha ({ restart } = código nuevo)
 //   GET    /connections/:id/status cómo va la vinculación (QR renovado, conectada…)
+//   POST   /connections/:id/disconnect   cerrar la sesión de WhatsApp (se reconecta con un QR nuevo)
+//   POST   /connections/:id/restart      retomar la conexión sin desvincular
 //   GET    /connections/:id/triggers              disparadores del número
 //   POST   /connections/:id/triggers              crear uno
 //   PATCH  /connections/:id/triggers/:triggerId   cambiarlo (o activarlo/pausarlo)
@@ -26,6 +28,7 @@ import { sendJson } from "../http/sendJson";
 const ITEM = /^\/connections\/([^/]+)$/;
 const LINK = /^\/connections\/([^/]+)\/link$/;
 const STATUS = /^\/connections\/([^/]+)\/status$/;
+const SESSION_ACTION = /^\/connections\/([^/]+)\/(disconnect|restart)$/;
 const TRIGGERS = /^\/connections\/([^/]+)\/triggers$/;
 const TRIGGER = /^\/connections\/([^/]+)\/triggers\/([^/]+)$/;
 
@@ -86,6 +89,13 @@ export async function routeConnectionsRequest(
   if (link && method === "POST") {
     const body = await parseJsonBody<Partial<LinkConnectionRequest>>(request);
     sendJson(response, 200, await services.link.execute(tenantId, link[1]!, { restart: body.restart === true }));
+    return true;
+  }
+
+  const action = SESSION_ACTION.exec(path);
+  if (action && method === "POST") {
+    const service = action[2] === "disconnect" ? services.disconnect : services.restart;
+    sendJson(response, 200, await service.execute(tenantId, action[1]!));
     return true;
   }
 

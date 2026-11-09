@@ -1,33 +1,28 @@
 import type { AiProviderId } from "@contracts/AiContracts";
 import type { IntegrationMarkKind } from "../catalog/integrationCatalog";
+import { IntegrationGlyph } from "./IntegrationGlyph";
 
-const INITIALS: Readonly<Record<AiProviderId, string>> = { openai: "AI", gemini: "G", openrouter: "OR" };
+type MarkSize = "sm" | "md" | "lg";
 
-/** Distintivo de Meta para los píxeles (iniciales, sin el logo de la marca). */
-export function MetaMark({ size = "md" }: { readonly size?: "sm" | "md" }) {
-  return (
-    <span className={`provider-mark provider-mark--meta provider-mark--${size}`} aria-hidden="true">
-      PX
-    </span>
-  );
-}
-
-/** Distintivo del proveedor (iniciales con el color del proveedor en el tema; sin logos de marca). */
-export function ProviderMark({ provider, size = "md" }: { readonly provider: AiProviderId; readonly size?: "sm" | "md" }) {
-  return (
-    <span className={`provider-mark provider-mark--${provider} provider-mark--${size}`} aria-hidden="true">
-      {INITIALS[provider]}
-    </span>
-  );
-}
-
-const MARK_INITIALS: Readonly<Record<IntegrationMarkKind, string>> = { ...INITIALS, meta: "PX", webhook: "WH", mcp: "MCP" };
-
-/** Distintivo de cualquier integración del catálogo (iniciales con su color; sin logos de marca). */
-export function IntegrationMark({ kind, size = "md" }: { readonly kind: IntegrationMarkKind; readonly size?: "sm" | "md" | "lg" }) {
+/**
+ * Distintivo de una integración: el logo del servicio sobre una ficha neutra
+ * (fondo, borde fino y sombra suave del tema), como en los paneles de
+ * integraciones profesionales. El nombre lo da el texto de al lado.
+ */
+export function IntegrationMark({ kind, size = "md" }: { readonly kind: IntegrationMarkKind; readonly size?: MarkSize }) {
   return (
     <span className={`provider-mark provider-mark--${kind} provider-mark--${size}`} aria-hidden="true">
-      {MARK_INITIALS[kind]}
+      <IntegrationGlyph kind={kind} />
     </span>
   );
+}
+
+/** Distintivo de un proveedor de IA (OpenAI, Gemini, OpenRouter). */
+export function ProviderMark({ provider, size = "md" }: { readonly provider: AiProviderId; readonly size?: MarkSize }) {
+  return <IntegrationMark kind={provider} size={size} />;
+}
+
+/** Distintivo de Meta (los píxeles de conversión). */
+export function MetaMark({ size = "md" }: { readonly size?: MarkSize }) {
+  return <IntegrationMark kind="meta" size={size} />;
 }

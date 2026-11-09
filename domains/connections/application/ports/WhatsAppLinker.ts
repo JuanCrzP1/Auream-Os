@@ -29,7 +29,7 @@ export interface LinkTarget {
 /** Cómo está la sesión en el proveedor. */
 export type SessionState =
   | { readonly kind: "qr"; readonly qrImage: string }
-  | { readonly kind: "connected"; readonly phoneNumber: string; readonly profileName: string | null }
+  | { readonly kind: "connected"; readonly phoneNumber: string; readonly profileName: string | null; readonly profilePictureUrl: string | null }
   | { readonly kind: "disconnected" };
 
 export type StartOutcome =
@@ -58,6 +58,17 @@ export interface WhatsAppLinker {
   refresh(session: ProviderSession): Promise<void>;
   /** Estado actual de la sesión. Lanza `LinkerError` si el proveedor falla. */
   check(session: ProviderSession): Promise<SessionState>;
+  /**
+   * Cierra la sesión de WhatsApp (el número deja de estar vinculado) pero
+   * CONSERVA la sesión en el proveedor: reconectar pide un QR nuevo sobre ella.
+   * Lanza `LinkerError` si el proveedor falla.
+   */
+  disconnect(session: ProviderSession): Promise<void>;
+  /**
+   * Retoma la conexión de un número vinculado sin perder la vinculación (para
+   * cuando no recibe o no envía). Lanza `LinkerError` si el proveedor falla.
+   */
+  reset(session: ProviderSession): Promise<void>;
   /** Cierra y borra la sesión en el proveedor. No falla si ya no existía. */
   unlink(session: ProviderSession): Promise<void>;
 }

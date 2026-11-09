@@ -45,6 +45,14 @@ export class UazapiMessenger implements WhatsAppMessenger {
   }
 
   /** Envía y devuelve el id de WhatsApp del mensaje (las reacciones no tienen). */
+  public async profilePicture(session: ProviderSession, phone: string): Promise<string | null> {
+    try {
+      return await this.client.chatAvatar(session.secret, phone);
+    } catch (error) {
+      throw new MessengerError(error instanceof Error ? error.message : "uazapi falló.");
+    }
+  }
+
   private async dispatch(token: string, phone: string, message: OutboundMessage): Promise<string | null> {
     if (message.kind === "reaction") {
       if (message.replyToMessageId) await this.client.react(token, message.replyToMessageId, message.content);

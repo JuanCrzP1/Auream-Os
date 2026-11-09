@@ -180,7 +180,7 @@ export function ConversationList({
                   aria-label={`${name}${conversation.unreadCount ? `, ${conversation.unreadCount} sin leer` : ""}`}
                   onClick={() => onSelect(conversation.id)}
                 >
-                  <Avatar name={conversation.contactName} phone={conversation.phone} />
+                  <Avatar name={conversation.contactName} phone={conversation.phone} photoUrl={conversation.contactAvatarUrl} size={40} />
                   <span className="ios-row__body">
                     <span className="ios-row__top">
                       <span className="ios-row__name">{name}</span>

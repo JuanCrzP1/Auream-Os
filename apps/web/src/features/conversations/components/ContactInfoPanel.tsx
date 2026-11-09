@@ -94,7 +94,7 @@ export function ContactInfoPanel({
 
       <div className="ios-info__scroll">
         <div className="ios-info__hero">
-          <Avatar name={conversation.contactName} phone={conversation.phone} size={84} />
+          <Avatar name={conversation.contactName} phone={conversation.phone} photoUrl={conversation.contactAvatarUrl} size={84} />
           <strong>{name}</strong>
           <span>{conversation.contactName ? phone : "Sin nombre guardado"}</span>
         </div>

@@ -1,0 +1,400 @@
+/* ===== TARJETA DE UN NÚMERO =====
+   Compacta: foto (o ícono) con anillo de estado, identidad, estado y método,
+   disparadores y acción. Estado: verde conectada, ámbar por vincular, rosa
+   desconectada. Solo tokens del tema. */
+
+.wa-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.wa-card {
+  --state: var(--amber);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 70% at 0% 0%, color-mix(in srgb, var(--state) 8%, transparent), transparent 60%),
+    var(--surface);
+  transition: border-color var(--speed-fast, 0.15s) ease, box-shadow var(--speed-fast, 0.15s) ease;
+}
+
+.wa-card:hover {
+  border-color: color-mix(in srgb, var(--state) 35%, var(--line));
+  box-shadow: 0 6px 18px -10px rgb(15 23 42 / 0.25);
+}
+
+.wa-card--connected { --state: var(--status-active-text); }
+.wa-card--disconnected { --state: var(--rose); }
+
+.wa-card--skeleton {
+  min-height: 160px;
+  background: linear-gradient(100deg, var(--surface) 30%, var(--surface-alt) 50%, var(--surface) 70%);
+  background-size: 200% 100%;
+  animation: wa-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes wa-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.wa-card__top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+/* --- Foto con anillo de estado --- */
+.wa-avatar {
+  --mark: var(--teal);
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--mark) 34%, transparent), color-mix(in srgb, var(--mark) 12%, transparent));
+  color: var(--text);
+}
+
+.wa-avatar--cloud_api { --mark: var(--primary); }
+
+.wa-avatar svg {
+  width: 20px;
+  height: 20px;
+}
+
+.wa-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.wa-avatar__ring {
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--state);
+  border-radius: 50%;
+  opacity: 0.85;
+}
+
+.wa-card--pending .wa-avatar__ring {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.wa-card--connected .wa-avatar__ring,
+.wa-card--connecting .wa-avatar__ring {
+  animation: wa-pulse 2.4s ease-out infinite;
+}
+
+@keyframes wa-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--state) 45%, transparent); }
+  70% { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* --- Identidad --- */
+.wa-card__identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.wa-card__name {
+  margin: 0 0 1px;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.94rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-card__phone {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wa-card__phone--empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.wa-card__profile {
+  margin: 1px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Estado y método --- */
+.wa-card__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.wa-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--state) 14%, transparent);
+  color: color-mix(in srgb, var(--state) 85%, var(--text));
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.wa-pill--connected { --state: var(--status-active-text); }
+.wa-pill--pending,
+.wa-pill--connecting { --state: var(--amber); }
+.wa-pill--disconnected { --state: var(--rose); }
+
+.wa-pill__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--state);
+}
+
+.wa-method {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.wa-method svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* --- Disparadores --- */
+.wa-triggers {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.76rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--speed-fast, 0.15s) ease, background var(--speed-fast, 0.15s) ease;
+}
+
+.wa-triggers:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+  background: color-mix(in srgb, var(--primary) 11%, transparent);
+}
+
+.wa-triggers svg {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: var(--primary);
+}
+
+.wa-triggers__text {
+  flex: 1;
+  font-weight: 600;
+}
+
+.wa-triggers__cta {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.wa-triggers--empty {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--line));
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+}
+
+.wa-triggers--empty svg {
+  color: var(--amber);
+}
+
+/* --- Pie --- */
+.wa-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.wa-card__since {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.wa-card__action svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* --- Menú de acciones (como el de Leona) --- */
+.wa-card__menu {
+  position: relative;
+  align-self: flex-start;
+}
+
+.wa-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.wa-icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.wa-icon-btn:hover,
+.wa-icon-btn[aria-expanded="true"] {
+  border-color: var(--line);
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+.wa-icon-btn:focus-visible,
+.wa-triggers:focus-visible,
+.wa-menu__item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.wa-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 210px;
+  padding: 6px;
+  border: 1px solid var(--border, var(--line));
+  border-radius: 12px;
+  /* Opaco: el menú va encima del contenido de la tarjeta. */
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.22), var(--shadow, none);
+}
+
+.wa-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wa-menu__item svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.wa-menu__item:hover {
+  background: var(--chip-bg-hover, var(--chip-bg));
+}
+
+.wa-menu__item--separated {
+  margin-top: 5px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 8px 8px;
+}
+
+.wa-menu__item--warning,
+.wa-menu__item--warning svg {
+  color: var(--amber);
+}
+
+.wa-menu__item--danger,
+.wa-menu__item--danger svg {
+  color: var(--rose);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-avatar__ring,
+  .wa-card--skeleton {
+    animation: none !important;
+  }
+}
+
+/* --- Aviso de una acción (reiniciar) --- */
+.wa-notice {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.wa-notice--ok {
+  background: color-mix(in srgb, var(--status-active-text) 12%, transparent);
+  color: color-mix(in srgb, var(--status-active-text) 80%, var(--text));
+}
+
+.wa-notice--error {
+  background: color-mix(in srgb, var(--rose) 12%, transparent);
+  color: color-mix(in srgb, var(--rose) 80%, var(--text));
+}

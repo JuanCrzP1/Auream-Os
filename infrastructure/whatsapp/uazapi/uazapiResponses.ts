@@ -12,6 +12,8 @@ export interface UazapiInstanceInfo {
   /** QR como data URL (vacío mientras se genera). */
   readonly qrcode: string;
   readonly profileName: string | null;
+  /** Foto de perfil del número conectado (`instance.profilePicUrl`, enlace temporal). */
+  readonly profilePictureUrl: string | null;
   /** Número conectado, solo dígitos (de `status.jid.user`). */
   readonly phoneNumber: string | null;
 }
@@ -45,6 +47,7 @@ export function toInstanceInfo(body: Json): UazapiInstanceInfo {
     status: text(instance["status"]) || (status["connected"] === true || body["connected"] === true ? "connected" : "disconnected"),
     qrcode: asDataUrl(text(instance["qrcode"])),
     profileName: text(instance["profileName"]) || null,
+    profilePictureUrl: /^https:\/\//.test(text(instance["profilePicUrl"])) ? text(instance["profilePicUrl"]) : null,
     phoneNumber: digits(jid["user"]) ?? digits(instance["owner"])
   };
 }

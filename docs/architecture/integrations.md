@@ -51,6 +51,10 @@ Reglas:
 - **Límite:** 600 envíos por minuto por webhook (la cuenta compartida en Neon). Envíos de hasta 256 KB.
 - **Sin Kanban:** Auream no lo tiene.
 
+### Logos
+
+`components/IntegrationGlyph.tsx`: el logo de cada servicio (OpenAI, Gemini, OpenRouter, Meta y MCP de Simple Icons, CC0, solo para identificar el servicio; el de webhook es propio) sobre una ficha neutra (`provider-mark`). Una integración nueva agrega su `IntegrationMarkKind` y su trazo.
+
 ## Agentes de IA (MCP)
 
 `contracts/McpContracts.ts` · `contracts/McpOAuthContracts.ts` · `domains/mcp` · `apps/api/mcp` · `apps/api/routes/routeMcp.ts` · `apps/api/routes/routeMcpCredentialsRequest.ts` · `apps/api/routes/routeOAuthPublic.ts` · `apps/api/routes/routeOAuthConsentRequest.ts` · `025_mcp_credentials.sql` · `026_mcp_oauth.sql`

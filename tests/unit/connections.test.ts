@@ -38,6 +38,8 @@ function fakeLinker(start: StartOutcome, checks: SessionState[] = []) {
     restart: vi.fn(async () => ({ kind: "qr", qrImage: "data:image/png;base64,NUEVO" }) as SessionState),
     refresh: vi.fn(async () => undefined),
     check: vi.fn(async () => queue.shift() ?? ({ kind: "disconnected" } as SessionState)),
+    disconnect: vi.fn(async () => undefined),
+    reset: vi.fn(async () => undefined),
     unlink: vi.fn(async () => undefined)
   } satisfies WhatsAppLinker;
 }
@@ -134,7 +136,7 @@ describe("vincular por QR", () => {
   });
 
   it("al consultar: QR renovado → conectada con número y perfil", async () => {
-    const s = setup(fakeLinker(qrOutcome, [{ kind: "qr", qrImage: "data:image/png;base64,BB" }, { kind: "connected", phoneNumber: "573013815302", profileName: "Auream" }]));
+    const s = setup(fakeLinker(qrOutcome, [{ kind: "qr", qrImage: "data:image/png;base64,BB" }, { kind: "connected", phoneNumber: "573013815302", profileName: "Auream", profilePictureUrl: null }]));
     const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
     await s.link.execute(T, created.id);
     expect(await s.check.execute(T, created.id)).toMatchObject({ state: "qr", qrImage: "data:image/png;base64,BB" });
@@ -144,7 +146,7 @@ describe("vincular por QR", () => {
   });
 
   it("si el QR vence sin escanear, vuelve a «sin vincular»; si se cae una conectada, queda «desconectada»", async () => {
-    const s = setup(fakeLinker(qrOutcome, [{ kind: "disconnected" }, { kind: "connected", phoneNumber: "573013815302", profileName: null }, { kind: "disconnected" }]));
+    const s = setup(fakeLinker(qrOutcome, [{ kind: "disconnected" }, { kind: "connected", phoneNumber: "573013815302", profileName: null, profilePictureUrl: null }, { kind: "disconnected" }]));
     const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
     await s.link.execute(T, created.id);
     expect((await s.check.execute(T, created.id)).connection.status).toBe("pending");
@@ -164,7 +166,7 @@ describe("vincular por QR", () => {
 
 describe("ver estado de un número conectado", () => {
   it("pone al día los avisos del proveedor con la sesión guardada", async () => {
-    const linker = fakeLinker(qrOutcome, [{ kind: "connected", phoneNumber: "573013815302", profileName: null }]);
+    const linker = fakeLinker(qrOutcome, [{ kind: "connected", phoneNumber: "573013815302", profileName: null, profilePictureUrl: null }]);
     const s = setup(linker);
     const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
     await s.link.execute(T, created.id);
@@ -198,7 +200,7 @@ describe("eliminar", () => {
 
 describe("avisos del proveedor", () => {
   async function linked() {
-    const s = setup(fakeLinker(qrOutcome, [{ kind: "connected", phoneNumber: "573013815302", profileName: "Auream" }]));
+    const s = setup(fakeLinker(qrOutcome, [{ kind: "connected", phoneNumber: "573013815302", profileName: "Auream", profilePictureUrl: null }]));
     const created = await s.create.execute(T, { name: "Ventas", method: "qr" });
     await s.link.execute(T, created.id);
     await s.check.execute(T, created.id);

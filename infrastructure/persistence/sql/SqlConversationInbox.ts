@@ -21,6 +21,7 @@ interface InboxRow {
   created_at: Date | string;
   connection_name: string;
   contact_name: string | null;
+  contact_avatar_url: string | null;
   last_message_text: string;
   last_message_author: MessageAuthor | null;
   last_message_at: Date | string | null;
@@ -34,6 +35,7 @@ const toSummary = (row: InboxRow): ConversationSummary => ({
   connectionName: row.connection_name,
   contactId: row.contact_id,
   contactName: row.contact_name,
+  contactAvatarUrl: row.contact_avatar_url,
   phone: row.phone,
   botEnabled: row.bot_enabled,
   unreadCount: row.unread_count,
@@ -53,7 +55,7 @@ const ACTIVITY = "coalesce(c.last_message_at, c.created_at)";
 const INBOX_SELECT = `
   select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
          c.last_message_text, c.last_message_author, c.last_message_at,
-         w.name as connection_name, w.deleted_at is not null as connection_deleted, ct.name as contact_name, a.name as active_flow_name,
+         w.name as connection_name, w.deleted_at is not null as connection_deleted, ct.name as contact_name, ct.avatar_url as contact_avatar_url, a.name as active_flow_name,
          (select json_agg(json_build_object('id', l.id, 'name', l.name, 'color', l.color) order by lower(l.name))
             from contact_label_assignments la
             join contact_labels l on l.tenant_id = la.tenant_id and l.id = la.label_id

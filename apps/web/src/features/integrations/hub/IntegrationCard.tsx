@@ -8,7 +8,7 @@ export function IntegrationCard({ entry }: { readonly entry: IntegrationEntry })
   return (
     <article className={`integration-card${active ? " integration-card--active" : ""}`}>
       <div className="integration-card__top">
-        <IntegrationMark kind={entry.mark} />
+        <IntegrationMark kind={entry.mark} size="lg" />
         <span className="integration-card__category">{categoryLabel(entry.category)}</span>
       </div>
       <h3 className="integration-card__name">{entry.name}</h3>

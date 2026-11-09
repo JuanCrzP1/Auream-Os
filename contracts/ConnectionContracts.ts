@@ -31,6 +31,8 @@ export interface ConnectionSummary {
   readonly phoneNumber: string | null;
   /** Nombre del perfil de WhatsApp del número vinculado. */
   readonly profileName: string | null;
+  /** Foto de perfil del número (enlace temporal; si falla al cargar se muestra el ícono). */
+  readonly profilePictureUrl: string | null;
   readonly lastConnectedAt: string | null;
   /** Cuántos disparadores tiene (activos y pausados). */
   readonly triggerCount: number;

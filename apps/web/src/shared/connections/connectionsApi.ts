@@ -33,3 +33,13 @@ export function linkConnection(id: string, restart = false): Promise<ConnectionL
 export function checkConnection(id: string): Promise<ConnectionLinkState> {
   return builderApiClient.get<ConnectionLinkState>(`/connections/${encodeURIComponent(id)}/status`);
 }
+
+/** Cierra la sesión de WhatsApp del número; la conexión queda (se reconecta con un QR nuevo). */
+export function disconnectConnection(id: string): Promise<ConnectionSummary> {
+  return builderApiClient.post<ConnectionSummary>(`/connections/${encodeURIComponent(id)}/disconnect`, {});
+}
+
+/** Retoma la conexión de un número vinculado sin desvincularlo. */
+export function restartConnection(id: string): Promise<ConnectionSummary> {
+  return builderApiClient.post<ConnectionSummary>(`/connections/${encodeURIComponent(id)}/restart`, {});
+}

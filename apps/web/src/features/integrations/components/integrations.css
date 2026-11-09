@@ -19,31 +19,41 @@
   font-weight: 700;
 }
 
-/* --- Distintivo del proveedor (sin logos de marca) ------------------------ */
+/* --- Distintivo de una integración ----------------------------------------
+   El logo del servicio sobre una ficha neutra (como los paneles de
+   integraciones profesionales): el color lo pone la marca, no la ficha. */
 
 .provider-mark {
-  --mark: var(--primary);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  border: 1px solid color-mix(in srgb, var(--mark) 40%, transparent);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--mark) 30%, transparent), color-mix(in srgb, var(--mark) 10%, transparent));
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px -4px rgb(15 23 42 / 0.1);
   color: var(--text);
-  font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: -0.02em;
 }
 
-.provider-mark--md { width: 42px; height: 42px; font-size: 0.86rem; }
-.provider-mark--sm { width: 30px; height: 30px; border-radius: 9px; font-size: 0.7rem; }
-.provider-mark--openai { --mark: var(--teal); }
-.provider-mark--gemini { --mark: var(--slate); }
-.provider-mark--openrouter { --mark: var(--primary); }
-.provider-mark--meta { --mark: var(--rose); }
-.provider-mark--webhook { --mark: var(--amber); }
-.provider-mark--mcp { --mark: var(--teal); font-size: 0.68rem; }
-.provider-mark--lg { width: 52px; height: 52px; border-radius: 14px; font-size: 1rem; }
+.provider-mark svg {
+  width: 52%;
+  height: 52%;
+}
+
+.provider-mark--sm { width: 30px; height: 30px; border-radius: 9px; }
+.provider-mark--md { width: 42px; height: 42px; }
+.provider-mark--lg { width: 52px; height: 52px; border-radius: 14px; }
+
+/* Monocromos (OpenAI, OpenRouter, MCP): el color del texto, legible en ambos temas. */
+.provider-mark--openrouter { color: #6467f2; }
+.provider-mark--webhook { color: #e0457b; }
+.provider-mark--webhook svg { width: 56%; height: 56%; }
+
+:root[data-theme="dark"] .provider-mark {
+  background: color-mix(in srgb, var(--surface) 82%, white 6%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+:root[data-theme="dark"] .provider-mark--openrouter { color: #8b8ef8; }
 
 /* --- Tarjetas ------------------------------------------------------------- */
 

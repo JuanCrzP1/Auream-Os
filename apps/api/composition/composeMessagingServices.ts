@@ -1,3 +1,5 @@
+import { ContactAvatarService } from "../../../domains/contacts/application/ContactAvatarService";
+import { SqlContactAvatarStore } from "../../../infrastructure/persistence/sql/SqlContactAvatarStore";
 import type { ApiConfig } from "../config/loadApiConfig";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
@@ -53,6 +55,8 @@ export interface MessagingServices {
   readonly receipts: Pick<ConversationRecorder, "applyReceipts">;
   /** Iniciar un flujo para un teléfono aunque nunca haya escrito (webhooks de entrada). */
   readonly flows: StartFlowForContactService;
+  /** Fotos de perfil de los contactos (se renuevan cuando escriben). */
+  readonly avatars: Pick<ContactAvatarService, "refreshIfStale">;
 }
 
 export interface MessagingDependencies {
@@ -123,6 +127,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     },
     timers: new FlowTimerService(lock, recorder, turn),
     flows: new StartFlowForContactService(recorder, launcher),
+    avatars: new ContactAvatarService(new SqlContactAvatarStore(deps.sql)),
     receipts: recorder,
     conversations: new ConversationInbox(conversations, recorder, delivery, launcher, {
       // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).

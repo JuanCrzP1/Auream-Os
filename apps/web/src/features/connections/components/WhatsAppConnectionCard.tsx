@@ -1,61 +1,46 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ConnectionSummary } from "@contracts/ConnectionContracts";
 import { formatPhone } from "@shared/phone/formatPhone";
 import { formatDate } from "@shared/format/formatDate";
-import { BoltGlyph, ChatPhoneGlyph, DotsGlyph, LinkGlyph, OfficialGlyph, QrGlyph } from "./ConnectionGlyphs";
-import { METHOD_LABEL, primaryAction, STATUS_HINT, STATUS_LABEL } from "./connectionLabels";
+import { BoltGlyph, ChatPhoneGlyph, LinkGlyph, OfficialGlyph, QrGlyph } from "./ConnectionGlyphs";
+import { ConnectionActionsMenu } from "./ConnectionActionsMenu";
+import type { ConnectionAction } from "./connectionActions";
+import { METHOD_LABEL, primaryAction, STATUS_LABEL } from "./connectionLabels";
+import "./connection-card.css";
 
 // ---------------------------------------------------------------------------
-// Tarjeta de un número: avatar con anillo de estado, número con su bandera,
-// método, desde cuándo, sus disparadores y la acción que toca (vincular,
-// ver código, reconectar).
+// Tarjeta de un número, compacta: foto de perfil (o el ícono) con anillo de
+// estado, nombre, número con su bandera, estado y método, sus disparadores y
+// la acción que toca. El resto de acciones (reconectar, reiniciar,
+// desconectar, renombrar, eliminar) en su menú «⋮», como en Leona.
 // ---------------------------------------------------------------------------
 
-export function WhatsAppConnectionCard({
-  connection,
-  onLink,
-  onTriggers,
-  onRename,
-  onDelete
-}: {
-  readonly connection: ConnectionSummary;
-  readonly onLink: () => void;
-  /** Abrir sus disparadores (qué flujo inicia cada mensaje). */
-  readonly onTriggers: () => void;
-  readonly onRename: () => void;
-  readonly onDelete: () => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+function ConnectionAvatar({ connection }: { readonly connection: ConnectionSummary }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [connection.profilePictureUrl]);
+  const photo = connection.profilePictureUrl && !failed ? connection.profilePictureUrl : null;
+  return (
+    <span className={`wa-avatar wa-avatar--${connection.method}${photo ? " has-photo" : ""}`} aria-hidden="true">
+      {photo ? <img src={photo} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} /> : <ChatPhoneGlyph />}
+      <span className="wa-avatar__ring" />
+    </span>
+  );
+}
+
+export function WhatsAppConnectionCard({ connection, onAction }: { readonly connection: ConnectionSummary; readonly onAction: (action: ConnectionAction) => void }) {
   const action = primaryAction(connection.status);
   const phone = connection.phoneNumber ? formatPhone(connection.phoneNumber) : null;
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const close = (event: MouseEvent | KeyboardEvent) => {
-      if (event instanceof KeyboardEvent ? event.key === "Escape" : !menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", close);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("keydown", close);
-    };
-  }, [menuOpen]);
-
   const since =
     connection.status === "connected" && connection.lastConnectedAt
       ? `Conectada desde el ${formatDate(connection.lastConnectedAt)}`
-      : `Creada el ${formatDate(connection.createdAt)}`;
+      : connection.status === "disconnected"
+        ? `Desconectada · ${formatDate(connection.updatedAt)}`
+        : `Creada el ${formatDate(connection.createdAt)}`;
 
   return (
     <article className={`wa-card wa-card--${connection.status}`} aria-label={`${connection.name}, ${STATUS_LABEL[connection.status]}`}>
       <div className="wa-card__top">
-        <span className={`wa-avatar wa-avatar--${connection.method}`} aria-hidden="true">
-          <ChatPhoneGlyph />
-          <span className="wa-avatar__ring" />
-        </span>
-
+        <ConnectionAvatar connection={connection} />
         <div className="wa-card__identity">
           <h3 className="wa-card__name">{connection.name}</h3>
           {phone ? (
@@ -68,34 +53,7 @@ export function WhatsAppConnectionCard({
           )}
           {connection.profileName ? <p className="wa-card__profile">{connection.profileName}</p> : null}
         </div>
-
-        <div className="wa-card__menu" ref={menuRef}>
-          <button
-            type="button"
-            className="wa-icon-btn"
-            aria-label={`Más acciones de ${connection.name}`}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <DotsGlyph />
-          </button>
-          {menuOpen ? (
-            <div className="wa-menu" role="menu">
-              <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onRename(); }}>
-                Renombrar
-              </button>
-              {connection.status === "connected" ? (
-                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onLink(); }}>
-                  Ver estado
-                </button>
-              ) : null}
-              <button type="button" role="menuitem" className="wa-menu__danger" onClick={() => { setMenuOpen(false); onDelete(); }}>
-                Eliminar
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <ConnectionActionsMenu name={connection.name} status={connection.status} onAction={onAction} />
       </div>
 
       <div className="wa-card__status">
@@ -109,19 +67,15 @@ export function WhatsAppConnectionCard({
         </span>
       </div>
 
-      <p className="wa-card__hint">{STATUS_HINT[connection.status]}</p>
-
       <button
         type="button"
         className={`wa-triggers${connection.triggerCount === 0 ? " wa-triggers--empty" : ""}`}
-        onClick={onTriggers}
+        onClick={() => onAction("triggers")}
         aria-label={`Disparadores de ${connection.name}: ${connection.triggerCount === 0 ? "ninguno" : connection.triggerCount}`}
       >
         <BoltGlyph />
         <span className="wa-triggers__text">
-          {connection.triggerCount === 0
-            ? "Sin disparadores: no inicia ningún flujo"
-            : `${connection.triggerCount} ${connection.triggerCount === 1 ? "disparador" : "disparadores"}`}
+          {connection.triggerCount === 0 ? "Sin disparadores" : `${connection.triggerCount} ${connection.triggerCount === 1 ? "disparador" : "disparadores"}`}
         </span>
         <span className="wa-triggers__cta" aria-hidden="true">{connection.triggerCount === 0 ? "Configurar" : "Ver"} ›</span>
       </button>
@@ -129,7 +83,7 @@ export function WhatsAppConnectionCard({
       <footer className="wa-card__footer">
         <span className="wa-card__since">{since}</span>
         {action ? (
-          <button type="button" className={`ui-btn ${connection.status === "disconnected" ? "ui-btn--primary" : "ui-btn--ghost"} wa-card__action`} onClick={onLink}>
+          <button type="button" className={`ui-btn ${connection.status === "disconnected" ? "ui-btn--primary" : "ui-btn--ghost"} wa-card__action`} onClick={() => onAction("link")}>
             <LinkGlyph />
             {action}
           </button>

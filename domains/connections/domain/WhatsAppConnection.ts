@@ -20,6 +20,8 @@ export interface WhatsAppConnection {
   readonly status: ConnectionStatus;
   readonly phoneNumber: string | null;
   readonly profileName: string | null;
+  /** Foto de perfil del número (enlace temporal del proveedor). */
+  readonly profilePictureUrl: string | null;
   readonly providerRef: string | null;
   readonly providerSecret: string | null;
   readonly lastConnectedAt: string | null;

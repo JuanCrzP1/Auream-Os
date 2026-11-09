@@ -438,9 +438,9 @@
 .ios-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   width: 100%;
-  padding: 0 14px 0 16px;
+  padding: 0 12px 0 14px;
   border: 0;
   background: none;
   color: inherit;
@@ -460,9 +460,9 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
-  padding: 11px 0;
+  padding: 9px 0;
   border-bottom: 1px solid var(--wa-separator);
 }
 
@@ -478,8 +478,9 @@
 .ios-row__name {
   flex: 1;
   overflow: hidden;
-  font-size: 1.02rem;
+  font-size: 0.9rem;
   font-weight: 600;
+  letter-spacing: -0.005em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -487,7 +488,7 @@
 .ios-row__time {
   flex: 0 0 auto;
   color: var(--wa-secondary);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .ios-row__time.is-unread {
@@ -499,7 +500,7 @@
   flex: 1;
   overflow: hidden;
   color: var(--wa-secondary);
-  font-size: 0.92rem;
+  font-size: 0.8rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -511,8 +512,8 @@
 }
 
 .ios-row__paused svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .ios-row__extra {
@@ -588,12 +589,12 @@
   gap: 5px;
   flex: 0 0 auto;
   max-width: 140px;
-  padding: 2px 8px;
+  padding: 1px 7px;
   overflow: hidden;
   border-radius: 999px;
   background: color-mix(in srgb, var(--label-color, #64748b) var(--wa-label-mix), transparent);
   color: var(--wa-text);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -606,8 +607,8 @@
 
 .ios-label__dot {
   flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--label-color, #64748b);
 }
@@ -623,7 +624,19 @@
 }
 
 .ios-row .ios-avatar {
-  margin: 10px 0;
+  margin: 9px 0;
+}
+
+/* Con foto de perfil: la imagen llena el círculo (sin el color de las iniciales). */
+.ios-avatar.has-photo {
+  overflow: hidden;
+  background: var(--wa-separator);
+}
+
+.ios-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 :root[data-theme="dark"] .ios-avatar {

@@ -1,37 +1,63 @@
 import "@shared/ui/page/page.css";
 import "@shared/ui/controls/controls.css";
 import "../components/connections.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ConnectionMethod, ConnectionSummary } from "@contracts/ConnectionContracts";
 import { useConnections } from "@shared/connections/useConnections";
 import { StateCard, RetryButton } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
+import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { WhatsAppConnectionCard } from "../components/WhatsAppConnectionCard";
 import { ConnectionsOverview } from "../components/ConnectionsOverview";
 import { METHOD_OPTIONS, NewConnectionDialog } from "../components/NewConnectionDialog";
 import { LinkConnectionDialog } from "../components/LinkConnectionDialog";
 import { RenameConnectionDialog } from "../components/RenameConnectionDialog";
 import { ConnectionTriggersDialog } from "../components/triggers/ConnectionTriggersDialog";
+import { DeleteConnectionDialog, DisconnectConnectionDialog } from "../components/ConnectionConfirmDialogs";
+import type { ConnectionAction } from "../components/connectionActions";
 import { ChatPhoneGlyph, PlusGlyph } from "../components/ConnectionGlyphs";
 
 /**
  * ConnectionsPage — los números de WhatsApp de la cuenta: su estado de un
- * vistazo, crear uno (QR o API oficial), vincularlo, elegir qué flujos inicia
- * (disparadores), renombrarlo o quitarlo.
+ * vistazo, crear uno (QR o API oficial), vincularlo o reconectarlo, reiniciar
+ * su conexión, desconectarlo, elegir qué flujos inicia (disparadores),
+ * renombrarlo o eliminarlo.
  * La lista viene del servidor; esta página solo ordena las piezas.
  */
 
 type Dialog =
   | { readonly kind: "new"; readonly method?: ConnectionMethod }
-  | { readonly kind: "link" | "triggers" | "rename" | "delete"; readonly connection: ConnectionSummary }
+  | { readonly kind: "link" | "triggers" | "rename" | "delete" | "disconnect"; readonly connection: ConnectionSummary }
   | null;
 
 export function ConnectionsPage() {
   const connections = useConnections();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [retrying, setRetrying] = useState(false);
+  const [notice, setNotice] = useState<{ readonly tone: "ok" | "error"; readonly text: string } | null>(null);
   const list = connections.connections;
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  /** Reiniciar no pide confirmación (no desvincula): se avisa cómo fue. */
+  const restart = async (connection: ConnectionSummary) => {
+    try {
+      await connections.restart(connection.id);
+      setNotice({ tone: "ok", text: `Reiniciando la conexión de «${connection.name}». En unos segundos vuelve a recibir y enviar.` });
+    } catch (error) {
+      setNotice({ tone: "error", text: apiErrorMessage(error, "No se pudo reiniciar la conexión. Inténtalo de nuevo.") });
+    }
+  };
+
+  const act = (connection: ConnectionSummary, action: ConnectionAction) => {
+    if (action === "restart") void restart(connection);
+    else if (action === "link") setDialog({ kind: "link", connection });
+    else setDialog({ kind: action, connection });
+  };
 
   const retry = async () => {
     setRetrying(true);
@@ -55,6 +81,11 @@ export function ConnectionsPage() {
       </header>
 
       <div className="ui-panel">
+        {notice ? (
+          <p className={`wa-notice wa-notice--${notice.tone}`} role={notice.tone === "error" ? "alert" : "status"}>
+            {notice.text}
+          </p>
+        ) : null}
         {connections.status === "loading" ? (
           <div className="wa-grid" aria-busy="true" aria-label="Cargando conexiones">
             {[0, 1, 2].map((index) => (
@@ -108,14 +139,7 @@ export function ConnectionsPage() {
             <ConnectionsOverview connections={list} />
             <div className="wa-grid">
               {list.map((connection) => (
-                <WhatsAppConnectionCard
-                  key={connection.id}
-                  connection={connection}
-                  onLink={() => setDialog({ kind: "link", connection })}
-                  onTriggers={() => setDialog({ kind: "triggers", connection })}
-                  onRename={() => setDialog({ kind: "rename", connection })}
-                  onDelete={() => setDialog({ kind: "delete", connection })}
-                />
+                <WhatsAppConnectionCard key={connection.id} connection={connection} onAction={(action) => act(connection, action)} />
               ))}
             </div>
           </>
@@ -152,14 +176,9 @@ export function ConnectionsPage() {
       {dialog?.kind === "rename" ? (
         <RenameConnectionDialog name={dialog.connection.name} onSave={(name) => connections.rename(dialog.connection.id, name)} onClose={() => setDialog(null)} />
       ) : null}
-      {dialog?.kind === "delete" ? (
-        <ConfirmDialog
-          title={`¿Eliminar «${dialog.connection.name}»?`}
-          message="Se cierra la sesión de WhatsApp de este número en Auream, se borran sus disparadores y los flujos dejarán de responder por él. El historial de sus chats se conserva en Conversaciones para consultarlo."
-          confirmLabel="Eliminar conexión"
-          onConfirm={() => connections.remove(dialog.connection.id)}
-          onClose={() => setDialog(null)}
-        />
+      {dialog?.kind === "delete" ? <DeleteConnectionDialog connection={dialog.connection} onConfirm={() => connections.remove(dialog.connection.id)} onClose={() => setDialog(null)} /> : null}
+      {dialog?.kind === "disconnect" ? (
+        <DisconnectConnectionDialog connection={dialog.connection} onConfirm={() => connections.disconnect(dialog.connection.id)} onClose={() => setDialog(null)} />
       ) : null}
     </div>
   );
