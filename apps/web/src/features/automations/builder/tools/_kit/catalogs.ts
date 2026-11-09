@@ -42,7 +42,9 @@ const SAMPLE_VALUES: Readonly<Record<string, string>> = {
   "{full_name}": "Laura Gómez",
   "{phone}": "+57 300 123 4567",
   "{email}": "laura@correo.com",
-  "{last_message}": "Quiero más información"
+  "{last_message}": "Quiero más información",
+  "{fecha}": "09/11/2026",
+  "{hora}": "14:35"
 };
 
 /** Sustituye las variables conocidas por valores de ejemplo; deja el resto tal cual. */

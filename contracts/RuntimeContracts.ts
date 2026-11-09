@@ -58,13 +58,9 @@ export interface InboundEnvelope {
 }
 
 /**
- * Qué clase de salida es.
- *
- * Ausente equivale a `"text"`: todos los emisores anteriores a esta distinción
- * mandan texto y ninguno tuvo que cambiar. Una reacción NO es un mensaje con
- * otro contenido —no se entrega, no ocupa sitio en la conversación y se adjunta
- * a un mensaje ajeno—, así que se distingue en el contrato en lugar de dejar
- * que cada canal lo adivine por el tamaño del texto.
+ * Qué clase de salida es. Ausente = `"text"`. Una reacción no es un mensaje:
+ * no ocupa sitio en la conversación y se adjunta a un mensaje ajeno, así que
+ * se distingue aquí en vez de que cada canal lo adivine.
  */
 export type OutboundKind = "text" | "reaction" | "media" | "pause" | "presence";
 
@@ -85,18 +81,16 @@ export interface OutboundMessage {
   /** Texto del mensaje, o el emoji cuando `kind` es `"reaction"`. */
   readonly content: string;
   /**
-   * Mensaje del cliente al que esta salida se refiere.
-   *
-   * Con `kind: "text"` significa citarlo al responder; con `kind: "reaction"`
-   * es el mensaje sobre el que se pone el emoji. Sale de
-   * `InboundEnvelope.messageId`, que ya viajaba en el envelope: no hay ninguna
-   * API de canal nueva detrás de este campo.
-   *
-   * Opcional: entregarlo como cita o como reacción es responsabilidad del
-   * adaptador de canal (Fase D). Hoy el dato se produce correctamente y ningún
-   * emisor anterior se ve afectado.
+   * Mensaje del cliente al que se refiere (`InboundEnvelope.messageId`): con
+   * `kind: "text"`, citarlo; con `kind: "reaction"`, ponerle el emoji. Cómo se
+   * entrega lo decide el adaptador de canal.
    */
   readonly replyToMessageId?: string;
+  /**
+   * Para OTRO número, no para el cliente del chat (Notificación al equipo):
+   * sale por el mismo número conectado y no queda en el chat del cliente.
+   */
+  readonly recipient?: OutboundRecipient;
   /** Ausente = `"text"`. Ver `OutboundKind`. */
   readonly kind?: OutboundKind;
   /** Con `kind: "media"`: el archivo. `content` es su leyenda (puede ir vacía). */
@@ -111,6 +105,13 @@ export interface OutboundMessage {
    * el adaptador de canal (FASE D) usa esto para pintarlo nativo.
    */
   readonly interactive?: OutboundInteractive;
+}
+
+export interface OutboundRecipient {
+  /** Número completo con prefijo de país, solo dígitos. */
+  readonly phone: string;
+  /** A quién se avisa (para el registro y el simulador). */
+  readonly name: string;
 }
 
 export interface OutboundInteractive {

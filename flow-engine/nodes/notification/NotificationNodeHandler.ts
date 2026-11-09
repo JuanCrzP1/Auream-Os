@@ -1,34 +1,51 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
 import type { NodeExecutionResult, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
+import { notificationRecipientPhone, readNotificationConfig } from "../../../contracts/NotificationConfig";
 import type { NodeHandler } from "../NodeHandler";
+import { ConversationTemplates } from "../../templates/ConversationTemplates";
 
 // ---------------------------------------------------------------------------
-// NotificationNodeHandler
+// NotificationNodeHandler — avisa por WhatsApp a un número del equipo, como en
+// Leona: el aviso sale por el MISMO número conectado que atiende el chat, en
+// orden con lo demás del turno, y no queda en el chat del cliente
+// (`OutboundMessage.recipient`). El texto admite variables (contacto, campos,
+// datos del flujo, `{fecha}` y `{hora}`).
 //
-// Estado: NO IMPLEMENTADO — la herramienta existe en el catálogo y en el
-// builder, pero su comportamiento de ejecución todavía no está especificado.
-//
-// Enviará un aviso a un destinatario interno. El canal de notificación no está definido.
-//
-// Falla de forma explícita en lugar de devolver un resultado inventado: un flow
-// que llegue a este nodo se detiene y lo dice. No se finge funcionalidad.
+// Un aviso mal configurado (sin número válido o sin texto) no detiene la
+// venta: el flujo sigue y queda anotado (`notification_skipped`).
 // ---------------------------------------------------------------------------
 
 export class NotificationNodeHandler implements NodeHandler {
+  public constructor(private readonly templates: ConversationTemplates = new ConversationTemplates()) {}
+
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "notification";
   }
 
-  public async execute(node: FlowNode, _input: RuntimeInput, _session: Session): Promise<NodeExecutionResult> {
+  public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
+    const config = readNotificationConfig(node.config);
+    const phone = notificationRecipientPhone(config);
+    const [text] = await this.templates.render([config.message], input, session);
+    const content = (text ?? "").trim();
+    const name = config.name.trim() || "Equipo";
+
+    if (!phone || !content) {
+      return {
+        executionStatus: "success",
+        outputMessages: [],
+        contextPatch: {},
+        nodeResult: { notified: false, reason: !phone ? "invalid_phone" : "empty_message" },
+        domainEvents: [`notification_skipped:${node.id}`]
+      };
+    }
+
     return {
-      executionStatus: "failed",
-      outputMessages: [],
+      executionStatus: "success",
+      outputMessages: [{ channel: input.envelope.channel, conversationKey: input.envelope.conversationKey, content, recipient: { phone, name } }],
       contextPatch: {},
-      nodeResult: {
-        reason: "notification_executor_not_implemented"
-      },
-      domainEvents: [`notification_node_not_implemented:${node.id}`]
+      nodeResult: { notified: true, recipient: name },
+      domainEvents: [`notification_sent:${node.id}`]
     };
   }
 }

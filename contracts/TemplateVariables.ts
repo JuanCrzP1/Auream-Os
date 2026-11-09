@@ -23,7 +23,10 @@ export const BUILT_IN_VARIABLES: ReadonlyArray<BuiltInVariable> = [
   { name: "full_name", label: "Nombre completo", sample: "Laura Gómez" },
   { name: "phone", label: "Teléfono", sample: "573001234567" },
   { name: "email", label: "Correo", sample: "laura@correo.com" },
-  { name: "last_message", label: "Último mensaje", sample: "Quiero más información" }
+  { name: "last_message", label: "Último mensaje", sample: "Quiero más información" },
+  // Del reloj, en la zona del negocio. Un campo o dato del flujo con el mismo nombre manda.
+  { name: "fecha", label: "Fecha", sample: "09/11/2026" },
+  { name: "hora", label: "Hora", sample: "14:35" }
 ];
 
 /** Mismo formato que la clave de un campo personalizado del contacto. */

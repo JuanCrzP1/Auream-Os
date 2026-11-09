@@ -16,7 +16,7 @@ export function NotificationEditor({ draft, onChange }: ToolEditorProps) {
       outputs={null}
       Icon={NotificationIcon}
       title="Notificación al equipo"
-      description="Envía un aviso por WhatsApp a alguien de tu equipo. El cliente no lo ve."
+      description="Envía un aviso por WhatsApp a alguien de tu equipo, desde el número conectado que atiende el chat. El cliente no lo ve."
     >
       <CardSection step={1} title="Destinatario" description="Quién recibe el aviso.">
         <TextField label="Nombre" value={config.name} placeholder="Ej.: Ventas, Juan, Soporte" onChange={(name) => update({ name })} />

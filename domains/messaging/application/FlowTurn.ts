@@ -35,9 +35,11 @@ export class FlowTurn {
 
   public async run(target: FlowTurnTarget & { readonly conversationId: string }, envelope: InboundEnvelope): Promise<FlowTurnOutcome> {
     const result = await this.runner.handle(envelope);
-    const report = await this.delivery.deliver(target.tenantId, target.connectionId, target.phone, result.outputMessages, (sent) =>
-      this.conversations.recordOutbound(target.tenantId, target.conversationId, [sent], { author: "bot", flowKey: target.flowKey })
-    );
+    const report = await this.delivery.deliver(target.tenantId, target.connectionId, target.phone, result.outputMessages, async (sent) => {
+      // Un aviso al equipo (Notificación) no es parte del chat del cliente.
+      if (sent.message.recipient) return;
+      await this.conversations.recordOutbound(target.tenantId, target.conversationId, [sent], { author: "bot", flowKey: target.flowKey });
+    });
     const wakeUp = result.wakeUp ? alignWakeUpToDelivery(result.wakeUp, this.now()) : undefined;
     await this.timers.afterTurn(target, wakeUp === result.wakeUp ? result : { ...result, wakeUp });
     return { result, report };

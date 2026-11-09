@@ -4,9 +4,8 @@ import { summarizeNotification } from "./summarizeNotification";
 import { validateNotification } from "./validateNotification";
 
 /**
- * Notificación — aviso por WhatsApp a un número del equipo, no al cliente.
- *
- * `executable: false`: el editor está completo; falta el adaptador de canal.
+ * Notificación — aviso por WhatsApp a un número del equipo, no al cliente,
+ * enviado por el mismo número conectado que atiende el chat (como en Leona).
  */
 export const notificationTool: ToolDefinition = {
   type: "notification",
@@ -16,7 +15,7 @@ export const notificationTool: ToolDefinition = {
   editorTitle: "Editar notificación",
   availableInPalette: true,
   terminal: false,
-  executable: false,
+  executable: true,
   defaultContent: {},
   defaultConfig: { ...NOTIFICATION_DEFAULT_CONFIG },
   summarize: summarizeNotification,

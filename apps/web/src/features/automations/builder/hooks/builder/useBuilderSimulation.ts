@@ -43,7 +43,8 @@ export function useBuilderSimulation({ flowKey }: UseBuilderSimulationParams) {
         ...result.outputMessages.map((output, index) => ({
           id: `bot-${Date.now()}-${index}`,
           role: "bot" as const,
-          content: output.content
+          // Un aviso al equipo (Notificación) no lo ve el cliente: se marca como tal.
+          content: output.recipient ? `🔔 Aviso a ${output.recipient.name} (+${output.recipient.phone}): ${output.content}` : output.content
         }))
       ]);
       setSimulationStatus("idle");

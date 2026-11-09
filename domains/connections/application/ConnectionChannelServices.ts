@@ -125,7 +125,9 @@ export class ConnectionChannelServices {
       }
       let result: ChannelDeliveryResult;
       try {
-        const providerMessageId = (await messenger.send(session, phone, message))?.providerMessageId ?? null;
+        // Un aviso al equipo (Notificación) va a su número, por esta misma conexión.
+        const to = message.recipient?.phone ?? phone;
+        const providerMessageId = (await messenger.send(session, to, message))?.providerMessageId ?? null;
         sent += 1;
         result = { message, ok: true, ...(providerMessageId ? { providerMessageId } : {}) };
       } catch (error) {

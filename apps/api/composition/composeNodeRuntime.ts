@@ -110,7 +110,7 @@ export function composeNodeRuntime(
     new DelayNodeHandler(),
     new IntegrationNodeHandler(dependencies.http, dependencies.contacts),
     new MenuNodeHandler(templates),
-    new NotificationNodeHandler(),
+    new NotificationNodeHandler(templates),
     new EndNodeHandler()
   ]);
 }
