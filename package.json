@@ -31,6 +31,7 @@
   "dependencies": {
     "@tesseract.js-data/spa": "1.0.0",
     "@vercel/blob": "^2.8.2",
+    "@vercel/functions": "2.2.13",
     "pg": "^8.23.0",
     "sharp": "^0.34.4",
     "tesseract.js": "^7.0.0",

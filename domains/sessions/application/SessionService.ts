@@ -16,18 +16,32 @@ import type { SessionRepository } from "./SessionRepository";
 //   - auditoría de transiciones (el estado previo se puede capturar antes de la transición)
 // ---------------------------------------------------------------------------
 
+/** Estados en que la sesión sigue en curso (el próximo mensaje la continúa). */
+export const LIVE_SESSION_STATUSES: ReadonlyArray<SessionStatus> = ["active", "waiting_input", "delayed", "paused"];
+
+/** Identificador de la sesión de una conversación (una por conversación). */
+export function sessionIdFor(tenantId: string, conversationKey: string): string {
+  return `${tenantId}:${conversationKey}`;
+}
+
 export class SessionService {
   public constructor(private readonly repository: SessionRepository) {}
 
+  /**
+   * La sesión en curso de la conversación para ese flujo; si no hay, o la que
+   * hay ya terminó (completada o fallida) o es de otro flujo, empieza una nueva
+   * en la entrada del flujo. Así un cliente que termina un flujo y vuelve a
+   * escribir no queda atascado en el final.
+   */
   public async getOrCreateActive(
     tenantId: string,
     envelope: InboundEnvelope,
     snapshot: FlowSnapshot
   ): Promise<Session> {
-    const key = `${tenantId}:${envelope.conversationKey}`;
+    const key = sessionIdFor(tenantId, envelope.conversationKey);
     const existing = await this.repository.find(key);
 
-    if (existing) {
+    if (existing && existing.flowId === snapshot.flow.id && LIVE_SESSION_STATUSES.includes(existing.status)) {
       return existing;
     }
 
@@ -43,7 +57,7 @@ export class SessionService {
       userKey: envelope.userKey,
       currentNodeId: snapshot.version.entryNodeId,
       status: "active",
-      revision: 1,
+      revision: (existing?.revision ?? 0) + 1,
       context: {},
       createdAt: now,
       updatedAt: now

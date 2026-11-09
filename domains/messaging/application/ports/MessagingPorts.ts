@@ -1,0 +1,55 @@
+import type { InboundChannelMessage, InboundOutcome } from "../../../../contracts/InboundMessageContracts";
+import type { InboundTriggerFacts } from "../../../../contracts/ConnectionTriggerContracts";
+import type { OutboundMessage } from "../../../../contracts/RuntimeContracts";
+
+// ---------------------------------------------------------------------------
+// Lo que la mensajería entrante necesita del resto de la plataforma. Cada
+// puerto es una responsabilidad; la composición decide quién la cumple.
+// ---------------------------------------------------------------------------
+
+/** Registro de mensajes recibidos: evita duplicados y deja rastro de lo que pasó. */
+export interface InboundMessageLog {
+  /** Lo registra si es nuevo. `false` si ese mensaje ya se había recibido. */
+  claim(tenantId: string, message: InboundChannelMessage): Promise<boolean>;
+  /** Anota el resultado. */
+  finish(
+    tenantId: string,
+    connectionId: string,
+    providerMessageId: string,
+    outcome: InboundOutcome,
+    detail: { readonly flowKey?: string; readonly sent?: number; readonly error?: string; readonly events?: ReadonlyArray<string> }
+  ): Promise<void>;
+}
+
+/** Procesa de a un mensaje por conversación: dos seguidos no se pisan. */
+export interface ConversationLock {
+  withLock<T>(key: string, work: () => Promise<T>): Promise<T>;
+}
+
+/** El contacto que escribe: lo crea (con su nombre de WhatsApp) si es nuevo. */
+export interface InboundContacts {
+  identify(tenantId: string, phone: string, displayName: string | null): Promise<{ readonly contactId: string; readonly isNew: boolean }>;
+}
+
+/** ¿El cliente está dentro de un flujo en esta conversación? */
+export interface LiveSessions {
+  liveFlowOf(tenantId: string, conversationKey: string): Promise<string | null>;
+}
+
+/** Qué flujo inicia un mensaje en ese número (sus disparadores). */
+export interface TriggerRouter {
+  route(tenantId: string, connectionId: string, facts: InboundTriggerFacts): Promise<{ readonly flowKey: string; readonly triggerId: string } | null>;
+}
+
+/** Corre el flujo con el mensaje: el contrato público del motor. */
+export type { FlowExecutor as FlowRunner } from "../../../../flow-engine/ports/FlowExecutor";
+
+export interface DeliveryReport {
+  readonly sent: number;
+  readonly failures: ReadonlyArray<string>;
+}
+
+/** Envía las respuestas del flujo por el número que recibió el mensaje. */
+export interface OutboundDelivery {
+  deliver(tenantId: string, connectionId: string, phone: string, messages: ReadonlyArray<OutboundMessage>): Promise<DeliveryReport>;
+}

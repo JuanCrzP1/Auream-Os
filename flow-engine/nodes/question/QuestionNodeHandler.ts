@@ -49,6 +49,15 @@ export class QuestionNodeHandler implements NodeHandler {
   public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const config = readWaitResponseConfig(node.config);
     const inboundText = input.envelope.payload.text;
+    // Una foto, audio o archivo también es respuesta: se guarda su enlace
+    // (lo lee, p. ej., el Comprobante automático). Si no, el texto.
+    const inboundMedia = input.envelope.payload["mediaUrl"];
+    const answer =
+      typeof inboundMedia === "string" && inboundMedia.length > 0
+        ? inboundMedia
+        : typeof inboundText === "string" && inboundText.length > 0
+          ? inboundText
+          : null;
 
     // Lo que la espera declara sobre sí misma. Viaja en las dos pasadas para
     // que quien inspeccione la ejecución vea la misma configuración en ambas.
@@ -59,7 +68,7 @@ export class QuestionNodeHandler implements NodeHandler {
       ...(config.groupMessages ? { groupMessages: true } : {})
     };
 
-    if (input.isWaitingInput && typeof inboundText === "string" && inboundText.length > 0) {
+    if (input.isWaitingInput && answer !== null) {
       // Guardar la respuesta en contexto es opcional y lo decide `config.targetKey`.
       // Esta capacidad venía del retirado nodo `capture`: una pregunta que no
       // recuerda lo que le contestaron no sirve para nada aguas abajo.
@@ -85,9 +94,9 @@ export class QuestionNodeHandler implements NodeHandler {
         // vencimiento de la espera cuando exista la cola de tareas (C6).
         output: WAIT_RESPONSE_OUTPUT.answer,
         outputMessages: reaccion,
-        contextPatch: contextKey ? { [contextKey]: inboundText } : {},
+        contextPatch: contextKey ? { [contextKey]: answer } : {},
         nodeResult: {
-          capturedInput: inboundText,
+          capturedInput: answer,
           ...(contextKey ? { storedKey: contextKey } : {}),
           ...declaracionDeEspera
         },

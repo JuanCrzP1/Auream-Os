@@ -17,6 +17,8 @@ import { UazapiClient, UazapiError, type UazapiInstanceInfo } from "./UazapiClie
 // ---------------------------------------------------------------------------
 
 export const UAZAPI_INSTANCE_PREFIX = "auream-";
+/** Avisos que Auream pide a cada instancia: su conexión y los mensajes que llegan. */
+export const WEBHOOK_EVENTS = ["connection", "messages"] as const;
 /** Nombre del dispositivo que ve el cliente en «Dispositivos vinculados». */
 const DEVICE_NAME = "Auream";
 
@@ -54,7 +56,7 @@ export class UazapiLinker implements WhatsAppLinker {
       }
       const created = await this.client.createInstance(instanceNameFor(target.id), DEVICE_NAME);
       const fresh: ProviderSession = { ref: created.id, secret: created.token };
-      if (this.webhookUrl) await this.client.setWebhook(created.token, this.webhookUrl, ["connection"]);
+      if (this.webhookUrl) await this.client.setWebhook(created.token, this.webhookUrl, WEBHOOK_EVENTS);
       return { ...(await this.connect(created.token)), session: fresh };
     } catch (error) {
       return asLinkerError(error);

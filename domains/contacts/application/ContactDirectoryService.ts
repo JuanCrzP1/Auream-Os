@@ -36,9 +36,25 @@ export class ContactDirectoryService {
   ) {}
 
   public async resolve(tenantId: string, identity: ContactIdentity): Promise<ContactProfile> {
+    return (await this.identify(tenantId, identity, null)).profile;
+  }
+
+  /**
+   * Como `resolve`, diciendo además si el contacto es nuevo (lo usan los
+   * disparadores de «primer mensaje»). Un contacto nuevo nace con el nombre
+   * de su perfil de WhatsApp, si llega; uno existente sin nombre lo recibe.
+   */
+  public async identify(tenantId: string, identity: ContactIdentity, displayName: string | null): Promise<{ readonly profile: ContactProfile; readonly isNew: boolean }> {
     const externalKey = normalizeExternalKey(identity.channel, identity.externalKey);
+    const name = displayName?.trim().slice(0, 120) || null;
     const existing = await this.contacts.findByIdentity(tenantId, identity.channel, externalKey);
-    if (existing) return toProfile(existing);
+    if (existing) {
+      if (!existing.contact.name && name) {
+        await this.contacts.update({ ...existing.contact, name, updatedAt: new Date().toISOString() });
+        return { profile: { ...toProfile(existing), name }, isNew: false };
+      }
+      return { profile: toProfile(existing), isNew: false };
+    }
 
     const now = new Date().toISOString();
     const contact: Contact = {
@@ -46,14 +62,16 @@ export class ContactDirectoryService {
       tenantId,
       channel: identity.channel,
       externalKey,
-      name: null,
+      name,
       phone: identity.channel === "whatsapp" ? externalKey : null,
       email: null,
       customFields: {},
       createdAt: now,
       updatedAt: now
     };
-    return toProfile(await this.contacts.create(contact));
+    // Si otro mensaje lo creó a la vez, `create` devuelve el existente: no es nuevo.
+    const stored = await this.contacts.create(contact);
+    return { profile: toProfile(stored), isNew: stored.contact.id === contact.id };
   }
 
   public async addTags(tenantId: string, contactId: string, names: ReadonlyArray<string>): Promise<ContactProfile> {

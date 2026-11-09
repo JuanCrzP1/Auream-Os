@@ -87,10 +87,9 @@ describe("operaciones sobre la secuencia", () => {
     expect(items.map((item) => item.id)).toEqual(["a", "b", "c"]);
   });
 
-  it("solo el texto es entregable hoy", () => {
-    expect(isExecutableKind("text")).toBe(true);
-    for (const kind of ["image", "video", "audio", "file", "interval"] as const) {
-      expect(isExecutableKind(kind)).toBe(false);
+  it("el motor entrega todos los bloques: texto, archivos y pausas", () => {
+    for (const kind of ["text", "image", "video", "audio", "file", "interval"] as const) {
+      expect(isExecutableKind(kind)).toBe(true);
     }
   });
 

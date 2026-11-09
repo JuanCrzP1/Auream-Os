@@ -91,7 +91,7 @@ describe("UazapiLinker", () => {
     const outcome = await linker.start({ id: "c1", tenantId: "t", name: "Ventas", method: "qr" }, null);
     expect(outcome).toMatchObject({ kind: "qr", qrImage: "data:image/png;base64,iVBORw0KGgo", session: { ref: "r1a2b3", secret: "inst-token" } });
     expect(api.calls[0]!.body).toMatchObject({ name: instanceNameFor("c1") });
-    expect(api.calls[1]!.body).toEqual({ enabled: true, url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection"], excludeMessages: ["wasSentByApi"] });
+    expect(api.calls[1]!.body).toEqual({ enabled: true, url: "https://auream-os.vercel.app/api/webhooks/uazapi", events: ["connection", "messages"], excludeMessages: ["wasSentByApi"] });
   });
 
   it("sin URL pública (desarrollo) no registra avisos", async () => {

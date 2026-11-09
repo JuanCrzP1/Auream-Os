@@ -6,6 +6,9 @@
 //   POST   /instance/connect  token        pedir el QR
 //   GET    /instance/status   token        estado, QR renovado, número y perfil
 //   POST   /instance/disconnect token      cerrar la sesión (o el QR en curso)
+//   POST   /send/text · /send/media · /send/menu   token   enviar
+//   POST   /message/react      token        reaccionar con un emoji
+//   POST   /message/download   token        enlace de un archivo recibido (2 días)
 //   DELETE /instance          token        borrar la sesión
 //   POST   /webhook           token        avisos de conexión a Auream
 //
@@ -121,6 +124,52 @@ export class UazapiClient {
     await this.request("POST", "/instance/disconnect", { token });
   }
 
+  public async sendText(token: string, number: string, text: string, replyId?: string): Promise<void> {
+    await this.request("POST", "/send/text", { token }, { number, text, ...(replyId ? { replyid: replyId } : {}) });
+  }
+
+  /** `type`: image · video · audio · ptt · document (según la documentación de uazapi). */
+  public async sendMedia(token: string, number: string, media: { readonly type: string; readonly file: string; readonly text?: string; readonly docName?: string }): Promise<void> {
+    await this.request("POST", "/send/media", { token }, {
+      number,
+      type: media.type,
+      file: media.file,
+      ...(media.text ? { text: media.text } : {}),
+      ...(media.docName ? { docName: media.docName } : {})
+    });
+  }
+
+  /**
+   * Botones o lista. `choices`: botones `"texto|id"`; lista: `"[Sección]"` y
+   * `"texto|id|descripción"`.
+   */
+  public async sendMenu(
+    token: string,
+    number: string,
+    menu: { readonly type: "button" | "list"; readonly text: string; readonly choices: ReadonlyArray<string>; readonly footerText?: string; readonly listButton?: string }
+  ): Promise<void> {
+    await this.request("POST", "/send/menu", { token }, {
+      number,
+      type: menu.type,
+      text: menu.text,
+      choices: [...menu.choices],
+      ...(menu.footerText ? { footerText: menu.footerText } : {}),
+      ...(menu.listButton ? { listButton: menu.listButton } : {})
+    });
+  }
+
+  public async react(token: string, messageId: string, emoji: string): Promise<void> {
+    await this.request("POST", "/message/react", { token }, { id: messageId, text: emoji });
+  }
+
+  /** Enlace público (2 días) y tipo de un archivo recibido. */
+  public async downloadMedia(token: string, messageId: string): Promise<{ readonly url: string; readonly mimeType: string | null }> {
+    const body = await this.request("POST", "/message/download", { token }, { id: messageId, return_base64: false, generate_mp3: true });
+    const url = text(body["fileURL"]);
+    if (!url) throw new UazapiError("unavailable", "uazapi no devolvió el archivo.");
+    return { url, mimeType: text(body["mimetype"]) || null };
+  }
+
   /** Borra la instancia. Si ya no existía, no es un error. */
   public async deleteInstance(token: string): Promise<void> {
     try {
@@ -133,7 +182,7 @@ export class UazapiClient {
 
   /** Avisos de la instancia a Auream (modo simple: uno por instancia). */
   public async setWebhook(token: string, url: string, events: ReadonlyArray<string>): Promise<void> {
-    await this.request("POST", "/webhook", { token }, { enabled: true, url, events, excludeMessages: ["wasSentByApi"] });
+    await this.request("POST", "/webhook", { token }, { enabled: true, url, events: [...events], excludeMessages: ["wasSentByApi"] });
   }
 
   private async request(method: string, path: string, auth: Readonly<Record<string, string>>, payload?: Json): Promise<Json> {
@@ -166,6 +215,7 @@ export class UazapiClient {
       const limit = text(body["error"]).toLowerCase().includes("limit") && path === "/instance/create";
       throw new UazapiError("rate_limited", limit ? "Tu plan de uazapi llegó al máximo de números." : "uazapi está limitando las peticiones. Intenta en unos segundos.");
     }
+    if (response.status === 503) throw new UazapiError("unavailable", "uazapi no está disponible o el número no está conectado (503).");
     throw new UazapiError("unavailable", `uazapi respondió ${response.status}.`);
   }
 }

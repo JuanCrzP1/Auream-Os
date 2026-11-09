@@ -10,6 +10,8 @@ import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
 import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
 import type { ConnectionsServices } from "../composition/composeConnectionsServices";
+import type { MessagingServices } from "../composition/composeMessagingServices";
+import type { BackgroundTasks } from "../http/BackgroundTasks";
 import { routeLocalMediaRequest, routeMediaRequest } from "./routeMediaRequest";
 import type { MediaServices } from "../composition/composeMediaServices";
 import type { IntegrationsServices } from "../composition/composeIntegrationsServices";
@@ -35,6 +37,10 @@ export interface ApiRouterDependencies {
   readonly contactsServices: ContactsServices;
   readonly integrationsServices: IntegrationsServices;
   readonly connectionsServices: ConnectionsServices;
+  /** Mensajes reales de WhatsApp (los avisos de uazapi los traen). */
+  readonly messagingServices?: MessagingServices;
+  /** Trabajo después de responder (procesar mensajes). */
+  readonly background?: BackgroundTasks;
   /** `null` si no hay almacén de medios configurado. */
   readonly mediaServices: MediaServices | null;
   readonly authService: AuthService;
@@ -56,7 +62,7 @@ export async function routeApiRequest(
   }
 
   // Avisos de los proveedores de WhatsApp: los autentica el token de la instancia, no una sesión.
-  if (await routeWhatsAppWebhooks(request, response, url, connectionsServices)) return;
+  if (await routeWhatsAppWebhooks(request, response, url, connectionsServices, dependencies.messagingServices, dependencies.background)) return;
 
   // Almacén local de medios (solo desarrollo): autoriza el permiso firmado, no la sesión.
   if (await routeLocalMediaRequest(request, response, url, mediaServices)) return;

@@ -39,6 +39,7 @@ import { EnginePixelEventTester } from "./EnginePixelEventTester";
 import { TestPaymentProofService } from "../../../domains/automations/builder/application/TestPaymentProofService";
 import { EnginePaymentProofTester } from "./EnginePaymentProofTester";
 import { TesseractDocumentReader } from "../../../infrastructure/documents/TesseractDocumentReader";
+import type { DocumentTextReader } from "../../../flow-engine/ports/DocumentTextReader";
 import { SqlReceiptRegistry } from "../../../infrastructure/persistence/sql/SqlReceiptRegistry";
 import { InMemoryReceiptRegistry } from "../../../infrastructure/persistence/memory/InMemoryReceiptRegistry";
 import { composeNodeRuntime, simulationDependencies } from "./composeNodeRuntime";
@@ -119,15 +120,15 @@ export function composeBuilderServices(
   config: ApiConfig,
   sqlClient: SqlClient,
   ai: AiGateway = new DisabledAiGateway(),
-  conversions: ConversionTracker = new DisabledConversionTracker()
+  conversions: ConversionTracker = new DisabledConversionTracker(),
+  /** Lector de comprobantes compartido (un motor de OCR por instancia). */
+  documents: DocumentTextReader = new TesseractDocumentReader()
 ): ApiServices {
   const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
     composeAutomationsPersistence(config, sqlClient);
   // Un único cliente HTTP protegido (SSRF, plazos, tamaños) para la simulación
   // y para «Probar» del bloque Integración.
   const http = new SafeHttpRequester({ allowPrivateNetworks: config.integrationsAllowPrivateNetwork });
-  // Un solo lector de comprobantes (un motor de OCR por instancia).
-  const documents = new TesseractDocumentReader();
   const receipts = config.automationsStore === "sql" ? new SqlReceiptRegistry(sqlClient) : new InMemoryReceiptRegistry();
 
   return {

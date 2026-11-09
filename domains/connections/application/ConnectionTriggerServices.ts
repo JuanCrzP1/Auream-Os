@@ -127,12 +127,16 @@ export class ConnectionTriggerServices {
    * El flujo que debe arrancar con un mensaje entrante a esta conexión, o
    * `null` (lo usará la entrada de mensajes, FASE D4). Ignora flujos archivados.
    */
-  public async resolve(tenantId: string, connectionId: string, facts: InboundTriggerFacts): Promise<{ readonly triggerId: string; readonly automationId: string } | null> {
+  public async resolve(
+    tenantId: string,
+    connectionId: string,
+    facts: InboundTriggerFacts
+  ): Promise<{ readonly triggerId: string; readonly automationId: string; readonly flowKey: string } | null> {
     const records = await this.triggers.listByConnection(tenantId, connectionId);
     const flows = await flowMap(this.flows, tenantId, records);
     const usable = records.filter((record) => flows.has(record.automationId) && !flows.get(record.automationId)!.archived);
     const chosen = selectTrigger(usable, facts);
-    return chosen ? { triggerId: chosen.id, automationId: chosen.automationId } : null;
+    return chosen ? { triggerId: chosen.id, automationId: chosen.automationId, flowKey: flows.get(chosen.automationId)!.key } : null;
   }
 
   private assertNoClash(valid: ValidTrigger, siblings: ReadonlyArray<ConnectionTriggerRecord>): void {

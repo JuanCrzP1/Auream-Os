@@ -42,11 +42,11 @@ export function isMediaKind(kind: MessageItemKind): kind is MessageMediaKind {
 }
 
 /**
- * `true` si el motor sabe entregar este bloque hoy (solo texto:
- * `OutboundMessage` lleva una cadena). Lo usa el runtime, no la interfaz.
+ * `true` si el motor sabe entregar este bloque: todos (texto, archivos y
+ * pausas). Un archivo necesita además su URL; eso lo valida el editor.
  */
 export function isExecutableKind(kind: MessageItemKind): boolean {
-  return kind === "text";
+  return (MESSAGE_ITEM_KINDS as ReadonlyArray<string>).includes(kind);
 }
 
 /** Identidad de un bloque nuevo. Única fuente de ids del módulo. */

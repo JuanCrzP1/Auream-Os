@@ -204,10 +204,32 @@ describe("MessageNodeHandler — compatibilidad y datos no fiables", () => {
     expect((await run(node)).outputMessages.map((m) => m.content)).toEqual(["válido"]);
   });
 
-  it("trata un texto ausente como vacío en vez de romper", async () => {
-    const node = makeNode({ config: { items: [{ id: "1", kind: "text" }] } });
+  it("un texto ausente o vacío no rompe ni se envía (WhatsApp rechaza mensajes vacíos)", async () => {
+    const node = makeNode({ config: { items: [{ id: "1", kind: "text" }, { id: "2", kind: "text", text: "   " }] } });
 
-    expect((await run(node)).outputMessages.map((m) => m.content)).toEqual([""]);
+    expect((await run(node)).outputMessages).toEqual([]);
+  });
+
+  it("entrega archivos con su leyenda, pausas y «enviar una sola vez»", async () => {
+    const node = makeNode({
+      config: {
+        items: [
+          { id: "t", kind: "text", text: "Mira" },
+          { id: "p", kind: "interval", amount: 3, unit: "seconds" },
+          { id: "i", kind: "image", url: "https://blob.example/a.jpg", caption: "Catálogo", sendOnce: true },
+          { id: "f", kind: "file", url: "https://blob.example/b.pdf", fileName: "precios.pdf", caption: "", sendOnce: false }
+        ]
+      }
+    });
+    const first = await run(node);
+    expect(first.outputMessages.map((m) => [m.kind ?? "text", m.content, m.delayMs ?? null, m.media?.url ?? null])).toEqual([
+      ["text", "Mira", null, null],
+      ["pause", "", 3000, null],
+      ["media", "Catálogo", null, "https://blob.example/a.jpg"],
+      ["media", "", null, "https://blob.example/b.pdf"]
+    ]);
+    expect(first.outputMessages[3]!.media).toEqual({ type: "file", url: "https://blob.example/b.pdf", fileName: "precios.pdf" });
+    expect(Object.keys(first.contextPatch)).toEqual(["__sent_once.n-mensaje.i"]);
   });
 
   it("emite siempre el evento de ejecución del nodo", async () => {

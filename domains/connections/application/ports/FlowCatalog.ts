@@ -5,6 +5,8 @@
 
 export interface FlowReference {
   readonly id: string;
+  /** Con la que el motor carga el flujo. */
+  readonly key: string;
   readonly name: string;
   readonly archived: boolean;
 }

@@ -1,59 +1,35 @@
 import type { FlowNode } from "../../../contracts/FlowSnapshot";
 import type { NodeExecutionResult, OutboundMessage, RuntimeInput } from "../../../contracts/RuntimeContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
+import { intervalMs, readMessageItems, type MessageItem } from "../../../contracts/MessageConfig";
 import type { NodeHandler } from "../NodeHandler";
 import { ConversationTemplates } from "../../templates/ConversationTemplates";
 
 // ---------------------------------------------------------------------------
 // MessageNodeHandler
 //
-// Un nodo Mensaje contiene una SECUENCIA de contenidos (`config.items`) y emite
-// uno de salida por cada contenido que el motor sabe enviar, en el mismo orden.
+// Un nodo Mensaje es una SECUENCIA de bloques (`contracts/MessageConfig.ts`) y
+// emite una salida por bloque, en el mismo orden:
 //
-// El contrato ya lo permitía: `NodeExecutionResult.outputMessages` siempre fue
-// un array. Lo que faltaba era que este handler lo aprovechara — antes emitía
-// exactamente uno.
+//   texto     → `text` (variables resueltas)
+//   archivo   → `media` con su URL pública; la leyenda, con variables
+//   pausa     → `pause` con su duración; la entrega espera antes de seguir
 //
-// QUÉ SE PUEDE ENVIAR HOY: solo texto. `OutboundMessage` tiene un único campo
-// de contenido, de tipo `string`, así que no hay forma de transportar una
-// imagen, un audio o un archivo aunque el nodo los tenga configurados. Esos
-// contenidos NO se envían y NO se inventan: se registran como omitidos en los
-// eventos de dominio, para que quede rastro observable en lugar de un silencio.
-//
-// Cambiar eso exige tres piezas que no existen —almacenamiento de medios, un
-// `OutboundMessage` capaz de llevar algo que no sea texto, y un adaptador de
-// canal que lo entregue— y ninguna se finge aquí.
-//
-// COMPATIBILIDAD: un nodo guardado antes de la secuencia no tiene `items` y sí
-// `content.text`. Se sigue leyendo, como un único contenido de texto.
-//
-// La forma de `config` NO está garantizada por el compilador: viene de un JSON
-// persistido. Por eso se estrecha con desconfianza en lugar de castear.
+// Un archivo sin URL (subida que no terminó) no se inventa: queda como evento
+// `message_item_not_deliverable`. «Enviar una sola vez» se recuerda en la
+// conversación (`contextPatch`) y no se repite.
 // ---------------------------------------------------------------------------
 
-/** Contenido de la secuencia, ya estrechado a lo que este handler entiende. */
-interface ReadItem {
-  readonly kind: string;
-  readonly text: string;
+/** Clave de contexto que recuerda un bloque «enviar una sola vez» ya enviado. */
+export function sentOnceKey(nodeId: string, itemId: string): string {
+  return `__sent_once.${nodeId}.${itemId}`;
 }
 
-function readItems(node: FlowNode): ReadItem[] {
-  const raw = node.config.items;
-
-  if (Array.isArray(raw)) {
-    return raw.flatMap((entry): ReadItem[] => {
-      if (typeof entry !== "object" || entry === null) return [];
-
-      const record = entry as Record<string, unknown>;
-      const kind = typeof record.kind === "string" ? record.kind : "";
-      if (kind === "") return [];
-
-      return [{ kind, text: typeof record.text === "string" ? record.text : "" }];
-    });
-  }
-
-  const legacy = node.content.text;
-  return typeof legacy === "string" ? [{ kind: "text", text: legacy }] : [];
+/** Texto de cada bloque que lleva variables (texto o leyenda). */
+function templateOf(item: MessageItem): string {
+  if (item.kind === "text") return item.text;
+  if (item.kind === "interval") return "";
+  return item.caption;
 }
 
 export class MessageNodeHandler implements NodeHandler {
@@ -64,23 +40,34 @@ export class MessageNodeHandler implements NodeHandler {
   }
 
   public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
-    const items = readItems(node);
-    const texts = await this.templates.render(items.map((item) => item.text), input, session);
+    const items = readMessageItems(node.config, node.content);
+    const texts = await this.templates.render(items.map(templateOf), input, session);
     const outputMessages: OutboundMessage[] = [];
     const domainEvents: string[] = [];
+    const contextPatch: Record<string, unknown> = {};
+    const base = { channel: input.envelope.channel, conversationKey: input.envelope.conversationKey };
 
     for (const [index, item] of items.entries()) {
-      if (item.kind !== "text") {
-        // El contenido existe en la configuración pero el motor no puede
-        // entregarlo. Se deja constancia en lugar de omitirlo en silencio.
+      if (item.kind === "text") {
+        if (texts[index]!.trim()) outputMessages.push({ ...base, content: texts[index]! });
+        continue;
+      }
+      if (item.kind === "interval") {
+        outputMessages.push({ ...base, kind: "pause", content: "", delayMs: intervalMs(item) });
+        continue;
+      }
+      if (!item.url) {
         domainEvents.push(`message_item_not_deliverable:${node.id}:${item.kind}`);
         continue;
       }
-
+      const onceKey = sentOnceKey(node.id, item.id);
+      if (item.sendOnce && session.context[onceKey] === true) continue;
+      if (item.sendOnce) contextPatch[onceKey] = true;
       outputMessages.push({
-        channel: input.envelope.channel,
-        conversationKey: input.envelope.conversationKey,
-        content: texts[index]!
+        ...base,
+        kind: "media",
+        content: texts[index]!,
+        media: { type: item.kind, url: item.url, ...(item.fileName ? { fileName: item.fileName } : {}) }
       });
     }
 
@@ -89,7 +76,7 @@ export class MessageNodeHandler implements NodeHandler {
     return {
       executionStatus: "success",
       outputMessages,
-      contextPatch: {},
+      contextPatch,
       nodeResult: {},
       domainEvents
     };

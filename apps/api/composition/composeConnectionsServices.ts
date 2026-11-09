@@ -4,6 +4,9 @@ import { UnconfiguredWhatsAppLinker } from "../../../infrastructure/whatsapp/Unc
 import { LinkersByMethod } from "../../../infrastructure/whatsapp/LinkersByMethod";
 import { UazapiClient, type FetchLike } from "../../../infrastructure/whatsapp/uazapi/UazapiClient";
 import { UazapiLinker } from "../../../infrastructure/whatsapp/uazapi/UazapiLinker";
+import { UazapiMessenger } from "../../../infrastructure/whatsapp/uazapi/UazapiMessenger";
+import { ConnectionChannelServices } from "../../../domains/connections/application/ConnectionChannelServices";
+import type { WhatsAppMessengers } from "../../../domains/connections/application/ports/WhatsAppMessenger";
 import { AesGcmSecretCipher, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
 import { SecretDecryptionError, type SecretCipher } from "../../../platform/security/secrets/SecretCipher";
 import type { ConnectionRepository } from "../../../domains/connections/application/ConnectionRepository";
@@ -45,6 +48,10 @@ export interface ConnectionsServices {
   readonly providerEvents: HandleProviderEventService;
   /** Qué flujo arranca cada número (palabra clave, anuncio, primer mensaje…). */
   readonly triggers: ConnectionTriggerServices;
+  /** El canal de cada número: reconocer los avisos de su proveedor y enviar por él. */
+  readonly channel: ConnectionChannelServices;
+  /** Catálogo de flujos (nombre, clave, archivado) que usan disparadores y mensajería. */
+  readonly flows: FlowCatalog;
 }
 
 export interface ConnectionsOptions {
@@ -66,6 +73,12 @@ const NO_CIPHER: SecretCipher = {
 
 /** Ruta pública donde uazapi avisa los cambios de conexión. */
 export const UAZAPI_WEBHOOK_PATH = "/webhooks/uazapi";
+
+/** El proveedor que envía por cada forma de conectar (QR → uazapi). */
+export function composeMessengers(options: ConnectionsOptions): WhatsAppMessengers {
+  const qr = options.uazapi && options.keyRing ? new UazapiMessenger(new UazapiClient(options.uazapi, options.fetch)) : null;
+  return { for: (method) => (method === "qr" ? qr : null) };
+}
 
 export function composeLinkers(options: ConnectionsOptions): WhatsAppLinkers {
   const unconfigured = new UnconfiguredWhatsAppLinker();
@@ -95,7 +108,9 @@ export function composeConnectionsServicesWith(stores: ConnectionsStores | Conne
     link: new LinkConnectionService(repository, linkers, cipher),
     check: new CheckConnectionService(repository, linkers, cipher),
     providerEvents: new HandleProviderEventService(repository, cipher),
-    triggers: new ConnectionTriggerServices(repository, triggers, flows)
+    triggers: new ConnectionTriggerServices(repository, triggers, flows),
+    channel: new ConnectionChannelServices(repository, composeMessengers(options), cipher),
+    flows
   };
 }
 

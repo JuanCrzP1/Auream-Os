@@ -9,10 +9,10 @@ export class SqlFlowCatalog implements FlowCatalog {
   public async findMany(tenantId: string, ids: ReadonlyArray<string>): Promise<ReadonlyArray<FlowReference>> {
     const valid = ids.filter(isUuid);
     if (!isUuid(tenantId) || valid.length === 0) return [];
-    const result = await this.sql.query<{ id: string; name: string; status: string }>(
-      "select id, name, status from automations where tenant_id = $1 and id = any($2::uuid[])",
+    const result = await this.sql.query<{ id: string; key: string; name: string; status: string }>(
+      "select id, key, name, status from automations where tenant_id = $1 and id = any($2::uuid[])",
       [tenantId, valid]
     );
-    return result.rows.map((row) => ({ id: row.id, name: row.name, archived: row.status === "archived" }));
+    return result.rows.map((row) => ({ id: row.id, key: row.key, name: row.name, archived: row.status === "archived" }));
   }
 }

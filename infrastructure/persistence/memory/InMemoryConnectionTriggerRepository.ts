@@ -37,9 +37,11 @@ export class InMemoryConnectionTriggerRepository implements ConnectionTriggerRep
 
 /** Catálogo de flujos fijo (tests). */
 export class InMemoryFlowCatalog implements FlowCatalog {
-  public constructor(private readonly flows: ReadonlyArray<FlowReference & { readonly tenantId: string }> = []) {}
+  public constructor(private readonly flows: ReadonlyArray<Omit<FlowReference, "key"> & { readonly key?: string; readonly tenantId: string }> = []) {}
 
   public async findMany(tenantId: string, ids: ReadonlyArray<string>): Promise<ReadonlyArray<FlowReference>> {
-    return this.flows.filter((flow) => flow.tenantId === tenantId && ids.includes(flow.id)).map(({ id, name, archived }) => ({ id, name, archived }));
+    return this.flows
+      .filter((flow) => flow.tenantId === tenantId && ids.includes(flow.id))
+      .map(({ id, key, name, archived }) => ({ id, key: key ?? id, name, archived }));
   }
 }
