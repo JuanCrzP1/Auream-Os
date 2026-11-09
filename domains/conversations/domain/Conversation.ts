@@ -14,6 +14,8 @@ export interface Conversation {
   readonly phone: string;
   readonly botEnabled: boolean;
   readonly unreadCount: number;
+  /** Su número fue eliminado: el historial se lee, pero ya no se puede responder. */
+  readonly connectionDeleted: boolean;
   readonly createdAt: string;
 }
 

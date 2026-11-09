@@ -39,25 +39,29 @@ function toConnection(row: Row): WhatsAppConnection {
   };
 }
 
-/** Conexiones de WhatsApp en PostgreSQL (`011_whatsapp_connections.sql`). Todo filtra por cuenta. */
+/**
+ * Conexiones de WhatsApp en PostgreSQL (`011_whatsapp_connections.sql`). Todo
+ * filtra por cuenta. Una conexión eliminada (`018_connection_soft_delete.sql`)
+ * no aparece en ninguna lectura: solo queda para el historial de sus chats.
+ */
 export class SqlConnectionRepository implements ConnectionRepository {
   public constructor(private readonly sql: SqlExecutor) {}
 
   public async listByTenant(tenantId: string): Promise<WhatsAppConnection[]> {
     if (!isUuid(tenantId)) return [];
-    const result = await this.sql.query<Row>(`select ${COLUMNS} from whatsapp_connections where tenant_id = $1 order by created_at`, [tenantId]);
+    const result = await this.sql.query<Row>(`select ${COLUMNS} from whatsapp_connections where tenant_id = $1 and deleted_at is null order by created_at`, [tenantId]);
     return result.rows.map(toConnection);
   }
 
   public async findById(tenantId: string, id: string): Promise<WhatsAppConnection | null> {
     if (!isUuid(tenantId) || !isUuid(id)) return null;
-    const result = await this.sql.query<Row>(`select ${COLUMNS} from whatsapp_connections where tenant_id = $1 and id = $2`, [tenantId, id]);
+    const result = await this.sql.query<Row>(`select ${COLUMNS} from whatsapp_connections where tenant_id = $1 and id = $2 and deleted_at is null`, [tenantId, id]);
     return result.rows[0] ? toConnection(result.rows[0]) : null;
   }
 
   public async findForProvider(id: string): Promise<WhatsAppConnection | null> {
     if (!isUuid(id)) return null;
-    const result = await this.sql.query<Row>(`select ${COLUMNS} from whatsapp_connections where id = $1`, [id]);
+    const result = await this.sql.query<Row>(`select ${COLUMNS} from whatsapp_connections where id = $1 and deleted_at is null`, [id]);
     return result.rows[0] ? toConnection(result.rows[0]) : null;
   }
 
@@ -70,7 +74,7 @@ export class SqlConnectionRepository implements ConnectionRepository {
            name = excluded.name, status = excluded.status, phone_number = excluded.phone_number,
            profile_name = excluded.profile_name, provider_ref = excluded.provider_ref, provider_secret = excluded.provider_secret,
            last_connected_at = excluded.last_connected_at, updated_at = excluded.updated_at
-         where whatsapp_connections.tenant_id = excluded.tenant_id`,
+         where whatsapp_connections.tenant_id = excluded.tenant_id and whatsapp_connections.deleted_at is null`,
         [
           connection.id, connection.tenantId, connection.name, connection.method, connection.status, connection.phoneNumber,
           connection.profileName, connection.providerRef, connection.providerSecret, connection.lastConnectedAt, connection.createdAt, connection.updatedAt
@@ -82,9 +86,24 @@ export class SqlConnectionRepository implements ConnectionRepository {
     }
   }
 
+  /**
+   * La marca como eliminada en una sola sentencia: desconectada, sin
+   * credencial y sin disparadores. La fila queda para el historial de chats.
+   */
   public async delete(tenantId: string, id: string): Promise<boolean> {
     if (!isUuid(tenantId) || !isUuid(id)) return false;
-    const result = await this.sql.query("delete from whatsapp_connections where tenant_id = $1 and id = $2", [tenantId, id]);
-    return result.rowCount > 0;
+    const result = await this.sql.query<{ removed: number }>(
+      `with removed as (
+         update whatsapp_connections
+            set deleted_at = now(), status = 'disconnected', provider_secret = null, updated_at = now()
+          where tenant_id = $1 and id = $2 and deleted_at is null
+         returning id
+       ), dropped_triggers as (
+         delete from connection_triggers t using removed where t.connection_id = removed.id
+       )
+       select count(*)::int as removed from removed`,
+      [tenantId, id]
+    );
+    return (result.rows[0]?.removed ?? 0) > 0;
   }
 }

@@ -21,7 +21,7 @@ const PAGO = { id: "l-pago", name: "Pagó", color: "#16a34a" };
 const CHAT: ConversationSummary = {
   id: "c1", connectionId: "w1", connectionName: "venta", contactId: "k1", contactName: "Laura Gómez", phone: "573001112233",
   botEnabled: true, unreadCount: 2, lastMessageText: "Te envío info", lastMessageAuthor: "bot", lastMessageAt: now, activeFlowName: "Ventas",
-  labels: [VIP], createdAt: now
+  labels: [VIP], connectionDeleted: false, createdAt: now
 };
 const OLD_CHAT: ConversationSummary = {
   ...CHAT, id: "c2", contactId: "k2", contactName: "Pedro Ruiz", phone: "573004445566", unreadCount: 0, labels: [],
@@ -32,8 +32,8 @@ const msg = (over: Partial<ConversationMessage>): ConversationMessage => ({
   options: [], status: "received", error: null, flowName: null, agentName: null, createdAt: now, ...over
 });
 
-function stubApi(options: { paged?: boolean } = {}) {
-  let chat = { ...CHAT };
+function stubApi(options: { paged?: boolean; deleted?: boolean } = {}) {
+  let chat = { ...CHAT, connectionDeleted: options.deleted ?? false };
   const listCalls: URLSearchParams[] = [];
   const messages: ConversationMessage[] = [
     msg({ text: "Hola" }),
@@ -199,5 +199,21 @@ describe("ConversationsPage", () => {
     expect(await screen.findByRole("button", { name: "Pedro Ruiz" })).toBeInTheDocument();
     expect(api.listCalls.some((params) => params.get("cursor") === "page-2")).toBe(true);
     expect(screen.queryByRole("button", { name: "Ver más chats" })).not.toBeInTheDocument();
+  });
+
+  it("chat de un número eliminado: se lee el historial, pero sin barra para escribir, sin bot ni «Ejecutar flujo»", async () => {
+    stubApi({ deleted: true });
+    render(<ConversationsPage />);
+    const row = await screen.findByRole("button", { name: /Laura Gómez/ });
+    expect(within(row).getByText("venta · eliminado")).toBeInTheDocument();
+    await userEvent.click(row);
+    const chat = await screen.findByRole("region", { name: "Chat con Laura Gómez" });
+
+    expect(await within(chat).findByText("Hola")).toBeInTheDocument();
+    expect(within(chat).getByText("Número eliminado · venta")).toBeInTheDocument();
+    expect(within(chat).getByRole("note")).toHaveTextContent("El número «venta» fue eliminado");
+    expect(within(chat).queryByLabelText("Escribe un mensaje")).not.toBeInTheDocument();
+    expect(within(chat).queryByRole("button", { name: "Ejecutar flujo" })).not.toBeInTheDocument();
+    expect(within(chat).queryByRole("switch")).not.toBeInTheDocument();
   });
 });

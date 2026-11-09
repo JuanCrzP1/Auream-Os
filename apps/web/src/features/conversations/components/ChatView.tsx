@@ -107,31 +107,37 @@ export function ChatView({
             <span className="ios-chat__who-text">
               <strong>{name}</strong>
               <span>
-                {conversation.activeFlowName
-                  ? `En el flujo «${conversation.activeFlowName}»`
-                  : `${conversation.contactName ? `${formatPhone(conversation.phone).text} · ` : ""}${conversation.connectionName}`}
+                {conversation.connectionDeleted
+                  ? `Número eliminado · ${conversation.connectionName}`
+                  : conversation.activeFlowName
+                    ? `En el flujo «${conversation.activeFlowName}»`
+                    : `${conversation.contactName ? `${formatPhone(conversation.phone).text} · ` : ""}${conversation.connectionName}`}
               </span>
             </span>
           </button>
-          <button type="button" className="ios-run-flow" onClick={() => setFlowDialog(true)}>
-            <BoltGlyph />
-            <span>Ejecutar flujo</span>
-          </button>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={conversation.botEnabled}
-            aria-label={conversation.botEnabled ? "Bot activo" : "Bot pausado"}
-            className={`ios-bot-toggle${conversation.botEnabled ? " is-on" : ""}`}
-            title={conversation.botEnabled ? "El bot responde este chat. Tócalo para atenderlo tú." : "Un asesor atiende este chat. Tócalo para que el bot vuelva a responder."}
-            onClick={() => void toggleBot()}
-          >
-            <BotGlyph />
-            <span>{conversation.botEnabled ? "Bot activo" : "Bot pausado"}</span>
-            <span className="ios-bot-toggle__track" aria-hidden="true">
-              <span className="ios-bot-toggle__thumb" />
-            </span>
-          </button>
+          {conversation.connectionDeleted ? null : (
+            <>
+              <button type="button" className="ios-run-flow" onClick={() => setFlowDialog(true)}>
+                <BoltGlyph />
+                <span>Ejecutar flujo</span>
+              </button>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={conversation.botEnabled}
+                aria-label={conversation.botEnabled ? "Bot activo" : "Bot pausado"}
+                className={`ios-bot-toggle${conversation.botEnabled ? " is-on" : ""}`}
+                title={conversation.botEnabled ? "El bot responde este chat. Tócalo para atenderlo tú." : "Un asesor atiende este chat. Tócalo para que el bot vuelva a responder."}
+                onClick={() => void toggleBot()}
+              >
+                <BotGlyph />
+                <span>{conversation.botEnabled ? "Bot activo" : "Bot pausado"}</span>
+                <span className="ios-bot-toggle__track" aria-hidden="true">
+                  <span className="ios-bot-toggle__thumb" />
+                </span>
+              </button>
+            </>
+          )}
           <button type="button" className={`ios-icon-btn${infoOpen ? " is-active" : ""}`} aria-label="Info. del contacto" aria-pressed={infoOpen} onClick={() => onInfo(!infoOpen)}>
             <InfoGlyph />
           </button>
@@ -163,7 +169,7 @@ export function ChatView({
               </Fragment>
             );
           })}
-          {!conversation.botEnabled ? (
+          {!conversation.botEnabled && !conversation.connectionDeleted ? (
             <div className="ios-system ios-system--note">
               <span>Atiendes este chat: el bot no responderá hasta que lo actives.</span>
               <button type="button" className="ios-link-btn" onClick={() => void toggleBot()}>
@@ -175,26 +181,32 @@ export function ChatView({
 
         {notice ? <p className={`ios-notice ios-notice--${notice.kind}`} role={notice.kind === "error" ? "alert" : "status"}>{notice.text}</p> : null}
 
-        <footer className="ios-composer">
-          <textarea
-            className="ios-composer__input"
-            value={draft}
-            rows={1}
-            maxLength={MAX_AGENT_MESSAGE_LENGTH}
-            placeholder="Mensaje"
-            aria-label="Escribe un mensaje"
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void send();
-              }
-            }}
-          />
-          <button type="button" className="ios-send" aria-label="Enviar" disabled={!draft.trim() || sending} onClick={() => void send()}>
-            <SendGlyph />
-          </button>
-        </footer>
+        {conversation.connectionDeleted ? (
+          <footer className="ios-composer ios-composer--closed" role="note">
+            El número «{conversation.connectionName}» fue eliminado. Puedes leer y etiquetar este chat, pero ya no responder desde él.
+          </footer>
+        ) : (
+          <footer className="ios-composer">
+            <textarea
+              className="ios-composer__input"
+              value={draft}
+              rows={1}
+              maxLength={MAX_AGENT_MESSAGE_LENGTH}
+              placeholder="Mensaje"
+              aria-label="Escribe un mensaje"
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  void send();
+                }
+              }}
+            />
+            <button type="button" className="ios-send" aria-label="Enviar" disabled={!draft.trim() || sending} onClick={() => void send()}>
+              <SendGlyph />
+            </button>
+          </footer>
+        )}
 
         {flowDialog ? (
           <SendFlowDialog

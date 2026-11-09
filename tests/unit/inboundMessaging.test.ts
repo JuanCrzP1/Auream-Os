@@ -303,4 +303,20 @@ describe("bandeja de Conversaciones", () => {
     expect(second.conversations.map((c) => c.lastMessageText)).toEqual(["m2", "m1", "m0"]);
     expect(second.nextCursor).toBeNull();
   });
+
+  it("si el número del chat fue eliminado, el historial se lee y se etiqueta, pero no se responde ni se ejecutan flujos", async () => {
+    const s = await setup();
+    await s.service.execute(T, s.message("buenas tardes"));
+    const { conversations: [chat] } = await s.inbox.list(T, {});
+    s.conversations.deletedConnections.add(s.connectionId);
+
+    expect((await s.inbox.get(T, chat!.id)).connectionDeleted).toBe(true);
+    expect((await s.inbox.messages(T, chat!.id)).messages.map((m) => m.text)).toEqual(["buenas tardes"]);
+    await s.inbox.markRead(T, chat!.id);
+    expect((await s.inbox.setLabels(T, chat!.id, ["l-vip"])).labels).toHaveLength(1);
+    await expect(s.inbox.sendAgentMessage(T, chat!.id, "Hola", { id: "u1", name: null })).rejects.toThrow(/fue eliminado/);
+    await expect(s.inbox.startFlow(T, chat!.id, FLOW_ID)).rejects.toThrow(/fue eliminado/);
+    await expect(s.inbox.setBotEnabled(T, chat!.id, false)).rejects.toThrow(/fue eliminado/);
+    expect(s.delivery.deliver).not.toHaveBeenCalled();
+  });
 });

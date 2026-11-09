@@ -121,4 +121,38 @@ describe("SqlConversationRepository", () => {
     expect([page[0]!.phone, next[0]!.phone]).toEqual(["573001112233", "573005550000"]);
     expect(await repository.inbox(tenant, { filter: "all", limit: 1, after: { activityAt: next[0]!.lastMessageAt!, id: next[0]!.id } })).toEqual([]);
   });
+
+  it("eliminar el número conserva sus chats (solo lectura), borra sus disparadores y libera el nombre", async () => {
+    const tenant = await insertTenant("conv-c");
+    const connections = new SqlConnectionRepository(sql);
+    const create = new CreateConnectionService(connections);
+    const connection = await create.execute(tenant, { name: "Ventas", method: "qr" });
+    const repository = new SqlConversationRepository(sql);
+    const chat = await new ConversationRecorder(repository).recordInbound(tenant, {
+      connectionId: connection.id, providerMessageId: "x1", phone: "573001112233", senderName: null, kind: "text", text: "Hola",
+      replyId: null, media: null, fromAd: false, providerType: "Conversation", sentAt: new Date().toISOString()
+    }, null);
+    const flowId = randomUUID();
+    await sql.query("insert into automations (id, tenant_id, key, name, status) values ($1, $2, $3, 'Ventas', 'active')", [flowId, tenant, flowId]);
+    await sql.query(
+      "insert into connection_triggers (id, tenant_id, connection_id, automation_id, type) values ($1, $2, $3, $4, 'any_message')",
+      [randomUUID(), tenant, connection.id, flowId]
+    );
+
+    expect(await connections.delete(tenant, connection.id)).toBe(true);
+    expect(await connections.delete(tenant, connection.id)).toBe(false);
+    expect(await connections.findById(tenant, connection.id)).toBeNull();
+    expect(await connections.findForProvider(connection.id)).toBeNull();
+    expect(await connections.listByTenant(tenant)).toEqual([]);
+    const stored = await sql.query<{ status: string; provider_secret: string | null }>("select status, provider_secret from whatsapp_connections where id = $1", [connection.id]);
+    expect(stored.rows[0]).toEqual({ status: "disconnected", provider_secret: null });
+    expect((await sql.query("select 1 from connection_triggers where connection_id = $1", [connection.id])).rowCount).toBe(0);
+
+    expect(await repository.findById(tenant, chat.id)).toMatchObject({ connectionDeleted: true });
+    expect(await repository.inbox(tenant, { filter: "all", limit: 10 })).toMatchObject([{ id: chat.id, connectionName: "Ventas", connectionDeleted: true }]);
+    expect((await repository.messages(tenant, chat.id, { limit: 10 })).messages.map((m) => m.text)).toEqual(["Hola"]);
+
+    // El nombre queda libre para un número nuevo.
+    expect((await create.execute(tenant, { name: "Ventas", method: "qr" })).name).toBe("Ventas");
+  });
 });

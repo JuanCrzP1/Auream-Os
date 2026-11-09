@@ -155,7 +155,7 @@ export function ConnectionsPage() {
       {dialog?.kind === "delete" ? (
         <ConfirmDialog
           title={`¿Eliminar «${dialog.connection.name}»?`}
-          message="Se cierra la sesión de WhatsApp de este número en Auream. Los flujos que lo usan dejarán de responder por él."
+          message="Se cierra la sesión de WhatsApp de este número en Auream, se borran sus disparadores y los flujos dejarán de responder por él. El historial de sus chats se conserva en Conversaciones para consultarlo."
           confirmLabel="Eliminar conexión"
           onConfirm={() => connections.remove(dialog.connection.id)}
           onClose={() => setDialog(null)}

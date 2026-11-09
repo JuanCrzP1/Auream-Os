@@ -75,6 +75,12 @@ export interface ConversationSummary {
   readonly activeFlowName: string | null;
   /** Etiquetas del cliente (vacío si el chat no tiene contacto). */
   readonly labels: ReadonlyArray<ConversationLabel>;
+  /**
+   * El número de WhatsApp de este chat fue eliminado: el historial se
+   * conserva y se puede leer y etiquetar, pero ya no se puede responder,
+   * ejecutar flujos ni activar el bot.
+   */
+  readonly connectionDeleted: boolean;
   readonly createdAt: string;
 }
 

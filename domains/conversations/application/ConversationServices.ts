@@ -192,7 +192,7 @@ export class ConversationInbox {
 
   public async setBotEnabled(tenantId: string, id: string, enabled: unknown): Promise<ConversationSummary> {
     if (typeof enabled !== "boolean") throw new ValidationError("Indica si el bot atiende o no este chat.");
-    await this.require(tenantId, id);
+    await this.requireLive(tenantId, id);
     await this.repository.setBotEnabled(tenantId, id, enabled);
     return this.get(tenantId, id);
   }
@@ -207,7 +207,7 @@ export class ConversationInbox {
     const body = typeof text === "string" ? text.trim() : "";
     if (!body) throw new ValidationError("Escribe un mensaje.");
     if (body.length > MAX_AGENT_MESSAGE_LENGTH) throw new ValidationError(`El mensaje admite hasta ${MAX_AGENT_MESSAGE_LENGTH} caracteres.`);
-    const conversation = await this.require(tenantId, id);
+    const conversation = await this.requireLive(tenantId, id);
 
     const { results } = await this.sender.deliver(tenantId, conversation.connectionId, conversation.phone, [
       { channel: "whatsapp", conversationKey: conversation.id, content: body }
@@ -234,7 +234,7 @@ export class ConversationInbox {
   /** Envía un flujo a mano: corta lo que el cliente estuviera haciendo y lo empieza; el bot queda activo. */
   public async startFlow(tenantId: string, id: string, automationId: unknown): Promise<{ readonly flowName: string; readonly sent: number; readonly failed: number }> {
     if (typeof automationId !== "string" || !automationId) throw new ValidationError("Elige el flujo que quieres enviar.");
-    const conversation = await this.require(tenantId, id);
+    const conversation = await this.requireLive(tenantId, id);
     if (!conversation.botEnabled) await this.repository.setBotEnabled(tenantId, id, true);
     return this.flows.launch(tenantId, conversation, automationId);
   }
@@ -242,6 +242,15 @@ export class ConversationInbox {
   private async require(tenantId: string, id: string): Promise<Conversation> {
     const conversation = await this.repository.findById(tenantId, id);
     if (!conversation) throw new NotFoundError("Conversación no encontrada.");
+    return conversation;
+  }
+
+  /** Para lo que sale hacia el cliente o mueve el bot: el número del chat debe seguir existiendo. */
+  private async requireLive(tenantId: string, id: string): Promise<Conversation> {
+    const conversation = await this.require(tenantId, id);
+    if (conversation.connectionDeleted) {
+      throw new ValidationError("El número de este chat fue eliminado: puedes leer el historial, pero ya no responder desde él.");
+    }
     return conversation;
   }
 }

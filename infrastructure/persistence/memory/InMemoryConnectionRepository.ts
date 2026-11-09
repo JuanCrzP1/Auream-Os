@@ -2,9 +2,11 @@ import type { ConnectionRepository } from "../../../domains/connections/applicat
 import type { WhatsAppConnection } from "../../../domains/connections/domain/WhatsAppConnection";
 import { ConflictError } from "../../../platform/observability/errors/ConflictError";
 
-/** Conexiones en memoria (tests). Mismas reglas que la versión SQL. */
+/** Conexiones en memoria (tests). Mismas reglas que la versión SQL: eliminar no borra, la retira. */
 export class InMemoryConnectionRepository implements ConnectionRepository {
   private items: WhatsAppConnection[] = [];
+  /** Conexiones eliminadas (su historial de chats sigue existiendo). */
+  public readonly removed: WhatsAppConnection[] = [];
 
   public async listByTenant(tenantId: string): Promise<WhatsAppConnection[]> {
     return this.items.filter((item) => item.tenantId === tenantId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -29,8 +31,10 @@ export class InMemoryConnectionRepository implements ConnectionRepository {
   }
 
   public async delete(tenantId: string, id: string): Promise<boolean> {
-    const before = this.items.length;
-    this.items = this.items.filter((item) => !(item.tenantId === tenantId && item.id === id));
-    return this.items.length < before;
+    const found = this.items.find((item) => item.tenantId === tenantId && item.id === id);
+    if (!found) return false;
+    this.items = this.items.filter((item) => item !== found);
+    this.removed.push({ ...found, status: "disconnected", providerSecret: null });
+    return true;
   }
 }

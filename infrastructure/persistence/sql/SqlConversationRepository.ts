@@ -21,6 +21,8 @@ interface ConversationRow {
   phone: string;
   bot_enabled: boolean;
   unread_count: number;
+  /** Solo en lecturas que cruzan con el número (no en el alta). */
+  connection_deleted?: boolean;
   created_at: Date | string;
 }
 
@@ -59,6 +61,7 @@ const toConversation = (row: ConversationRow): Conversation => ({
   phone: row.phone,
   botEnabled: row.bot_enabled,
   unreadCount: row.unread_count,
+  connectionDeleted: row.connection_deleted ?? false,
   createdAt: toIso(row.created_at)
 });
 
@@ -76,6 +79,7 @@ const toSummary = (row: InboxRow): ConversationSummary => ({
   lastMessageAt: row.last_message_at === null ? null : toIso(row.last_message_at),
   activeFlowName: row.active_flow_name,
   labels: row.labels ?? [],
+  connectionDeleted: row.connection_deleted ?? false,
   createdAt: toIso(row.created_at)
 });
 
@@ -88,7 +92,7 @@ const ACTIVITY = "coalesce(c.last_message_at, c.created_at)";
 const INBOX_SELECT = `
   select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
          c.last_message_text, c.last_message_author, c.last_message_at,
-         w.name as connection_name, ct.name as contact_name, a.name as active_flow_name,
+         w.name as connection_name, w.deleted_at is not null as connection_deleted, ct.name as contact_name, a.name as active_flow_name,
          (select json_agg(json_build_object('id', l.id, 'name', l.name, 'color', l.color) order by lower(l.name))
             from contact_label_assignments la
             join contact_labels l on l.tenant_id = la.tenant_id and l.id = la.label_id
@@ -119,7 +123,14 @@ export class SqlConversationRepository implements ConversationRepository {
 
   public async findById(tenantId: string, id: string): Promise<Conversation | null> {
     if (!isUuid(tenantId) || !isUuid(id)) return null;
-    const result = await this.sql.query<ConversationRow>(`select ${CONVERSATION_COLUMNS} from conversations where tenant_id = $1 and id = $2`, [tenantId, id]);
+    const result = await this.sql.query<ConversationRow>(
+      `select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
+              w.deleted_at is not null as connection_deleted
+         from conversations c
+         join whatsapp_connections w on w.id = c.connection_id
+        where c.tenant_id = $1 and c.id = $2`,
+      [tenantId, id]
+    );
     return result.rows[0] ? toConversation(result.rows[0]) : null;
   }
 

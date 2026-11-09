@@ -99,21 +99,23 @@ export function ContactInfoPanel({
           <span>{conversation.contactName ? phone : "Sin nombre guardado"}</span>
         </div>
 
-        <div className="ios-info__actions">
-          <button type="button" className="ios-action" onClick={onRunFlow}>
-            <BoltGlyph />
-            Ejecutar flujo
-          </button>
-          <button type="button" className={`ios-action${conversation.botEnabled ? " is-on" : ""}`} aria-pressed={conversation.botEnabled} onClick={onToggleBot}>
-            <BotGlyph />
-            {conversation.botEnabled ? "Bot activo" : "Bot pausado"}
-          </button>
-        </div>
+        {conversation.connectionDeleted ? null : (
+          <div className="ios-info__actions">
+            <button type="button" className="ios-action" onClick={onRunFlow}>
+              <BoltGlyph />
+              Ejecutar flujo
+            </button>
+            <button type="button" className={`ios-action${conversation.botEnabled ? " is-on" : ""}`} aria-pressed={conversation.botEnabled} onClick={onToggleBot}>
+              <BotGlyph />
+              {conversation.botEnabled ? "Bot activo" : "Bot pausado"}
+            </button>
+          </div>
+        )}
 
         <section className="ios-group" aria-label="Atención">
           <div className="ios-group__row">
             <span>Atiende</span>
-            <strong>{conversation.botEnabled ? "El bot" : "Un asesor"}</strong>
+            <strong>{conversation.connectionDeleted ? "Nadie (número eliminado)" : conversation.botEnabled ? "El bot" : "Un asesor"}</strong>
           </div>
           <div className="ios-group__row">
             <span>Flujo en curso</span>
@@ -201,7 +203,7 @@ export function ContactInfoPanel({
           </div>
           <div className="ios-group__row">
             <span>Escribe a</span>
-            <strong>{conversation.connectionName || "—"}</strong>
+            <strong>{conversation.connectionName ? `${conversation.connectionName}${conversation.connectionDeleted ? " (eliminado)" : ""}` : "—"}</strong>
           </div>
           <div className="ios-group__row">
             <span>Chat desde</span>

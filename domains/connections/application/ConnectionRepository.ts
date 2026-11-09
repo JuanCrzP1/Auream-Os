@@ -10,6 +10,11 @@ export interface ConnectionRepository {
   findForProvider(id: string): Promise<WhatsAppConnection | null>;
   /** Inserta o actualiza. Un nombre repetido en la cuenta → `ConflictError`. */
   save(connection: WhatsAppConnection): Promise<void>;
-  /** `true` si existía. */
+  /**
+   * Elimina el número de la cuenta: deja de aparecer en todas las lecturas y
+   * pierde su credencial y sus disparadores, pero NO se borra el historial de
+   * sus chats (la bandeja lo sigue mostrando como «número eliminado»).
+   * `true` si existía.
+   */
   delete(tenantId: string, id: string): Promise<boolean>;
 }

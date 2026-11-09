@@ -17,12 +17,14 @@ export class InMemoryConversationRepository implements ConversationRepository {
   public readonly stored: StoredMessage[] = [];
   /** Etiquetas de cada contacto (en SQL vienen de Contactos). */
   public readonly contactLabels = new Map<string, ConversationLabel[]>();
+  /** Números eliminados (en SQL, `whatsapp_connections.deleted_at`). */
+  public readonly deletedConnections = new Set<string>();
 
   public async findOrCreate(tenantId: string, connectionId: string, phone: string, contactId: string | null): Promise<Conversation> {
     const existing = [...this.rows.values()].find((row) => row.connectionId === connectionId && row.phone === phone);
     if (existing) return existing;
     const row: Row = {
-      id: randomUUID(), tenantId, connectionId, contactId, phone, botEnabled: true, unreadCount: 0,
+      id: randomUUID(), tenantId, connectionId, contactId, phone, botEnabled: true, unreadCount: 0, connectionDeleted: false,
       createdAt: new Date().toISOString(), lastMessageText: "", lastMessageAuthor: null, lastMessageAt: null
     };
     this.rows.set(row.id, row);
@@ -31,7 +33,7 @@ export class InMemoryConversationRepository implements ConversationRepository {
 
   public async findById(tenantId: string, id: string): Promise<Conversation | null> {
     const row = this.rows.get(id);
-    return row && row.tenantId === tenantId ? row : null;
+    return row && row.tenantId === tenantId ? { ...row, connectionDeleted: this.deletedConnections.has(row.connectionId) } : null;
   }
 
   public async append(message: StoredMessage): Promise<void> {
@@ -100,7 +102,8 @@ export class InMemoryConversationRepository implements ConversationRepository {
     return {
       id: row.id, connectionId: row.connectionId, connectionName: "", contactId: row.contactId, contactName: null, phone: row.phone,
       botEnabled: row.botEnabled, unreadCount: row.unreadCount, lastMessageText: row.lastMessageText, lastMessageAuthor: row.lastMessageAuthor,
-      lastMessageAt: row.lastMessageAt, activeFlowName: null, labels: this.labelsOf(row), createdAt: row.createdAt
+      lastMessageAt: row.lastMessageAt, activeFlowName: null, labels: this.labelsOf(row),
+      connectionDeleted: this.deletedConnections.has(row.connectionId), createdAt: row.createdAt
     };
   }
 }

@@ -199,10 +199,14 @@ export function ConversationList({
                       ) : null}
                       {conversation.unreadCount ? <span className="ios-badge">{conversation.unreadCount}</span> : null}
                     </span>
-                    {conversation.labels.length || connections.length > 1 ? (
+                    {conversation.labels.length || connections.length > 1 || conversation.connectionDeleted ? (
                       <span className="ios-row__extra">
                         <ChatLabels labels={conversation.labels} />
-                        {connections.length > 1 ? <span className="ios-row__connection">{conversation.connectionName}</span> : null}
+                        {conversation.connectionDeleted ? (
+                          <span className="ios-row__connection is-deleted">{conversation.connectionName} · eliminado</span>
+                        ) : connections.length > 1 ? (
+                          <span className="ios-row__connection">{conversation.connectionName}</span>
+                        ) : null}
                       </span>
                     ) : null}
                   </span>
