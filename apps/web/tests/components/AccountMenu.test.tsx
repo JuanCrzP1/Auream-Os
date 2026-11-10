@@ -7,8 +7,8 @@ import { AccountCard } from "../../src/shared/account/AccountCard";
 
 // ---------------------------------------------------------------------------
 // La tarjeta de la cuenta (abajo en la barra lateral) y su menú estándar:
-// quién eres, tu empresa, Mi perfil, Configuración y Equipo, lo que llega
-// «Pronto» (Pagos y suscripciones, Ayuda), el tema y cerrar sesión. Con teclado.
+// quién eres, tu empresa, Mi perfil, Configuración (donde viven Equipo y Plan
+// y pagos), el tema, Ayuda («Pronto») y cerrar sesión. Con teclado.
 // ---------------------------------------------------------------------------
 
 const signOut = vi.fn(async () => undefined);
@@ -71,7 +71,8 @@ describe("tarjeta de la cuenta", () => {
     expect(menu).toHaveTextContent("Dueño");
     const items = screen.getAllByRole("menuitem").map((item) => item.textContent);
     // La tarjeta de la empresa abre sus datos (Configuración); luego las opciones y lo que llega pronto.
-    expect(items).toEqual(["DCDilo CantandoDueño", "Mi perfil", "Configuración", "Equipo", "Pagos y suscripcionesPronto", "AyudaPronto", "Cerrar sesión"]);
+    // Equipo, Plan y pagos y lo demás viven dentro de Configuración.
+    expect(items).toEqual(["DCDilo CantandoDueño", "Mi perfil", "Configuración", "AyudaPronto", "Cerrar sesión"]);
     // El foco entra al menú.
     expect(screen.getAllByRole("menuitem")[0]).toHaveFocus();
   });
@@ -86,7 +87,7 @@ describe("tarjeta de la cuenta", () => {
 
     await userEvent.click(card);
     await userEvent.click(screen.getByRole("menuitem", { name: "Mi perfil" }));
-    expect(screen.getByTestId("where")).toHaveTextContent("/profile");
+    expect(screen.getByTestId("where")).toHaveTextContent("/settings/profile");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
@@ -112,7 +113,7 @@ describe("tarjeta de la cuenta", () => {
     expect(screen.getByRole("menuitem", { name: "Cerrar sesión" })).toHaveFocus();
     await userEvent.keyboard("{Home}");
     await userEvent.keyboard("{Enter}");
-    expect(screen.getByTestId("where")).toHaveTextContent("/settings");
+    expect(screen.getByTestId("where")).toHaveTextContent("/settings/general");
   });
 
   it("elige el tema (claro, oscuro o el del sistema) y cierra sesión", async () => {

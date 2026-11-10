@@ -1,3 +1,5 @@
+import "@shared/ui/controls/controls.css";
+import "./account-pages.css";
 import { useState } from "react";
 import { useAccount } from "@shared/account/AccountContext";
 import { removeCompanyLogo, uploadCompanyLogo } from "@shared/account/accountApi";
@@ -34,7 +36,7 @@ export function CompanySettings() {
   }
 
   return (
-    <>
+    <div className="account-page__body">
       <section className="account-hero" aria-label="Logo de la empresa">
         <ImagePicker
           name={company.name}
@@ -51,6 +53,6 @@ export function CompanySettings() {
         </div>
       </section>
       <CompanyForm company={company} />
-    </>
+    </div>
   );
 }

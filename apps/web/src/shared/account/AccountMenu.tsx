@@ -11,7 +11,8 @@ import { ThemeSwitch } from "./ThemeSwitch";
 import { roleLabel } from "@shared/team/teamRoles";
 
 const FOCUSABLE = '[role="menuitem"], [role="menuitemradio"]';
-const SETTINGS_PATH = "/settings";
+/** Los datos de la empresa: Configuración → General. */
+const SETTINGS_PATH = "/settings/general";
 
 function MenuLink({ link, onNavigate }: { readonly link: AccountMenuLink; readonly onNavigate: () => void }) {
   return (

@@ -11,6 +11,7 @@ import { sendJson } from "../http/sendJson";
 // `/team` — el equipo de la cuenta activa (Configuración → Equipo).
 //
 //   GET    /team                              ver miembros e invitaciones  (team.read)
+//   GET    /team/activity                     lo que pasó en el equipo     (team.read)
 //   POST   /team/invitations                  invitar con enlace           (team.manage)
 //   POST   /team/invitations/:id/renew        enlace nuevo                 (team.manage)
 //   DELETE /team/invitations/:id              cancelar la invitación       (team.manage)
@@ -50,9 +51,9 @@ export async function routeTeamRequest(
   }
   const actor = { tenantId: context.tenantId, userId: context.actorId };
 
-  if (path === "/team" && method === "GET") {
+  if ((path === "/team" || path === "/team/activity") && method === "GET") {
     requireScope(context, TeamPermissions.read, context.tenantId);
-    sendJson(response, 200, await team.list(actor));
+    sendJson(response, 200, path === "/team" ? await team.list(actor) : await team.activity(actor));
     return true;
   }
 

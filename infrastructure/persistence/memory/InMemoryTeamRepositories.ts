@@ -8,6 +8,7 @@ import type {
   InvitationWithInviter
 } from "../../../domains/team/application/InvitationRepository";
 import type { ChangeRoleOutcome, RemoveMemberOutcome, TeamMemberRecord, TeamRepository } from "../../../domains/team/application/TeamRepository";
+import type { TeamActivityEntry, TeamActivityLog, TeamActivityRecord } from "../../../domains/team/application/TeamActivityLog";
 
 // ---------------------------------------------------------------------------
 // Equipo en memoria: pruebas y desarrollo sin base de datos. Un solo estado
@@ -26,6 +27,7 @@ interface MembershipState {
   role: Role;
   status: "active" | "revoked";
   joinedAt: string;
+  lastSeenAt?: string;
 }
 
 export class InMemoryTeamStore {
@@ -55,7 +57,33 @@ export class InMemoryTeamStore {
     findMember: async (tenantId, userId) => this.activeOf(tenantId).find((member) => member.userId === userId) ?? null,
     hasMemberWithEmail: async (tenantId, email) => this.activeOf(tenantId).some((member) => member.email === email),
     changeRole: async (tenantId, userId, role) => this.changeOwnerSafely(tenantId, userId, role === "tenant_owner", (state) => (state.role = role)) as ChangeRoleOutcome,
-    removeMember: async (tenantId, userId) => this.changeOwnerSafely(tenantId, userId, false, (state) => (state.status = "revoked")) as RemoveMemberOutcome
+    removeMember: async (tenantId, userId) => this.changeOwnerSafely(tenantId, userId, false, (state) => (state.status = "revoked")) as RemoveMemberOutcome,
+    touchLastSeen: async (tenantId, userId) => {
+      const state = this.membership(tenantId, userId);
+      if (state?.status === "active") state.lastSeenAt = new Date().toISOString();
+    }
+  };
+
+  /** Registro de actividad (lo que en SQL es `team_activity`). */
+  public readonly activityEntries: Array<TeamActivityEntry & { readonly at: string }> = [];
+
+  public readonly activity: TeamActivityLog = {
+    record: async (entry) => {
+      this.activityEntries.push({ ...entry, at: new Date().toISOString() });
+    },
+    list: async (tenantId, limit) =>
+      this.activityEntries
+        .filter((entry) => entry.tenantId === tenantId)
+        .reverse()
+        .slice(0, limit)
+        .map((entry, index): TeamActivityRecord => ({
+          id: String(index),
+          action: entry.action,
+          actorName: this.people.get(entry.actorId)?.displayName ?? null,
+          targetName: entry.targetEmail ?? (entry.targetUserId ? this.people.get(entry.targetUserId)?.displayName ?? null : null),
+          role: entry.role ?? null,
+          at: entry.at
+        }))
   };
 
   public readonly invitations: InvitationRepository = {
@@ -96,7 +124,7 @@ export class InMemoryTeamStore {
       .map(([key, state]) => {
         const userId = key.slice(tenantId.length + 1);
         const person = this.people.get(userId);
-        return { userId, role: state.role, joinedAt: state.joinedAt, displayName: person?.displayName ?? null, email: person?.email ?? null, photoUrl: person?.photoUrl ?? null };
+        return { userId, role: state.role, joinedAt: state.joinedAt, lastSeenAt: state.lastSeenAt ?? null, displayName: person?.displayName ?? null, email: person?.email ?? null, photoUrl: person?.photoUrl ?? null };
       })
       .sort((a, b) => a.joinedAt.localeCompare(b.joinedAt));
   }

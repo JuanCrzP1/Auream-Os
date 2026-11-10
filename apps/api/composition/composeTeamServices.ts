@@ -2,6 +2,7 @@ import { InvitationServices } from "../../../domains/team/application/Invitation
 import { TeamServices } from "../../../domains/team/application/TeamServices";
 import { SqlInvitationRepository } from "../../../infrastructure/persistence/sql/SqlInvitationRepository";
 import { SqlTeamRepository } from "../../../infrastructure/persistence/sql/SqlTeamRepository";
+import { SqlTeamActivityLog } from "../../../infrastructure/persistence/sql/SqlTeamActivityLog";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 
 // ---------------------------------------------------------------------------
@@ -17,8 +18,9 @@ export interface TeamModule {
 
 export function composeTeamServices(sql: SqlClient): TeamModule {
   const invitations = new SqlInvitationRepository(sql);
+  const log = new SqlTeamActivityLog(sql);
   return {
-    team: new TeamServices(new SqlTeamRepository(sql), invitations),
-    invitations: new InvitationServices(invitations)
+    team: new TeamServices(new SqlTeamRepository(sql), invitations, log),
+    invitations: new InvitationServices(invitations, log)
   };
 }

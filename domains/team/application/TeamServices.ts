@@ -4,6 +4,7 @@ import type {
   CreateInvitationRequest,
   InvitationLinkResponse,
   TeamInvitationSummary,
+  TeamActivityResponse,
   TeamMemberSummary,
   TeamResponse,
   TeamRole
@@ -16,6 +17,7 @@ import { ValidationError } from "../../../platform/observability/errors/Validati
 import { MAX_PENDING_INVITATIONS, invitationExpiry, isInvitationExpired, normalizeInvitationEmail, type Invitation } from "../domain/Invitation";
 import { assignableRoles, canAssign, canManageInvitation, canManageMember, teamRoleOf } from "../domain/TeamPolicy";
 import type { InvitationRepository } from "./InvitationRepository";
+import type { TeamActivityEntry, TeamActivityLog } from "./TeamActivityLog";
 import { hashInvitationToken, newInvitationToken } from "./InvitationToken";
 import type { TeamMemberRecord, TeamRepository } from "./TeamRepository";
 
@@ -39,6 +41,7 @@ export class TeamServices {
   public constructor(
     private readonly members: TeamRepository,
     private readonly invitations: InvitationRepository,
+    private readonly log: TeamActivityLog,
     private readonly now: () => Date = () => new Date(),
     private readonly newToken: () => string = newInvitationToken
   ) {}
@@ -71,10 +74,12 @@ export class TeamServices {
       throw new ConflictError("Tienes demasiadas invitaciones pendientes. Cancela las que ya no uses.");
     }
     const now = this.now();
-    return this.issue(
+    const link = await this.issue(
       { id: existing?.id ?? randomUUID(), tenantId: actor.tenantId, email, role: input.role, tokenHash: "", status: "pending", invitedBy: actor.userId, createdAt: now.toISOString(), expiresAt: "", acceptedBy: null, acceptedAt: null },
       me
     );
+    await this.note({ tenantId: actor.tenantId, actorId: actor.userId, action: existing ? "invitation_renewed" : "invited", targetEmail: email, role: input.role });
+    return link;
   }
 
   /** Enlace nuevo (el anterior deja de servir) y 7 días más. Sirve también para una vencida. */
@@ -82,7 +87,9 @@ export class TeamServices {
     const me = await this.requireMe(actor);
     const invitation = await this.requirePending(actor.tenantId, invitationId);
     if (!canManageInvitation(me.role, invitation.role)) throw new AccessError("Tu rol no puede cambiar esta invitación.");
-    return this.issue({ ...invitation, invitedBy: actor.userId }, me);
+    const link = await this.issue({ ...invitation, invitedBy: actor.userId }, me);
+    await this.note({ tenantId: actor.tenantId, actorId: actor.userId, action: "invitation_renewed", targetEmail: invitation.email, role: invitation.role });
+    return link;
   }
 
   public async revoke(actor: TeamActor, invitationId: string): Promise<void> {
@@ -90,6 +97,7 @@ export class TeamServices {
     const invitation = await this.requirePending(actor.tenantId, invitationId);
     if (!canManageInvitation(me.role, invitation.role)) throw new AccessError("Tu rol no puede cancelar esta invitación.");
     await this.invitations.save({ ...invitation, status: "revoked" });
+    await this.note({ tenantId: actor.tenantId, actorId: actor.userId, action: "invitation_revoked", targetEmail: invitation.email, role: invitation.role });
   }
 
   public async changeRole(actor: TeamActor, userId: string, input: Partial<ChangeMemberRoleRequest>): Promise<TeamResponse> {
@@ -101,6 +109,7 @@ export class TeamServices {
       const outcome = await this.members.changeRole(actor.tenantId, userId, input.role);
       if (outcome === "not_found") throw new NotFoundError("Esa persona ya no está en el equipo.");
       if (outcome === "last_owner") throw new ConflictError("Debe quedar al menos un dueño en la cuenta.");
+      await this.note({ tenantId: actor.tenantId, actorId: actor.userId, action: "role_changed", targetUserId: userId, role: input.role });
     }
     return this.list(actor);
   }
@@ -111,6 +120,27 @@ export class TeamServices {
     const outcome = await this.members.removeMember(actor.tenantId, userId);
     if (outcome === "not_found") throw new NotFoundError("Esa persona ya no está en el equipo.");
     if (outcome === "last_owner") throw new ConflictError("Debe quedar al menos un dueño en la cuenta.");
+    await this.note({ tenantId: actor.tenantId, actorId: actor.userId, action: "removed", targetUserId: userId });
+  }
+
+  /** Lo que pasó en el equipo, lo más reciente primero (todo el equipo lo ve). */
+  public async activity(actor: TeamActor): Promise<TeamActivityResponse> {
+    await this.requireMe(actor);
+    return { entries: await this.log.list(actor.tenantId, 50) };
+  }
+
+  /** Anota que la persona usó la app en esta cuenta («En línea», «Hace 2 horas»). */
+  public async touch(actor: TeamActor): Promise<void> {
+    await this.members.touchLastSeen(actor.tenantId, actor.userId);
+  }
+
+  /** La acción ya ocurrió: si el registro falla, no se deshace ni se le avisa al usuario. */
+  private async note(entry: TeamActivityEntry): Promise<void> {
+    try {
+      await this.log.record(entry);
+    } catch {
+      // Sin registro de esta acción; la acción en sí quedó hecha.
+    }
   }
 
   private async issue(base: Invitation, me: { readonly role: TeamRole; readonly displayName: string | null }): Promise<InvitationLinkResponse> {
@@ -147,7 +177,7 @@ export class TeamServices {
     const role = teamRoleOf(member.role);
     if (!role) return [];
     const isYou = member.userId === myUserId;
-    return [{ userId: member.userId, displayName: member.displayName, email: member.email, photoUrl: member.photoUrl, role, joinedAt: member.joinedAt, isYou, canManage: canManageMember(me, role, isYou) }];
+    return [{ userId: member.userId, displayName: member.displayName, email: member.email, photoUrl: member.photoUrl, role, joinedAt: member.joinedAt, lastSeenAt: member.lastSeenAt, isYou, canManage: canManageMember(me, role, isYou) }];
   }
 
   private toInvitation(invitation: Invitation, invitedByName: string | null, me: TeamRole): TeamInvitationSummary {

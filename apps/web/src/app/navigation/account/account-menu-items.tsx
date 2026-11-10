@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { SIDEBAR_ROUTES } from "../sidebar/sidebar-routes";
 import { SidebarIcons } from "../sidebar/sidebar-icons";
+import { SETTINGS_ROUTES } from "@app/settings/settings-sections";
 
 /**
  * account-menu-items — lo que ofrece el menú de la cuenta (la tarjeta de abajo
@@ -49,10 +50,8 @@ export const AccountMenuIcons = {
 
 /** Tu cuenta y tu empresa. Los datos de la empresa se abren también desde su tarjeta, arriba del menú. */
 export const accountMenuLinks: ReadonlyArray<AccountMenuLink> = [
-  { label: "Mi perfil", hint: "Foto, nombre, correo y contraseña", path: SIDEBAR_ROUTES.profile, icon: SidebarIcons.profile },
-  { label: "Configuración", hint: "Empresa, equipo y apariencia", path: SIDEBAR_ROUTES.settings, icon: SidebarIcons.settings },
-  { label: "Equipo", hint: "Invitar a tu equipo y sus roles", path: SIDEBAR_ROUTES.team, icon: SidebarIcons.team },
-  { label: "Pagos y suscripciones", hint: "Tu plan, métodos de pago y facturas", path: SIDEBAR_ROUTES.billing, icon: SidebarIcons.billing, soon: true }
+  { label: "Mi perfil", hint: "Tu foto, tus datos y tu contraseña", path: SETTINGS_ROUTES.profile, icon: SidebarIcons.profile },
+  { label: "Configuración", hint: "Empresa, equipo, apariencia y más", path: SETTINGS_ROUTES.general, icon: SidebarIcons.settings }
 ];
 
 /** Después de las preferencias. */

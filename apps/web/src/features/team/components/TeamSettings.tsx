@@ -1,25 +1,33 @@
 import "./team.css";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useActiveTenantOptional } from "@shared/auth/tenant/ActiveTenantContext";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { TEAM_ROLE_INFO, type TeamRoleTone } from "@shared/team/teamRoles";
 import { useTeam } from "../hooks/useTeam";
-import { InvitationRow } from "./InvitationRow";
-import { MemberRow } from "./MemberRow";
-import { RolesGuide } from "./RolesGuide";
+import { ActivityTab } from "./ActivityTab";
+import { InvitationsTab } from "./InvitationsTab";
+import { MembersTab } from "./MembersTab";
+import { RolesTab } from "./RolesTab";
 import { TeamDialogs, type TeamDialog } from "./TeamDialogs";
 import { TeamIcons } from "./teamIcons";
 
+type TeamTab = "members" | "invitations" | "roles" | "activity";
+const TABS: ReadonlyArray<TeamTab> = ["members", "invitations", "roles", "activity"];
+const isTab = (value: string | null): value is TeamTab => TABS.some((tab) => tab === value);
+
 /**
- * Configuración → Equipo: quién trabaja en la cuenta y con qué rol, las
- * invitaciones pendientes y qué puede hacer cada rol. Quien administra el
- * equipo invita, cambia roles y quita; el resto lo ve. El servidor decide
- * qué puede tocar cada uno (`assignableRoles` y `canManage`).
+ * Configuración → Equipo: Miembros (buscador, filtro, última vez y menú ⋯),
+ * Invitaciones, Roles y Actividad. Quien administra el equipo invita, cambia
+ * roles y quita; el resto lo ve. El servidor decide qué puede tocar cada uno
+ * (`assignableRoles` y `canManage`). La pestaña viaja en la dirección (`?tab=`).
  */
 export function TeamSettings() {
   const team = useTeam();
   const [dialog, setDialog] = useState<TeamDialog>(null);
+  const [params, setParams] = useSearchParams();
+  const requested = params.get("tab");
+  const tab: TeamTab = isTab(requested) ? requested : "members";
   const tenant = useActiveTenantOptional();
   const companyName =
     (tenant?.state.status === "ready" ? tenant.state.tenants.find((entry) => entry.tenantId === tenant.activeTenantId)?.tenantName : undefined) ?? "nuestro equipo";
@@ -39,81 +47,61 @@ export function TeamSettings() {
     );
   }
 
-  const { members, invitations, myRole, assignableRoles } = team.team;
-  const mine = TEAM_ROLE_INFO[myRole];
+  const view = team.team;
+  const canInvite = view.assignableRoles.length > 0;
+  // Solo en la cuenta: la tarjeta «Trabaja en equipo» ya trae su botón de invitar.
+  const alone = view.members.length === 1 && view.invitations.length === 0;
+  const invite = () => setDialog({ kind: "invite" });
+  const labels: Readonly<Record<TeamTab, string>> = {
+    members: `Miembros · ${view.members.length}`,
+    invitations: `Invitaciones · ${view.invitations.length}`,
+    roles: "Roles",
+    activity: "Actividad"
+  };
 
   return (
-    <section className="team" aria-labelledby="team-title">
-      <header className="team__head">
-        <div>
-          <h2 id="team-title" className="team__title">
-            Equipo
-          </h2>
-          <p className="team__lead">Las personas que trabajan contigo en esta cuenta y lo que puede hacer cada una.</p>
+    <section className="team" aria-label="Equipo">
+      <div className="team__bar">
+        <div className="team-tabs" role="tablist" aria-label="Secciones del equipo">
+          {TABS.map((id) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} className="team-tabs__tab" onClick={() => setParams({ tab: id }, { replace: true })}>
+              {labels[id]}
+            </button>
+          ))}
         </div>
-        {assignableRoles.length > 0 ? (
-          <button type="button" className="ui-btn ui-btn--primary team__invite" onClick={() => setDialog({ kind: "invite" })}>
+        {canInvite && !(alone && tab === "members") ? (
+          <button type="button" className="ui-btn ui-btn--primary team__invite" onClick={invite}>
             {TeamIcons.plus}
-            Invitar
+            Invitar personas
           </button>
         ) : null}
-      </header>
-
-      <div className="team__stats">
-        <Stat icon={TeamIcons.users} value={String(members.length)} label={members.length === 1 ? "miembro" : "miembros"} />
-        <Stat icon={TeamIcons.mail} value={String(invitations.length)} label={invitations.length === 1 ? "invitación pendiente" : "invitaciones pendientes"} />
-        <Stat icon={TeamIcons.shield} value={mine.label} label="tu rol" tone={mine.tone} />
       </div>
 
-      <section className="team__section" aria-labelledby="team-members-title">
-        <h3 id="team-members-title" className="team__section-title">
-          Miembros
-        </h3>
-        <ul className="team__list">
-          {members.map((member) => (
-            <MemberRow
-              key={member.userId}
-              member={member}
-              assignableRoles={assignableRoles}
-              onChangeRole={(role) => team.changeRole(member.userId, role)}
-              onRemove={() => setDialog({ kind: "remove", member })}
-            />
-          ))}
-        </ul>
-      </section>
+      <div role="tabpanel" aria-label={labels[tab]}>
+        {tab === "members" ? (
+          <MembersTab
+            view={view}
+            onInvite={invite}
+            onChangeRole={(userId, role) => team.changeRole(userId, role)}
+            onRemove={(member) => setDialog({ kind: "remove", member })}
+          />
+        ) : null}
+        {tab === "invitations" ? (
+          <InvitationsTab
+            invitations={view.invitations}
+            onRenew={async (invitation) => {
+              const link = await team.renew(invitation.id);
+              setDialog({ kind: "link", link });
+              return link;
+            }}
+            onRevoke={(invitation) => setDialog({ kind: "revoke", invitation })}
+          />
+        ) : null}
+        {tab === "roles" ? <RolesTab /> : null}
+        {tab === "activity" ? <ActivityTab /> : null}
+      </div>
 
-      {invitations.length > 0 ? (
-        <section className="team__section" aria-labelledby="team-invitations-title">
-          <h3 id="team-invitations-title" className="team__section-title">
-            Invitaciones pendientes
-          </h3>
-          <ul className="team__list">
-            {invitations.map((invitation) => (
-              <InvitationRow
-                key={invitation.id}
-                invitation={invitation}
-                onRenew={async () => setDialog({ kind: "link", link: await team.renew(invitation.id) })}
-                onRevoke={() => setDialog({ kind: "revoke", invitation })}
-              />
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <RolesGuide />
-      <TeamDialogs dialog={dialog} team={team} assignableRoles={assignableRoles} companyName={companyName} onClose={() => setDialog(null)} />
+      <TeamDialogs dialog={dialog} team={team} assignableRoles={view.assignableRoles} companyName={companyName} onClose={() => setDialog(null)} />
     </section>
-  );
-}
-
-function Stat({ icon, value, label, tone }: { readonly icon: ReactNode; readonly value: string; readonly label: string; readonly tone?: TeamRoleTone }) {
-  return (
-    <div className={`team-stat${tone ? ` team-stat--${tone}` : ""}`}>
-      <span className="team-stat__icon" aria-hidden="true">
-        {icon}
-      </span>
-      <span className="team-stat__value">{value}</span>{" "}
-      <span className="team-stat__label">{label}</span>
-    </div>
   );
 }

@@ -28,6 +28,8 @@ export interface TeamMemberSummary {
   readonly role: TeamRole;
   /** Desde cuándo está en la cuenta (ISO). */
   readonly joinedAt: string;
+  /** La última vez que usó la app en esta cuenta (ISO); `null` si aún no. */
+  readonly lastSeenAt: string | null;
   /** Es quien pregunta. */
   readonly isYou: boolean;
   /** Si quien pregunta puede cambiarle el rol o quitarlo. */
@@ -99,4 +101,20 @@ export interface AcceptInvitationResponse {
   readonly role: TeamRole;
   /** `false` si ya pertenecías a esa cuenta (no se cambió nada). */
   readonly joined: boolean;
+}
+
+export type TeamActivityAction = "invited" | "invitation_renewed" | "invitation_revoked" | "joined" | "role_changed" | "removed";
+
+export interface TeamActivityItem {
+  readonly id: string;
+  readonly action: TeamActivityAction;
+  readonly actorName: string | null;
+  readonly targetName: string | null;
+  readonly role: TeamRole | null;
+  readonly at: string;
+}
+
+/** `GET /team/activity` */
+export interface TeamActivityResponse {
+  readonly entries: ReadonlyArray<TeamActivityItem>;
 }

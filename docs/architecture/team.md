@@ -1,6 +1,6 @@
 # Equipo: invitar, roles y permisos
 
-**Configuración → Equipo** (`/settings?tab=team`) y la página del enlace (`/invite/:token`). Dominio: [`domains/team`](../../domains/team/README.md) · web: [`features/team`](../../apps/web/src/features/team/README.md).
+**Configuración → Equipo** (`/settings/team`) y la página del enlace (`/invite/:token`). Dominio: [`domains/team`](../../domains/team/README.md) · web: [`features/team`](../../apps/web/src/features/team/README.md).
 
 ## Cómo se invita (como Slack, Notion o HubSpot)
 
@@ -27,6 +27,21 @@
 - Quitar a alguien revoca su membresía al instante; sus conversaciones y lo que hizo se conservan. Si vuelve con una invitación nueva, la membresía se reactiva con el rol invitado.
 - **El Asesor ve las automatizaciones sin editarlas** (decisión del dueño, 2026-11-10): sin `flows.write` ni `credentials.read`. Sigue respondiendo chats y mandando flujos a mano (eso es `conversations.write`).
 
+## La pantalla
+
+Cuatro pestañas (viajan en la dirección, `?tab=`):
+
+- **Miembros**: buscador (sin importar tildes), filtro por rol y la tabla: persona, **última vez** («En línea», «Hace 2 h», «Aún no ha entrado»), desde cuándo está, su rol y el menú ⋯ (cambiar rol o quitar) en quien puedes administrar. Si estás solo, arriba la tarjeta «Trabaja en equipo» con el botón de invitar.
+- **Invitaciones**: las pendientes, con «Enlace nuevo» y «Retirar invitación».
+- **Roles**: una tarjeta por rol con lo que puede en cada área (la tabla de arriba).
+- **Actividad**: quién invitó, entró, cambió un rol, retiró una invitación o quitó a alguien, y cuándo (las últimas 50).
+
+**Invitar a varios a la vez**: los correos se escriben como chips (Enter, coma o espacio; se pegan varios; los que no son correo quedan en rojo; hasta 20) con un mismo rol. Se invitan uno por uno y se muestra el enlace de cada uno, o por qué no se pudo.
+
+**Última vez.** Cada petición de una persona a su cuenta anota `memberships.last_seen_at` en segundo plano (`apps/api/middleware/recordLastSeen.ts`): como mucho una vez por minuto por persona y cuenta (en memoria de la instancia y en la base), sin frenar la respuesta.
+
+**Actividad.** `TeamServices` e `InvitationServices` anotan cada acción en `team_activity` (`TeamActivityLog`); si anotar falla, la acción igual se hace. Los nombres salen de `user_profiles` al leer.
+
 ## Lo que ve la web según los permisos
 
 `/me/tenants` trae, por cada cuenta, sus `permissions` (derivados en el servidor de `ROLE_SCOPES`). `useCan(permiso)` (`shared/auth/tenant/usePermissions.ts`) los consulta: solo dice «no» cuando el servidor ya lo confirmó; mientras cargan, «sí» (la API protege igual con 403).
@@ -47,14 +62,15 @@ El correo y el nombre con el que se registró los firma Neon Auth en el token. A
 | `POST /team/invitations` | `team.manage` | Invitar (devuelve el enlace una vez) |
 | `POST /team/invitations/:id/renew` · `DELETE /team/invitations/:id` | `team.manage` | Enlace nuevo · retirar |
 | `PATCH /team/members/:userId` · `DELETE /team/members/:userId` | `team.manage` | Cambiar rol · quitar |
+| `GET /team/activity` | `team.read` | Lo último que pasó en el equipo |
 | `GET /invitations/:token` | Cualquiera con el enlace | La empresa, quién invita, el rol y el correo a medias |
 | `POST /me/invitations/:token/accept` | Con sesión, sin cuenta elegida | Unirse |
 
-Solo personas: una credencial de máquina recibe 403 en `/team`. Base: `029_team_invitations.sql` (`team_invitations` y `user_profiles.email`).
+Solo personas: una credencial de máquina recibe 403 en `/team`. Base: `029_team_invitations.sql` (`team_invitations` y `user_profiles.email`) y `030_team_activity.sql` (`team_activity` y `memberships.last_seen_at`).
 
 ## Pruebas
 
-`tests/unit/teamPolicy.test.ts`, `tests/unit/teamServices.test.ts`, `tests/unit/teamInvitations.test.ts`, `tests/security/routeTeam.test.ts`, `tests/integration/teamPersistence.test.ts` (PostgreSQL real, con dos dueños a la vez), `apps/web/tests/components/TeamSettings.test.tsx`, `AcceptInvitationPage.test.tsx` y `ReadOnlyAutomations.test.tsx`.
+`tests/unit/teamPolicy.test.ts`, `tests/unit/teamServices.test.ts`, `tests/unit/teamInvitations.test.ts`, `tests/security/routeTeam.test.ts`, `tests/integration/teamPersistence.test.ts` (PostgreSQL real, con dos dueños a la vez), `apps/web/tests/components/TeamSettings.test.tsx` (pestañas, buscador, menú ⋯, invitar a uno y a varios, actividad), `AcceptInvitationPage.test.tsx` y `ReadOnlyAutomations.test.tsx`.
 
 ## Después
 

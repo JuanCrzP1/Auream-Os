@@ -47,9 +47,8 @@ La barra lateral tiene el trabajo del día, en orden fijo: `app/navigation/sideb
 | Ventas | `/sales` | `features/sales` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
 | Conexiones | `/connections` | `features/connections` | `IMPLEMENTADO` |
 | Integraciones | `/integrations` | `features/integrations` | `IMPLEMENTADO` |
-| Mi perfil | `/profile` | `features/account` | `IMPLEMENTADO` — menú de la cuenta |
-| Configuración | `/settings` | `features/account` | `IMPLEMENTADO` — Empresa y Apariencia, menú de la cuenta |
-| Equipo · Pagos y suscripciones · Ayuda | `/team` · `/billing` · `/help` | — | `NO IMPLEMENTADO` — «Pronto» en el menú de la cuenta |
+| Configuración | `/settings/:section` | `app/settings` (+ `features/account`, `features/team`) | `IMPLEMENTADO` — a pantalla completa, sin la barra: Mi perfil, Apariencia, General, Equipo; Plan y pagos y Seguridad «Pronto». `/profile`, `/team`, `/billing` y `/settings?tab=` llevan a su sección |
+| Ayuda | `/help` | — | `NO IMPLEMENTADO` — «Pronto» en el menú de la cuenta |
 
 Ninguna opción visible manda a otra pantalla sin avisar: las que se están construyendo tienen su página en su módulo (`app/router/moduleRoutes.tsx`, `app/router/accountRoutes.tsx`).
 
@@ -136,5 +135,6 @@ Los módulos de la aplicación (Contactos, Integraciones…) comparten:
 - `page/page.css` — `.ui-page`, cabecera, pestañas y panel.
 - `controls/controls.css` — botones (`.ui-btn`), campos, errores de formulario y el diálogo centrado (`.ui-overlay` / `.ui-dialog`).
 - `state/StateCard` — la tarjeta de error, vacío o sin resultados, con `RetryButton` e iconos (`stateIcons`).
+- `settings-layout/SettingsLayout` — el marco de Configuración a pantalla completa (menú por grupos, «Volver a Auream», encabezado de la sección). No conoce módulos: las secciones las arma `app/settings`. «Volver» usa `shared/navigation/lastAppLocation.ts`.
 
 Cada módulo conserva solo lo propio en su CSS (la tabla de Contactos, las tarjetas de Integraciones). Una feature no importa de otra: lo que usan dos o más vive aquí.

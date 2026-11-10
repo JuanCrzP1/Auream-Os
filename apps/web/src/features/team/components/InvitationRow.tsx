@@ -1,5 +1,5 @@
 import "./team-role.css";
-import "./team-row.css";
+import "./invitation-row.css";
 import { useState } from "react";
 import type { TeamInvitationSummary } from "@contracts/TeamContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
@@ -46,18 +46,18 @@ export function InvitationRow({
   };
 
   return (
-    <li className="team-row team-row--invitation">
-      <span className="team-row__pending" aria-hidden="true">
+    <li className="invite-row">
+      <span className="invite-row__icon" aria-hidden="true">
         {TeamIcons.mail}
       </span>
-      <div className="team-row__who">
-        <span className="team-row__name">{invitation.email}</span>
-        <span className="team-row__meta">
-          {invitation.expired ? <span className="team-row__expired">Venció</span> : expiresIn(invitation.expiresAt)}
+      <div className="invite-row__who">
+        <span className="invite-row__email">{invitation.email}</span>
+        <span className="invite-row__meta">
+          {invitation.expired ? <span className="invite-row__expired">Venció</span> : expiresIn(invitation.expiresAt)}
           {invitation.invitedByName ? ` · Invitó ${invitation.invitedByName}` : ""}
         </span>
         {error ? (
-          <span className="team-row__error" role="alert">
+          <span className="invite-row__error" role="alert">
             {error}
           </span>
         ) : null}
@@ -66,16 +66,16 @@ export function InvitationRow({
       <span className={`team-role team-role--${info.tone}`}>{info.label}</span>
 
       {invitation.canManage ? (
-        <span className="team-row__actions">
-          <button type="button" className="ui-btn ui-btn--ghost team-row__renew" onClick={() => void renew()} disabled={busy}>
+        <span className="invite-row__actions">
+          <button type="button" className="ui-btn ui-btn--ghost invite-row__renew" onClick={() => void renew()} disabled={busy}>
             {busy ? "Generando…" : "Enlace nuevo"}
           </button>
-          <button type="button" className="team-row__icon team-row__icon--danger" aria-label={`Retirar la invitación a ${invitation.email}`} title="Retirar invitación" onClick={onRevoke}>
+          <button type="button" className="invite-row__remove" aria-label={`Retirar la invitación a ${invitation.email}`} title="Retirar invitación" onClick={onRevoke}>
             {TeamIcons.close}
           </button>
         </span>
       ) : (
-        <span className="team-row__icon-space" aria-hidden="true" />
+        <span className="invite-row__space" aria-hidden="true" />
       )}
     </li>
   );

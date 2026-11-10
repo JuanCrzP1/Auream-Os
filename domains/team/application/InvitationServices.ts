@@ -4,6 +4,7 @@ import { ConflictError } from "../../../platform/observability/errors/ConflictEr
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
 import { invitationPreviewStatus, maskEmail } from "../domain/Invitation";
 import type { InvitationPreviewRecord, InvitationRepository } from "./InvitationRepository";
+import type { TeamActivityLog } from "./TeamActivityLog";
 import { hashInvitationToken, isWellFormedInvitationToken } from "./InvitationToken";
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,7 @@ const NOT_FOUND = "Esta invitación no existe. Revisa el enlace o pide uno nuevo
 export class InvitationServices {
   public constructor(
     private readonly invitations: InvitationRepository,
+    private readonly log: TeamActivityLog,
     private readonly now: () => Date = () => new Date()
   ) {}
 
@@ -65,6 +67,10 @@ export class InvitationServices {
 
     const outcome = await this.invitations.accept(invitation.id, acceptor.userId, this.now());
     if (outcome === "not_pending") throw new ConflictError("Esta invitación ya no está disponible. Pide un enlace nuevo a quien te invitó.");
+    if (outcome === "joined") {
+      // Ya entró: si el registro falla, igual queda dentro.
+      await this.log.record({ tenantId: invitation.tenantId, actorId: acceptor.userId, action: "joined", targetUserId: acceptor.userId, role: invitation.role }).catch(() => undefined);
+    }
     return joinedAnswer(outcome === "joined");
   }
 

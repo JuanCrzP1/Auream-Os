@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { SqlClient } from "../../infrastructure/persistence/sql/SqlClient.js";
 import { SqlInvitationRepository } from "../../infrastructure/persistence/sql/SqlInvitationRepository.js";
 import { SqlTeamRepository } from "../../infrastructure/persistence/sql/SqlTeamRepository.js";
+import { SqlTeamActivityLog } from "../../infrastructure/persistence/sql/SqlTeamActivityLog.js";
 import { SqlUserProfileRepository } from "../../infrastructure/persistence/sql/SqlUserProfileRepository.js";
 import { InvitationServices } from "../../domains/team/application/InvitationServices.js";
 import { TeamServices } from "../../domains/team/application/TeamServices.js";
@@ -34,7 +35,8 @@ async function addPerson(tenantId: string, role: string, name: string, email: st
 
 const services = () => {
   const invitations = new SqlInvitationRepository(sql);
-  return { team: new TeamServices(new SqlTeamRepository(sql), invitations), invitations: new InvitationServices(invitations) };
+  const log = new SqlTeamActivityLog(sql);
+  return { team: new TeamServices(new SqlTeamRepository(sql), invitations, log), invitations: new InvitationServices(invitations, log) };
 };
 
 beforeAll(() => {
@@ -75,6 +77,15 @@ describe("Equipo en PostgreSQL", () => {
       ["María", "maria@test.co", "operator"]
     ]);
     expect(view.invitations).toEqual([]);
+
+    // La actividad lo cuenta con nombres, y la «última vez» se anota.
+    const { entries } = await team.activity({ tenantId, userId: owner });
+    expect(entries.map((entry) => [entry.action, entry.actorName, entry.targetName])).toEqual([
+      ["joined", "María", "María"],
+      ["invited", "Camilo", "maria@test.co"]
+    ]);
+    await team.touch({ tenantId, userId: maria });
+    expect((await team.list({ tenantId, userId: owner })).members.find((m) => m.email === "maria@test.co")?.lastSeenAt).toEqual(expect.any(String));
     await expect(team.invite({ tenantId, userId: owner }, { email: "maria@test.co", role: "viewer" })).rejects.toBeInstanceOf(ConflictError);
   });
 

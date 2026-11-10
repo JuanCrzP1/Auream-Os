@@ -20,13 +20,14 @@ interface MemberRow {
   readonly user_id: string;
   readonly role: string;
   readonly created_at: Date | string;
+  readonly last_seen_at: Date | string | null;
   readonly display_name: string | null;
   readonly email: string | null;
   readonly photo_url: string | null;
 }
 
 const SELECT_MEMBERS = `
-  select m.user_id, m.role, m.created_at, p.display_name, p.email, p.photo_url
+  select m.user_id, m.role, m.created_at, m.last_seen_at, p.display_name, p.email, p.photo_url
     from memberships m
     left join user_profiles p on p.user_id = m.user_id
    where m.tenant_id = $1 and m.status = 'active'`;
@@ -38,6 +39,7 @@ function toRecord(row: MemberRow): TeamMemberRecord {
     userId: row.user_id,
     role: row.role as Role,
     joinedAt: iso(row.created_at),
+    lastSeenAt: row.last_seen_at ? iso(row.last_seen_at) : null,
     displayName: row.display_name,
     email: row.email,
     photoUrl: row.photo_url
@@ -97,6 +99,16 @@ export class SqlTeamRepository implements TeamRepository {
       await tx.query("update memberships set role = $3, updated_at = now() where tenant_id = $1 and user_id = $2", [tenantId, userId, role]);
       return "changed";
     });
+  }
+
+  public async touchLastSeen(tenantId: string, userId: string): Promise<void> {
+    // Una escritura por minuto como mucho, aunque lleguen muchas peticiones.
+    await this.sql.query(
+      `update memberships set last_seen_at = now()
+        where tenant_id = $1 and user_id = $2 and status = 'active'
+          and (last_seen_at is null or last_seen_at < now() - interval '1 minute')`,
+      [tenantId, userId]
+    );
   }
 
   public async removeMember(tenantId: string, userId: string): Promise<RemoveMemberOutcome> {

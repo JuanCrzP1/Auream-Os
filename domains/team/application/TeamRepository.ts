@@ -16,6 +16,7 @@ export interface TeamMemberRecord {
   readonly role: Role;
   /** Desde cuándo está en la cuenta (ISO). */
   readonly joinedAt: string;
+  readonly lastSeenAt: string | null;
   readonly displayName: string | null;
   readonly email: string | null;
   readonly photoUrl: string | null;
@@ -35,4 +36,6 @@ export interface TeamRepository {
   changeRole(tenantId: string, userId: string, role: TeamRole): Promise<ChangeRoleOutcome>;
   /** Le quita el acceso (membresía revocada; sus chats y datos quedan), salvo que sea el último dueño. */
   removeMember(tenantId: string, userId: string): Promise<RemoveMemberOutcome>;
+  /** Anota que la persona usó la app en esta cuenta (como mucho una vez por minuto). */
+  touchLastSeen(tenantId: string, userId: string): Promise<void>;
 }

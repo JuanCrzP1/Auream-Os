@@ -25,7 +25,7 @@ function setup() {
     .addMember(T, { userId: ADMIN, displayName: "Luis", email: "luis@x.co" }, "tenant_admin", "2026-11-02T00:00:00.000Z")
     .addMember(T, { userId: AGENT, displayName: "Ana", email: "ana@x.co" }, "operator", "2026-11-03T00:00:00.000Z");
   let issued = 0;
-  const team = new TeamServices(store.members, store.invitations, () => NOW, () => `token${++issued}`.padEnd(43, "x"));
+  const team = new TeamServices(store.members, store.invitations, store.activity, () => NOW, () => `token${++issued}`.padEnd(43, "x"));
   return { store, team };
 }
 
@@ -127,5 +127,30 @@ describe("TeamServices — roles y salidas", () => {
     expect(await store.members.changeRole(T, OWNER, "tenant_admin")).toBe("last_owner");
     expect(await store.members.removeMember(T, OWNER)).toBe("last_owner");
     expect(store.membership(T, OWNER)).toMatchObject({ role: "tenant_owner", status: "active" });
+  });
+});
+
+describe("TeamServices — actividad y última vez", () => {
+  it("cada acción queda en la actividad del equipo, lo más reciente primero", async () => {
+    const { team } = setup();
+    const link = await team.invite(as(OWNER), { email: "maria@x.co", role: "operator" });
+    await team.revoke(as(OWNER), link.invitation.id);
+    await team.changeRole(as(OWNER), AGENT, { role: "viewer" });
+    await team.remove(as(OWNER), AGENT);
+
+    const { entries } = await team.activity(as(ADMIN));
+    expect(entries.map((entry) => [entry.action, entry.actorName, entry.targetName, entry.role])).toEqual([
+      ["removed", "Camilo", "Ana", null],
+      ["role_changed", "Camilo", "Ana", "viewer"],
+      ["invitation_revoked", "Camilo", "maria@x.co", "operator"],
+      ["invited", "Camilo", "maria@x.co", "operator"]
+    ]);
+  });
+
+  it("anota la última vez que alguien usó la app en la cuenta", async () => {
+    const { team } = setup();
+    expect((await team.list(as(OWNER))).members.find((m) => m.userId === AGENT)?.lastSeenAt).toBeNull();
+    await team.touch(as(AGENT));
+    expect((await team.list(as(OWNER))).members.find((m) => m.userId === AGENT)?.lastSeenAt).toEqual(expect.any(String));
   });
 });

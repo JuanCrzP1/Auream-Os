@@ -1,3 +1,4 @@
+import "./account-pages.css";
 import "./appearance-settings.css";
 import { useTheme } from "@shared/theme/context/ThemeContext";
 import type { ThemePreference } from "@shared/theme/contracts/Theme";

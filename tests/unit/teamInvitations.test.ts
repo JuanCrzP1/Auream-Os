@@ -24,8 +24,8 @@ function setup() {
   const store = new InMemoryTeamStore()
     .addCompany(T, "Dilo Cantando", "https://blob/logo.png")
     .addMember(T, { userId: OWNER, displayName: "Camilo", email: "camilo@x.co" }, "tenant_owner");
-  const team = new TeamServices(store.members, store.invitations, clock);
-  const invitations = new InvitationServices(store.invitations, clock);
+  const team = new TeamServices(store.members, store.invitations, store.activity, clock);
+  const invitations = new InvitationServices(store.invitations, store.activity, clock);
   return { store, team, invitations, later: (ms: number) => (now = new Date(NOW.getTime() + ms)) };
 }
 

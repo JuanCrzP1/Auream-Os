@@ -1,0 +1,81 @@
+/* El resultado de invitar a varios: un renglón por correo con su enlace. Tokens
+ * del tema, salvo el verde de WhatsApp. */
+
+.invite-results {
+  display: grid;
+  gap: 12px;
+}
+
+.invite-results h2,
+.invite-results p {
+  margin: 0;
+}
+
+.invite-results__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  list-style: none;
+}
+
+.invite-results__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.invite-results__item + .invite-results__item {
+  border-top: 1px solid var(--line);
+}
+
+.invite-results__email {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invite-results__error {
+  color: var(--rose);
+  font-size: 0.8rem;
+}
+
+.invite-results__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.invite-results__btn {
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+
+.invite-results__whatsapp {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #25d366;
+  color: #ffffff;
+}
+
+.invite-results__whatsapp svg {
+  width: 17px;
+  height: 17px;
+}
+
+.invite-results__whatsapp:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

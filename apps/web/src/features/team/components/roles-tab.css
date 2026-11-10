@@ -1,0 +1,91 @@
+/* Roles: una tarjeta por rol con lo que puede hacer en cada área. Solo tokens del tema. */
+
+.roles-tab {
+  display: grid;
+  gap: 14px;
+}
+
+.roles-tab__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.role-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--elevation-inset);
+}
+
+.role-card--owner {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  background:
+    radial-gradient(260px 140px at 0% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%),
+    var(--surface);
+}
+
+.role-card__head .team-role {
+  justify-self: start;
+}
+
+.role-card__description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.role-card__list {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.role-card__item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.role-card__mark {
+  font-weight: 800;
+  text-align: center;
+}
+
+.role-card__area {
+  color: var(--text);
+}
+
+.role-card__access {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.role-card__item--all .role-card__mark,
+.role-card__item--edit .role-card__mark,
+.role-card__item--most .role-card__mark,
+.role-card__item--all .role-card__access,
+.role-card__item--edit .role-card__access {
+  color: var(--status-active-text);
+}
+
+.role-card__item--none .role-card__area,
+.role-card__item--none .role-card__mark {
+  color: var(--muted);
+}
+
+.roles-tab__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}

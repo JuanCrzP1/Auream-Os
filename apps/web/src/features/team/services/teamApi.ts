@@ -3,6 +3,7 @@ import type {
   CreateInvitationRequest,
   InvitationLinkResponse,
   InvitationPreviewResponse,
+  TeamActivityResponse,
   TeamResponse,
   TeamRole
 } from "@contracts/TeamContracts";
@@ -16,6 +17,7 @@ const id = encodeURIComponent;
 
 export const teamApi = {
   get: () => builderApiClient.get<TeamResponse>("/team"),
+  activity: () => builderApiClient.get<TeamActivityResponse>("/team/activity"),
   invite: (request: CreateInvitationRequest) => builderApiClient.post<InvitationLinkResponse>("/team/invitations", request),
   renew: (invitationId: string) => builderApiClient.post<InvitationLinkResponse>(`/team/invitations/${id(invitationId)}/renew`),
   revoke: (invitationId: string) => builderApiClient.delete(`/team/invitations/${id(invitationId)}`),

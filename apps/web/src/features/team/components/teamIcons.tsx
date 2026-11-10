@@ -56,6 +56,23 @@ export const TeamIcons = {
       <path d="M6 6l12 12M18 6 6 18" />
     </Stroke>
   ),
+  search: (
+    <Stroke>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </Stroke>
+  ),
+  link: (
+    <Stroke>
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+    </Stroke>
+  ),
+  swap: (
+    <Stroke>
+      <path d="M7 4 4 7l3 3M4 7h13M17 20l3-3-3-3M20 17H7" />
+    </Stroke>
+  ),
   /** Burbuja de chat (el botón de WhatsApp pone el verde). */
   chat: (
     <Stroke>

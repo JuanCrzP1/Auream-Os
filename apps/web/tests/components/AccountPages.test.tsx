@@ -3,13 +3,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { CompanyResponse, MyProfileResponse } from "@contracts/AccountContracts";
-import { ProfilePage } from "../../src/features/account/pages/ProfilePage";
-import { SettingsPage } from "../../src/features/account/pages/SettingsPage";
+import { AppearanceSettings } from "../../src/features/account/components/AppearanceSettings";
+import { CompanySettings } from "../../src/features/account/components/CompanySettings";
+import { ProfileSettings } from "../../src/features/account/components/ProfileSettings";
 import { ThemeProvider } from "../../src/shared/theme/context/ThemeContext";
 
 // ---------------------------------------------------------------------------
-// Mi perfil (foto, nombre, WhatsApp personal, correo, contraseña) y Empresa
-// (logo, nombre, zona horaria): lo que se guarda va a la API y se refleja en la
+// Configuración → Mi perfil (foto, nombre, WhatsApp personal, correo, contraseña)
+// y General (logo, nombre, zona horaria): lo que se guarda va a la API y se refleja en la
 // cuenta compartida (la tarjeta de la barra lateral cambia al instante).
 // ---------------------------------------------------------------------------
 
@@ -46,10 +47,10 @@ beforeEach(() => {
 
 const page = (element: JSX.Element) => render(<MemoryRouter>{element}</MemoryRouter>);
 
-describe("Mi perfil", () => {
+describe("Configuración → Mi perfil", () => {
   it("muestra tus datos y guarda nombre y WhatsApp personal con su prefijo", async () => {
     api.updateMyProfile.mockResolvedValue({ displayName: "Juan C. Cruz", phone: "+573009998877", photoUrl: null });
-    page(<ProfilePage />);
+    page(<ProfileSettings />);
     expect(screen.getByLabelText("Nombre completo")).toHaveValue("Juan Camilo");
     expect(screen.getByLabelText("WhatsApp personal")).toHaveValue("3001234567");
 
@@ -66,7 +67,7 @@ describe("Mi perfil", () => {
 
   it("sube la foto al elegirla y rechaza archivos que no son imagen sin subirlos", async () => {
     api.uploadProfilePhoto.mockResolvedValue({ displayName: "Juan Camilo", phone: null, photoUrl: "https://blob.example/p.png" });
-    page(<ProfilePage />);
+    page(<ProfileSettings />);
     const input = screen.getByLabelText("Elegir foto");
 
     await userEvent.upload(input, new File(["x"], "foto.png", { type: "image/png" }));
@@ -77,23 +78,22 @@ describe("Mi perfil", () => {
     expect(api.uploadProfilePhoto).toHaveBeenCalledTimes(1);
   });
 
-  it("muestra el correo de acceso (sin editar: lo cambia soporte) y la pestaña Seguridad", async () => {
-    page(<ProfilePage />);
+  it("muestra el correo de acceso (sin editar: lo cambia soporte) y la contraseña debajo", async () => {
+    page(<ProfileSettings />);
     expect(screen.getAllByText("juan@example.com").length).toBeGreaterThan(0);
     expect(screen.getByText(/no se cambia desde aquí/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cambiar correo" })).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("tab", { name: "Seguridad" }));
     await userEvent.type(screen.getByLabelText("Nueva contraseña"), "corta");
     expect(screen.getByRole("alert")).toHaveTextContent("al menos 8 caracteres");
     expect(screen.getByRole("button", { name: "Cambiar contraseña" })).toBeDisabled();
   });
 });
 
-describe("Configuración → Empresa", () => {
+describe("Configuración → General", () => {
   it("el dueño cambia nombre y zona horaria; avisa si usa la de la plataforma", async () => {
     api.updateCompany.mockResolvedValue({ ...COMPANY, name: "Dilo Cantando SAS", timezone: "America/Mexico_City", timezoneIsDefault: false });
-    page(<SettingsPage />);
+    page(<CompanySettings />);
     expect(screen.getByText(/rige la de la plataforma/)).toBeInTheDocument();
 
     await userEvent.clear(screen.getByLabelText("Nombre de la empresa"));
@@ -107,7 +107,7 @@ describe("Configuración → Empresa", () => {
 
   it("quien no es dueño la ve sin poder cambiarla", () => {
     state.company = { ...COMPANY, canEdit: false };
-    page(<SettingsPage />);
+    page(<CompanySettings />);
     expect(screen.getByLabelText("Nombre de la empresa")).toBeDisabled();
     expect(screen.getByLabelText("Zona horaria")).toBeDisabled();
     expect(screen.getByText("Solo el dueño de la cuenta puede cambiar estos datos.")).toBeInTheDocument();
@@ -121,11 +121,10 @@ describe("Configuración → Apariencia", () => {
     render(
       <MemoryRouter>
         <ThemeProvider>
-          <SettingsPage />
+          <AppearanceSettings />
         </ThemeProvider>
       </MemoryRouter>
     );
-    await userEvent.click(screen.getByRole("tab", { name: "Apariencia" }));
     const system = screen.getByRole("radio", { name: /Sistema/ });
     await userEvent.click(system);
     expect(system).toHaveAttribute("aria-checked", "true");

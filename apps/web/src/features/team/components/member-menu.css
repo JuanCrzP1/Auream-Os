@@ -1,0 +1,135 @@
+/* El menú ⋯ de un miembro: cambiar rol y quitar. Solo tokens del tema. */
+
+.member-menu {
+  position: relative;
+  justify-self: end;
+}
+
+.member-menu__trigger {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.member-menu__trigger svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.member-menu__trigger:hover,
+.member-menu__trigger[aria-expanded="true"] {
+  background: var(--chip-bg-hover);
+  color: var(--primary);
+}
+
+.member-menu__trigger:focus-visible,
+.member-menu__item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.member-menu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  display: grid;
+  gap: 2px;
+  min-width: 210px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-floating);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow), var(--elevation-inset);
+  animation: member-menu-in var(--speed-fast) var(--ease-out);
+}
+
+.member-menu__label {
+  margin: 4px 8px 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.member-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.member-menu__item:hover {
+  background: var(--chip-bg);
+}
+
+.member-menu__item--danger {
+  color: var(--rose);
+}
+
+.member-menu__item--danger:hover {
+  background: color-mix(in srgb, var(--rose) 10%, transparent);
+}
+
+.member-menu__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.member-menu__dot--owner {
+  background: var(--primary);
+}
+
+.member-menu__dot--admin {
+  background: var(--slate);
+}
+
+.member-menu__dot--agent {
+  background: var(--teal);
+}
+
+.member-menu__check {
+  margin-left: auto;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.member-menu__divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+
+@keyframes member-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-menu__panel {
+    animation: none;
+  }
+}

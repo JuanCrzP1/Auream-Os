@@ -5,15 +5,13 @@ import type { TeamMemberSummary, TeamRole } from "@contracts/TeamContracts";
 import { AccountAvatar } from "@shared/account/AccountAvatar";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { TEAM_ROLE_INFO } from "@shared/team/teamRoles";
-import { TeamIcons } from "./teamIcons";
-
-const SINCE = new Intl.DateTimeFormat("es", { month: "short", year: "numeric" });
+import { MONTH_YEAR, lastSeenLabel } from "../teamTime";
+import { MemberMenu } from "./MemberMenu";
 
 /**
- * Un miembro del equipo: foto o iniciales, nombre, correo, desde cuándo está
- * y su rol. Si quien mira puede administrarlo, el rol se cambia ahí mismo y
- * aparece «Quitar». El servidor decide `canManage` (nadie se toca a sí mismo,
- * un administrador no toca a los dueños).
+ * Un miembro en la tabla del equipo: foto o iniciales, nombre y correo, la
+ * última vez que usó la app, desde cuándo está, su rol y el menú ⋯ (si quien
+ * mira puede administrarlo; lo decide el servidor con `canManage`).
  */
 export function MemberRow({
   member,
@@ -26,62 +24,42 @@ export function MemberRow({
   readonly onChangeRole: (role: TeamRole) => Promise<unknown>;
   readonly onRemove: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const info = TEAM_ROLE_INFO[member.role];
   const name = member.displayName || member.email || "Sin nombre todavía";
   // Sin nombre, el correo hace de nombre y no se repite abajo.
   const contact = member.displayName || !member.email ? member.email ?? "Su correo aparece cuando vuelva a entrar" : null;
-  const meta = [contact, `Desde ${SINCE.format(new Date(member.joinedAt))}`].filter(Boolean).join(" · ");
+  const seen = member.isYou ? { text: "En línea", online: true } : lastSeenLabel(member.lastSeenAt);
 
-  const change = async (role: TeamRole) => {
-    setBusy(true);
+  const change = (role: TeamRole) => {
     setError(null);
-    try {
-      await onChangeRole(role);
-    } catch (e) {
-      setError(apiErrorMessage(e, "No se pudo cambiar el rol. Inténtalo de nuevo."));
-    } finally {
-      setBusy(false);
-    }
+    onChangeRole(role).catch((e: unknown) => setError(apiErrorMessage(e, "No se pudo cambiar el rol. Inténtalo de nuevo.")));
   };
 
   return (
     <li className="team-row">
-      <AccountAvatar name={name} imageUrl={member.photoUrl} size={40} />
-      <div className="team-row__who">
-        <span className="team-row__name">
-          {name}
-          {member.isYou ? <span className="team-row__you">Tú</span> : null}
-        </span>
-        <span className="team-row__meta">{meta}</span>
-        {error ? (
-          <span className="team-row__error" role="alert">
-            {error}
+      <div className="team-row__person">
+        <AccountAvatar name={name} imageUrl={member.photoUrl} size={40} />
+        <div className="team-row__who">
+          <span className="team-row__name">
+            {name}
+            {member.isYou ? <span className="team-row__you">Tú</span> : null}
           </span>
-        ) : null}
+          {contact ? <span className="team-row__meta">{contact}</span> : null}
+          {error ? (
+            <span className="team-row__error" role="alert">
+              {error}
+            </span>
+          ) : null}
+        </div>
       </div>
-
+      <span className={`team-row__seen${seen.online ? " team-row__seen--online" : ""}`}>{seen.text}</span>
+      <span className="team-row__since">{MONTH_YEAR.format(new Date(member.joinedAt))}</span>
+      <span className={`team-role team-role--${info.tone}`}>{info.label}</span>
       {member.canManage ? (
-        <span className={`team-role team-role--${info.tone} team-role--select`}>
-          <select aria-label={`Rol de ${name}`} value={member.role} disabled={busy} onChange={(event) => void change(event.target.value as TeamRole)}>
-            {assignableRoles.map((role) => (
-              <option key={role} value={role}>
-                {TEAM_ROLE_INFO[role].label}
-              </option>
-            ))}
-          </select>
-        </span>
+        <MemberMenu name={name} role={member.role} assignableRoles={assignableRoles} onChangeRole={change} onRemove={onRemove} />
       ) : (
-        <span className={`team-role team-role--${info.tone}`}>{info.label}</span>
-      )}
-
-      {member.canManage ? (
-        <button type="button" className="team-row__icon team-row__icon--danger" aria-label={`Quitar a ${name} del equipo`} title="Quitar del equipo" onClick={onRemove}>
-          {TeamIcons.trash}
-        </button>
-      ) : (
-        <span className="team-row__icon-space" aria-hidden="true" />
+        <span aria-hidden="true" />
       )}
     </li>
   );

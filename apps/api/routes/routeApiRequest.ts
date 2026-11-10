@@ -11,6 +11,7 @@ import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeCompanyRequest } from "./routeCompanyRequest";
 import { routeTeamRequest } from "./routeTeamRequest";
+import { recordLastSeen } from "../middleware/recordLastSeen";
 import { routeInvitationPublic } from "./routeInvitationPublic";
 import type { TeamServices } from "../../../domains/team/application/TeamServices";
 import type { InvitationServices } from "../../../domains/team/application/InvitationServices";
@@ -153,6 +154,7 @@ export async function routeApiRequest(
   const requestContext = resolution.context;
   requestLogger.logReceived(requestContext, method, url.pathname);
   await enforceRateLimit(dependencies.rateLimiter, `api:tenant:${requestContext.tenantId}`, TENANT_API_POLICY);
+  recordLastSeen(dependencies.teamServices, dependencies.background, requestContext);
 
   if (url.pathname.startsWith("/contacts") || url.pathname.startsWith("/labels")) {
     if (await routeContactsRequest(request, response, url, contactsServices, requestContext)) return;

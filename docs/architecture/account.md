@@ -13,13 +13,10 @@ Abajo en la barra lateral, como en las apps con barra lateral (Slack, Linear, No
 ```
 (foto) Nombre            ⌄     ← la flecha baja (cierra) el menú
        correo de acceso
-[logo] Empresa activa · rol  ›        ← abre Configuración → Empresa; con varias empresas, «Cambiar a …»
+[logo] Empresa activa · rol  ›        ← abre Configuración → General; con varias empresas, «Cambiar a …»
 ──────────────────────
-Mi perfil                     /profile
-Configuración                 /settings  (Empresa · Apariencia)
-Equipo              Pronto    /team
-Pagos y
-suscripciones       Pronto    /billing
+Mi perfil                     /settings/profile
+Configuración                 /settings/general
 ──────────────────────
 TEMA  [☀ Claro] [☾ Oscuro] [▭ Sistema]
 Ayuda               Pronto    /help
@@ -27,15 +24,17 @@ Ayuda               Pronto    /help
 Cerrar sesión
 ```
 
-- Lo del día a día queda en la barra (Dashboard, Conversaciones, Automatizaciones, AI Agents, Conexiones, Contactos, Integraciones); lo administrativo, en el menú.
-- **«Pronto»**: la opción ya se ve para conocer el menú completo, pero su módulo llega después. Abre una página «Próximamente», en vez de mandar a otra pantalla sin avisar. Las opciones están en `app/navigation/account/account-menu-items.tsx`.
+- Lo del día a día queda en la barra; lo administrativo, en Configuración. El menú es corto (como Linear o Vercel): Equipo, Plan y pagos y Seguridad son secciones de Configuración, no opciones sueltas. Las opciones están en `app/navigation/account/account-menu-items.tsx`.
+- **«Pronto»** (Ayuda): la opción ya se ve, pero su módulo llega después. Abre una página «Próximamente», en vez de mandar a otra pantalla sin avisar.
 - **Al ancho de la barra**: las etiquetas largas bajan a un segundo renglón en vez de cortarse, y el tema pone el icono sobre el nombre.
 - **Cerrar**: la flecha junto al nombre y el correo, Escape, elegir algo o tocar fuera: el menú baja y se desvanece (0,14 s; sin animación si el equipo pide menos movimiento) y el foco vuelve a la tarjeta. Al cambiar de página se quita enseguida.
 - **Teclado**: el foco entra al menú; flechas, Inicio y Fin lo recorren.
 - **Tema**: claro, oscuro o «sistema» (sigue al equipo y cambia solo con él). El script anti-parpadeo de `index.html` también entiende «sistema».
 - `AccountProvider` (`shared/account/AccountContext.tsx`) carga el perfil y la empresa una vez y los comparte. Por eso cambiar la foto en Mi perfil la cambia al instante en la tarjeta. Un fallo pasajero se reintenta solo (2 s, 4 s y 8 s).
 
-## Mi perfil (`/profile`)
+## Mi perfil (`/settings/profile`)
+
+Una sola página, de arriba abajo: foto, datos personales, correo de acceso y contraseña (`features/account/components/ProfileSettings.tsx`).
 
 | Dato | Dónde vive | Cómo se cambia |
 |---|---|---|
@@ -49,11 +48,23 @@ El perfil es del **usuario**, no de una empresa: el mismo en todas a las que per
 
 **Correo de acceso.** Es una credencial: su única autoridad es Neon Auth, que hoy responde `CHANGE_EMAIL_DISABLED` (verificado en la rama `test` el 2026-11-10) y no documenta cómo activarlo. Por eso se muestra sin editar, con la nota de que soporte lo cambia. Si Neon lo habilita, se agrega el flujo de confirmación por correo.
 
-## Configuración (`/settings`)
+## Configuración (`/settings/:section`)
 
-Tres pestañas: **Empresa**, **Equipo** y **Apariencia** (el tema, con una vista previa de cada opción; el mismo del menú). La pestaña viaja en la dirección (`?tab=team`). Cada módulo que traiga ajustes propios suma aquí su pestaña desde la capa de la app (`app/router/accountRoutes.tsx`, `SettingsPage extraTabs`): Cuenta no importa a otros módulos. **Equipo** (invitar con enlace, roles, quitar) está en [`team.md`](team.md).
+**A pantalla completa**, como Linear, Vercel o Stripe: la barra de la app se esconde y queda el menú de Configuración, con «← Volver a Auream» arriba, que regresa a la última pantalla de trabajo (`shared/navigation/lastAppLocation.ts`: la recuerda `AppShell` en la pestaña del navegador; nunca una de Configuración; sin nada guardado, el inicio).
 
-**Empresa**: nombre, logo y zona horaria de la cuenta activa (`tenants.name`, `logo_*`, `timezone`). Todo el equipo los ve; solo los dueños los cambian (`tenant.manage`, `CompanyPermissions`). Quien no es dueño ve la página sin poder editar.
+```
+← Volver a Auream
+Configuración
+TU CUENTA   Mi perfil · Apariencia
+EMPRESA     General · Equipo · Plan y pagos (Pronto) · Seguridad (Pronto)
+```
+
+- **El marco** (`shared/ui/settings-layout/SettingsLayout.tsx`) no conoce ningún módulo: recibe los grupos, la sección activa (título y descripción del encabezado) y el contenido. En celular el menú pasa arriba.
+- **Las secciones** las arma la app (`app/settings/settings-sections.tsx` y `SettingsScreen.tsx`, que dice qué módulo pone cada contenido): Cuenta no importa a Equipo ni al revés. Un módulo nuevo con ajustes propios (Ventas: monedas; CRM: etapas; Plan y pagos en la FASE F) suma su entrada ahí. Una sección que no existe lleva a General.
+- **Direcciones de antes**: `/settings` y `?tab=team|appearance`, `/profile`, `/team` y `/billing` llevan a su sección.
+- **Apariencia**: el tema, con una vista previa de cada opción (el mismo del menú). **Equipo**: [`team.md`](team.md).
+
+**General** (la empresa): nombre, logo y zona horaria de la cuenta activa (`tenants.name`, `logo_*`, `timezone`). Todo el equipo los ve; solo los dueños los cambian (`tenant.manage`, `CompanyPermissions`). Quien no es dueño ve la página sin poder editar.
 
 **La zona horaria rige los flujos.** El motor resuelve cada cuenta con `SqlTenantResolver`: la zona que eligió la empresa o, si no eligió, la de la plataforma (`DEFAULT_TENANT_TIMEZONE`). La recuerda 30 s por instancia, así que un cambio llega a los flujos en menos de medio minuto, sin una consulta por turno. Si la base no responde, sigue con la última conocida. La usan el Programador, los horarios, las fechas de los bloques, el Laboratorio y «Probar» del comprobante.
 
@@ -82,4 +93,4 @@ Sin almacén de archivos, las rutas de imágenes responden 503; el resto funcion
 
 ## Pruebas
 
-`tests/unit/accountProfiles.test.ts`, `tests/unit/sqlTenantResolver.test.ts`, `tests/security/routeAccount.test.ts`, `tests/integration/accountPersistence.test.ts` (PostgreSQL real), `apps/web/tests/components/AccountMenu.test.tsx`, `apps/web/tests/components/AccountPages.test.tsx` y `apps/web/tests/unit/accountHelpers.test.ts`.
+`tests/unit/accountProfiles.test.ts`, `tests/unit/sqlTenantResolver.test.ts`, `tests/security/routeAccount.test.ts`, `tests/integration/accountPersistence.test.ts` (PostgreSQL real), `apps/web/tests/components/AccountMenu.test.tsx`, `apps/web/tests/components/AccountPages.test.tsx`, `SettingsScreen.test.tsx` y `apps/web/tests/unit/accountHelpers.test.ts`.

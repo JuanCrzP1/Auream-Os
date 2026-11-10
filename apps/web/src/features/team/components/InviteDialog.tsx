@@ -4,16 +4,18 @@ import { useId, useState, type FormEvent } from "react";
 import type { InvitationLinkResponse, TeamRole } from "@contracts/TeamContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { TEAM_ROLE_INFO } from "@shared/team/teamRoles";
+import { EmailChipsInput, isEmail } from "./EmailChipsInput";
 import { InviteLinkPanel } from "./InviteLinkPanel";
+import { InviteResults, type InviteOutcome } from "./InviteResults";
 import { TeamIcons } from "./teamIcons";
 
 /** Rol que viene marcado: Asesor si se puede dar (el más común), si no el más bajo permitido. */
 const initialRole = (roles: ReadonlyArray<TeamRole>): TeamRole => (roles.includes("operator") ? "operator" : roles[roles.length - 1]!);
 
 /**
- * Invitar a alguien: correo y rol (solo los que quien invita puede dar), y
- * después el enlace para mandárselo. La persona no necesita tener cuenta: la
- * crea al abrir el enlace, con ese correo.
+ * Invitar: uno o varios correos (como chips) con el mismo rol (solo los que
+ * quien invita puede dar), y después el enlace de cada uno. La persona no
+ * necesita tener cuenta: la crea al abrir el enlace, con ese correo.
  */
 export function InviteDialog({
   assignableRoles,
@@ -27,30 +29,41 @@ export function InviteDialog({
   readonly onClose: () => void;
 }) {
   const titleId = useId();
-  const [email, setEmail] = useState("");
+  const emailsId = useId();
+  const [emails, setEmails] = useState<ReadonlyArray<string>>([]);
   const [role, setRole] = useState<TeamRole>(initialRole(assignableRoles));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [link, setLink] = useState<InvitationLinkResponse | null>(null);
+  const [outcomes, setOutcomes] = useState<ReadonlyArray<InviteOutcome> | null>(null);
+  const invalid = emails.filter((email) => !isEmail(email));
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (emails.length === 0) return setError("Escribe al menos un correo.");
+    if (invalid.length > 0) return setError(`Revisa ${invalid.length === 1 ? "este correo" : "estos correos"}: ${invalid.join(", ")}.`);
     setBusy(true);
     setError(null);
-    try {
-      setLink(await onInvite(email.trim(), role));
-    } catch (e) {
-      setError(apiErrorMessage(e, "No se pudo crear la invitación. Inténtalo de nuevo."));
-    } finally {
-      setBusy(false);
+    const results: InviteOutcome[] = [];
+    for (const email of emails) {
+      try {
+        results.push({ email, link: await onInvite(email, role) });
+      } catch (e) {
+        results.push({ email, error: apiErrorMessage(e, "No se pudo invitar.") });
+      }
     }
+    setBusy(false);
+    setOutcomes(results);
   };
+
+  const single = outcomes?.length === 1 && outcomes[0]?.link ? outcomes[0].link : null;
 
   return (
     <div className="ui-overlay" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={busy ? undefined : onClose}>
       <div className="ui-dialog invite-dialog" onClick={(event) => event.stopPropagation()}>
-        {link ? (
-          <InviteLinkPanel titleId={titleId} link={link} companyName={companyName} onDone={onClose} />
+        {single ? (
+          <InviteLinkPanel titleId={titleId} link={single} companyName={companyName} onDone={onClose} />
+        ) : outcomes ? (
+          <InviteResults titleId={titleId} outcomes={outcomes} companyName={companyName} onDone={onClose} />
         ) : (
           <form className="invite-dialog__form" onSubmit={(event) => void submit(event)}>
             <div className="invite-dialog__head">
@@ -58,15 +71,19 @@ export function InviteDialog({
                 {TeamIcons.userPlus}
               </span>
               <div>
-                <h2 id={titleId}>Invitar a tu equipo</h2>
-                <p className="ui-muted">Le das un enlace. Si no tiene cuenta, la crea ahí mismo con este correo.</p>
+                <h2 id={titleId}>Invitar personas</h2>
+                <p className="ui-muted">Les das un enlace. Si no tienen cuenta, la crean ahí mismo con su correo.</p>
               </div>
             </div>
 
-            <label className="ui-field">
-              <span>Correo de la persona</span>
-              <input className="ui-input" type="email" autoFocus required maxLength={254} value={email} placeholder="ana@tuempresa.com" onChange={(event) => setEmail(event.target.value)} />
-            </label>
+            <div className="ui-field">
+              <label htmlFor={emailsId}>Correos (uno o varios)</label>
+              <EmailChipsInput id={emailsId} emails={emails} onChange={(next) => {
+                  setEmails(next);
+                  setError(null);
+                }}
+              />
+            </div>
 
             <fieldset className="invite-dialog__roles">
               <legend>Rol</legend>
@@ -91,8 +108,8 @@ export function InviteDialog({
               <button type="button" className="ui-btn ui-btn--ghost" onClick={onClose} disabled={busy}>
                 Cancelar
               </button>
-              <button type="submit" className="ui-btn ui-btn--primary" disabled={busy || email.trim() === ""}>
-                {busy ? "Creando…" : "Crear invitación"}
+              <button type="submit" className="ui-btn ui-btn--primary" disabled={busy || emails.length === 0}>
+                {busy ? "Creando…" : emails.length > 1 ? `Invitar a ${emails.length}` : "Crear invitación"}
               </button>
             </div>
           </form>

@@ -1,0 +1,114 @@
+/* Una invitación pendiente: el correo, su rol, cuándo vence y quién invitó,
+ * con «Enlace nuevo» y retirar. Solo tokens del tema. */
+
+.invite-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.invite-row:last-child {
+  border-bottom: 0;
+}
+
+.invite-row__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1.5px dashed var(--border);
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.invite-row__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.invite-row__who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.invite-row__email {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invite-row__meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.invite-row__expired {
+  color: var(--status-paused-text);
+  font-weight: 700;
+}
+
+.invite-row__error {
+  color: var(--rose);
+  font-size: 0.76rem;
+}
+
+.invite-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.invite-row__renew {
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+
+.invite-row__remove,
+.invite-row__space {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+}
+
+.invite-row__remove {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.invite-row__remove svg {
+  width: 16px;
+  height: 16px;
+}
+
+.invite-row__remove:hover {
+  border-color: color-mix(in srgb, var(--rose) 35%, transparent);
+  background: color-mix(in srgb, var(--rose) 10%, transparent);
+  color: var(--rose);
+}
+
+.invite-row__remove:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@container team (max-width: 560px) {
+  .invite-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .invite-row .team-role {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
