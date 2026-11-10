@@ -1,3 +1,4 @@
+import "./side-panel/side-panel.css";
 import "./app-sidebar.css";
 import { NavLink } from "react-router-dom";
 import { sidebarItems } from "@app/navigation/sidebar/sidebar-items";
@@ -10,7 +11,7 @@ import { AccountCard } from "../account/AccountCard";
  */
 export function AppSidebar() {
   return (
-    <aside className="app-sidebar">
+    <aside className="app-sidebar ui-side-panel">
       <AureamLockup size="sm" className="app-sidebar__brand" />
 
       <nav className="app-sidebar__nav">

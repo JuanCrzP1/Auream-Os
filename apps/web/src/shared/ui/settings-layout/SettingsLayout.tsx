@@ -1,3 +1,4 @@
+import "../side-panel/side-panel.css";
 import "./settings-layout.css";
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
@@ -37,7 +38,7 @@ export function SettingsLayout({
 }) {
   return (
     <div className="settings-shell">
-      <nav className="settings-nav" aria-label="Configuración">
+      <nav className="settings-nav ui-side-panel" aria-label="Configuración">
         <Link className="settings-nav__back" to={backTo}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M19 12H5M12 5l-7 7 7 7" />

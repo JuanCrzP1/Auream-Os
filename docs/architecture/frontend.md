@@ -135,6 +135,7 @@ Los módulos de la aplicación (Contactos, Integraciones…) comparten:
 - `page/page.css` — `.ui-page`, cabecera, pestañas y panel.
 - `controls/controls.css` — botones (`.ui-btn`), campos, errores de formulario y el diálogo centrado (`.ui-overlay` / `.ui-dialog`).
 - `state/StateCard` — la tarjeta de error, vacío o sin resultados, con `RetryButton` e iconos (`stateIcons`).
+- `side-panel/side-panel.css` — `.ui-side-panel`, la piel de las barras laterales (228 px, fondo lila, borde y sombra). La usan la barra de la app y el menú de Configuración: miden y se ven igual, así el paso de una a otra no se nota.
 - `settings-layout/SettingsLayout` — el marco de Configuración a pantalla completa (menú por grupos, «Volver a Auream», encabezado de la sección). No conoce módulos: las secciones las arma `app/settings`. «Volver» usa `shared/navigation/lastAppLocation.ts`.
 
 Cada módulo conserva solo lo propio en su CSS (la tabla de Contactos, las tarjetas de Integraciones). Una feature no importa de otra: lo que usan dos o más vive aquí.

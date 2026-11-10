@@ -1,32 +1,11 @@
 .app-sidebar {
-  /* 200px dejaban la marca sin respiración: con el isotipo (34px) y el nombre
-     (97px) sólo sobraban 31px, y el bloque se leía comprimido contra el borde.
-     A 228px la marca respira y la opción más larga («Grupos y comunidades»)
-     cabe en un renglón. */
-  width: 228px;
-  flex: 0 0 228px;
-  height: calc(100vh - 24px);
-  margin: 12px 0 12px 12px;
+  /* Tamaño, fondo, borde y sombra: `side-panel/side-panel.css` (la misma piel
+     del menú de Configuración). Aquí solo el orden de dentro. */
   display: flex;
   flex-direction: column;
   gap: 14px;
-  /* Margen lateral de la barra y, sumado al borde, lo que el menú de la cuenta
-     se extiende para abrirse de borde a borde (`account-menu.css`). */
-  --app-sidebar-pad: 10px;
-  --app-sidebar-inset: calc(var(--app-sidebar-pad) + 1px);
-  padding: var(--app-sidebar-pad) var(--app-sidebar-pad) 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  box-shadow: var(--elevation-inset), var(--shadow);
-}
-
-/* El contraste de la tarjeta en claro lo da el lienzo blanco del shell
-   (ver app-shell.css); aquí sólo se refuerzan borde y sombra para rematar el
-   recorte. El fondo lila del sidebar no se toca: es el que lo identifica. */
-:root[data-theme="light"] .app-sidebar {
-  border-color: var(--border);
-  box-shadow: var(--elevation-inset), 0 12px 32px -10px rgba(108, 92, 231, 0.28);
+  /* Lo que el menú de la cuenta se extiende para abrirse de borde a borde. */
+  --app-sidebar-inset: calc(var(--side-panel-pad) + 1px);
 }
 
 .app-sidebar__brand {

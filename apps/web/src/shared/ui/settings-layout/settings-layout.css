@@ -8,22 +8,15 @@
   background: var(--app-canvas);
 }
 
+/* Tamaño, fondo, borde y sombra: la misma piel de la barra de la app
+ * (`side-panel/side-panel.css`), para que al entrar no se note el cambio. */
 .settings-nav {
-  flex: 0 0 264px;
-  box-sizing: border-box;
-  height: calc(100vh - 24px);
-  margin: 12px 0 12px 12px;
-  padding: 12px 10px;
   position: sticky;
   top: 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   overflow-y: auto;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: var(--bg-elevated);
-  box-shadow: var(--elevation-inset), var(--shadow);
 }
 
 .settings-nav__back,
@@ -31,13 +24,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 40px;
-  padding: 0 10px;
+  padding: 9px 10px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 10px;
   color: color-mix(in oklab, var(--text) 70%, var(--muted));
   font-size: 0.88rem;
-  font-weight: 600;
   text-decoration: none;
   transition: background var(--speed-fast) var(--ease-out), color var(--speed-fast) var(--ease-out);
 }
@@ -119,8 +110,8 @@
 }
 
 .settings-nav__icon svg {
-  width: 19px;
-  height: 19px;
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
 }
 
@@ -179,8 +170,10 @@
     flex-direction: column;
   }
 
-  .settings-nav {
+  .settings-nav.ui-side-panel {
     position: static;
+    width: auto;
+    flex: none;
     height: auto;
     margin: 12px;
   }
