@@ -1,3 +1,4 @@
+import "./theme-switch.css";
 import type { ReactElement } from "react";
 import { useTheme } from "@shared/theme/context/ThemeContext";
 import { ThemeIcons } from "@shared/theme/components/theme-icons";

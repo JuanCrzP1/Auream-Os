@@ -17,6 +17,7 @@ const ROLE_LABEL: Readonly<Record<string, string>> = {
 };
 
 const FOCUSABLE = '[role="menuitem"], [role="menuitemradio"]';
+const SETTINGS_PATH = "/settings";
 
 function MenuLink({ link, onNavigate }: { readonly link: AccountMenuLink; readonly onNavigate: () => void }) {
   return (
@@ -29,10 +30,11 @@ function MenuLink({ link, onNavigate }: { readonly link: AccountMenuLink; readon
 }
 
 /**
- * El menú de la cuenta (se abre desde la tarjeta de abajo en la barra lateral):
- * quién eres, en qué empresa estás (y cambiar de empresa si tienes varias),
- * tu perfil y la administración de la empresa, el tema, la ayuda y cerrar
- * sesión. Se maneja con el teclado: flechas, Inicio/Fin y Escape.
+ * El menú de la cuenta (se abre desde la tarjeta de abajo en la barra lateral,
+ * con su mismo ancho): quién eres, en qué empresa estás (su tarjeta abre sus
+ * datos; con varias, cambiar de empresa), tu perfil, la configuración y lo que
+ * llega pronto, el tema, la ayuda y cerrar sesión. Con teclado: flechas,
+ * Inicio/Fin y Escape.
  */
 export function AccountMenu({ onClose }: { readonly onClose: (refocus?: boolean) => void }) {
   const { profile, company, displayName, email } = useAccount();
@@ -76,7 +78,7 @@ export function AccountMenu({ onClose }: { readonly onClose: (refocus?: boolean)
   return (
     <div className="account-menu" role="menu" aria-label="Menú de la cuenta" ref={menu} onKeyDown={onKeyDown}>
       <div className="account-menu__identity">
-        <AccountAvatar name={displayName} imageUrl={profile?.photoUrl ?? null} size={42} />
+        <AccountAvatar name={displayName} imageUrl={profile?.photoUrl ?? null} size={36} />
         <span className="account-menu__who">
           <strong>{displayName}</strong>
           <span>{email}</span>
@@ -84,13 +86,14 @@ export function AccountMenu({ onClose }: { readonly onClose: (refocus?: boolean)
       </div>
 
       {companyName ? (
-        <div className="account-menu__company">
-          <AccountAvatar name={companyName} imageUrl={company?.logoUrl ?? null} size={30} shape="square" />
+        <Link role="menuitem" to={SETTINGS_PATH} className="account-menu__company" title="Datos de la empresa" onClick={() => onClose(false)}>
+          <AccountAvatar name={companyName} imageUrl={company?.logoUrl ?? null} size={28} shape="square" />
           <span className="account-menu__who">
             <strong>{companyName}</strong>
             <span>{active ? ROLE_LABEL[active.role] ?? active.role : "Empresa"}</span>
           </span>
-        </div>
+          <span className="account-menu__chevron" aria-hidden="true">{AccountMenuIcons.chevron}</span>
+        </Link>
       ) : null}
       {others.length > 0 ? (
         <div className="account-menu__group" aria-label="Cambiar de empresa">

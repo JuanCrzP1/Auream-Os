@@ -23,12 +23,6 @@ export interface AccountMenuLink {
 const STROKE = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
 export const AccountMenuIcons = {
-  company: (
-    <svg viewBox="0 0 24 24" {...STROKE}>
-      <path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16" />
-      <path d="M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3" />
-    </svg>
-  ),
   system: (
     <svg viewBox="0 0 24 24" {...STROKE}>
       <rect x="3" y="4" width="18" height="12" rx="2" />
@@ -41,25 +35,25 @@ export const AccountMenuIcons = {
       <path d="M10 17l-5-5 5-5M5 12h11" />
     </svg>
   ),
-  check: (
-    <svg viewBox="0 0 24 24" {...STROKE} strokeWidth={2.2}>
-      <path d="M5 12.5l4.5 4.5L19 7.5" />
+  chevron: (
+    <svg viewBox="0 0 24 24" {...STROKE} strokeWidth={2}>
+      <path d="M9 6l6 6-6 6" />
     </svg>
   )
 } as const;
 
-/** Tu cuenta y tu empresa. */
+/** Tu cuenta y tu empresa. Los datos de la empresa se abren también desde su tarjeta, arriba del menú. */
 export const accountMenuLinks: ReadonlyArray<AccountMenuLink> = [
   { label: "Mi perfil", hint: "Foto, nombre, correo y contraseña", path: SIDEBAR_ROUTES.profile, icon: SidebarIcons.profile },
-  { label: "Empresa", hint: "Nombre, logo y zona horaria", path: SIDEBAR_ROUTES.settings, icon: AccountMenuIcons.company },
+  { label: "Configuración", hint: "Empresa (logo, nombre y zona horaria) y apariencia", path: SIDEBAR_ROUTES.settings, icon: SidebarIcons.settings },
   { label: "Equipo", hint: "Invitar asesores y sus permisos", path: SIDEBAR_ROUTES.team, icon: SidebarIcons.team, soon: true },
   { label: "Pagos y suscripciones", hint: "Tu plan, métodos de pago y facturas", path: SIDEBAR_ROUTES.billing, icon: SidebarIcons.billing, soon: true }
 ];
 
 /** Después de las preferencias. */
 export const accountHelpLink: AccountMenuLink = {
-  label: "Ayuda y soporte",
-  hint: "Guías, novedades y contacto",
+  label: "Ayuda",
+  hint: "Guías, novedades y soporte",
   path: SIDEBAR_ROUTES.help,
   icon: SidebarIcons.help,
   soon: true

@@ -4,7 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { CompanyResponse, MyProfileResponse } from "@contracts/AccountContracts";
 import { ProfilePage } from "../../src/features/account/pages/ProfilePage";
-import { CompanyPage } from "../../src/features/account/pages/CompanyPage";
+import { SettingsPage } from "../../src/features/account/pages/SettingsPage";
+import { ThemeProvider } from "../../src/shared/theme/context/ThemeContext";
 
 // ---------------------------------------------------------------------------
 // Mi perfil (foto, nombre, WhatsApp personal, correo, contraseña) y Empresa
@@ -89,10 +90,10 @@ describe("Mi perfil", () => {
   });
 });
 
-describe("Empresa", () => {
+describe("Configuración → Empresa", () => {
   it("el dueño cambia nombre y zona horaria; avisa si usa la de la plataforma", async () => {
     api.updateCompany.mockResolvedValue({ ...COMPANY, name: "Dilo Cantando SAS", timezone: "America/Mexico_City", timezoneIsDefault: false });
-    page(<CompanyPage />);
+    page(<SettingsPage />);
     expect(screen.getByText(/rige la de la plataforma/)).toBeInTheDocument();
 
     await userEvent.clear(screen.getByLabelText("Nombre de la empresa"));
@@ -106,10 +107,28 @@ describe("Empresa", () => {
 
   it("quien no es dueño la ve sin poder cambiarla", () => {
     state.company = { ...COMPANY, canEdit: false };
-    page(<CompanyPage />);
+    page(<SettingsPage />);
     expect(screen.getByLabelText("Nombre de la empresa")).toBeDisabled();
     expect(screen.getByLabelText("Zona horaria")).toBeDisabled();
     expect(screen.getByText("Solo el dueño de la cuenta puede cambiar estos datos.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Subir logo" })).toBeDisabled();
+  });
+});
+
+describe("Configuración → Apariencia", () => {
+  it("elige el tema con vista previa (claro, oscuro o el del sistema) y lo guarda en el navegador", async () => {
+    window.localStorage.clear();
+    render(
+      <MemoryRouter>
+        <ThemeProvider>
+          <SettingsPage />
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+    await userEvent.click(screen.getByRole("tab", { name: "Apariencia" }));
+    const system = screen.getByRole("radio", { name: /Sistema/ });
+    await userEvent.click(system);
+    expect(system).toHaveAttribute("aria-checked", "true");
+    expect(window.localStorage.getItem("bots-ai-theme")).toBe("system");
   });
 });

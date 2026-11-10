@@ -70,9 +70,10 @@ describe("tarjeta de la cuenta", () => {
     expect(menu).toHaveTextContent("juan@example.com");
     expect(menu).toHaveTextContent("Dueño");
     const items = screen.getAllByRole("menuitem").map((item) => item.textContent);
-    expect(items).toEqual(["Mi perfil", "Empresa", "EquipoPronto", "Pagos y suscripcionesPronto", "Ayuda y soportePronto", "Cerrar sesión"]);
+    // La tarjeta de la empresa abre sus datos (Configuración); luego las opciones y lo que llega pronto.
+    expect(items).toEqual(["DCDilo CantandoDueño", "Mi perfil", "Configuración", "EquipoPronto", "Pagos y suscripcionesPronto", "AyudaPronto", "Cerrar sesión"]);
     // El foco entra al menú.
-    expect(screen.getByRole("menuitem", { name: "Mi perfil" })).toHaveFocus();
+    expect(screen.getAllByRole("menuitem")[0]).toHaveFocus();
   });
 
   it("navega a Mi perfil y se cierra; Escape cierra y devuelve el foco a la tarjeta", async () => {
@@ -89,13 +90,18 @@ describe("tarjeta de la cuenta", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("las flechas recorren las opciones", async () => {
+  it("las flechas recorren las opciones; la tarjeta de la empresa lleva a Configuración", async () => {
     renderCard();
     await userEvent.click(screen.getByRole("button", { name: "Cuenta de Juan Camilo" }));
     await userEvent.keyboard("{ArrowDown}");
-    expect(screen.getByRole("menuitem", { name: "Empresa" })).toHaveFocus();
+    expect(screen.getByRole("menuitem", { name: "Mi perfil" })).toHaveFocus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Configuración" })).toHaveFocus();
     await userEvent.keyboard("{End}");
     expect(screen.getByRole("menuitem", { name: "Cerrar sesión" })).toHaveFocus();
+    await userEvent.keyboard("{Home}");
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByTestId("where")).toHaveTextContent("/settings");
   });
 
   it("elige el tema (claro, oscuro o el del sistema) y cierra sesión", async () => {

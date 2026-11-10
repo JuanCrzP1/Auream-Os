@@ -44,10 +44,10 @@ La barra lateral tiene el trabajo del día, en orden fijo: `app/navigation/sideb
 | Contactos | `/contacts` | Barra | `IMPLEMENTADO` — lista con búsqueda y filtro, ficha editable y catálogo de etiquetas |
 | Integraciones | `/integrations` | Barra | `IMPLEMENTADO` |
 | Mi perfil | `/profile` | Menú de la cuenta | `IMPLEMENTADO` — foto, nombre, WhatsApp personal, correo de acceso y contraseña |
-| Empresa | `/settings` | Menú de la cuenta | `IMPLEMENTADO` — logo, nombre y zona horaria |
+| Configuración | `/settings` | Menú de la cuenta | `IMPLEMENTADO` — Empresa (logo, nombre y zona horaria) y Apariencia (tema) |
 | Equipo | `/team` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» |
 | Pagos y suscripciones | `/billing` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» (FASE F) |
-| Ayuda y soporte | `/help` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» |
+| Ayuda | `/help` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» |
 
 Las rutas «Pronto» tienen su `<Route>` con una página «Próximamente» (`app/router/accountRoutes.tsx`): ninguna opción visible manda a otra pantalla sin avisar.
 

@@ -1,4 +1,4 @@
-# Cuenta: menú de la cuenta, Mi perfil y Empresa
+# Cuenta: menú de la cuenta, Mi perfil y Configuración
 
 `domains/profiles` · `domains/company` · `domains/media/application/ImageUploads.ts` · `028_account_profiles.sql` · `apps/api/routes/routeMyProfileRequest.ts` · `apps/api/routes/routeCompanyRequest.ts` · `infrastructure/persistence/sql/SqlTenantResolver.ts` · `apps/web/src/shared/account/` · `apps/web/src/features/account/`
 
@@ -8,26 +8,28 @@ Lo que es de la persona (su foto, cómo se llama, su WhatsApp personal y su cont
 
 ## La tarjeta y el menú de la cuenta
 
-Abajo en la barra lateral, como en las apps con barra lateral (Slack, Linear, Notion, Vercel). Muestra la foto (o las iniciales), el nombre y la empresa activa. Al tocarla se abre hacia arriba:
+Abajo en la barra lateral, como en las apps con barra lateral (Slack, Linear, Notion, Vercel). Muestra la foto (o las iniciales), el nombre y la empresa activa. Al tocarla se abre hacia arriba, **con el mismo ancho de la tarjeta** (no se sale de la barra):
 
 ```
 (foto) Nombre
        correo de acceso
-[logo] Empresa activa · rol           ← y «Cambiar a …» si tiene varias empresas
-──────────────────────────
-Mi perfil                             /profile
-Empresa                               /settings
-Equipo                       Pronto   /team
-Pagos y suscripciones        Pronto   /billing
-──────────────────────────
-TEMA  [Claro] [Oscuro] [Sistema]
-Ayuda y soporte              Pronto   /help
-──────────────────────────
+[logo] Empresa activa · rol  ›        ← abre Configuración → Empresa; con varias empresas, «Cambiar a …»
+──────────────────────
+Mi perfil                     /profile
+Configuración                 /settings  (Empresa · Apariencia)
+Equipo              Pronto    /team
+Pagos y
+suscripciones       Pronto    /billing
+──────────────────────
+TEMA  [☀ Claro] [☾ Oscuro] [▭ Sistema]
+Ayuda               Pronto    /help
+──────────────────────
 Cerrar sesión
 ```
 
 - Lo del día a día queda en la barra (Dashboard, Conversaciones, Automatizaciones, AI Agents, Conexiones, Contactos, Integraciones); lo administrativo, en el menú.
 - **«Pronto»**: la opción ya se ve para conocer el menú completo, pero su módulo llega después. Abre una página «Próximamente», en vez de mandar a otra pantalla sin avisar. Las opciones están en `app/navigation/account/account-menu-items.tsx`.
+- **Al ancho de la barra**: las etiquetas largas bajan a un segundo renglón en vez de cortarse, y el tema pone el icono sobre el nombre.
 - **Teclado**: el foco entra al menú; flechas, Inicio y Fin lo recorren; Escape lo cierra y devuelve el foco a la tarjeta. También se cierra al tocar fuera o al cambiar de página.
 - **Tema**: claro, oscuro o «sistema» (sigue al equipo y cambia solo con él). El script anti-parpadeo de `index.html` también entiende «sistema».
 - `AccountProvider` (`shared/account/AccountContext.tsx`) carga el perfil y la empresa una vez y los comparte. Por eso cambiar la foto en Mi perfil la cambia al instante en la tarjeta. Un fallo pasajero se reintenta solo (2 s, 4 s y 8 s).
@@ -46,9 +48,11 @@ El perfil es del **usuario**, no de una empresa: el mismo en todas a las que per
 
 **Correo de acceso.** Es una credencial: su única autoridad es Neon Auth, que hoy responde `CHANGE_EMAIL_DISABLED` (verificado en la rama `test` el 2026-11-10) y no documenta cómo activarlo. Por eso se muestra sin editar, con la nota de que soporte lo cambia. Si Neon lo habilita, se agrega el flujo de confirmación por correo.
 
-## Empresa (`/settings`)
+## Configuración (`/settings`)
 
-Nombre, logo y zona horaria de la cuenta activa (`tenants.name`, `logo_*`, `timezone`). Todo el equipo los ve; solo los dueños los cambian (`tenant.manage`, `CompanyPermissions`). Quien no es dueño ve la página sin poder editar.
+Dos pestañas: **Empresa** y **Apariencia** (el tema, con una vista previa de cada opción; el mismo del menú). Cada módulo que traiga ajustes propios suma aquí su pestaña.
+
+**Empresa**: nombre, logo y zona horaria de la cuenta activa (`tenants.name`, `logo_*`, `timezone`). Todo el equipo los ve; solo los dueños los cambian (`tenant.manage`, `CompanyPermissions`). Quien no es dueño ve la página sin poder editar.
 
 **La zona horaria rige los flujos.** El motor resuelve cada cuenta con `SqlTenantResolver`: la zona que eligió la empresa o, si no eligió, la de la plataforma (`DEFAULT_TENANT_TIMEZONE`). La recuerda 30 s por instancia, así que un cambio llega a los flujos en menos de medio minuto, sin una consulta por turno. Si la base no responde, sigue con la última conocida. La usan el Programador, los horarios, las fechas de los bloques, el Laboratorio y «Probar» del comprobante.
 

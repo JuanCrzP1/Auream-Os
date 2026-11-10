@@ -1,0 +1,124 @@
+/* Configuración → Apariencia: tres tarjetas con una vista previa del tema. */
+.appearance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.appearance__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.appearance__option:hover {
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--line));
+}
+
+.appearance__option:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.appearance__option.is-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent);
+}
+
+.appearance__preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  height: 72px;
+  margin-bottom: 6px;
+  padding: 10px 10px 10px 34px;
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+/* La barra lateral de la vista previa. */
+.appearance__bar {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  width: 18px;
+  border-radius: 6px;
+}
+
+.appearance__line {
+  height: 8px;
+  width: 80%;
+  border-radius: 4px;
+}
+
+.appearance__line--short {
+  width: 50%;
+}
+
+.appearance__preview--light {
+  background: #f4f2ff;
+}
+
+.appearance__preview--light .appearance__bar {
+  background: #e3defd;
+}
+
+.appearance__preview--light .appearance__line {
+  background: #d9d3f7;
+}
+
+.appearance__preview--dark {
+  background: #0f0c1d;
+}
+
+.appearance__preview--dark .appearance__bar {
+  background: #1d1835;
+}
+
+.appearance__preview--dark .appearance__line {
+  background: #2d2650;
+}
+
+/* Sistema: mitad clara y mitad oscura. */
+.appearance__preview--system {
+  background: linear-gradient(115deg, #f4f2ff 0 50%, #0f0c1d 50% 100%);
+}
+
+.appearance__preview--system .appearance__bar {
+  background: #e3defd;
+}
+
+/* Líneas translúcidas: se leen igual sobre la mitad clara y la oscura. */
+.appearance__preview--system .appearance__line {
+  background: rgba(150, 132, 235, 0.5);
+}
+
+.appearance__title {
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.appearance__description {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .appearance {
+    grid-template-columns: 1fr;
+  }
+}

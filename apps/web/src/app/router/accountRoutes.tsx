@@ -1,15 +1,15 @@
 import type { ReactElement } from "react";
 import { Route } from "react-router-dom";
 import { ProfilePage } from "@features/account/pages/ProfilePage";
-import { CompanyPage } from "@features/account/pages/CompanyPage";
+import { SettingsPage } from "@features/account/pages/SettingsPage";
 import { AppShell } from "@shared/ui/app-shell/AppShell";
 import { SIDEBAR_ROUTES } from "../navigation/sidebar/sidebar-routes";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { BillingComingSoon, DashboardComingSoon, HelpComingSoon, TeamComingSoon } from "./placeholders/ComingSoonPages";
 
 /**
- * Las rutas del menú de la cuenta (y el Dashboard): Mi perfil y Empresa ya
- * funcionan; Equipo, Pagos y suscripciones, Ayuda y Dashboard muestran
+ * Las rutas del menú de la cuenta (y el Dashboard): Mi perfil y Configuración
+ * (Empresa y Apariencia) ya funcionan; Equipo, Pagos y suscripciones, Ayuda y Dashboard muestran
  * «Próximamente» en vez de mandar a otra página sin avisar.
  *
  * Se devuelven como elementos `<Route>` (no como componente) para ir dentro de
@@ -17,7 +17,7 @@ import { BillingComingSoon, DashboardComingSoon, HelpComingSoon, TeamComingSoon 
  */
 const PAGES: ReadonlyArray<readonly [string, ReactElement]> = [
   [SIDEBAR_ROUTES.profile, <ProfilePage />],
-  [SIDEBAR_ROUTES.settings, <CompanyPage />],
+  [SIDEBAR_ROUTES.settings, <SettingsPage />],
   [SIDEBAR_ROUTES.team, <TeamComingSoon />],
   [SIDEBAR_ROUTES.billing, <BillingComingSoon />],
   [SIDEBAR_ROUTES.help, <HelpComingSoon />],
