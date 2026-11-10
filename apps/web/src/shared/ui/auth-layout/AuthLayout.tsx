@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ThemeToggleButton } from "@shared/theme/components/ThemeToggleButton";
 import { AuthHero } from "./AuthHero";
-import "../styles/auth-page.css";
+import "./auth-page.css";
 
 interface Props {
   readonly title: string;

@@ -66,24 +66,55 @@ FASE A  Fundación y control arquitectónico        🟢 COMPLETADA
    ↓
 FASE B  Automatizaciones — producto visual        🟢 COMPLETADA
    ↓
-FASE C  Persistencia y Runtime real               ⬜
+FASE C  Persistencia y Runtime real               🟢 COMPLETADA (2026-11-10)
    ↓
-FASE D  Canales y Conversations                   ⬜
+FASE D  Canales y Conversations                   🟡 WhatsApp por QR funcionando; faltan API oficial, Difusiones y Grupos
    ↓
-FASE E  AI Agents + AI Sales Engine               ⬜
+FASE G  Producto visual restante                  🟡 en el orden de trabajo de abajo (con F4 Equipo adelantado)
    ↓
-FASE F  SaaS, Usage y Billing                     ⬜
+FASE H  Producción y Escalabilidad                🟡 desplegado (H1, H3); lo demás antes de abrir a clientes
    ↓
-FASE G  Producto visual restante                  ⬜
+FASE F  SaaS, Usage y Billing                     ⬜ antes de cobrar
    ↓
-FASE H  Producción y Escalabilidad                ⬜
+FASE E  AI Agents + AI Sales Engine               ⬜ al final: el motor se termina aparte y se conecta por API
 ```
+
+### Orden de trabajo acordado (2026-11-10)
+
+Primero lo que los demás módulos necesitan y después lo que lo usa, para no construir vistas vacías ni rehacer nada:
+
+1. ~~**Equipo** (F4, adelantado)~~ 🟢 hecho el 2026-11-10: invitar con enlace, roles y miembros. Lo usan los chats, el CRM, las ventas y el Dashboard «por asesor».
+2. **Ventas y Productos** (G7): catálogo con precios por país y cada venta guardada sola al aprobarse el Comprobante. Es el dato central.
+3. **CRM completo** (G9): etapas con su valor y seguimientos, al estilo FunnelChat (no kanban).
+4. **Dashboard** (G1): con ventas, CRM y conversaciones ya hay qué mostrar.
+5. **Difusiones** (D5): filtran por etiquetas y etapas del CRM.
+6. Después: Grupos (D6), campañas de Meta Ads con cuentas propias (G8) y Ayuda (G6). **Configuración** (G5) crece con cada módulo (roles, monedas y países, etapas, notificaciones, horarios), no como un bloque aparte.
+
+Antes de abrir a clientes: lo que falta de la FASE H. Antes de cobrar: la FASE F y Vercel Pro. Al final: la FASE E.
 
 ---
 
 ## Estado actual
 
-Verificado contra el repositorio el 2026-09-01, no copiado de la revisión anterior.
+**Resumen al 2026-11-10** (verificado contra el repositorio; la tabla de más abajo es la foto del 2026-09-01 y se conserva como historia):
+
+| Área | Estado | Observación |
+|---|---|---|
+| Automatizaciones | 🟢 | Editor, 12 herramientas que se ejecutan, laboratorio de pruebas, guardado en Neon |
+| Motor en producción | 🟢 | Mensajes reales de WhatsApp disparan los flujos; cola de tareas con Programador y esperas (C6) |
+| Conexiones | 🟡 | QR con uazapi funcionando; falta la API oficial de Meta (al final) |
+| Conversaciones | 🟢 | Bandeja estilo WhatsApp, asesor responde, filtros y etiquetas |
+| CRM | 🟡 | Contactos y etiquetas hechos; faltan etapas y seguimientos (G9) |
+| Integraciones | 🟢 | IA (OpenAI, Gemini, OpenRouter), webhooks de entrada, MCP con OAuth |
+| Meta Ads | 🟡 | Píxel (varios por cuenta) con diseño propio; faltan rendimiento y «Conectar con Meta» (G8) |
+| Cuenta | 🟢 | Mi perfil, Empresa (zona horaria del motor), Apariencia |
+| Equipo | 🟢 | Invitar con enlace, roles y permisos; el Asesor ve automatizaciones en solo lectura (F4) |
+| Ventas, Dashboard, Difusiones, Grupos | ⬜ | Carpetas, páginas y fichas listas; en el orden de trabajo |
+| Billing y usage | ⬜ | Antes de cobrar (FASE F) |
+| AI Sales Engine | ⬜ | Proyecto aparte; se conecta por API al final (FASE E) |
+| Producción | 🟡 | Vercel + Neon desplegado; faltan correo propio, alertas, pruebas de navegador y usuarios borrados (FASE H) |
+
+Foto del 2026-09-01, no copiada de la revisión anterior:
 
 | Área | Estado | Observación |
 |---|---|---|
@@ -416,7 +447,7 @@ La fase pasa a 🟢 COMPLETADA **solo** cuando se cumplan todos estos puntos:
 
 ## FASE C — Persistencia y Runtime real
 
-**Estado: ⬜ POR HACER** — desbloqueada (FASE B cerrada el 2026-11-08). Primero C1 y C2: los flujos a PostgreSQL/Neon por cuenta.
+**Estado: 🟢 COMPLETADA (2026-11-10)** — C7 y C8 quedaron resueltos por otro camino (ver sus filas). Pendiente menor: la carga de los flujos en la base de producción se hace al desplegar (FASE H).
 
 Objetivo: que un flow activo se ejecute solo (lo último guardado; no hay publicación, ver B6), sin depender del builder, sobre una persistencia que soporte más de un proceso y más de un desarrollador.
 
@@ -428,8 +459,8 @@ Objetivo: que un flow activo se ejecute solo (lo último guardado; no hay public
 | C4 | Lock optimista real usando `revision`, y validación de entrada en la API del builder | 🟢 COMPLETADO (2026-11-08) — `baseRevision` en cada guardado; en SQL comprobar y escribir es UNA sentencia (carrera probada: solo entra una); 409 → el builder deja de guardar y ofrece recargar. Entrada: tope de 2 MB (413), JSON inválido 400, forma del flujo y del `flowKey` 400, identidad del flujo fijada por el servidor |
 | C5 | Convertir en asíncrona la cadena de ejecución del motor (`ExecutionLoop`, `NodeRuntime`, `SessionStore`, `ContextWriter`) | 🟢 COMPLETADO (2026-11-08) — handlers, `NodeRuntime`, loop, orquestador, `FlowExecutor`, `SessionStore`, `FlowRegistry`, `TenantContextResolver` y la simulación, asíncronos. `ContextWriter` queda síncrono a propósito (transformación pura). Prueba de punta a punta por la cadena real de la API |
 | C6 | `infrastructure/queue` + contenido real en `apps/worker`: reanudar sesiones `delayed`, reintentos con política explícita, timeouts | 🟢 COMPLETADO (2026-11-09) — cola genérica en Neon (`domains/scheduling`, `019_scheduled_tasks.sql`): reserva atómica `for update skip locked` con reservas que caducan, reintentos espaciados (30 s → 1 h, 5 intentos), errores definitivos, limpieza; despertadores de los flujos: el motor declara `wakeUp` (Programador con espera/fecha/horario en la zona del negocio, «Tiempo agotado» de Esperar respuesta y Menú, pausas de un Mensaje que no caben en 20 s por turno) y descarta los vencidos por revisión; `FlowTurn` único para mensaje, envío a mano y despertador; `/internal/tasks/run` con `CRON_SECRET` (Vercel Cron + autoinvocación para lo que vence en segundos + revisión en cada mensaje); `apps/worker` y servidor local con rondas. Ver docs/architecture/task-queue.md |
-| C7 | Endpoint de recepción de eventos externos + implementar `flow-engine/triggers/TriggerResolver` (hoy es puerto sin cuerpo) + almacén de bindings + idempotencia por `messageId` (hoy una reentrega reejecuta) | ⬜ POR HACER — depende de C5 |
-| C8 | Nodo `integration` real: ejecutor de efectos externos (hoy falla explícitamente con `integration_executor_not_implemented`) | ⬜ POR HACER — depende de C5 |
+| C7 | Endpoint de recepción de eventos externos + implementar `flow-engine/triggers/TriggerResolver` (hoy es puerto sin cuerpo) + almacén de bindings + idempotencia por `messageId` (hoy una reentrega reejecuta) | 🟢 COMPLETADO por otro camino (2026-11-09) — los avisos de uazapi (`/webhooks/uazapi`, D4) llegan sin duplicados por `messageId` (`015_inbound_messages.sql`), los disparadores viven por conexión (`selectTrigger` en `domains/connections`, `013_connection_triggers.sql`) y los webhooks de entrada inician flujos por número. `flow-engine/triggers/TriggerResolver.ts` quedó sin uso: se retira cuando se toque esa carpeta |
+| C8 | Nodo `integration` real: ejecutor de efectos externos (hoy falla explícitamente con `integration_executor_not_implemented`) | 🟢 COMPLETADO en C10 (2026-11-08) — el bloque Integración llama de verdad (cliente HTTP con protección SSRF); el error `integration_executor_not_implemented` ya no existe |
 | C9 | Nodo `ai` conectado a modelos reales (**OpenAI, Gemini y OpenRouter**) detrás del puerto `flow-engine/ports/AiGateway.ts`. Es un tipo de nodo del grafo, **no** el AI Sales Engine | 🟢 COMPLETADO (2026-11-08) — conexiones de IA por cuenta con clave cifrada (AES-256-GCM), verificadas con el proveedor; el bloque responde, recuerda la conversación y clasifica intención; «Probar» en el editor |
 | C10 | Implementar el comportamiento de ejecución de las herramientas que hoy declaran `executable: false`. Cada una con su contrato de configuración compartido (`contracts/*Config.ts`) | 🟢 COMPLETADO (2026-11-09) — **Notificación** (aviso por WhatsApp al número del equipo, por el mismo número conectado del chat, como en Leona) cierra las 12 herramientas. Antes: **Condicional, Menú, Distribuidor, Etiquetas, Integración, Extensión IA, Pixel y Comprobante automático funcionando** (2026-11-08, con contadores atómicos en PostgreSQL, módulo de Contactos, cliente HTTP con protección SSRF, OCR propio y simulación de punta a punta). |
 | C11 | Conectar `platform/security/rate-limiting` (implementado y probado) a `apps/api` | 🟢 COMPLETADO (2026-11-09) — cuenta compartida en Neon (`SqlRateLimiter`, `022_rate_limits.sql`): 1.200/min por cuenta y 300/min por IP sin sesión válida; 429 con `Retry-After`; los botones de prueba y subidas usan la misma cuenta; si la base falla, deja pasar |
@@ -451,7 +482,7 @@ Objetivo: que un mensaje real de un canal real dispare un flow real y quede visi
 | D1 | `domains/connections` — conexiones WhatsApp con dos modos: **QR (WhatsApp Web)** y **API oficial (Meta Cloud API)**. Cada conexión tiene **el flujo que atiende** (`TriggerBinding` conexión → flujo): crear conexión, elegir flujo, escanear QR o poner credenciales de la API, y queda funcionando. Modelo de Leona como referencia funcional, con diseño propio | 🟡 EN PROGRESO — **pantalla y módulo listos** (2026-11-08): `domains/connections`, `011_whatsapp_connections.sql`, permisos `connections.read/write`, `/connections`, pantalla Conexiones (resumen, tarjetas por estado, asistente QR/API oficial, vinculación, renombrar, eliminar). **QR con uazapi** (2026-11-08): instancia por conexión, QR que se renueva solo y la pantalla pasa sola a «conectado», token de cada instancia cifrado (`012_whatsapp_connection_secret.sql`), avisos de conexión verificados en `/webhooks/uazapi`; se activa con `UAZAPI_BASE_URL` + `UAZAPI_ADMIN_TOKEN`. **Disparadores por conexión** (2026-11-09): palabra clave (contiene / exacta / empieza por, sin tildes ni mayúsculas), viene de un anuncio, primer mensaje y cualquier mensaje; gana el más específico (`selectTrigger`, compartido), una palabra por flujo, un genérico de cada tipo, pausables (`013_connection_triggers.sql`). **QR**: cuenta atrás real (primer código ~60 s, luego ~20 s, ~2 min 45 s en total, medido con uazapi) y «Generar otro código» siempre a mano. Faltan: la app de Meta para la API oficial y los mensajes entrantes que usen los disparadores (D4) |
 | D2 | `domains/connections` — adaptador Telegram | ⬜ POR HACER |
 | D3 | `domains/conversations` — inbox mínimo: lista, hilo, estado, contacto asociado | ✅ HECHO (2026-11-09) — **bandeja estilo WhatsApp de iOS** (claro y oscuro): un chat por cliente y número en Neon (`016_conversations.sql`: `conversations` + `conversation_messages`), cada mensaje del cliente, del bot (con el flujo que lo envió) y del asesor queda guardado con su estado (enviado / no se envió y por qué); lista con no leídos, búsqueda por número, filtros (todos, no leídos, atendidos por asesor) y por número; hilo con separadores por día y mensajes antiguos por páginas; responder como asesor (pausa el bot de ese chat), interruptor del bot y **enviar un flujo a mano** (termina el flujo en curso y arranca el elegido, `StartFlowService`); con el bot pausado los mensajes se guardan pero no se responden (`bot_paused`). Permisos `conversations.read/write`, `/conversations`, ruta web `/conversations`, actualización cada 4 s. **Filtros y etiquetas como Leona** (2026-11-09): estado (todos, no leídos, con bot, con asesor), número, etiquetas del cliente (cualquiera de las elegidas) y fecha del último mensaje (hoy, ayer, 7 y 30 días o rango, en la zona horaria de quien mira); etiquetas en cada chat y «Info. del contacto» para ponerlas o crearlas (las mismas de Contactos y de los flujos, `PUT /conversations/:id/labels`); «Ejecutar flujo» a la vista; lista por páginas de 50 con cursor (`017_conversations_activity_index.sql`); colores medidos en las capturas oficiales de iOS (fondo #F6F1EB / #0A0A0A) con dibujo de fondo propio, colita en la última burbuja de cada tanda y un visto gris de «enviado» |
-| D4 | Cierre del ciclo: canal → `ExternalEvent` → `TriggerResolver` → flow-engine → sesión visible en Conversations | 🟡 EN PROGRESO — **mensajes reales de punta a punta** (2026-11-09): aviso `messages` de uazapi verificado con el token de la instancia → `domains/messaging` (`HandleInboundMessageService`: registro sin duplicados `015_inbound_messages.sql`, candado por conversación en PostgreSQL, contacto con su nombre de WhatsApp, flujo en curso o disparador) → motor de producción (flujos guardados, sesiones en `014_flow_sessions.sql`, IA/píxel/integraciones/comprobante reales) → respuestas por uazapi (texto, archivos, botones/listas, reacciones, pausas ≤ 20 s), procesado tras responder (`waitUntil`). Programador, tiempos de espera y pausas largas: con la cola de tareas (C6) |
+| D4 | Cierre del ciclo: canal → `ExternalEvent` → `TriggerResolver` → flow-engine → sesión visible en Conversations | 🟢 COMPLETADO (2026-11-10: funcionando en producción, probado en uso real por el dueño; más pruebas en vivo del Programador más adelante) — **mensajes reales de punta a punta** (2026-11-09): aviso `messages` de uazapi verificado con el token de la instancia → `domains/messaging` (`HandleInboundMessageService`: registro sin duplicados `015_inbound_messages.sql`, candado por conversación en PostgreSQL, contacto con su nombre de WhatsApp, flujo en curso o disparador) → motor de producción (flujos guardados, sesiones en `014_flow_sessions.sql`, IA/píxel/integraciones/comprobante reales) → respuestas por uazapi (texto, archivos, botones/listas, reacciones, pausas ≤ 20 s), procesado tras responder (`waitUntil`). Programador, tiempos de espera y pausas largas: con la cola de tareas (C6) |
 | D5 | **Difusiones** (`/broadcasts`): enviar un flujo a muchos contactos por etiquetas o etapa del CRM, programado, con ritmo que cuida el número y resultados por destinatario; cupo por plan cuando lleguen los planes. Módulo `features/broadcasts` · dominio `domains/broadcasts` (ficha) | ⬜ POR HACER — carpetas y página listas (2026-11-10) |
 | D6 | **Grupos y comunidades** (`/groups`): grupos de WhatsApp por número, mensajes programados, bienvenida automática y enlaces de invitación (lo que distingue a FunnelChat). Módulo `features/groups` · dominio `domains/groups` · proveedor `infrastructure/whatsapp` | ⬜ POR HACER — carpetas y página listas (2026-11-10) |
 
@@ -464,6 +495,8 @@ Recordatorio de frontera: `sessions` es el estado de ejecución del runtime; `co
 **Estado: ⬜ POR HACER**
 
 > El AI Sales Engine se abordará posteriormente en esta fase específica. Antes de integrarlo se realizará una auditoría profunda de su arquitectura, responsabilidades, dependencias, memoria, configuración, comportamiento comercial, multi-tenancy, persistencia, puntos de integración y escalabilidad. No debe modificarse durante las fases anteriores salvo dependencia explícitamente aprobada.
+
+**Decisión del dueño (2026-11-10): esta fase va al final, y el motor se termina como proyecto aparte.** El AI Sales Engine vive en su propia carpeta y repositorio (`~/Dev/ai-sales-engine`: Python/FastAPI, unas 15 mil líneas de aplicación, panel propio). Se termina allá —su configuración nueva BusinessConfig v1 en vez de los YAML (contrato terminado y los 9 negocios ya convertidos; falta que el motor la lea), su base en Neon y su despliegue en Vercel, en las mismas cuentas pero con proyecto y base separados— y al final se conecta por API: **Auream maneja WhatsApp, cuentas y pagos; el motor solo piensa la respuesta.** Nunca comparten base. Revisión inicial hecha (solo lectura) como antesala de E0. Para trabajar los dos en paralelo, el panel del motor se mueve del puerto 5173 (el de Auream) al 5180.
 
 **No se asume todavía la estrategia de incorporación.** Si será paquete, módulo, servicio, submódulo, adaptador u otra cosa se decide **después** de la auditoría E0, con datos y no con suposiciones.
 
@@ -491,14 +524,14 @@ Reglas de frontera ya acordadas y vigentes: solo `domains/ai-agents` habla con e
 | F1 | Medición de consumo real en `domains/billing` (usage no vive en `platform/` por decisión ya tomada) | ⬜ POR HACER — depende de C12 |
 | F2 | Aplicar límites de plan (`domains/billing/limits`) sobre endpoints reales, incluidas cuotas de automatizaciones por tenant | ⬜ POR HACER — depende de F1 |
 | F3 | Exponer `domains/billing` en `apps/api` (hoy sin endpoint) | ⬜ POR HACER |
-| F4 | Gestión de equipo más allá del alta inicial: invitar, remover, cambiar rol de miembros | ⬜ POR HACER |
+| F4 | Gestión de equipo más allá del alta inicial: invitar, remover, cambiar rol de miembros | 🟢 COMPLETADO (2026-11-10, adelantado) — Configuración → Equipo: invitar con enlace (sin registro previo; copiar o WhatsApp), roles Dueño · Administrador · Asesor · Solo lectura, cambiar rol y quitar, siempre un dueño (atómico en la base). El Asesor ve las automatizaciones sin editarlas (editor en solo lectura). `029_team_invitations.sql`. Ver `docs/architecture/team.md` |
 | F5 | Integración de pasarela de pago concreta bajo `infrastructure/providers` | ⬜ POR HACER |
 
 ---
 
 ## FASE G — Producto visual restante
 
-**Estado: ⬜ POR HACER**
+**Estado: 🟡 EN PROGRESO** — se construye en el orden de trabajo acordado el 2026-11-10 (ver «Secuencia oficial de fases»).
 
 Las áreas del sidebar que siguen sin implementación. Dependen de que las fases anteriores generen datos reales que mostrar — construirlas antes produce vistas vacías sin valor de validación.
 
@@ -508,10 +541,10 @@ Las áreas del sidebar que siguen sin implementación. Dependen de que las fases
 | G2 | Contactos (`domains/contacts`) | 🟢 COMPLETADO (2026-11-08, adelantado por C10) — contactos, catálogo de etiquetas, API y pantalla `/contacts` |
 | G3 | Integraciones (`domains/integrations`) | 🟢 COMPLETADO (2026-11-08) — conexiones de IA y píxeles de Meta, pantalla `/integrations` por secciones |
 | G4 | Mi perfil | 🟢 COMPLETADO (2026-11-10) — tarjeta de la cuenta abajo en la barra lateral con su menú estándar (Mi perfil, Empresa, Equipo · Pagos y suscripciones · Ayuda «Pronto», tema claro/oscuro/sistema, cerrar sesión, cambiar de empresa). Mi perfil: foto (Vercel Blob, validada por el servidor), nombre visible y WhatsApp personal en `user_profiles` (028), correo de acceso visible (Neon Auth no deja cambiarlo: `CHANGE_EMAIL_DISABLED`) y cambio de contraseña. Ver `docs/architecture/account.md` |
-| G5 | Configuración — incluida la pantalla de seguridad que usará `passwordClient.change`, ya implementado en el cliente | 🟡 EN PROGRESO — **Empresa** (2026-11-10): logo, nombre y zona horaria de la cuenta (`tenants`, 028; solo dueños, `tenant.manage`). La zona rige el motor (`SqlTenantResolver`: Programador, horarios, fechas, Laboratorio). La seguridad (contraseña) quedó en Mi perfil → Seguridad. Falta lo que traiga cada módulo (notificaciones, etc.) |
+| G5 | Configuración — incluida la pantalla de seguridad que usará `passwordClient.change`, ya implementado en el cliente | 🟡 EN PROGRESO — pestañas Empresa · **Equipo** (F4) · Apariencia, cada módulo suma la suya desde la app (`extraTabs`). **Empresa** (2026-11-10): logo, nombre y zona horaria de la cuenta (`tenants`, 028; solo dueños, `tenant.manage`). La zona rige el motor (`SqlTenantResolver`: Programador, horarios, fechas, Laboratorio). La seguridad (contraseña) quedó en Mi perfil → Seguridad. Falta lo que traiga cada módulo (notificaciones, etc.) |
 | G6 | Ayuda | ⬜ POR HACER |
 | G7 | **Ventas y Productos** (`/sales`): cada venta (sola al aprobar el Comprobante, de un asesor o de un webhook) con producto, monto, moneda, país, número, flujo y anuncio de origen; «Por revisar»; catálogo con precio por país y tipo. Módulo `features/sales` (`orders/`, `products/`) · dominios `domains/sales` y `domains/products` | ⬜ POR HACER — carpetas y página listas (2026-11-10) |
-| G8 | **Meta Ads** (`/meta-ads`): «Conectar con Meta» (inicio de sesión, como Leona), campañas y anuncios con gasto, chats, ventas y ROAS, y el Píxel en la misma página. Requiere la revisión de Meta para cuentas de otros negocios. Módulo `features/ads` · dominio `domains/ads` · proveedor `infrastructure/meta` | 🟡 EN PROGRESO — pestaña **Píxel** funcionando (2026-11-10, movido desde Integraciones con su logo); Campañas y Cuentas por construir |
+| G8 | **Meta Ads** (`/meta-ads`): «Conectar con Meta» (inicio de sesión, como Leona), campañas y anuncios con gasto, chats, ventas y ROAS, y el Píxel en la misma página. Requiere la revisión de Meta para cuentas de otros negocios. Módulo `features/ads` · dominio `domains/ads` · proveedor `infrastructure/meta` | 🟡 EN PROGRESO — sección **Píxel** funcionando (2026-11-10, movida desde Integraciones con su logo; varios píxeles por cuenta, cada uno una sola vez; el bloque Pixel solo los elige) con diseño propio (tarjetas de estado Píxel · Rendimiento · Cuentas); Rendimiento y «Conectar con Meta» por construir |
 | G9 | **CRM** (`/crm`): contactos y etiquetas (hecho) más etapas de venta con su valor y seguimientos, al estilo FunnelChat; los flujos mueven etapas con el bloque Etiquetas. Módulo `features/crm` (`contacts/`, `pipeline/`, `follow-ups/`) · dominios `domains/contacts` y `domains/crm` | 🟡 EN PROGRESO — contactos hechos; etapas y seguimientos por construir |
 
 ---
@@ -601,3 +634,7 @@ Cada vez que se cierra una tarea:
 | 2026-11-10 | **El menú de la cuenta, de borde a borde de la barra.** Ya no queda más angosto que la barra lateral: se extiende exactamente lo que mide su margen más el borde (`--app-sidebar-inset`, definido en la barra), con esquinas redondeadas como las de la barra. |
 | 2026-11-10 | **La barra con lo mejor de Leona, FunnelChat y Vyper, y la arquitectura de cada módulo.** 11 opciones: Dashboard, Conversaciones, CRM, Automatizaciones, Agentes de IA, Difusiones, Grupos y comunidades, Meta Ads, Ventas, Conexiones e Integraciones (sin «Pronto»). Contactos pasa a ser el CRM (`features/crm/contacts`; `/contacts` redirige a `/crm`). Cada módulo nuevo nace con su página en `features/<módulo>/pages` y su ficha (`README.md`), y cada dominio nuevo con la suya (`domains/crm`, `broadcasts`, `groups`, `ads`, `sales`, `products`, `analytics`, `ai-agents`); mapa en `docs/architecture/modules.md`. Leona revisada por dentro: Meta se conecta con inicio de sesión (no por webhook). |
 | 2026-11-10 | **El Píxel de Meta vive en Meta Ads, con su logo.** Meta Ads tiene pestañas Campañas · Píxel · Cuentas (como Leona) y el logo de Meta junto al título; el Píxel (conectar, verificar, cambiar token, renombrar, eliminar) se mudó de Integraciones a `features/ads/pixel`. Lo que usan los dos módulos subió a un kit compartido (`shared/ui/integration-kit`: logos, tarjeta, sección, diálogos y campo secreto, cada pieza con su CSS). En Integraciones queda la tarjeta «Meta Ads», que lleva allá; `/integrations/meta-pixel` redirige y el bloque «Pixel» enlaza a Meta Ads. Tests: `MetaAdsPage` (4). |
+| 2026-11-10 | **Meta Ads con diseño propio de Auream (no como Leona).** Las secciones son tarjetas de estado en vivo (Píxel · Rendimiento · Cuentas, con flechas como pestañas) y la elegida se enciende con el degradado de Auream; Píxel sin conectar muestra una portada con el recorrido de la conversión (chat → bloque Pixel → Meta) y los tres pasos; con píxeles, sus tarjetas y una para conectar otro; Rendimiento muestra la tabla de campañas en blanco (sin números inventados) y Cuentas el botón «Conectar con Meta» aún sin usar. Las piezas se acomodan al ancho del panel (*container queries*). El kit compartido suma `ConnectionListNotice`. Tests: `MetaAdsPage` (8). |
+| 2026-11-10 | **Varios píxeles por cuenta y el bloque Pixel solo elige.** Una cuenta conecta muchos píxeles, pero cada ID una sola vez (`409` antes de llamar a Meta; otra cuenta sí puede); la tarjeta Píxel dice «2 activos · 1 rechazado». El bloque Pixel ya no crea píxeles (como en Leona): se conectan y administran solo en Meta Ads, el bloque abre Meta Ads en otra pestaña y la lista se actualiza sola al volver; la página de Facebook sigue en el bloque. Tests: `pixelBlock` (39), `PixelEditor` (4), `BuilderResourcesRefresh` (1), `pixelConnectionsPersistence` (2, PostgreSQL real). |
+| 2026-11-10 | **Reorganización del plan (sin cambios de código).** FASE C cerrada (C7 y C8 resueltos por otro camino); D4 funcionando en producción. Orden de trabajo acordado: Equipo (F4, adelantado) → Ventas y Productos → CRM completo → Dashboard → Difusiones; después Grupos, campañas de Meta Ads y Ayuda; FASE H antes de abrir a clientes, FASE F antes de cobrar y la FASE E al final, con el AI Sales Engine terminado como proyecto aparte y conectado por API. Resumen de estado actualizado. |
+| 2026-11-10 | **F4 — Equipo, adelantado y cerrado.** Configuración → Equipo: invitar con un enlace (la persona no necesita cuenta previa; copiar o «Enviar por WhatsApp»; el correo propio vendrá con H2), roles Dueño · Administrador · Asesor · Solo lectura con su guía, cambiar rol en la fila y quitar. Reglas en `domains/team/domain/TeamPolicy` (el administrador no toca dueños, nadie se toca a sí mismo) y «siempre un dueño» atómico en PostgreSQL. Enlace: 32 bytes guardados como huella, 7 días, un solo uso y solo con el correo invitado (el que firma Neon Auth). Página `/invite/:token` en el marco de acceso (movido a `shared/ui/auth-layout`): sin sesión, registrarse o entrar y volver; con sesión, «Unirme» sin crear un espacio vacío. Permisos nuevos `team.read`/`team.manage`; el Asesor ve las automatizaciones sin editarlas (sin `flows.write` ni `credentials.read`): lista sin crear ni mover y editor en solo lectura (`useReadOnlyBuilder`, sin autoguardado). `/me/tenants` trae `permissions` y la web usa `useCan`. El correo y el nombre del registro se copian a `user_profiles` al entrar. `029_team_invitations.sql` (aditiva, aplicada en la rama test). Tests: `teamPolicy` (8), `teamServices` (9), `teamInvitations` (6), `routeTeam` (5), `teamPersistence` (3, PostgreSQL real), `TeamSettings` (4), `AcceptInvitationPage` (3), `ReadOnlyAutomations` (4). Ver `docs/architecture/team.md`. |

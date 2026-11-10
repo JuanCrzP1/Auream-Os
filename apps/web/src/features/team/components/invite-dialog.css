@@ -1,0 +1,106 @@
+/* Diálogo de invitar: correo y rol en tarjetas que se eligen. Solo tokens del tema. */
+
+.invite-dialog {
+  width: min(500px, calc(100vw - 32px));
+}
+
+.invite-dialog__form {
+  display: grid;
+  gap: 16px;
+}
+
+.invite-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.invite-dialog__head p {
+  margin: 4px 0 0;
+}
+
+.invite-dialog__badge {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--gradient-primary);
+  box-shadow: var(--glow-primary);
+  color: var(--on-primary);
+}
+
+.invite-dialog__badge svg {
+  width: 22px;
+  height: 22px;
+}
+
+.invite-dialog__roles {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.invite-dialog__roles legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.invite-role {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+/* El botón de radio queda accesible pero invisible: la tarjeta entera es la opción. */
+.invite-role input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.invite-role__body {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  transition: border-color var(--speed-fast) var(--ease-out), box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.invite-role__body .team-role {
+  justify-self: start;
+}
+
+.invite-role__text {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.invite-role:hover .invite-role__body {
+  border-color: var(--border);
+}
+
+.invite-role input:checked + .invite-role__body {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.invite-role input:focus-visible + .invite-role__body {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-role__body {
+    transition: none;
+  }
+}

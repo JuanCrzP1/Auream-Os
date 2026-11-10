@@ -17,7 +17,9 @@ const KNOWN_SCOPES: ReadonlySet<string> = new Set<Scope>([
   "connections.write",
   "conversations.read",
   "conversations.write",
-  "tenant.manage"
+  "tenant.manage",
+  "team.read",
+  "team.manage"
 ]);
 
 // Convierte un RequestContext (capa de auth) en un Actor (capa de access).

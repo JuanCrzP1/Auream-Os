@@ -85,8 +85,15 @@ export class JwksTokenVerifier implements TokenVerifier {
     const claims = decodeSegment<NeonAuthClaims>(payloadSegment);
     this.validateClaims(claims);
 
-    // Sólo la identidad. Nunca tenant, nunca scopes.
-    return { actorId: claims.sub };
+    // Sólo la identidad. Nunca tenant, nunca scopes. El correo viaja como dato
+    // de la persona (invitaciones del equipo), no como autorización.
+    const email = typeof claims.email === "string" && claims.email.includes("@") ? claims.email.trim().toLowerCase() : undefined;
+    const name = typeof claims.name === "string" && claims.name.trim() ? claims.name.trim().slice(0, 80) : undefined;
+    return {
+      actorId: claims.sub,
+      ...(email ? { email, emailVerified: claims.emailVerified === true } : {}),
+      ...(name ? { name } : {})
+    };
   }
 
   private validateClaims(claims: NeonAuthClaims): void {

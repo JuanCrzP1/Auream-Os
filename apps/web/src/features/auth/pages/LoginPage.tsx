@@ -1,7 +1,7 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@shared/auth/context/AuthContext";
 import { useAuthActions } from "@shared/auth/hooks/useAuthActions";
-import { AuthLayout } from "../components/AuthLayout";
+import { AuthLayout } from "@shared/ui/auth-layout/AuthLayout";
 import { LoginForm } from "../components/LoginForm";
 
 /** Pantalla de inicio de sesión. Sólo compone: la lógica vive en los hooks. */
@@ -24,7 +24,9 @@ export function LoginPage() {
       footer={
         <>
           <span>¿No tienes cuenta? </span>
-          <Link to="/register">Crear una</Link>
+          <Link to="/register" state={location.state}>
+            Crear una
+          </Link>
         </>
       }
     >

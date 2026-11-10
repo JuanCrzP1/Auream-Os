@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 interface FlowNameEditorProps {
   readonly name: string;
   readonly onRename: (name: string) => void;
+  /** Sin permiso para editar automatizaciones: el nombre se ve, sin lápiz. */
+  readonly readOnly?: boolean;
 }
 
 /**
@@ -21,7 +23,7 @@ interface FlowNameEditorProps {
  * blur haría que un clic accidental en cualquier punto del builder renombrara
  * la automatización sin que el usuario lo pidiera.
  */
-export function FlowNameEditor({ name, onRename }: FlowNameEditorProps) {
+export function FlowNameEditor({ name, onRename, readOnly = false }: FlowNameEditorProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -70,6 +72,7 @@ export function FlowNameEditor({ name, onRename }: FlowNameEditorProps) {
         <span className="builder-topbar__name" title={name}>
           {name}
         </span>
+        {readOnly ? null : (
         <button
           type="button"
           className="builder-topbar__rename"
@@ -81,6 +84,7 @@ export function FlowNameEditor({ name, onRename }: FlowNameEditorProps) {
             <path d="M13.5 3.5a1.9 1.9 0 0 1 2.7 2.7L7.4 15 3.5 16.5 5 12.6z" />
           </svg>
         </button>
+        )}
       </div>
     );
   }

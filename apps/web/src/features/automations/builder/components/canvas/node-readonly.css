@@ -1,0 +1,31 @@
+/* El editor de un bloque en solo lectura (quien mira no puede editar
+ * automatizaciones, p. ej. el Asesor): la herramienta se ve igual, con todos
+ * sus campos apagados, y arriba un aviso. El desplazamiento sigue siendo de
+ * cada herramienta: el envoltorio solo le cede el alto que queda. */
+
+.node-expanded__readonly {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.node-expanded__readonly > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.node-expanded__readonly-note {
+  flex: 0 0 auto;
+  margin: 12px 16px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--chip-bg-hover);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}

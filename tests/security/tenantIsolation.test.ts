@@ -141,7 +141,8 @@ describe("manipulación de la petición", () => {
       "analytics.read",
       "contacts.read",
       "connections.read",
-      "conversations.read"
+      "conversations.read",
+      "team.read"
     ]);
   });
 

@@ -50,8 +50,8 @@ export const AccountMenuIcons = {
 /** Tu cuenta y tu empresa. Los datos de la empresa se abren también desde su tarjeta, arriba del menú. */
 export const accountMenuLinks: ReadonlyArray<AccountMenuLink> = [
   { label: "Mi perfil", hint: "Foto, nombre, correo y contraseña", path: SIDEBAR_ROUTES.profile, icon: SidebarIcons.profile },
-  { label: "Configuración", hint: "Empresa (logo, nombre y zona horaria) y apariencia", path: SIDEBAR_ROUTES.settings, icon: SidebarIcons.settings },
-  { label: "Equipo", hint: "Invitar asesores y sus permisos", path: SIDEBAR_ROUTES.team, icon: SidebarIcons.team, soon: true },
+  { label: "Configuración", hint: "Empresa, equipo y apariencia", path: SIDEBAR_ROUTES.settings, icon: SidebarIcons.settings },
+  { label: "Equipo", hint: "Invitar a tu equipo y sus roles", path: SIDEBAR_ROUTES.team, icon: SidebarIcons.team },
   { label: "Pagos y suscripciones", hint: "Tu plan, métodos de pago y facturas", path: SIDEBAR_ROUTES.billing, icon: SidebarIcons.billing, soon: true }
 ];
 

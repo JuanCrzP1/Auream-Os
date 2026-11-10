@@ -45,6 +45,12 @@ export interface BuilderEditingOperations {
   readonly duplicateNode: (nodeId: string) => void;
   /** Elimina el nodo y las conexiones que lo tocan. */
   readonly removeNode: (nodeId: string) => void;
+  /**
+   * Solo lectura: quien mira no puede editar automatizaciones (sin
+   * `flows.write`, p. ej. el Asesor). Las tarjetas esconden duplicar y
+   * borrar, y el editor de cada bloque se abre para ver, sin «Guardar».
+   */
+  readonly readOnly?: boolean;
 }
 
 const BuilderEditingContext = createContext<BuilderEditingOperations | null>(null);
@@ -67,11 +73,12 @@ export function BuilderEditingProvider({
   updateNode,
   duplicateNode,
   removeNode,
+  readOnly = false,
   children
 }: BuilderEditingProviderProps) {
   const operations = useMemo<BuilderEditingOperations>(
-    () => ({ requestEdit, toggleExpand, updateNode, duplicateNode, removeNode }),
-    [requestEdit, toggleExpand, updateNode, duplicateNode, removeNode]
+    () => ({ requestEdit, toggleExpand, updateNode, duplicateNode, removeNode, readOnly }),
+    [requestEdit, toggleExpand, updateNode, duplicateNode, removeNode, readOnly]
   );
 
   return (
@@ -97,4 +104,12 @@ export function useBuilderEditing(): BuilderEditingOperations {
   }
 
   return operations;
+}
+
+/**
+ * Solo lectura del builder, sin exigir el provider: el editor de un bloque
+ * también se monta suelto (pruebas, vistas sueltas), y ahí se edita.
+ */
+export function useBuilderReadOnly(): boolean {
+  return useContext(BuilderEditingContext)?.readOnly ?? false;
 }

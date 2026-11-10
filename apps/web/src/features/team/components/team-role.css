@@ -1,0 +1,66 @@
+/* El chip de un rol del equipo, con su color (Dueño, Administrador, Asesor,
+ * Solo lectura). Con permiso, un selector con la misma cara. Solo tokens del tema. */
+
+.team-role {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--chip-neutral-bg);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.team-role--owner {
+  background: var(--gradient-primary);
+  box-shadow: var(--glow-primary);
+  color: var(--on-primary);
+}
+
+.team-role--admin {
+  background: color-mix(in srgb, var(--slate) 18%, transparent);
+  color: color-mix(in srgb, var(--slate) 62%, var(--text));
+}
+
+.team-role--agent {
+  background: color-mix(in srgb, var(--teal) 18%, transparent);
+  color: var(--status-active-text);
+}
+
+.team-role--select {
+  padding-right: 26px;
+}
+
+.team-role--select::after {
+  content: "";
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  border: 4px solid transparent;
+  border-top-color: currentColor;
+  transform: translateY(-25%);
+  pointer-events: none;
+}
+
+.team-role select {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.team-role select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+
+.team-role select option {
+  background: var(--surface);
+  color: var(--text);
+}

@@ -3,12 +3,15 @@ interface AutomationEmptyStateProps {
   onCreateFlow: () => void;
   onCreateFolder?: () => void;
   onExploreTemplates?: () => void;
+  /** Sin permiso para crear (p. ej. el Asesor): se explica, sin botones. */
+  canCreate?: boolean;
 }
 
 export function AutomationEmptyState({
   onCreateFlow,
   onCreateFolder,
   onExploreTemplates,
+  canCreate = true,
 }: AutomationEmptyStateProps) {
   return (
     <div className="hub-empty">
@@ -25,8 +28,11 @@ export function AutomationEmptyState({
         </div>
         <h2 className="hub-empty__title">Sin automatizaciones aún</h2>
         <p className="hub-empty__desc">
-          Crea tu primera automatización, organízalas en carpetas o parte desde una plantilla.
+          {canCreate
+            ? "Crea tu primera automatización, organízalas en carpetas o parte desde una plantilla."
+            : "Cuando el equipo cree automatizaciones, las verás aquí. Tu rol puede verlas, no editarlas."}
         </p>
+        {canCreate ? (
         <div className="hub-empty__actions">
           <button type="button" className="hub-empty__btn hub-empty__btn--primary" onClick={onCreateFlow}>
             <span className="hub-empty__btn-plus" aria-hidden="true">+</span>
@@ -39,6 +45,7 @@ export function AutomationEmptyState({
             Explorar plantillas
           </button>
         </div>
+        ) : null}
       </div>
     </div>
   );

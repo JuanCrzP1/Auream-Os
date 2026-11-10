@@ -20,7 +20,7 @@ Decisión de producto del 2026-11-10: tomar lo mejor de **Leona** (el bot, los c
 | Conexiones | `/connections` | `connections/` | `/connections` | `connections` | `whatsapp` | ✅ Funciona |
 | Integraciones | `/integrations` | `integrations/` | `/ai-credentials` · `/inbound-webhooks` · `/mcp-credentials` | `integrations` · `webhooks` · `mcp` | `ai` | ✅ Funciona (la tarjeta de Meta lleva a Meta Ads) |
 
-Lo administrativo (Mi perfil, Configuración, Equipo, Pagos y suscripciones, Ayuda) vive en el menú de la cuenta: ver [`account.md`](account.md).
+Lo administrativo (Mi perfil, Configuración, Equipo, Pagos y suscripciones, Ayuda) vive en el menú de la cuenta: ver [`account.md`](account.md). Equipo (invitar con enlace, roles y permisos) es una pestaña de Configuración: ver [`team.md`](team.md).
 
 ## Cómo se relacionan
 

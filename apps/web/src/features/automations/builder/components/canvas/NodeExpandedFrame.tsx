@@ -6,7 +6,9 @@ import type { ToolDraft, ToolUi } from "@features/automations/builder/tools/Tool
 import type { NodePatch } from "@features/automations/builder/services/applyNodePatch";
 import type { CanvasNode } from "@features/automations/builder/types/canvas";
 import { useBuilderResources } from "@features/automations/builder/context/BuilderResourcesContext";
+import { useBuilderReadOnly } from "@features/automations/builder/context/BuilderEditingContext";
 import { UnsavedChangesDialog } from "./UnsavedChangesDialog";
+import { NodeReadOnlyBody } from "./NodeReadOnly";
 
 interface NodeExpandedFrameProps {
   readonly data: CanvasNode["data"];
@@ -46,6 +48,8 @@ export function NodeExpandedFrame({
 }: NodeExpandedFrameProps) {
   const Editor = ui.Editor;
   const resources = useBuilderResources();
+  // Solo lectura (sin `flows.write`): se ve la configuración, no se cambia ni se guarda.
+  const readOnly = useBuilderReadOnly();
 
   // Lo que hay guardado en el nodo, ahora mismo.
   const saved = useMemo<ToolDraft>(
@@ -172,7 +176,9 @@ export function NodeExpandedFrame({
           sigue estando dentro del lienzo de React Flow, que interpreta
           arrastre y rueda igual en cualquier punto que no lleve estas clases. */}
       <div className="node-expanded__body nodrag nowheel">
-        {Editor ? (
+        {Editor && readOnly ? (
+          <NodeReadOnlyBody Editor={Editor} draft={draft} resources={resources} />
+        ) : Editor ? (
           <Editor
             draft={draft}
             resources={resources}
@@ -193,7 +199,11 @@ export function NodeExpandedFrame({
           Vive aquí y no dentro de la herramienta porque el marco es lo único
           común a todas: cualquier editor que se declare mañana hereda esta
           barra sin escribir una línea. */}
-      {Editor ? (
+      {Editor && readOnly ? (
+        <footer className="node-expanded__actions">
+          <button type="button" className="toolbar-button nodrag" onClick={onClose}>Cerrar</button>
+        </footer>
+      ) : Editor ? (
         <footer className="node-expanded__actions">
           {validationNotice ? (
             <p className="node-expanded__aviso" role="alert">

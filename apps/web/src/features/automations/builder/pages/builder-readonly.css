@@ -1,0 +1,23 @@
+/* «Solo lectura» en la barra del editor: quien mira no puede editar
+ * automatizaciones (p. ej. el Asesor). Ocupa el lugar del estado de guardado. */
+
+.builder-topbar__readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--chip-bg-hover);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.builder-topbar__readonly::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+}

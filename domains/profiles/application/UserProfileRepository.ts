@@ -10,4 +10,10 @@ export interface UserProfileRepository {
   find(userId: string): Promise<UserProfile | null>;
   /** Crea o reemplaza el perfil completo. */
   save(profile: UserProfile): Promise<void>;
+  /**
+   * Guarda lo que firma Neon Auth de la persona para mostrarla a su equipo:
+   * su correo de acceso y, si nunca puso un nombre en Mi perfil, el nombre
+   * con el que se registró. Nunca pisa un nombre elegido en Mi perfil.
+   */
+  recordIdentity(userId: string, identity: { readonly email: string; readonly name?: string }): Promise<void>;
 }

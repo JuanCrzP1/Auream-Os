@@ -12,4 +12,6 @@ export type Scope =
   | "connections.write"
   | "conversations.read"
   | "conversations.write"
-  | "tenant.manage";
+  | "tenant.manage"
+  | "team.read"
+  | "team.manage";

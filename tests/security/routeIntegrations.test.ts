@@ -74,11 +74,12 @@ describe("routeIntegrationsRequest — permisos", () => {
     expect(handled).toBe(false);
   });
 
-  it("roles: dueños y administradores administran; operadores solo eligen; lectores no ven", () => {
+  it("roles: dueños y administradores administran las claves; asesores y lectores no las ven", () => {
     expect(ROLE_SCOPES.tenant_owner).toEqual(expect.arrayContaining(["credentials.read", "credentials.write"]));
     expect(ROLE_SCOPES.tenant_admin).toEqual(expect.arrayContaining(["credentials.read", "credentials.write"]));
-    expect(ROLE_SCOPES.operator).toContain("credentials.read");
-    expect(ROLE_SCOPES.operator).not.toContain("credentials.write");
+    // El Asesor (operator) ve las automatizaciones sin editarlas: no elige conexiones de IA ni píxeles.
+    expect(ROLE_SCOPES.operator).not.toContain("credentials.read");
+    expect(ROLE_SCOPES.operator).not.toContain("flows.write");
     expect(ROLE_SCOPES.viewer).not.toContain("credentials.read");
   });
 });

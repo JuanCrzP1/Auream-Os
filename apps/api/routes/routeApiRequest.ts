@@ -10,6 +10,10 @@ import { routeContactsRequest } from "./routeContactsRequest";
 import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeCompanyRequest } from "./routeCompanyRequest";
+import { routeTeamRequest } from "./routeTeamRequest";
+import { routeInvitationPublic } from "./routeInvitationPublic";
+import type { TeamServices } from "../../../domains/team/application/TeamServices";
+import type { InvitationServices } from "../../../domains/team/application/InvitationServices";
 import type { CompanyServices } from "../../../domains/company/application/CompanyServices";
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
 import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
@@ -69,6 +73,10 @@ export interface ApiRouterDependencies {
   readonly mcpServer?: McpServer;
   /** Datos de la empresa (`/company`). Ausente: la ruta responde 503. */
   readonly companyServices?: CompanyServices;
+  /** Equipo de la cuenta (`/team`). Ausente: la ruta responde 503. */
+  readonly teamServices?: TeamServices;
+  /** Invitaciones vistas por quien las recibe (`/invitations/:token`, sin sesión). */
+  readonly invitationServices?: InvitationServices;
 }
 
 export async function routeApiRequest(
@@ -96,6 +104,9 @@ export async function routeApiRequest(
 
   // OAuth del servidor MCP (descubrimiento, registro y tokens): lo usa el agente, sin sesión.
   if (await routeOAuthPublic(request, response, url, dependencies.mcpServer, dependencies.rateLimiter)) return;
+
+  // Enlace de invitación al equipo: lo autoriza su secreto; quien lo abre puede no tener cuenta.
+  if (await routeInvitationPublic(request, response, url, dependencies.invitationServices, dependencies.rateLimiter)) return;
 
   // Trabajador de la cola: lo autoriza `CRON_SECRET`, no una sesión.
   if (await routeInternalTasks(request, response, url, dependencies.tasks)) return;
@@ -148,6 +159,7 @@ export async function routeApiRequest(
   }
 
   if (await routeCompanyRequest(request, response, url, dependencies.companyServices, requestContext)) return;
+  if (await routeTeamRequest(request, response, url, dependencies.teamServices, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;

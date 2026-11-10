@@ -5,6 +5,8 @@ import type { MembershipRepository } from "../../../domains/team/application/Mem
 import type { OnboardingPort } from "../../../domains/team/application/OnboardingPort";
 import type { AuthenticatedPrincipal } from "../../../platform/identity/contracts/AuthenticatedPrincipal";
 import type { ProfileServices } from "../../../domains/profiles/application/ProfileServices";
+import type { InvitationServices } from "../../../domains/team/application/InvitationServices";
+import { sendJson } from "../http/sendJson";
 import { routeMyProfileRequest } from "./routeMyProfileRequest";
 
 // ---------------------------------------------------------------------------
@@ -29,7 +31,12 @@ export interface MeServices {
   readonly onboarding: OnboardingPort;
   /** Mi perfil (`/me/profile`). Ausente: la ruta responde 503. */
   readonly profiles?: ProfileServices;
+  /** Aceptar invitaciones al equipo (`/me/invitations/:token/accept`). */
+  readonly invitations?: InvitationServices;
 }
+
+/** Aceptar una invitación: con sesión pero sin cuenta elegida, porque es justo como se entra a una. */
+const ACCEPT_INVITATION = /^\/me\/invitations\/([A-Za-z0-9_-]{1,100})\/accept$/;
 
 export async function routeMeRequest(
   request: IncomingMessage,
@@ -50,9 +57,34 @@ export async function routeMeRequest(
   }
 
   if (url.pathname === "/me/onboarding" && request.method === "POST") {
+    await recordIdentity(services.profiles, userId, principal.identity);
     await handleOnboardingRequest(response, services.onboarding, userId, "Mi espacio");
     return true;
   }
 
+  const invitation = request.method === "POST" ? ACCEPT_INVITATION.exec(url.pathname) : null;
+  if (invitation) {
+    if (!services.invitations) {
+      sendJson(response, 503, { message: "Las invitaciones no están disponibles en este servidor." });
+      return true;
+    }
+    sendJson(response, 200, await services.invitations.accept(invitation[1]!, { userId, ...(principal.identity.email ? { email: principal.identity.email } : {}) }));
+    return true;
+  }
+
   return routeMyProfileRequest(request, response, url, services.profiles, userId);
+}
+
+/**
+ * Copia del token firmado el correo (y el nombre, si falta) al perfil, para
+ * que su equipo vea a la persona. Se llama cada vez que la app arranca
+ * (`/me/onboarding`); si falla, se reintenta la próxima vez: nunca impide entrar.
+ */
+async function recordIdentity(profiles: ProfileServices | undefined, userId: string, identity: { readonly email?: string; readonly name?: string }): Promise<void> {
+  if (!profiles || !identity.email) return;
+  try {
+    await profiles.recordIdentity(userId, { email: identity.email, ...(identity.name ? { name: identity.name } : {}) });
+  } catch {
+    // Sin consecuencias para entrar: el equipo verá el correo cuando vuelva a abrir la app.
+  }
 }

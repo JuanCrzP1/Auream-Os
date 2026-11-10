@@ -17,6 +17,17 @@ export class InMemoryUserProfileRepository implements UserProfileRepository {
   public async save(profile: UserProfile): Promise<void> {
     this.profiles.set(profile.userId, profile);
   }
+
+  /** Correos guardados (lo que en SQL es `user_profiles.email`). */
+  public readonly emails = new Map<string, string>();
+
+  public async recordIdentity(userId: string, identity: { readonly email: string; readonly name?: string }): Promise<void> {
+    this.emails.set(userId, identity.email);
+    const current = this.profiles.get(userId);
+    if (identity.name && !current?.displayName) {
+      this.profiles.set(userId, { userId, displayName: identity.name, phone: current?.phone ?? null, photoPathname: current?.photoPathname ?? null, photoUrl: current?.photoUrl ?? null });
+    }
+  }
 }
 
 export class InMemoryCompanyRepository implements CompanyRepository {

@@ -1,0 +1,78 @@
+/* El enlace de una invitación: listo para copiar o mandar por WhatsApp.
+ * Tokens del tema, salvo el verde de WhatsApp. */
+
+.invite-link {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.invite-link__ok {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--status-success) 16%, transparent);
+  color: var(--status-success);
+}
+
+.invite-link__ok svg {
+  width: 22px;
+  height: 22px;
+}
+
+.invite-link p {
+  margin: 0;
+}
+
+.invite-link__field {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.invite-link__field .ui-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+}
+
+.invite-link__whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  background: #25d366;
+  box-shadow: 0 10px 22px -14px rgba(18, 140, 126, 0.9);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.invite-link__whatsapp svg {
+  width: 18px;
+  height: 18px;
+}
+
+.invite-link__whatsapp:hover {
+  filter: brightness(1.05);
+}
+
+.invite-link__whatsapp:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.invite-link__note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.invite-link .ui-dialog__footer {
+  width: 100%;
+}

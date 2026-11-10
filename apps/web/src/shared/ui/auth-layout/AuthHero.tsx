@@ -1,5 +1,5 @@
 import { AureamLogo } from "@shared/brand/AureamLogo";
-import "../styles/auth-hero.css";
+import "./auth-hero.css";
 
 /**
  * Panel de marca de las pantallas de autenticación.

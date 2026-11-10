@@ -9,6 +9,7 @@
  * `apps/api/http/toMyTenantsResponse.ts`.
  */
 import type { Role } from "../platform/authorization/contracts/Role";
+import type { Scope } from "../platform/authorization/contracts/Scope";
 
 /**
  * Un tenant al que el usuario pertenece, tal como lo ve el cliente.
@@ -21,6 +22,13 @@ export interface TenantMembershipSummary {
   readonly tenantKey: string;
   readonly tenantName: string;
   readonly role: Role;
+  /**
+   * Lo que este rol puede hacer en esa cuenta, derivado en el servidor de
+   * `ROLE_SCOPES`. La web lo usa para mostrar u ocultar acciones (p. ej.
+   * automatizaciones en solo lectura para el Asesor); la protección real
+   * sigue en la API.
+   */
+  readonly permissions: ReadonlyArray<Scope>;
 }
 
 /** Cuerpo de `GET /me/tenants`. */

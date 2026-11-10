@@ -1,3 +1,4 @@
+import { ROLE_SCOPES } from "../../../platform/authorization/roles/RoleDefinitions";
 import type { MyTenantsResponse } from "../../../contracts/TenancyContracts";
 import type { MembershipWithTenant } from "../../../domains/team/application/MembershipRepository";
 
@@ -18,7 +19,8 @@ export function toMyTenantsResponse(
       tenantId: entry.membership.tenantId,
       tenantKey: entry.tenantKey,
       tenantName: entry.tenantName,
-      role: entry.membership.role
+      role: entry.membership.role,
+      permissions: ROLE_SCOPES[entry.membership.role] ?? []
     }))
   };
 }

@@ -1,21 +1,5 @@
 import { PagePlaceholder } from "@shared/ui/page-placeholder/PagePlaceholder";
 
-/**
- * Opciones del menú de la cuenta que ya se ven (para conocerlo completo) pero
- * que llegan más adelante. Cuando una se construya, tendrá su módulo propio en
- * `features/` y su ruta dejará de usar esto. Los módulos de la barra lateral
- * ya tienen el suyo (ver `moduleRoutes.tsx`).
- */
-
-export function TeamComingSoon() {
-  return (
-    <PagePlaceholder
-      title="Equipo"
-      description="Invita a tus asesores y administradores, dales permisos por área y mira quién atiende cada chat."
-    />
-  );
-}
-
 export function BillingComingSoon() {
   return (
     <PagePlaceholder

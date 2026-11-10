@@ -20,7 +20,16 @@ interface ActiveTenantContextValue {
   readonly state: TenantState;
   readonly activeTenantId: string | null;
   readonly selectTenant: (tenantId: string) => void;
+  /** Vuelve a pedir las cuentas (p. ej. después de aceptar una invitación al equipo). */
+  readonly reload: () => void;
 }
+
+/**
+ * En la página de una invitación al equipo no se crea «Mi espacio»: quien se
+ * registra desde un enlace entra a la cuenta que lo invitó, no a una vacía.
+ * Al aceptar, la página llama a `reload` ya fuera de esa ruta.
+ */
+const isInvitationPage = () => window.location.pathname.startsWith("/invite/");
 
 const ActiveTenantContext = createContext<ActiveTenantContextValue | null>(null);
 
@@ -34,6 +43,9 @@ export function ActiveTenantProvider({ children }: { children: ReactNode }) {
     setActiveTenantId(tenantId);
   }, []);
 
+  const [reloads, setReloads] = useState(0);
+  const reload = useCallback(() => setReloads((count) => count + 1), []);
+
   useEffect(() => {
     if (authState.status !== "authenticated") {
       return;
@@ -43,7 +55,7 @@ export function ActiveTenantProvider({ children }: { children: ReactNode }) {
 
     const load = async () => {
       try {
-        await ensureOnboarding();
+        if (!isInvitationPage()) await ensureOnboarding();
         const result = await fetchMyTenants();
 
         if (cancelled) return;
@@ -73,10 +85,10 @@ export function ActiveTenantProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [authState.status, selectTenant]);
+  }, [authState.status, selectTenant, reloads]);
 
   return (
-    <ActiveTenantContext.Provider value={{ state, activeTenantId, selectTenant }}>
+    <ActiveTenantContext.Provider value={{ state, activeTenantId, selectTenant, reload }}>
       {children}
     </ActiveTenantContext.Provider>
   );
@@ -90,4 +102,9 @@ export function useActiveTenant(): ActiveTenantContextValue {
   }
 
   return value;
+}
+
+/** Igual que `useActiveTenant`, pero `null` fuera del proveedor (pruebas y vistas sueltas). */
+export function useActiveTenantOptional(): ActiveTenantContextValue | null {
+  return useContext(ActiveTenantContext);
 }

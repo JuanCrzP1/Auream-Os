@@ -38,4 +38,19 @@ export class SqlUserProfileRepository implements UserProfileRepository {
       [profile.userId, profile.displayName, profile.phone, profile.photoPathname, profile.photoUrl]
     );
   }
+
+  public async recordIdentity(userId: string, identity: { readonly email: string; readonly name?: string }): Promise<void> {
+    // Solo escribe si algo cambió (se llama cada vez que la persona abre la
+    // app) y nunca pisa el nombre que eligió en Mi perfil.
+    await this.sql.query(
+      `insert into user_profiles (user_id, email, display_name) values ($1, $2, $3)
+       on conflict (user_id) do update
+         set email = excluded.email,
+             display_name = coalesce(user_profiles.display_name, excluded.display_name),
+             updated_at = now()
+       where user_profiles.email is distinct from excluded.email
+          or (user_profiles.display_name is null and excluded.display_name is not null)`,
+      [userId, identity.email, identity.name ?? null]
+    );
+  }
 }

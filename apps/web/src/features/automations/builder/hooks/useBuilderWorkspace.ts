@@ -19,7 +19,7 @@ import { useBuilderController } from "./useBuilderController";
  * El laboratorio de pruebas (`lab/useFlowLab`) prueba `currentDraft`: lo que
  * está en el lienzo, guardado o no.
  */
-export function useBuilderWorkspace(flowKey: string) {
+export function useBuilderWorkspace(flowKey: string, options: { readonly readOnly?: boolean } = {}) {
   const { workspace, loading, error, serverSignature, offline, setWorkspace, renameFlow } =
     useBuilderLoader(flowKey);
 
@@ -41,7 +41,8 @@ export function useBuilderWorkspace(flowKey: string) {
     seedSignature: serverSignature,
     seedRevision: workspace?.autosaveRevision ?? null,
     // Sin servidor no hay a dónde guardar: intentarlo solo produciría errores.
-    enabled: workspace !== null && !offline,
+    // En solo lectura (sin `flows.write`) nunca se guarda: la API lo rechazaría.
+    enabled: workspace !== null && !offline && !options.readOnly,
     onSaved: setWorkspace
   });
 

@@ -26,7 +26,7 @@ import { listNodeOutputs } from "@features/automations/builder/services/nodeOutp
  * la tarjeta siempre compacta, los handles no se mueven nunca.
  */
 export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
-  const { requestEdit, duplicateNode, removeNode } = useBuilderEditing();
+  const { requestEdit, duplicateNode, removeNode, readOnly } = useBuilderEditing();
   // `resolveTool` degrada a una presentación neutra si el flow guardado trae un
   // tipo que esta versión ya no soporta, en lugar de romper el canvas entero.
   const tool = resolveTool(data.nodeType);
@@ -117,13 +117,16 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
             <button
               type="button"
               className="flow-node__action-btn"
-              title="Editar"
-              aria-label={`Editar ${data.title}`}
+              title={readOnly ? "Ver configuración" : "Editar"}
+              aria-label={`${readOnly ? "Ver" : "Editar"} ${data.title}`}
               onClick={(e) => { e.stopPropagation(); requestEdit(id); }}
             >
-              ✏
+              {readOnly ? "👁" : "✏"}
             </button>
           ) : null}
+          {/* Solo lectura (sin `flows.write`): se puede mirar, no duplicar ni borrar. */}
+          {readOnly ? null : (
+          <>
           {/* Duplicar copia el nodo entero con su configuración. No aparece en
               el nodo de entrada: es único por definición —solo uno puede ser
               `entryNodeId`— y una copia sería un nodo que lo parece sin serlo.
@@ -150,6 +153,8 @@ export function FlowNodeCard({ id, data, selected }: NodeProps<CanvasNode>) {
           >
             ✕
           </button>
+          </>
+          )}
         </div>
       </header>
       {/* La herramienta puede traer su propio cuerpo en reposo. Esta tarjeta no

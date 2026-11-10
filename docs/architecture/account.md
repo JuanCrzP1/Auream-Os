@@ -51,7 +51,7 @@ El perfil es del **usuario**, no de una empresa: el mismo en todas a las que per
 
 ## Configuración (`/settings`)
 
-Dos pestañas: **Empresa** y **Apariencia** (el tema, con una vista previa de cada opción; el mismo del menú). Cada módulo que traiga ajustes propios suma aquí su pestaña.
+Tres pestañas: **Empresa**, **Equipo** y **Apariencia** (el tema, con una vista previa de cada opción; el mismo del menú). La pestaña viaja en la dirección (`?tab=team`). Cada módulo que traiga ajustes propios suma aquí su pestaña desde la capa de la app (`app/router/accountRoutes.tsx`, `SettingsPage extraTabs`): Cuenta no importa a otros módulos. **Equipo** (invitar con enlace, roles, quitar) está en [`team.md`](team.md).
 
 **Empresa**: nombre, logo y zona horaria de la cuenta activa (`tenants.name`, `logo_*`, `timezone`). Todo el equipo los ve; solo los dueños los cambian (`tenant.manage`, `CompanyPermissions`). Quien no es dueño ve la página sin poder editar.
 

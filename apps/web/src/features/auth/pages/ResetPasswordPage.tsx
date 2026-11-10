@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useResetPassword } from "@shared/auth/hooks/useResetPassword";
-import { AuthLayout } from "../components/AuthLayout";
+import { AuthLayout } from "@shared/ui/auth-layout/AuthLayout";
 import { ResetPasswordForm } from "../components/ResetPasswordForm";
 
 /**

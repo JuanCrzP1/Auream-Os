@@ -26,6 +26,7 @@ import { ErrorLogger } from "../../../platform/observability/logging/ErrorLogger
 import { createApiRequestListener, type ApiRequestListener } from "./createApiServer";
 import { wakeTasksOnTraffic } from "./wakeTasksOnTraffic";
 import { composeAccountServices } from "../composition/composeAccountServices";
+import { composeTeamServices } from "../composition/composeTeamServices";
 
 // ---------------------------------------------------------------------------
 // composeApiApplication — lee la configuración del entorno y compone TODA la
@@ -109,6 +110,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   // Medios de los bloques; el mismo almacén guarda las fotos de perfil y los logos (Mi perfil, Empresa).
   const mediaServices = composeMediaServices(config, tenancy.sqlClient, rateLimiter);
   const accountServices = composeAccountServices(config, tenancy.sqlClient, mediaServices?.storage ?? null, rateLimiter);
+  const team = composeTeamServices(tenancy.sqlClient);
 
   const listener = createApiRequestListener(config, {
     services,
@@ -132,6 +134,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     },
     mediaServices,
     companyServices: accountServices.company,
+    teamServices: team.team,
+    invitationServices: team.invitations,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,
@@ -148,7 +152,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     meServices: {
       membershipRepository: tenancy.membershipRepository,
       onboarding: tenancy.onboarding,
-      profiles: accountServices.profiles
+      profiles: accountServices.profiles,
+      invitations: team.invitations
     },
     authService: composeAuthService(config, authConfig),
     requestLogger: new RequestLogger(logger),

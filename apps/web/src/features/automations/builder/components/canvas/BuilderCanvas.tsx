@@ -67,6 +67,8 @@ interface BuilderCanvasProps {
   labTrail?: LabTrail;
   /** Entrega a la página la función que lleva a un bloque (el laboratorio la usa). */
   registerFocusNode?: (focus: (nodeId: string) => void) => void;
+  /** Solo lectura: no se arrastran bloques ni se tiran conexiones (la página además blinda el grafo). */
+  readOnly?: boolean;
 }
 
 /** Encuadre inicial: algo alejado, con aire alrededor. */
@@ -236,6 +238,8 @@ function CanvasInner(props: BuilderCanvasProps) {
           onNodesChange={props.onNodesChange}
           onEdgesChange={props.onEdgesChange}
           onConnect={props.onConnect}
+          nodesDraggable={!props.readOnly}
+          nodesConnectable={!props.readOnly}
           isValidConnection={isValidConnection}
           onConnectEnd={onConnectEnd}
           onNodeClick={(_event, node) => props.onSelectNode(node.id)}

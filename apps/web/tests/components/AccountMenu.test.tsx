@@ -7,8 +7,8 @@ import { AccountCard } from "../../src/shared/account/AccountCard";
 
 // ---------------------------------------------------------------------------
 // La tarjeta de la cuenta (abajo en la barra lateral) y su menú estándar:
-// quién eres, tu empresa, Mi perfil y Empresa, lo que llega «Pronto» (Equipo,
-// Pagos y suscripciones, Ayuda), el tema y cerrar sesión. Con teclado.
+// quién eres, tu empresa, Mi perfil, Configuración y Equipo, lo que llega
+// «Pronto» (Pagos y suscripciones, Ayuda), el tema y cerrar sesión. Con teclado.
 // ---------------------------------------------------------------------------
 
 const signOut = vi.fn(async () => undefined);
@@ -71,7 +71,7 @@ describe("tarjeta de la cuenta", () => {
     expect(menu).toHaveTextContent("Dueño");
     const items = screen.getAllByRole("menuitem").map((item) => item.textContent);
     // La tarjeta de la empresa abre sus datos (Configuración); luego las opciones y lo que llega pronto.
-    expect(items).toEqual(["DCDilo CantandoDueño", "Mi perfil", "Configuración", "EquipoPronto", "Pagos y suscripcionesPronto", "AyudaPronto", "Cerrar sesión"]);
+    expect(items).toEqual(["DCDilo CantandoDueño", "Mi perfil", "Configuración", "Equipo", "Pagos y suscripcionesPronto", "AyudaPronto", "Cerrar sesión"]);
     // El foco entra al menú.
     expect(screen.getAllByRole("menuitem")[0]).toHaveFocus();
   });

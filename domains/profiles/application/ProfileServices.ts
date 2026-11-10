@@ -67,6 +67,15 @@ export class ProfileServices {
     return toProfileResponse(next);
   }
 
+  /**
+   * Copia del token verificado el correo de acceso y, si falta, el nombre
+   * con el que se registró, para que su equipo la vea. Se llama al abrir la
+   * app; un fallo aquí nunca impide entrar.
+   */
+  public async recordIdentity(userId: string, identity: { readonly email: string; readonly name?: string }): Promise<void> {
+    await this.repository.recordIdentity(userId, identity);
+  }
+
   private async load(userId: string): Promise<UserProfile> {
     return (await this.repository.find(userId)) ?? emptyProfile(userId);
   }

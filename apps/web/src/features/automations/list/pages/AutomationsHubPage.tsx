@@ -24,6 +24,7 @@ import { FolderEmptyState } from "../components/FolderEmptyState";
 import { HubBreadcrumb } from "../components/HubBreadcrumb";
 import { selectHubContents } from "../services/selectHubContents";
 import type { AutomationSummary } from "@contracts/AutomationContracts";
+import { useCan } from "@shared/auth/tenant/usePermissions";
 
 export function AutomationsHubPage() {
   const navigate = useNavigate();
@@ -95,6 +96,8 @@ export function AutomationsHubPage() {
   // Estado derivado de la lista real: decide dónde viven las acciones de
   // creación (empty state central vs. cabecera), nunca en ambos sitios.
   const hasContent = flows.length > 0 || folders.length > 0;
+  // Sin `flows.write` (p. ej. el Asesor) se ven y se abren, sin crear, mover ni editar.
+  const canEdit = useCan("flows.write");
 
   return (
     <>
@@ -110,7 +113,7 @@ export function AutomationsHubPage() {
           <HubBreadcrumb
             folderName={contents.currentFolder.name}
             onGoToRoot={location.goToRoot}
-            onDropFlowToRoot={(flowId) => void flowMove.moveToFolder(flowId, null)}
+            onDropFlowToRoot={(flowId) => canEdit && void flowMove.moveToFolder(flowId, null)}
           />
         )}
         {lifecycle.error && (
@@ -130,6 +133,7 @@ export function AutomationsHubPage() {
         )}
         {!hasContent ? (
           <AutomationEmptyState
+            canCreate={canEdit}
             onCreateFlow={handleCreateFlow}
             onCreateFolder={folderCreation.open}
             onExploreTemplates={handleExploreTemplates}
@@ -141,6 +145,7 @@ export function AutomationsHubPage() {
               onSearchChange={setSearch}
               onCreateFolder={folderCreation.open}
               onCreateFlow={handleCreateFlow}
+              canCreate={canEdit}
             />
             {contents.folders.length > 0 && (
               <AutomationSection
@@ -153,8 +158,7 @@ export function AutomationsHubPage() {
                     folder={folder}
                     flowCount={contents.countByFolder.get(folder.id) ?? 0}
                     onClick={location.openFolder}
-                    onRename={folderRename.request}
-                    onDropFlow={(flowId, folderId) => void flowMove.moveToFolder(flowId, folderId)}
+                    {...(canEdit ? { onRename: folderRename.request, onDropFlow: (flowId: string, folderId: string) => void flowMove.moveToFolder(flowId, folderId) } : {})}
                   />
                 ))}
               </AutomationSection>
@@ -166,6 +170,7 @@ export function AutomationsHubPage() {
                 <AutomationFlowCard
                   key={flow.id}
                   flow={flow}
+                  readOnly={!canEdit}
                   onDelete={actions.requestDelete}
                   onRename={actions.requestRename}
                   onDuplicate={(f) => void lifecycle.duplicate(f)}
@@ -180,6 +185,7 @@ export function AutomationsHubPage() {
                   <AutomationFlowCard
                     key={flow.id}
                     flow={flow}
+                    readOnly={!canEdit}
                     onDelete={actions.requestDelete}
                     onRename={actions.requestRename}
                     onDuplicate={(f) => void lifecycle.duplicate(f)}

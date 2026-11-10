@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useForgotPassword } from "@shared/auth/hooks/useForgotPassword";
-import { AuthLayout } from "../components/AuthLayout";
+import { AuthLayout } from "@shared/ui/auth-layout/AuthLayout";
 import { ForgotPasswordForm } from "../components/ForgotPasswordForm";
 
 /**

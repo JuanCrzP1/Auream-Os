@@ -1,7 +1,7 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@shared/auth/context/AuthContext";
 import { useAuthActions } from "@shared/auth/hooks/useAuthActions";
-import { AuthLayout } from "../components/AuthLayout";
+import { AuthLayout } from "@shared/ui/auth-layout/AuthLayout";
 import { RegisterForm } from "../components/RegisterForm";
 
 /**
@@ -14,19 +14,24 @@ import { RegisterForm } from "../components/RegisterForm";
 export function RegisterPage() {
   const { state } = useAuth();
   const { pending, error, signUp } = useAuthActions();
+  const location = useLocation();
+  // Desde una invitación al equipo: al crear la cuenta se vuelve a ella (y el enlace a «Entrar» la conserva).
+  const from = (location.state as { from?: string } | null)?.from;
 
   if (state.status === "authenticated") {
-    return <Navigate to="/automations" replace />;
+    return <Navigate to={from ?? "/automations"} replace />;
   }
 
   return (
     <AuthLayout
       title="Crear cuenta"
-      subtitle="Tu espacio de trabajo se prepara automáticamente."
+      subtitle={from ? "Crea tu cuenta con el correo que invitaron y luego te unes al equipo." : "Tu espacio de trabajo se prepara automáticamente."}
       footer={
         <>
           <span>¿Ya tienes cuenta? </span>
-          <Link to="/login">Entrar</Link>
+          <Link to="/login" state={from ? { from } : undefined}>
+            Entrar
+          </Link>
         </>
       }
     >

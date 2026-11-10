@@ -16,6 +16,8 @@ interface AutomationFlowCardProps {
   onMove?: (flow: AutomationSummary) => void;
   onArchive?: (flow: AutomationSummary) => void;
   onRestore?: (flow: AutomationSummary) => void;
+  /** Solo lectura (sin `flows.write`): se abre para verla; sin menú de acciones ni arrastre. */
+  readOnly?: boolean;
 }
 
 export function AutomationFlowCard({
@@ -25,7 +27,8 @@ export function AutomationFlowCard({
   onDuplicate,
   onMove,
   onArchive,
-  onRestore
+  onRestore,
+  readOnly = false
 }: AutomationFlowCardProps) {
   const archived = flow.status === "archived";
   const navigate = useNavigate();
@@ -66,8 +69,9 @@ export function AutomationFlowCard({
       onKeyDown={handleKeyDown}
       // La tarjeta solo ANUNCIA que se la llevan y quién es. Qué
       // significa soltarla es asunto del destino; a dónde va, del hub.
-      draggable
+      draggable={!readOnly}
       onDragStart={(event) => {
+        if (readOnly) return;
         escribirFlujoArrastrado(event.dataTransfer, flow.id);
         setArrastrando(true);
       }}
@@ -107,6 +111,7 @@ export function AutomationFlowCard({
             </>
           )}
         </div>
+        {readOnly ? null : (
         <AutomationContextMenu
           flow={flow}
           onOpen={(f) => navigate(`/builder/${f.key}`)}
@@ -117,6 +122,7 @@ export function AutomationFlowCard({
           onRestore={onRestore}
           onDelete={onDelete}
         />
+        )}
       </footer>
     </article>
   );

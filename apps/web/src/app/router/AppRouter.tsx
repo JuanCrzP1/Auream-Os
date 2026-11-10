@@ -18,6 +18,7 @@ import { TemplatesPage } from "./placeholders/TemplatesPage";
 import { ArchivePage } from "./placeholders/ArchivePage";
 import { accountRoutes } from "./accountRoutes";
 import { moduleRoutes } from "./moduleRoutes";
+import { AcceptInvitationPage } from "@features/team/pages/AcceptInvitationPage";
 
 /**
  * Rutas de la aplicación.
@@ -36,6 +37,9 @@ export function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      {/* Invitación al equipo: se abre sin sesión (quien la recibe puede no tener
+          cuenta); la página pide entrar o registrarse y vuelve a sí misma. */}
+      <Route path="/invite/:token" element={<AcceptInvitationPage />} />
 
       <Route path="/" element={<Navigate to="/automations" replace />} />
 

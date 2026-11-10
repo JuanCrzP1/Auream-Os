@@ -1,5 +1,6 @@
 import "../components/builder-shell/builder-topbar.css";
 import "./builder-page.css";
+import "./builder-readonly.css";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { BuilderCanvas } from "../components/canvas/BuilderCanvas";
@@ -11,6 +12,8 @@ import { PalettePanel } from "../components/panels/PalettePanel";
 import { BuilderEditingProvider } from "../context/BuilderEditingContext";
 import { BuilderResourcesProvider } from "../context/BuilderResourcesContext";
 import { useBuilderWorkspace } from "../hooks/useBuilderWorkspace";
+import { useReadOnlyBuilder } from "../hooks/useReadOnlyBuilder";
+import { useCan } from "@shared/auth/tenant/usePermissions";
 import { resolveToolUi } from "../tools/ui-registry";
 import { freeCanvasPosition } from "../services/freeCanvasPosition";
 import type { CanvasNode } from "../types/canvas";
@@ -31,7 +34,11 @@ interface BuilderViewProps {
 
 function BuilderView({ flowKey, onReload }: BuilderViewProps) {
   const navigate = useNavigate();
-  const builder = useBuilderWorkspace(flowKey);
+  // Sin `flows.write` (p. ej. el Asesor) el flujo se ve, no se edita: sin
+  // paleta, sin autoguardado y con el grafo blindado (`useReadOnlyBuilder`).
+  const readOnly = !useCan("flows.write");
+  const builder = useBuilderWorkspace(flowKey, { readOnly });
+  const edit = useReadOnlyBuilder(builder, readOnly);
 
   // Laboratorio de pruebas: prueba lo que está en el lienzo AHORA (guardado o no).
   const draftRef = useRef(builder.currentDraft);
@@ -96,9 +103,10 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
       <BuilderEditingProvider
         requestEdit={openNodeEditor}
         toggleExpand={builder.handleToggleNodeExpanded}
-        updateNode={builder.handleUpdateNode}
-        duplicateNode={builder.handleDuplicateNode}
-        removeNode={builder.handleRemoveNode}
+        updateNode={edit.updateNode}
+        duplicateNode={edit.duplicateNode}
+        removeNode={edit.removeNode}
+        readOnly={readOnly}
       >
       <BuilderResourcesProvider>
       <div className="builder-stage">
@@ -115,8 +123,8 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
                 <path d="M19 12H5M12 5l-7 7 7 7" />
               </svg>
             </button>
-            <FlowNameEditor name={builder.flowName} onRename={builder.handleRenameFlow} />
-            <SaveStatusPill status={builder.offline ? "offline" : builder.autosaveStatus} />
+            <FlowNameEditor name={builder.flowName} onRename={edit.renameFlow} readOnly={readOnly} />
+            {readOnly ? <span className="builder-topbar__readonly">Solo lectura</span> : <SaveStatusPill status={builder.offline ? "offline" : builder.autosaveStatus} />}
           </div>
           {/* Sin publicar, versión ni rollback: los flujos se autoguardan y lo
               guardado es lo que corre (ROADMAP, B6). Se prueba en el laboratorio. */}
@@ -131,20 +139,21 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
           <BuilderCanvas
             nodes={builder.nodes}
             edges={builder.edges}
-            onNodesChange={builder.handleNodesChange}
-            onEdgesChange={builder.handleEdgesChange}
-            onConnect={builder.handleConnect}
+            onNodesChange={edit.onNodesChange}
+            onEdgesChange={edit.onEdgesChange}
+            onConnect={edit.onConnect}
             onSelectNode={builder.handleSelectNode}
             onSelectEdge={builder.handleSelectEdge}
             onEditNode={openNodeEditor}
-            onDropNode={builder.handleDropNode}
+            onDropNode={edit.onDropNode}
+            readOnly={readOnly}
             onPaneClick={builder.handleCollapseNodes}
             review={builder.review}
             registerViewportCenter={registerViewportCenter}
             registerFocusNode={registerFocusNode}
             {...(labTrail ? { labTrail } : {})}
           />
-          <PalettePanel onAddNode={addNodeAtCenter} />
+          {readOnly ? null : <PalettePanel onAddNode={addNodeAtCenter} />}
           {labOpen ? <FlowLab lab={lab} blockName={blockName} onFocusBlock={(nodeId) => focusBlock.current?.(nodeId)} onClose={() => setLabOpen(false)} /> : null}
           {builder.offline ? <OfflineNotice onRetry={onReload} /> : null}
           {builder.autosaveStatus === "conflict" ? <OfflineNotice reason="conflict" onRetry={onReload} /> : null}

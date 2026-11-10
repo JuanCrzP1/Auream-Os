@@ -5,6 +5,8 @@ interface AutomationsToolbarProps {
   onSearchChange: (value: string) => void;
   onCreateFolder: () => void;
   onCreateFlow: () => void;
+  /** Sin permiso para crear (p. ej. el Asesor): solo el buscador. */
+  canCreate?: boolean;
 }
 
 /**
@@ -30,11 +32,13 @@ export function AutomationsToolbar({
   search,
   onSearchChange,
   onCreateFolder,
-  onCreateFlow
+  onCreateFlow,
+  canCreate = true
 }: AutomationsToolbarProps) {
   return (
     <div className="hub-toolbar">
       <AutomationSearchBar value={search} onChange={onSearchChange} />
+      {canCreate ? (
       <div className="hub-toolbar__actions">
         <button type="button" className="hub-toolbar__new-btn" onClick={onCreateFlow}>
           <svg
@@ -55,6 +59,7 @@ export function AutomationsToolbar({
           Nueva carpeta
         </button>
       </div>
+      ) : null}
     </div>
   );
 }

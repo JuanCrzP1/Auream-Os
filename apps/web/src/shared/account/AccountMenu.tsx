@@ -8,14 +8,7 @@ import { AccountMenuIcons, accountHelpLink, accountMenuLinks, type AccountMenuLi
 import { AccountAvatar } from "./AccountAvatar";
 import { useAccount } from "./AccountContext";
 import { ThemeSwitch } from "./ThemeSwitch";
-
-const ROLE_LABEL: Readonly<Record<string, string>> = {
-  platform_admin: "Administrador de la plataforma",
-  tenant_owner: "Dueño",
-  tenant_admin: "Administrador",
-  operator: "Asesor",
-  viewer: "Solo lectura"
-};
+import { roleLabel } from "@shared/team/teamRoles";
 
 const FOCUSABLE = '[role="menuitem"], [role="menuitemradio"]';
 const SETTINGS_PATH = "/settings";
@@ -94,7 +87,7 @@ export function AccountMenu({ onClose, closing = false }: { readonly onClose: (r
           <AccountAvatar name={companyName} imageUrl={company?.logoUrl ?? null} size={28} shape="square" />
           <span className="account-menu__who">
             <strong>{companyName}</strong>
-            <span>{active ? ROLE_LABEL[active.role] ?? active.role : "Empresa"}</span>
+            <span>{active ? roleLabel(active.role) : "Empresa"}</span>
           </span>
           <span className="account-menu__chevron" aria-hidden="true">{AccountMenuIcons.chevron}</span>
         </Link>
