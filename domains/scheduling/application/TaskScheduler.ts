@@ -113,12 +113,14 @@ export class TaskScheduler {
   }
 
   /**
-   * Red de seguridad: si hay tareas YA vencidas (p. ej. no corrió la ronda
-   * programada), despierta al trabajador. Una consulta; nunca lanza.
+   * Red de seguridad (mensajes entrantes, tráfico de la app): si algo ya venció
+   * o vence dentro de `kickHorizonMs`, despierta al trabajador, que espera la
+   * hora exacta. Así lo que vence sigue a su hora aunque su despertador se
+   * pierda. Una consulta; nunca lanza.
    */
   public async nudgeIfDue(): Promise<void> {
     const next = await this.repository.peekNext().catch(() => null);
-    if (next && next.dueAt.getTime() <= this.clock.now().getTime()) this.kicker.kick();
+    if (next && next.dueAt.getTime() - this.clock.now().getTime() <= this.kickHorizonMs) this.kicker.kick();
   }
 
   /** Pronto: despertar ya. Más tarde: el despertador, con margen antes de la hora. */

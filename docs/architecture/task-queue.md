@@ -34,9 +34,9 @@ mensaje / envío a mano / despertador
                                    │  vence               en Vercel Queues (suena a su hora)
   despertador (Vercel Queues) ─┐   ▼                              │
   autoinvocación (segundos) ───┤                    api/task-alarm.ts (consumidor)
-  mensaje entrante (si hay ────┼─> /internal/tasks/run <──────────┘
-  vencidas)                    │        │
-  Vercel Cron (diario) ────────┘        ▼
+  tráfico de la app y ─────────┼─> /internal/tasks/run <──────────┘
+  mensajes (vence en segundos) │        │
+  Vercel Schedules (15 min) ───┘        ▼
                               TaskRunner ──> FlowTimerTaskHandler ──> FlowTimerService.fire
                                    │                                  (candado del chat) ──> FlowTurn
                                    └─> al terminar: armNext (el despertador de la siguiente pendiente)
@@ -71,8 +71,8 @@ Una **ronda** con tiempo limitado (`TASK_RUNNER_BUDGET_MS`, 50 s por defecto, po
 |---|---|---|
 | Autoinvocación (`HttpTaskKicker`) | Al programar algo que vence en menos de 20 s (lo que una ronda alcanza a esperar: su tiempo menos la reserva; `kickHorizonFor`) | Arranca la ronda enseguida; la ronda espera la hora exacta |
 | **Despertador** (`VercelQueueTaskAlarm`, Vercel Queues) | Al programar algo que vence más tarde, y al terminar cada ronda para la siguiente pendiente (`armNext`) | Programador, «Tiempo agotado» y pausas de minutos, horas o días, **a su hora**, sin cron frecuente ni funciones esperando. Mensaje con retraso al tema `auream-task-alarms` que suena **15 s antes** (`ALARM_LEAD_MS`): la ronda llega con margen y espera la hora exacta. Tareas en el mismo tramo de 5 s comparten uno. Más de 6 días: suena a los 6 y esa ronda arma el siguiente |
-| Mensaje entrante (`nudgeIfDue`) | Si hay tareas ya vencidas | Red de seguridad |
-| Vercel Cron → `GET /api/internal/tasks/run` | Plan **Hobby: una vez al día** (`vercel.json`, 11:00 UTC) | Barrido diario (red de seguridad) |
+| Tráfico de la API (`wakeTasksOnTraffic`) y mensajes entrantes (`nudgeIfDue`) | Primera petición de cada instancia: `armNext`. Después, como mucho cada 10 s por instancia (y con cada mensaje entrante): si algo ya venció o vence en menos de 20 s. Las peticiones del propio trabajador no cuentan | Red de seguridad con exactitud: mientras alguien usa la app (el panel abierto pregunta cada pocos segundos), lo que vence sigue a su hora aunque se pierda su despertador |
+| Vercel Schedules → `POST /api/internal/tasks/run` (`tasks-sweep` en `vercel.json`) | **Cada 15 min**: lo más seguido que permite Hobby, con 15 min de margen de Vercel. En Pro se puede cada minuto (`* * * * *`) | Revisión periódica (red de seguridad): sin nadie usando la app, lo que se pase por un despertador perdido se atiende en menos de 30 min. Reemplazó al Vercel Cron diario |
 | Cadena de rondas (`continueIfSoon`) | Solo **sin despertadores** (`TASK_ALARMS=off`): al terminar cada ronda, si algo vence dentro del margen | La ronda se sostiene (`holdWithinMs`) y despierta a la siguiente. Una sola cadena: eslabón con clave única por tramo de 30 s (`scheduling.chain`) |
 | Servidor local (`apps/api/main.ts`) / `apps/worker` | Rondas seguidas | Desarrollo y servidor propio |
 
@@ -80,9 +80,11 @@ Una **ronda** con tiempo limitado (`TASK_RUNNER_BUDGET_MS`, 50 s por defecto, po
 
 **Despertadores perdidos.** Al terminar cada ronda se arma el de la siguiente pendiente (`armNext`), y también con la **primera petición de cada instancia** de la API (dentro de una petición, donde está la credencial de Vercel Queues). Así un despertador que no se pudo enviar, o que armó un despliegue anterior con un consumidor roto, se recupera solo.
 
+**Cómo leer el tablero de Vercel Queues.** «Queued» cuenta cada vez que se arma un despertador, y el de la próxima pendiente se vuelve a armar con la primera petición de cada instancia y al final de cada ronda: Vercel descarta los repetidos (misma clave), pero los cuenta. Además, cada despliegue guarda su propia copia, así que cuando vence suenan varias a la vez (una por despliegue que la armó) y el trabajador despierta varias veces sin repetir nada (la reserva es atómica). Por eso «Queued» es mucho mayor que «Received», y las entregas llegan en tandas a la hora de cada tarea: no son despertadores perdidos. Para medir la puntualidad, mira `tasks.alarm_rang` (`lateMs`) y `tasks.late` en el registro.
+
 **Ayudas de Vercel (`NODEJS_HELPERS=0`).** El proyecto las apaga porque la API lee el cuerpo de las peticiones ella misma, y eso vale para **todas** las funciones: no hay `req.body` ni `res.status()`. El consumidor de la librería para `(req, res)` (`handleNodeCallback`) depende de las dos: con él cada entrega fallaba sin llamar a nadie y los intervalos solo seguían si otra cosa despertaba la cola (incidente del 2026-11-09). Por eso el consumidor usa el manejador web (`handleCallback`) servido con `webHandlerOnNode`, y `tests/unit/taskAlarmConsumer.test.ts` lo prueba con una entrega igual a la de Vercel en un servidor de Node sin ayudas.
 
-**Plan Hobby, puntualidad y consumo.** Con despertadores, cada espera cuesta un mensaje de la cola y dos invocaciones cortas, sin funciones esperando: el Programador de 3 minutos, el «Tiempo agotado» de 2 horas o una pausa de 2 días llegan a su hora en Hobby. El plan Hobby es solo para uso personal, no comercial: para vender el servicio a clientes hace falta el plan Pro. Si Vercel Queues fallara (`tasks.alarm_failed` en el registro), lo vencido se atiende con el próximo mensaje, la próxima ronda o el barrido diario; con `TASK_ALARMS=off` vuelve la cadena de rondas.
+**Plan Hobby, puntualidad y consumo.** Con despertadores, cada espera cuesta un mensaje de la cola y dos invocaciones cortas, sin funciones esperando: el Programador de 3 minutos, el «Tiempo agotado» de 2 horas o una pausa de 2 días llegan a su hora en Hobby. El plan Hobby es solo para uso personal, no comercial: para vender el servicio a clientes hace falta el plan Pro. Si Vercel Queues fallara (`tasks.alarm_failed` en el registro), lo vencido se atiende con el tráfico de la app (a su hora), la próxima ronda o la revisión cada 15 minutos; con `TASK_ALARMS=off` vuelve la cadena de rondas.
 
 ## Puntualidad
 
@@ -104,7 +106,7 @@ En el registro: `tasks.alarm_rang` (`lateMs`: cuánto tardó Vercel Queues respe
 
 | Variable | Para qué |
 |---|---|
-| `CRON_SECRET` | **Obligatoria en producción.** Protege `/internal/tasks/run` (Vercel Cron la envía como `Authorization: Bearer …`). Mínimo 16 caracteres. Sin ella el endpoint responde 503 y la cola solo corre dentro del proceso. |
+| `CRON_SECRET` | **Obligatoria en producción.** Protege `/internal/tasks/run` (Vercel Schedules la envía como `Authorization: Bearer …`). Mínimo 16 caracteres. Sin ella el endpoint responde 503 y la cola solo corre dentro del proceso. |
 | `TASK_RUNNER_BUDGET_MS` | Duración de una ronda (10 000–290 000; por defecto 50 000). |
 | `TASKS_BASE_URL` | Dirección pública de la API para la autoinvocación (por defecto, el dominio de producción de Vercel). |
 | `TASK_ALARMS` | Despertadores con Vercel Queues: `on` u `off`. Por defecto `on` en Vercel con `CRON_SECRET`, `off` en local. |
@@ -116,3 +118,4 @@ En el registro: `tasks.alarm_rang` (`lateMs`: cuánto tardó Vercel Queues respe
 - Fallidas recientes: `select kind, last_error, finished_at from scheduled_tasks where status = 'failed' order by finished_at desc limit 20`.
 - Registro de la función: `tasks.alarm_rang` (un despertador llegó, con su demora), `tasks.round` (lo que hizo cada ronda, con `maxLateMs`: lo más tarde que corrió una tarea), `tasks.late` (una tarea corrió más de un minuto tarde: algo no la despertó a su hora), `tasks.attempt_failed` (cada intento fallido con su motivo) y `tasks.alarm_failed` (un despertador que no se pudo armar). En Hobby el registro solo guarda la última hora.
 - Despertadores: en Vercel → el proyecto → Queues (tema `auream-task-alarms`); el consumidor es la función `api/task-alarm.ts`.
+- Revisión cada 15 min: en Vercel → el proyecto → Schedules (`tasks-sweep`), con su historial; «Run Schedule» la corre en el momento.

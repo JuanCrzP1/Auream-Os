@@ -47,7 +47,10 @@ export function useFlowLab(flowKey: string, getDraft: () => BuilderFlowSnapshot 
         const response = await runLabTurn(flowKey, request);
         state.current = response.state;
         setPersona(response.state.persona);
-        const turn = { id: nextId.current++, event, response, at: new Date(), ...(meta.auto ? { auto: true } : {}) };
+        const receivedAt = Date.now();
+        const serverAt = Date.parse(response.serverTime);
+        const clockOffsetMs = Number.isFinite(serverAt) ? serverAt - receivedAt : 0;
+        const turn = { id: nextId.current++, event, response, at: new Date(receivedAt), clockOffsetMs, ...(meta.auto ? { auto: true } : {}) };
         setTurns((current) => [...(event.type === "start" ? [] : current), turn]);
       } catch (e) {
         setError(apiErrorMessage(e, "No se pudo ejecutar la prueba. Revisa tu conexión e inténtalo de nuevo."));

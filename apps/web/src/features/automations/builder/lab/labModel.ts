@@ -14,6 +14,23 @@ export interface LabTurn {
   readonly at: Date;
   /** Una espera que terminó sola (no la adelantó el probador). */
   readonly auto?: boolean;
+  /** Reloj del servidor menos el de este navegador (ms) al recibir el turno. */
+  readonly clockOffsetMs: number;
+}
+
+/** Cuándo vence la espera EN EL RELOJ DE ESTE NAVEGADOR (corrige la diferencia con el servidor). */
+export function waitTarget(wait: SimulationWait, clockOffsetMs: number): number {
+  return Date.parse(wait.until) - clockOffsetMs;
+}
+
+/** «18 s», «3 min 20 s», «2 h 5 min». */
+export function formatRemaining(ms: number): string {
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  if (seconds < 60) return `${seconds} s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return seconds % 60 ? `${minutes} min ${seconds % 60} s` : `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  return minutes % 60 ? `${hours} h ${minutes % 60} min` : `${hours} h`;
 }
 
 /** Lo que dijo el probador en ese turno (vacío si no dijo nada: iniciar, saltar espera). */

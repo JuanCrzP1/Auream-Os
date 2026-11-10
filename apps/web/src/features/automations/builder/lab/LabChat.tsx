@@ -97,7 +97,7 @@ export function LabChat({
           </div>
         ) : null}
 
-        {settled && wait ? <LabWaitChip key={`${wait.nodeId}:${wait.revision}`} wait={wait} blockName={blockName(wait.nodeId)} onContinue={onContinue} /> : null}
+        {settled && wait ? <LabWaitChip key={`${wait.nodeId}:${wait.revision}`} wait={wait} clockOffsetMs={last.clockOffsetMs} blockName={blockName(wait.nodeId)} onContinue={onContinue} /> : null}
         {settled && waitingNode && !wait ? <p className="lab-system">Esperando tu respuesta en «{blockName(waitingNode)}»</p> : null}
         {settled && status === "finished" ? (
           <div className="lab-system lab-system--end">

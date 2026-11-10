@@ -8,10 +8,10 @@ import { TASKS_RUN_PATH } from "../config/loadTasksConfig";
 // ---------------------------------------------------------------------------
 // `/internal/tasks/run` — despierta al trabajador de la cola (FASE C6).
 //
-// Lo llaman la tarea programada de Vercel, la cadena de rondas y la API cuando
-// algo vence en segundos. No es de usuarios: exige `Authorization: Bearer
-// <CRON_SECRET>` (Vercel Cron lo envía solo). Sin `CRON_SECRET` configurado no
-// atiende a nadie.
+// Lo llaman los despertadores de Vercel Queues, la revisión cada 15 min de
+// Vercel Schedules, la cadena de rondas y la API cuando algo vence en segundos.
+// No es de usuarios: exige `Authorization: Bearer <CRON_SECRET>` (Vercel
+// Schedules lo envía solo). Sin `CRON_SECRET` configurado no atiende a nadie.
 //
 // Responde enseguida (202) y la ronda sigue en segundo plano dentro del tiempo
 // de la función: así quien llama no espera ni corta el trabajo. Al terminar,

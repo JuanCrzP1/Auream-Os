@@ -114,6 +114,12 @@ export interface SimulationTurnResponse {
   readonly variables: Readonly<Record<string, unknown>>;
   /** Algo que conviene saber (p. ej. «el flujo cambió y la prueba empezó de nuevo»). */
   readonly notice: string | null;
+  /**
+   * La hora del servidor al responder. Las esperas (`wait.until`) están en su
+   * reloj: el navegador corrige con esto la diferencia con el suyo, para que
+   * la prueba siga justo a la hora.
+   */
+  readonly serverTime: string;
 }
 
 export const DEFAULT_SIMULATION_PERSONA: SimulationPersona = {

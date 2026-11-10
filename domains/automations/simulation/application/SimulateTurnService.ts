@@ -89,7 +89,8 @@ export class SimulateTurnService {
       messages: describeMessages(run.records),
       wait,
       variables,
-      notice
+      notice,
+      serverTime: new Date().toISOString()
     };
   }
 

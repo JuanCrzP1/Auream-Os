@@ -5,8 +5,8 @@ export const TASKS_RUN_PATH = "/internal/tasks/run";
 
 /**
  * Cola de tareas (FASE C6).
- *   cronSecret      `CRON_SECRET`: protege `/internal/tasks/run` (Vercel Cron lo
- *                   envía como `Authorization: Bearer …`). Sin él, el endpoint
+ *   cronSecret      `CRON_SECRET`: protege `/internal/tasks/run` (Vercel Schedules
+ *                   lo envía como `Authorization: Bearer …`). Sin él, el endpoint
  *                   no atiende y la cola solo corre dentro del propio proceso.
  *   selfBaseUrl     dirección pública de esta API para despertar al trabajador
  *                   en otra invocación (producción en Vercel). `null`: en proceso.

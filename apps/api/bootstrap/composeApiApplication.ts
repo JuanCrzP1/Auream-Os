@@ -24,6 +24,7 @@ import { StructuredLogger } from "../../../platform/observability/logging/Struct
 import { RequestLogger } from "../../../platform/observability/logging/RequestLogger";
 import { ErrorLogger } from "../../../platform/observability/logging/ErrorLogger";
 import { createApiRequestListener, type ApiRequestListener } from "./createApiServer";
+import { wakeTasksOnTraffic } from "./wakeTasksOnTraffic";
 
 // ---------------------------------------------------------------------------
 // composeApiApplication — lee la configuración del entorno y compone TODA la
@@ -87,7 +88,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
         attempt: task.attempts,
         error: error instanceof Error ? error.message : String(error)
       }),
-    // Un despertador que no se pudo armar: lo cubren el próximo mensaje, la próxima ronda y el barrido diario.
+    // Un despertador que no se pudo armar: lo cubren el tráfico de la app, la próxima ronda y la revisión cada 15 min.
     (error) => logger.warn("tasks.alarm_failed", { error: error instanceof Error ? error.message : String(error) })
   );
   const messagingServices = composeMessagingServices({
@@ -148,21 +149,14 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     errorLogger
   });
 
-  // Con la primera petición de cada instancia (dentro de una petición: ahí
-  // está la credencial de Vercel Queues), asegura quién despierta para la
-  // próxima tarea pendiente: ya, o su despertador en ESTE despliegue. Recupera
-  // los despertadores perdidos (un envío fallido, un despliegue anterior).
-  let armed = false;
-  const armOnFirstRequest = () => {
-    if (armed) return;
-    armed = true;
-    background.run(() => scheduling.scheduler.armNext());
-  };
+  // Red de seguridad de los despertadores: el tráfico de la API también
+  // despierta la cola (ver `wakeTasksOnTraffic`).
+  const wakeTasks = wakeTasksOnTraffic(scheduling.scheduler, background);
 
   return {
     config,
     listener: async (request, response) => {
-      armOnFirstRequest();
+      wakeTasks(request.url);
       await listener(request, response);
     },
     tasks: runner

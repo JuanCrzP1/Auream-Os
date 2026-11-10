@@ -15,9 +15,9 @@
       "experimentalTriggers": [{ "type": "queue/v2beta", "topic": "auream-task-alarms", "retryAfterSeconds": 30 }]
     }
   },
-  "crons": [
-    { "path": "/api/internal/tasks/run", "schedule": "0 11 * * *" }
-  ],
+  "schedules": {
+    "tasks-sweep": { "schedule": "*/15 * * * *", "path": "/api/internal/tasks/run" }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/.well-known/(oauth-.*)", "destination": "/api" },
