@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { CreatePixelConnectionRequest, PixelConnectionSummary, UpdatePixelConnectionRequest } from "../../../contracts/PixelContracts";
 import type { SecretCipher } from "../../../platform/security/secrets/SecretCipher";
+import { ConflictError } from "../../../platform/observability/errors/ConflictError";
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 import {
@@ -73,6 +74,14 @@ export class CreatePixelConnectionService {
     if (!token) throw new ValidationError("El token no parece válido: cópialo completo, sin espacios.");
     const name = normalizePixelName(input.name ?? `Píxel ${pixelId.slice(-4)}`);
     if (!name) throw new ValidationError("Ponle un nombre de 1 a 60 caracteres.");
+
+    // Una cuenta puede tener muchos píxeles, pero cada uno una sola vez: dos
+    // conexiones del mismo píxel duplicarían sus conversiones. Para un token
+    // nuevo está «Cambiar token». Se revisa antes de molestar a Meta.
+    const existing = (await this.repository.listByTenant(tenantId)).find((connection) => connection.pixelId === pixelId);
+    if (existing) {
+      throw new ConflictError(`Ese píxel ya está conectado como «${existing.name}». Si necesitas otro token, usa «Cambiar token» en su tarjeta.`);
+    }
 
     await verifyOrFail(this.access, pixelId, token);
 

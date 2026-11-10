@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
 import { EMPTY_TOOL_RESOURCES, type ToolResources } from "@features/automations/builder/tools/ToolResources";
 import { testIntegrationRequest } from "@features/automations/builder/services/testIntegrationRequest";
@@ -6,7 +6,7 @@ import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
 import { connectAi, listAiModels, testAiStep } from "@features/automations/builder/services/aiCapabilities";
 import { uploadMediaForTool } from "@features/automations/builder/services/mediaCapabilities";
-import { connectPixel, testPixelEvent } from "@features/automations/builder/services/pixelCapabilities";
+import { testPixelEvent } from "@features/automations/builder/services/pixelCapabilities";
 import { testPaymentProof } from "@features/automations/builder/services/paymentProofCapabilities";
 import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
 
@@ -29,7 +29,18 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
   const ai = useAiCredentials();
   const { create: createAiCredential } = ai;
   const pixels = usePixelConnections();
-  const { create: createPixel } = pixels;
+  const { refresh: refreshPixels } = pixels;
+
+  // Los píxeles se conectan en Meta Ads, que el bloque abre en otra pestaña:
+  // al volver al editor, la lista se pone al día sola, sin recargar.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshPixels();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refreshPixels]);
+
   const resources = useMemo<ToolResources>(
     () => ({
       labels: catalog.labels.map(({ name, color }) => ({ name, color })),
@@ -51,11 +62,10 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       uploadMedia: uploadMediaForTool,
       pixelConnections: pixels.connections,
       pixelConnectionsStatus: pixels.status,
-      createPixelConnection: connectPixel(createPixel),
       testPixel: testPixelEvent,
       testPaymentProof
     }),
-    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, createPixel]
+    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status]
   );
 
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;

@@ -2,7 +2,7 @@ import type { IntegrationTestRequest, IntegrationTestResult } from "@contracts/I
 import type { AiCredentialSummary, AiModelOption, CreateAiCredentialRequest } from "@contracts/AiContracts";
 import type { AiTestRequest, AiTestResult } from "@contracts/AiTestContracts";
 import type { MediaAssetSummary, MediaKind } from "@contracts/MediaContracts";
-import type { CreatePixelConnectionRequest, PixelConnectionSummary } from "@contracts/PixelContracts";
+import type { PixelConnectionSummary } from "@contracts/PixelContracts";
 import type { PaymentProofTestResult } from "@contracts/PaymentProofTestContracts";
 import type { PixelTestRequest, PixelTestResult } from "@contracts/PixelTestContracts";
 
@@ -59,8 +59,6 @@ export interface ToolCapabilities {
   readonly listAiModels?: (credentialId: string) => Promise<ToolOutcome<ReadonlyArray<AiModelOption>>>;
   /** Prueba el bloque de IA con un mensaje de ejemplo. */
   readonly testAi?: (request: AiTestRequest) => Promise<ToolOutcome<AiTestResult>>;
-  /** Conecta un píxel de Meta (el servidor verifica el token y lo guarda cifrado). */
-  readonly createPixelConnection?: (request: CreatePixelConnectionRequest) => Promise<ToolOutcome<PixelConnectionSummary>>;
   /** Envía el evento de un bloque Pixel con el código de prueba de Meta. */
   readonly testPixel?: (request: PixelTestRequest) => Promise<ToolOutcome<PixelTestResult>>;
   /** Revisa un comprobante de ejemplo con un bloque Comprobante (no lo registra como usado). */

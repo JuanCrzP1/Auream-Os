@@ -72,7 +72,10 @@ export function PixelEditor({ draft, onChange, resources }: ToolEditorProps) {
         <PixelTestPanel rawConfig={draft.config} test={resources?.testPixel} />
       </CardSection>
 
-      <Notice>Evita poner dos bloques Pixel seguidos con el mismo evento: Meta contaría la conversión dos veces. Si Meta no responde, la conversación sigue igual.</Notice>
+      <Notice>
+        Cada bloque avisa a un píxel. Para varios píxeles (por ejemplo, dos marcas), pon un bloque por píxel; con el mismo píxel y el mismo evento dos veces, Meta
+        contaría la conversión doble. Si Meta no responde, la conversación sigue igual.
+      </Notice>
       <OutputsPreview outputs={null} />
     </ToolEditorLayout>
   );

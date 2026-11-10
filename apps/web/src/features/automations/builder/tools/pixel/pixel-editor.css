@@ -1,17 +1,26 @@
-/* Editor del Pixel: conexión y «Probar». Solo tokens del tema. */
+/* Editor del Pixel: qué píxel (se conectan en Meta Ads) y «Probar». Solo tokens del tema. */
 
-.pixel-connect,
 .pixel-test {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.pixel-connect__label-row {
+/* Sin píxeles: el camino a Meta Ads, donde se conectan. */
+.pixel-connect__empty {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.pixel-connect__empty-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
 .pixel-connect__link {
@@ -37,14 +46,9 @@
   margin-top: -4px;
 }
 
-.pixel-connect__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.pixel-connect__primary,
+.pixel-connect__go,
 .pixel-test__send {
+  align-self: flex-start;
   padding: 8px 16px;
   border: 0;
   border-radius: 10px;
@@ -53,40 +57,23 @@
   font-family: var(--font-body);
   font-size: 0.82rem;
   font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.pixel-test__send {
-  align-self: flex-start;
-}
-
-.pixel-connect__primary:disabled,
 .pixel-test__send:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.pixel-connect__ghost {
-  padding: 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .pixel-connect__link:focus-visible,
-.pixel-connect__primary:focus-visible,
-.pixel-connect__ghost:focus-visible,
+.pixel-connect__go:focus-visible,
 .pixel-test__send:focus-visible {
   outline: 2px solid var(--kit-accent, var(--primary));
   outline-offset: 2px;
 }
 
-.pixel-connect__error {
+.pixel-test__error {
   margin: 0;
   padding: 8px 12px;
   border: 1px solid color-mix(in srgb, var(--rose) 32%, transparent);

@@ -1,72 +1,32 @@
-import { useId, useState } from "react";
-import { META_EVENTS_MANAGER_URL } from "@contracts/PixelContracts";
 import type { ToolResources } from "../ToolResources";
-import { Notice, SelectField, TextField, type Option } from "../_kit/fields";
+import { Notice, SelectField, type Option } from "../_kit/fields";
 
 // ---------------------------------------------------------------------------
-// Paso 1 del Pixel: QUÉ píxel de la cuenta recibe el evento. El token no pasa
-// por aquí: se elige una conexión (o se crea una sin salir del bloque).
+// Paso 1 del Pixel: QUÉ píxel de la cuenta recibe el evento. Como en Leona, el
+// bloque solo elige: los píxeles se conectan y administran en Meta Ads (un solo
+// lugar para los tokens). Meta Ads abre en otra pestaña, y al volver al editor
+// la lista se pone al día sola (`BuilderResourcesProvider`).
 // ---------------------------------------------------------------------------
 
-function ConnectForm({ resources, onConnected, onCancel }: { readonly resources: ToolResources; readonly onConnected: (id: string) => void; readonly onCancel?: () => void }) {
-  const tokenId = useId();
-  const [name, setName] = useState("");
-  const [pixelId, setPixelId] = useState("");
-  const [token, setToken] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const cleanId = pixelId.replace(/\D/g, "");
+/** Donde viven los píxeles de la cuenta. */
+const PIXELS_PAGE = "/meta-ads?tab=pixel";
 
-  const connect = async () => {
-    if (!resources.createPixelConnection) return;
-    setBusy(true);
-    setError(null);
-    const outcome = await resources.createPixelConnection({ name: name.trim() || `Píxel ${cleanId.slice(-4)}`, pixelId: cleanId, accessToken: token.trim() });
-    setBusy(false);
-    if (outcome.ok) onConnected(outcome.value.id);
-    else setError(outcome.message);
-  };
-
+function MetaAdsLink({ children, className = "pixel-connect__link" }: { readonly children: string; readonly className?: string }) {
   return (
-    <div className="pixel-connect">
-      <TextField label="Nombre" value={name} placeholder="Píxel de ventas" onChange={setName} />
-      <TextField label="ID del píxel (conjunto de datos)" value={pixelId} monospace placeholder="1234567890123456" onChange={setPixelId} />
-      <div className="kit-field">
-        <span className="pixel-connect__label-row">
-          <label className="kit-label" htmlFor={tokenId}>
-            Token de la API de Conversiones
-          </label>
-          <a className="pixel-connect__link" href={META_EVENTS_MANAGER_URL} target="_blank" rel="noopener noreferrer">
-            ¿Dónde lo consigo?
-          </a>
-        </span>
-        <input
-          id={tokenId}
-          type="password"
-          className="kit-input kit-input--mono nodrag"
-          value={token}
-          placeholder="EAAG…"
-          autoComplete="off"
-          spellCheck={false}
-          onChange={(event) => setToken(event.target.value)}
-        />
-        <p className="kit-hint">Se comprueba con Meta y se guarda cifrado en tu cuenta, no en el flujo.</p>
-      </div>
-      {error ? (
-        <p className="pixel-connect__error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      <div className="pixel-connect__actions">
-        {onCancel ? (
-          <button type="button" className="pixel-connect__ghost nodrag" onClick={onCancel} disabled={busy}>
-            Cancelar
-          </button>
-        ) : null}
-        <button type="button" className="pixel-connect__primary nodrag" onClick={() => void connect()} disabled={busy || cleanId.length < 8 || token.trim().length < 30}>
-          {busy ? "Verificando con Meta…" : "Conectar píxel"}
-        </button>
-      </div>
+    <a className={`${className} nodrag`} href={PIXELS_PAGE} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  );
+}
+
+/** Sin píxeles todavía: a Meta Ads a conectar el primero. */
+function NoPixels() {
+  return (
+    <div className="pixel-connect__empty">
+      <p className="pixel-connect__empty-title">Todavía no tienes píxeles conectados</p>
+      <p className="kit-hint">Los píxeles se conectan una sola vez en Meta Ads; aquí eliges a cuál avisar.</p>
+      <MetaAdsLink className="pixel-connect__go">Conectar un píxel en Meta Ads</MetaAdsLink>
+      <p className="kit-hint">Cuando lo conectes, vuelve aquí: aparece solo en la lista.</p>
     </div>
   );
 }
@@ -83,27 +43,12 @@ export function PixelConnectionSection({
   const connections = resources?.pixelConnections ?? [];
   const status = resources?.pixelConnectionsStatus ?? "ready";
   const selected = connections.find((connection) => connection.id === connectionId);
-  const [connecting, setConnecting] = useState(false);
 
   if (status === "forbidden") return <Notice>Tu rol no permite usar los píxeles de esta cuenta. Pide acceso a un administrador.</Notice>;
   if (status === "unavailable") return <Notice>Los píxeles no están disponibles en este servidor (falta configurar el cifrado de secretos).</Notice>;
-
-  if (connections.length === 0 || connecting) {
-    if (!resources?.createPixelConnection) return <Notice>Conecta un píxel desde Meta Ads para usar este bloque.</Notice>;
-    return (
-      <>
-        {connections.length === 0 ? <p className="kit-hint">Conecta tu píxel una vez; después lo eliges de la lista en cualquier bloque.</p> : null}
-        <ConnectForm
-          resources={resources}
-          {...(connections.length > 0 ? { onCancel: () => setConnecting(false) } : {})}
-          onConnected={(id) => {
-            setConnecting(false);
-            onChange(id);
-          }}
-        />
-      </>
-    );
-  }
+  if (status === "loading") return <p className="kit-hint">Cargando tus píxeles…</p>;
+  if (status === "error") return <Notice>No pudimos cargar tus píxeles. Revisa tu conexión: la lista se vuelve a pedir al regresar a esta pestaña.</Notice>;
+  if (connections.length === 0) return <NoPixels />;
 
   const options: ReadonlyArray<Option<string>> = [
     ...(selected ? [] : [{ value: "", label: connectionId ? "El píxel elegido ya no existe" : "Elige un píxel…" }]),
@@ -118,12 +63,7 @@ export function PixelConnectionSection({
       <SelectField label="Píxel" value={selected ? selected.id : ""} options={options} onChange={(id) => id && onChange(id)} />
       {selected?.status === "invalid" ? <Notice>Meta ya no acepta el token de este píxel. Cámbialo en Meta Ads o elige otro.</Notice> : null}
       <div className="pixel-connect__links">
-        <button type="button" className="pixel-connect__link nodrag" onClick={() => setConnecting(true)}>
-          + Conectar otro píxel
-        </button>
-        <a className="pixel-connect__link" href="/meta-ads?tab=pixel" target="_blank" rel="noopener noreferrer">
-          Administrar píxeles
-        </a>
+        <MetaAdsLink>Administrar píxeles en Meta Ads</MetaAdsLink>
       </div>
     </>
   );

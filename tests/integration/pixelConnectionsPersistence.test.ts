@@ -45,7 +45,8 @@ describe("SqlPixelConnectionRepository", () => {
     expect(raw.rows[0]!.secret).not.toContain(TOKEN);
     expect(await new PixelConnectionVault(repo, cipher).reveal(a, created.id)).toMatchObject({ pixelId: "3151000009796", accessToken: TOKEN });
     expect(await new ListPixelConnectionsService(repo).execute(b)).toEqual([]);
-    await expect(new CreatePixelConnectionService(repo, cipher, access).execute(a, { name: "VENTAS", pixelId: "3151000009796", accessToken: TOKEN })).rejects.toBeInstanceOf(ConflictError);
+    // Otro píxel con el mismo nombre (sin importar mayúsculas): lo frena el índice único de la base.
+    await expect(new CreatePixelConnectionService(repo, cipher, access).execute(a, { name: "VENTAS", pixelId: "3151000009797", accessToken: TOKEN })).rejects.toBeInstanceOf(ConflictError);
   });
 
   it("la base rechaza un ID de píxel que no es numérico", async () => {

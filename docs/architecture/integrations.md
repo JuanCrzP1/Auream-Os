@@ -18,7 +18,11 @@ Un catálogo por categorías (Inteligencia artificial, Seguimiento, Automatizaci
 
 Agregar una integración = su definición y su panel en el registro + su fuente. La página no cambia.
 
-**El Píxel de Meta vive en Meta Ads** (`/meta-ads?tab=pixel`, `features/ads/pixel/`), junto a las campañas y las cuentas, como en Leona. En el centro queda la tarjeta «Meta Ads» (`href` en su definición) que lleva allá, y `/integrations/meta-pixel` redirige. La API (`/pixel-connections`) y el bloque «Pixel» no cambian.
+**El Píxel de Meta vive en Meta Ads** (`/meta-ads?tab=pixel`, `features/ads/pixel/`), junto al rendimiento de las campañas y las cuentas. En el centro queda la tarjeta «Meta Ads» (`href` en su definición) que lleva allá, y `/integrations/meta-pixel` redirige. La API (`/pixel-connections`) y el bloque «Pixel» no cambian.
+
+**Varios píxeles por cuenta** (una marca o tienda por píxel): cada uno con nombre propio (índice único por cuenta, sin importar mayúsculas) y **una sola vez**. Conectar de nuevo un ID que ya está da `409` («ya está conectado como…») antes de llamar a Meta, porque dos conexiones del mismo píxel duplicarían sus conversiones; para otro token está «Cambiar token». Cada bloque «Pixel» elige un píxel; para avisar a dos, dos bloques.
+
+**El bloque «Pixel» solo elige** (como en Leona): los píxeles se conectan y administran únicamente en Meta Ads, el único lugar donde entra un token. Sin píxeles, el bloque ofrece «Conectar un píxel en Meta Ads» (otra pestaña) y, al volver al editor, la lista se pide de nuevo sola (`visibilitychange` en `BuilderResourcesProvider`). Lo propio del flujo sí va en el bloque: el evento, el valor, la moneda y la página de Facebook del anuncio (opcional), porque puede cambiar de un flujo a otro.
 
 ## Webhooks de entrada
 

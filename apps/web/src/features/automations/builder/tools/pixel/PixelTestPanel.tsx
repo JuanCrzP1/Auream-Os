@@ -65,7 +65,7 @@ export function PixelTestPanel({ rawConfig, test }: { readonly rawConfig: Readon
       </button>
 
       {error ? (
-        <p className="pixel-connect__error" role="alert">
+        <p className="pixel-test__error" role="alert">
           {error}
         </p>
       ) : null}

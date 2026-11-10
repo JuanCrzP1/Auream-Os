@@ -170,6 +170,24 @@ describe("píxeles de la cuenta", () => {
     await expect(new CreatePixelConnectionService(new InMemoryPixelConnectionRepository(), cipher, access()).execute(T, input)).rejects.toThrow(message);
   });
 
+  it("una cuenta conecta varios píxeles, pero cada uno una sola vez (otra cuenta sí puede), sin preguntarle a Meta", async () => {
+    const repo = new InMemoryPixelConnectionRepository();
+    await new CreatePixelConnectionService(repo, cipher, access()).execute(T, { name: "Ventas", pixelId: "3151000009796", accessToken: TOKEN });
+    await new CreatePixelConnectionService(repo, cipher, access()).execute(T, { name: "Marca 2", pixelId: "3151000009797", accessToken: TOKEN });
+    expect(await repo.listByTenant(T)).toHaveLength(2);
+
+    const verifyPixel = vi.fn(async () => ({ ok: true }) as const);
+    await expect(
+      new CreatePixelConnectionService(repo, cipher, { verifyPixel }).execute(T, { name: "Otra vez", pixelId: "3151000009796", accessToken: TOKEN })
+    ).rejects.toThrow(/ya está conectado como «Ventas»/);
+    expect(verifyPixel).not.toHaveBeenCalled();
+
+    const other = "22222222-2222-2222-2222-222222222222";
+    await expect(new CreatePixelConnectionService(repo, cipher, access()).execute(other, { name: "Ventas", pixelId: "3151000009796", accessToken: TOKEN })).resolves.toMatchObject({
+      pixelId: "3151000009796"
+    });
+  });
+
   it("no guarda un token que Meta rechaza; verificar marca uno revocado como inválido", async () => {
     const repo = new InMemoryPixelConnectionRepository();
     await expect(new CreatePixelConnectionService(repo, cipher, access(false)).execute(T, { pixelId: "3151000009796", accessToken: TOKEN })).rejects.toThrow(/Meta rechazó el token/);

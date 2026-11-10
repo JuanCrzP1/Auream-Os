@@ -9,8 +9,9 @@ import type { PixelConnectionSummary } from "@contracts/PixelContracts";
 import type { PixelTestRequest } from "@contracts/PixelTestContracts";
 
 // ---------------------------------------------------------------------------
-// Editor del Pixel: elige un píxel de la cuenta (o lo conecta sin salir), y
-// «Probar» exige el código de prueba de Meta.
+// Editor del Pixel: solo ELIGE un píxel de la cuenta (como en Leona: se
+// conectan y administran en Meta Ads), y «Probar» exige el código de prueba
+// de Meta.
 // ---------------------------------------------------------------------------
 
 const VENTAS: PixelConnectionSummary = { id: "p1", name: "Ventas", pixelId: "3151000009796", tokenHint: "••••ZDZD", status: "active", lastVerifiedAt: null, createdAt: "x" };
@@ -27,25 +28,30 @@ function Editor({ resources, config = {} }: { resources: ToolResources; config?:
 const saved = () => JSON.parse(screen.getByTestId("config").textContent!) as Record<string, unknown>;
 
 describe("PixelEditor", () => {
-  it("sin píxeles, conecta uno desde el bloque y lo elige (el token no queda en el flujo)", async () => {
-    const createPixelConnection = vi.fn(async () => ({ ok: true as const, value: { ...VENTAS, id: "nuevo" } }));
-    render(<Editor resources={{ labels: [], pixelConnections: [], pixelConnectionsStatus: "ready", createPixelConnection }} />);
+  it("sin píxeles no deja crear uno aquí: lleva a Meta Ads, en otra pestaña", () => {
+    render(<Editor resources={{ labels: [], pixelConnections: [], pixelConnectionsStatus: "ready" }} />);
 
-    await userEvent.type(screen.getByLabelText("ID del píxel (conjunto de datos)"), "3151000009796");
-    await userEvent.type(screen.getByLabelText("Token de la API de Conversiones"), "EAAOtokenDePruebaMuyLargo0123456789ZDZD");
-    await userEvent.click(screen.getByRole("button", { name: "Conectar píxel" }));
-
-    expect(createPixelConnection).toHaveBeenCalledWith({ name: "Píxel 9796", pixelId: "3151000009796", accessToken: "EAAOtokenDePruebaMuyLargo0123456789ZDZD" });
-    expect(saved()).toMatchObject({ connectionId: "nuevo" });
-    expect(JSON.stringify(saved())).not.toContain("EAAO");
+    const link = screen.getByRole("link", { name: "Conectar un píxel en Meta Ads" });
+    expect(link).toHaveAttribute("href", "/meta-ads?tab=pixel");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(screen.queryByLabelText("Token de la API de Conversiones")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Conectar/ })).toBeNull();
   });
 
-  it("con píxeles, se elige de la lista; el ID viejo escrito en el bloque se descarta", async () => {
+  it("mientras cargan los píxeles no dice que no hay ninguno", () => {
+    render(<Editor resources={{ labels: [], pixelConnections: [], pixelConnectionsStatus: "loading" }} />);
+    expect(screen.getByText("Cargando tus píxeles…")).toBeInTheDocument();
+    expect(screen.queryByText("Todavía no tienes píxeles conectados")).toBeNull();
+  });
+
+  it("con píxeles, se elige de la lista y se administran en Meta Ads; el ID viejo escrito en el bloque se descarta", async () => {
     render(<Editor resources={{ labels: [], pixelConnections: [VENTAS], pixelConnectionsStatus: "ready" }} config={{ pixelId: "999", platform: "meta" }} />);
 
     await userEvent.selectOptions(screen.getByLabelText("Píxel"), "p1");
     expect(saved()).toMatchObject({ connectionId: "p1" });
     expect(saved()).not.toHaveProperty("pixelId");
+    expect(screen.getByRole("link", { name: "Administrar píxeles en Meta Ads" })).toHaveAttribute("href", "/meta-ads?tab=pixel");
+    expect(screen.queryByRole("button", { name: /Conectar otro píxel/ })).toBeNull();
   });
 
   it("«Probar» exige el código de prueba y muestra lo que recibió Meta", async () => {

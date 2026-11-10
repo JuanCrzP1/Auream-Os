@@ -67,7 +67,17 @@ describe("Meta Ads", () => {
     expect(screen.getByRole("button", { name: "Conectar otro píxel" })).toBeInTheDocument();
   });
 
-  it("si Meta rechazó un token, la tarjeta Píxel lo avisa", async () => {
+  it("con varios píxeles muestra todos, y la tarjeta Píxel cuenta los activos y los que Meta rechazó", async () => {
+    const SECOND = { ...PIXEL, id: "p2", name: "Píxel marca 2", pixelId: "998877665544332", status: "invalid" };
+    stubApi([PIXEL, SECOND]);
+    renderAt("/meta-ads");
+    expect(await screen.findByText("Píxel tienda")).toBeInTheDocument();
+    expect(screen.getByText("Píxel marca 2")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Píxel" })).toHaveAccessibleDescription("1 activo · 1 rechazado");
+    expect(screen.getByRole("button", { name: "Conectar otro píxel" })).toBeInTheDocument();
+  });
+
+  it("si Meta rechazó el único token, la tarjeta Píxel lo avisa", async () => {
     stubApi([{ ...PIXEL, status: "invalid" }]);
     renderAt("/meta-ads");
     expect(await screen.findByText("Píxel tienda")).toBeInTheDocument();
