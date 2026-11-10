@@ -11,7 +11,7 @@ import { PagePlaceholder } from "@shared/ui/page-placeholder/PagePlaceholder";
 export function AiAgentsPage() {
   return (
     <PagePlaceholder
-      title="AI Agents"
+      title="Agentes de IA"
       description="Administra agentes inteligentes, prompts y herramientas."
     />
   );

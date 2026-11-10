@@ -51,7 +51,7 @@ Cada bounded context replica el mismo patrón interno:
 └── http/             adaptador HTTP del dominio           — delega en application/
 ```
 
-No todos los dominios tienen las cuatro capas hoy; se añaden cuando hay contenido real que las justifique.
+No todos los dominios tienen las cuatro capas hoy; se añaden cuando hay contenido real que las justifique. Un dominio nuevo nace con su ficha (`README.md`: qué le pertenece, qué no, de qué depende y qué capas tendrá) antes que con carpetas vacías. El mapa de qué dominio sirve a cada opción de la barra está en [`modules.md`](modules.md).
 
 `automations` agrupa tres sub-módulos —`catalog`, `builder`, `validation`— porque son un producto cohesionado, no tres dominios. Versionar y publicar vive dentro de `builder`.
 

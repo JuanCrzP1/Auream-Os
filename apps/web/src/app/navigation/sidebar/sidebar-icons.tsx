@@ -49,14 +49,6 @@ export const SidebarIcons = {
     </svg>
   ),
 
-  contacts: (
-    <svg viewBox="0 0 24 24" {...STROKE}>
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  ),
-
   integrations: (
     <svg viewBox="0 0 24 24" {...STROKE}>
       <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
@@ -64,6 +56,40 @@ export const SidebarIcons = {
       <line x1="6" y1="1" x2="6" y2="4" />
       <line x1="10" y1="1" x2="10" y2="4" />
       <line x1="14" y1="1" x2="14" y2="4" />
+    </svg>
+  ),
+
+  crm: (
+    <svg viewBox="0 0 24 24" {...STROKE}>
+      <path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" />
+    </svg>
+  ),
+
+  broadcasts: (
+    <svg viewBox="0 0 24 24" {...STROKE}>
+      <path d="M3 11v2a1 1 0 0 0 1 1h2l6 4V6L6 10H4a1 1 0 0 0-1 1z" />
+      <path d="M16 9.5a3.5 3.5 0 0 1 0 5" />
+      <path d="M19 7a7 7 0 0 1 0 10" />
+    </svg>
+  ),
+
+  groups: (
+    <svg viewBox="0 0 24 24" {...STROKE}>
+      <path d="M3 5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H8l-3 3v-3a2 2 0 0 1-2-2z" />
+      <path d="M17 8h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-1v3l-3-3h-3a2 2 0 0 1-2-1.6" />
+    </svg>
+  ),
+
+  metaAds: (
+    <svg viewBox="0 0 24 24" {...STROKE}>
+      <path d="M6.5 7C4 7 2.5 9.5 2.5 12s1.5 5 4 5c3.5 0 5.5-10 11-10 2.5 0 4 2.5 4 5s-1.5 5-4 5c-5.5 0-7.5-10-11-10z" />
+    </svg>
+  ),
+
+  sales: (
+    <svg viewBox="0 0 24 24" {...STROKE}>
+      <path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z" />
+      <path d="M14.5 8.5h-3.2a1.6 1.6 0 0 0 0 3.2h1.4a1.6 1.6 0 0 1 0 3.2H9.5M12 7v1.5M12 14.9v1.6" />
     </svg>
   ),
 

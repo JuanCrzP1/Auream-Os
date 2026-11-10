@@ -44,7 +44,7 @@ export function ContactsPage() {
     <div className="ui-page">
       <header className="ui-page__header">
         <div>
-          <h1 className="ui-page__title">Contactos</h1>
+          <h1 className="ui-page__title">CRM</h1>
           <p className="ui-page__subtitle">Las personas que escriben a tus conexiones, sus etiquetas y los datos que guardan tus flujos.</p>
         </div>
         {tab === "contacts" ? (

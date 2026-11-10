@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ContactsPage } from "../../src/features/contacts/pages/ContactsPage";
+import { ContactsPage } from "../../src/features/crm/contacts/pages/ContactsPage";
 import { LEAD, VIP, contact, stubContactsApi } from "../helpers/contactsApi";
 
 // ---------------------------------------------------------------------------

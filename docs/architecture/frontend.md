@@ -32,24 +32,26 @@ El builder es sub-módulo, no feature: es una superficie grande de Automatizacio
 
 ## Features y navegación
 
-La barra lateral tiene el trabajo del día, en orden fijo: `app/navigation/sidebar/sidebar-items.tsx` es la única fuente de verdad. Lo administrativo vive en el **menú de la cuenta**, la tarjeta de abajo en la barra (`app/navigation/account/account-menu-items.tsx`; detalle en [`account.md`](account.md)).
+La barra lateral tiene el trabajo del día, en orden fijo: `app/navigation/sidebar/sidebar-items.tsx` es la única fuente de verdad. Lo administrativo vive en el **menú de la cuenta**, la tarjeta de abajo en la barra (`app/navigation/account/account-menu-items.tsx`; detalle en [`account.md`](account.md)). Dónde vive cada pieza de cada opción (web, API, dominio, proveedor): [`modules.md`](modules.md).
 
-| Área | Ruta | Dónde | Estado |
+| Área | Ruta | Módulo | Estado |
 |---|---|---|---|
-| Dashboard | `/dashboard` | Barra | `NO IMPLEMENTADO` — página «Próximamente» |
-| Conversaciones | `/conversations` | Barra | `IMPLEMENTADO` — bandeja con filtros y etiquetas, chat en vivo con chulos de WhatsApp, respuesta del asesor y «Ejecutar flujo» |
-| Automatizaciones | `/automations` | Barra | `IMPLEMENTADO` — hub y builder |
-| AI Agents | `/ai-agents` | Barra | `PREPARADO` — placeholder |
-| Conexiones | `/connections` | Barra | `IMPLEMENTADO` |
-| Contactos | `/contacts` | Barra | `IMPLEMENTADO` — lista con búsqueda y filtro, ficha editable y catálogo de etiquetas |
-| Integraciones | `/integrations` | Barra | `IMPLEMENTADO` |
-| Mi perfil | `/profile` | Menú de la cuenta | `IMPLEMENTADO` — foto, nombre, WhatsApp personal, correo de acceso y contraseña |
-| Configuración | `/settings` | Menú de la cuenta | `IMPLEMENTADO` — Empresa (logo, nombre y zona horaria) y Apariencia (tema) |
-| Equipo | `/team` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» |
-| Pagos y suscripciones | `/billing` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» (FASE F) |
-| Ayuda | `/help` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» |
+| Dashboard | `/dashboard` | `features/dashboard` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
+| Conversaciones | `/conversations` | `features/conversations` | `IMPLEMENTADO` — bandeja con filtros y etiquetas, chat en vivo con chulos de WhatsApp, respuesta del asesor y «Ejecutar flujo» |
+| CRM | `/crm` | `features/crm` (`contacts/`) | `IMPLEMENTADO` (contactos y etiquetas) — etapas y seguimientos por construir. `/contacts` redirige aquí |
+| Automatizaciones | `/automations` | `features/automations` | `IMPLEMENTADO` — hub y builder |
+| Agentes de IA | `/ai-agents` | `features/ai-agents` | `PREPARADO` — placeholder (FASE E) |
+| Difusiones | `/broadcasts` | `features/broadcasts` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
+| Grupos y comunidades | `/groups` | `features/groups` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
+| Meta Ads | `/meta-ads` | `features/ads` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
+| Ventas | `/sales` | `features/sales` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
+| Conexiones | `/connections` | `features/connections` | `IMPLEMENTADO` |
+| Integraciones | `/integrations` | `features/integrations` | `IMPLEMENTADO` |
+| Mi perfil | `/profile` | `features/account` | `IMPLEMENTADO` — menú de la cuenta |
+| Configuración | `/settings` | `features/account` | `IMPLEMENTADO` — Empresa y Apariencia, menú de la cuenta |
+| Equipo · Pagos y suscripciones · Ayuda | `/team` · `/billing` · `/help` | — | `NO IMPLEMENTADO` — «Pronto» en el menú de la cuenta |
 
-Las rutas «Pronto» tienen su `<Route>` con una página «Próximamente» (`app/router/accountRoutes.tsx`): ninguna opción visible manda a otra pantalla sin avisar.
+Ninguna opción visible manda a otra pantalla sin avisar: las que se están construyendo tienen su página en su módulo (`app/router/moduleRoutes.tsx`, `app/router/accountRoutes.tsx`).
 
 Estructura interna de una feature con contenido:
 
@@ -57,7 +59,14 @@ Estructura interna de una feature con contenido:
 features/automations/
 ├── list/       el hub: pages components hooks services types utils
 └── builder/    el editor: pages components hooks services adapters types
+
+features/crm/
+├── contacts/   contactos, ficha y etiquetas
+├── pipeline/   (por construir) etapas de venta y oportunidades
+└── follow-ups/ (por construir) seguimientos
 ```
+
+Cada módulo trae su `README.md` con su estructura y la API con la que habla.
 
 Dos responsabilidades, dos módulos, nada suelto en la raíz de la feature. Detalle en [`automations.md`](automations.md).
 

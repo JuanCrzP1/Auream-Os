@@ -63,6 +63,6 @@ Es un concepto **distinto** del dominio `ai-agents` y del AI Sales Engine. Compa
 
 ## Estado actual
 
-`domains/ai-agents/` está vacía. `ai-sales-engine/` está vacía y reservada. `apps/web/src/features/ai-agents/` contiene una página placeholder alcanzable desde el sidebar.
+`domains/ai-agents/` tiene su ficha (`README.md`); el código llega en la FASE E. `ai-sales-engine/` está vacía y reservada. `apps/web/src/features/ai-agents/` contiene una página placeholder alcanzable desde el sidebar.
 
 No existe puerto, adaptador ni integración: este documento describe la frontera acordada, no código presente.

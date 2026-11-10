@@ -1,9 +1,10 @@
 .app-sidebar {
   /* 200px dejaban la marca sin respiración: con el isotipo (34px) y el nombre
      (97px) sólo sobraban 31px, y el bloque se leía comprimido contra el borde.
-     A 220px la marca ocupa el mismo espacio pero con aire real a ambos lados. */
-  width: 220px;
-  flex: 0 0 220px;
+     A 228px la marca respira y la opción más larga («Grupos y comunidades»)
+     cabe en un renglón. */
+  width: 228px;
+  flex: 0 0 228px;
   height: calc(100vh - 24px);
   margin: 12px 0 12px 12px;
   display: flex;

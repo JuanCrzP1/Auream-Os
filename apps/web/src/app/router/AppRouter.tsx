@@ -4,7 +4,6 @@ import { BuilderPage } from "@features/automations/builder/pages/BuilderPage";
 import { ConnectionsPage } from "@features/connections/pages/ConnectionsPage";
 import { ConversationsPage } from "@features/conversations/pages/ConversationsPage";
 import { AiAgentsPage } from "@features/ai-agents/pages/AiAgentsPage";
-import { ContactsPage } from "@features/contacts/pages/ContactsPage";
 import { IntegrationsPage } from "@features/integrations/pages/IntegrationsPage";
 import { IntegrationDetailPage } from "@features/integrations/pages/IntegrationDetailPage";
 import { IntegrationItemPage } from "@features/integrations/pages/IntegrationItemPage";
@@ -18,6 +17,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { TemplatesPage } from "./placeholders/TemplatesPage";
 import { ArchivePage } from "./placeholders/ArchivePage";
 import { accountRoutes } from "./accountRoutes";
+import { moduleRoutes } from "./moduleRoutes";
 
 /**
  * Rutas de la aplicación.
@@ -117,16 +117,6 @@ export function AppRouter() {
         }
       />
       <Route
-        path="/contacts"
-        element={
-          <ProtectedRoute>
-            <AppShell>
-              <ContactsPage />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/integrations"
         element={
           <ProtectedRoute>
@@ -175,6 +165,7 @@ export function AppRouter() {
         }
       />
 
+      {moduleRoutes()}
       {accountRoutes()}
 
       <Route path="*" element={<Navigate to="/automations" replace />} />

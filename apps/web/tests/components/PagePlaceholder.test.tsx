@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PagePlaceholder } from "../../src/shared/ui/page-placeholder/PagePlaceholder";
 import { AiAgentsPage } from "../../src/features/ai-agents/pages/AiAgentsPage";
+import { DashboardPage } from "../../src/features/dashboard/pages/DashboardPage";
+import { BroadcastsPage } from "../../src/features/broadcasts/pages/BroadcastsPage";
+import { GroupsPage } from "../../src/features/groups/pages/GroupsPage";
+import { MetaAdsPage } from "../../src/features/ads/pages/MetaAdsPage";
+import { SalesPage } from "../../src/features/sales/pages/SalesPage";
 import { TemplatesPage } from "../../src/app/router/placeholders/TemplatesPage";
 import { ArchivePage } from "../../src/app/router/placeholders/ArchivePage";
 
@@ -33,7 +38,12 @@ describe("PagePlaceholder", () => {
 
 describe("pantallas pendientes", () => {
   it.each([
-    ["AI Agents", <AiAgentsPage key="a" />],
+    ["Agentes de IA", <AiAgentsPage key="a" />],
+    ["Dashboard", <DashboardPage key="d" />],
+    ["Difusiones", <BroadcastsPage key="b" />],
+    ["Grupos y comunidades", <GroupsPage key="g" />],
+    ["Meta Ads", <MetaAdsPage key="m" />],
+    ["Ventas", <SalesPage key="s" />],
     ["Plantillas", <TemplatesPage key="t" />],
     ["Archivo", <ArchivePage key="r" />]
   ])("%s se anuncia como pendiente", (title, element) => {

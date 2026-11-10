@@ -46,7 +46,14 @@ describe("AppRouter — rutas protegidas sin sesión", () => {
     ["/automations/templates", "plantillas"],
     ["/automations/archive", "archivo"],
     ["/connections", "conexiones"],
-    ["/ai-agents", "ai agents"],
+    ["/ai-agents", "agentes de ia"],
+    ["/crm", "crm"],
+    ["/contacts", "contactos (ahora CRM)"],
+    ["/dashboard", "dashboard"],
+    ["/broadcasts", "difusiones"],
+    ["/groups", "grupos y comunidades"],
+    ["/meta-ads", "meta ads"],
+    ["/sales", "ventas"],
     ["/builder/flow-1", "builder"],
     ["/ruta/desconocida", "desconocida"]
   ])("redirige %s a /login", async (path) => {
