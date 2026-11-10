@@ -16,7 +16,8 @@ export class EnginePaymentProofTester implements PaymentProofTester {
   public constructor(
     private readonly reader: DocumentTextReader,
     private readonly receipts: ReceiptRegistry,
-    private readonly timezone: string
+    /** Zona horaria de la empresa (fechas del comprobante). */
+    private readonly timezoneOf: (tenantId: string) => Promise<string>
   ) {}
 
   public async test(
@@ -27,7 +28,7 @@ export class EnginePaymentProofTester implements PaymentProofTester {
   ): Promise<PaymentProofTestResult> {
     const step = await runPaymentProofStep(
       readPaymentProofConfig(config),
-      { tenantId, resolve: sampleResolver(variables), now: new Date(), timezone: this.timezone, document },
+      { tenantId, resolve: sampleResolver(variables), now: new Date(), timezone: await this.timezoneOf(tenantId), document },
       // El archivo ya viene en la petición: no se descarga nada.
       { fetcher: new DisabledHttpRequester(), reader: this.reader, receipts: this.receipts }
     );

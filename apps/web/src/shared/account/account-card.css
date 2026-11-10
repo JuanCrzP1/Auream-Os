@@ -1,0 +1,64 @@
+/* La tarjeta de la cuenta: abajo en la barra lateral, ancla del menú. */
+.account-card {
+  position: relative;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.account-card__button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 8px 8px 7px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.account-card__button:hover,
+.account-card__button.is-open {
+  background: var(--surface-glass, var(--chip-bg));
+  border-color: var(--line);
+}
+
+.account-card__button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.account-card__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+
+.account-card__text strong,
+.account-card__text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-card__text strong {
+  font-size: 0.84rem;
+  font-weight: 620;
+}
+
+.account-card__text span {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.account-card__chevron {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--muted);
+}

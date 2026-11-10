@@ -25,6 +25,7 @@ import { RequestLogger } from "../../../platform/observability/logging/RequestLo
 import { ErrorLogger } from "../../../platform/observability/logging/ErrorLogger";
 import { createApiRequestListener, type ApiRequestListener } from "./createApiServer";
 import { wakeTasksOnTraffic } from "./wakeTasksOnTraffic";
+import { composeAccountServices } from "../composition/composeAccountServices";
 
 // ---------------------------------------------------------------------------
 // composeApiApplication — lee la configuración del entorno y compone TODA la
@@ -105,6 +106,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger)
   });
   const runner = scheduling.attachHandlers([new FlowTimerTaskHandler(messagingServices.timers)]);
+  // Medios de los bloques; el mismo almacén guarda las fotos de perfil y los logos (Mi perfil, Empresa).
+  const mediaServices = composeMediaServices(config, tenancy.sqlClient, rateLimiter);
+  const accountServices = composeAccountServices(config, tenancy.sqlClient, mediaServices?.storage ?? null, rateLimiter);
 
   const listener = createApiRequestListener(config, {
     services,
@@ -126,7 +130,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
         if (report.maxLateMs > LATE_TASK_WARNING_MS) logger.warn("tasks.late", { maxLateMs: report.maxLateMs, claimed: report.claimed });
       }
     },
-    mediaServices: composeMediaServices(config, tenancy.sqlClient, rateLimiter),
+    mediaServices,
+    companyServices: accountServices.company,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,
@@ -142,7 +147,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     rateLimiter,
     meServices: {
       membershipRepository: tenancy.membershipRepository,
-      onboarding: tenancy.onboarding
+      onboarding: tenancy.onboarding,
+      profiles: accountServices.profiles
     },
     authService: composeAuthService(config, authConfig),
     requestLogger: new RequestLogger(logger),

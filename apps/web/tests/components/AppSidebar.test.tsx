@@ -102,24 +102,17 @@ describe("AppSidebar", () => {
     expect(idxConn).toBeLessThan(idxContact);
   });
 
-  it("AI Agents aparece antes de Equipo en el orden", () => {
+  it("la navegación principal es el trabajo del día (7 opciones)", () => {
     renderSidebar();
-    const items = screen.getAllByRole("link");
-    const labels = items.map((el) => el.textContent ?? "");
-    const idxAI = labels.findIndex((l) => l.includes("AI Agents"));
-    const idxTeam = labels.findIndex((l) => l.includes("Equipo"));
-    expect(idxAI).toBeLessThan(idxTeam);
+    const labels = screen.getAllByRole("link").map((el) => el.textContent ?? "");
+    expect(labels).toEqual(["Dashboard", "Conversaciones", "Automatizaciones", "AI Agents", "Conexiones", "Contactos", "Integraciones"]);
   });
 
-  it("renderiza todos los 12 items del menú", () => {
+  it("lo administrativo vive en la tarjeta de la cuenta, abajo (estándar con barra lateral)", () => {
     renderSidebar();
-    const expectedLabels = [
-      "Dashboard", "Conversaciones", "Automatizaciones", "Conexiones",
-      "Contactos", "Integraciones", "AI Agents", "Equipo",
-      "Facturación", "Mi perfil", "Configuración", "Ayuda"
-    ];
-    expectedLabels.forEach((label) => {
-      expect(screen.getByText(label)).toBeInTheDocument();
+    ["Equipo", "Facturación", "Mi perfil", "Configuración", "Ayuda"].forEach((label) => {
+      expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
     });
+    expect(screen.getByRole("button", { name: /^Cuenta de/ })).toHaveAttribute("aria-haspopup", "menu");
   });
 });

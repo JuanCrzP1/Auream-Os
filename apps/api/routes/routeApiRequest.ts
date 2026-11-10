@@ -9,6 +9,8 @@ import { routeMeRequest, type MeServices } from "./routeMeRequest";
 import { routeContactsRequest } from "./routeContactsRequest";
 import type { ContactsServices } from "../composition/composeContactsServices";
 import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
+import { routeCompanyRequest } from "./routeCompanyRequest";
+import type { CompanyServices } from "../../../domains/company/application/CompanyServices";
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
 import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
 import { routeInternalTasks, type InternalTasksDependencies } from "./routeInternalTasks";
@@ -65,6 +67,8 @@ export interface ApiRouterDependencies {
   readonly webhookServices?: WebhookServices | null;
   /** Servidor MCP para agentes de IA. */
   readonly mcpServer?: McpServer;
+  /** Datos de la empresa (`/company`). Ausente: la ruta responde 503. */
+  readonly companyServices?: CompanyServices;
 }
 
 export async function routeApiRequest(
@@ -143,6 +147,7 @@ export async function routeApiRequest(
     if (await routeContactsRequest(request, response, url, contactsServices, requestContext)) return;
   }
 
+  if (await routeCompanyRequest(request, response, url, dependencies.companyServices, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;

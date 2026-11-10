@@ -1,26 +1,17 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/context/AuthContext";
-import { activeTenantStore } from "../auth/tenant/activeTenantStore";
+import { useSignOut } from "../auth/hooks/useSignOut";
 import "./sign-out-button.css";
 
 /**
  * Cierre de sesión.
  *
  * Invalida la sesión en el proveedor, limpia el estado local (incluido el
- * tenant activo) y devuelve al login.
+ * tenant activo) y devuelve al login (`useSignOut`).
  */
 export function SignOutButton() {
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleClick = async () => {
-    await signOut();
-    activeTenantStore.clear();
-    navigate("/login", { replace: true });
-  };
+  const signOut = useSignOut();
 
   return (
-    <button type="button" className="sign-out-button" onClick={() => void handleClick()}>
+    <button type="button" className="sign-out-button" onClick={() => void signOut()}>
       Cerrar sesión
     </button>
   );

@@ -1,10 +1,13 @@
 import "./app-sidebar.css";
-import { SignOutButton } from "./SignOutButton";
-import { ThemeToggleButton } from "../theme/components/ThemeToggleButton";
-﻿import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { sidebarItems } from "@app/navigation/sidebar/sidebar-items";
 import { AureamLockup } from "../brand/AureamLockup";
+import { AccountCard } from "../account/AccountCard";
 
+/**
+ * La barra lateral: la marca, el trabajo del día (`sidebarItems`) y, abajo, la
+ * tarjeta de la cuenta con su menú (perfil, empresa, tema, cerrar sesión…).
+ */
 export function AppSidebar() {
   return (
     <aside className="app-sidebar">
@@ -25,10 +28,7 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      <footer className="app-sidebar__footer">
-        <SignOutButton />
-        <ThemeToggleButton className="app-sidebar__theme-toggle" />
-      </footer>
+      <AccountCard />
     </aside>
   );
 }

@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../auth/context/AuthContext";
 import { ActiveTenantProvider } from "../auth/tenant/ActiveTenantContext";
 import { ThemeProvider } from "../theme/context/ThemeContext";
+import { AccountProvider } from "../account/AccountContext";
 
 /**
  * Render de tests con los providers reales de la aplicación.
@@ -19,7 +20,9 @@ export function renderWithProviders(
     <MemoryRouter initialEntries={[initialPath]}>
       <ThemeProvider>
         <AuthProvider>
-          <ActiveTenantProvider>{ui}</ActiveTenantProvider>
+          <ActiveTenantProvider>
+            <AccountProvider>{ui}</AccountProvider>
+          </ActiveTenantProvider>
         </AuthProvider>
       </ThemeProvider>
     </MemoryRouter>
@@ -32,7 +35,9 @@ export function ProvidersWrapper({ children }: { children: ReactNode }) {
     <MemoryRouter>
       <ThemeProvider>
         <AuthProvider>
-          <ActiveTenantProvider>{children}</ActiveTenantProvider>
+          <ActiveTenantProvider>
+            <AccountProvider>{children}</AccountProvider>
+          </ActiveTenantProvider>
         </AuthProvider>
       </ThemeProvider>
     </MemoryRouter>

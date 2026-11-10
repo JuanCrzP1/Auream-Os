@@ -1,0 +1,41 @@
+/* Foto de perfil o logo de empresa; sin imagen, iniciales sobre un color estable. */
+.account-avatar {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(140deg, hsl(var(--avatar-hue) 70% 58%), hsl(calc(var(--avatar-hue) + 40) 72% 46%));
+  color: #fff;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+}
+
+.account-avatar--square {
+  border-radius: 28%;
+}
+
+.account-avatar.has-image {
+  background: var(--surface-2, var(--bg-elevated));
+}
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.account-avatar--square.has-image img {
+  object-fit: contain;
+  background: #fff;
+}
+
+/* Aro con el degradado de la marca: la tarjeta de la cuenta. */
+.account-avatar--ring {
+  box-shadow: 0 0 0 2px var(--bg-elevated), 0 0 0 3.5px color-mix(in oklab, var(--primary) 75%, transparent);
+}

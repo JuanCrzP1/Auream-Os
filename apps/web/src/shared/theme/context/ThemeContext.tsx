@@ -1,52 +1,70 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { DEFAULT_THEME, oppositeTheme, type Theme } from "../contracts/Theme";
+import { DEFAULT_THEME, oppositeTheme, resolveTheme, type Theme, type ThemePreference } from "../contracts/Theme";
 import { applyThemeToDocument } from "../dom/applyThemeToDocument";
 import { themeStore } from "../storage/themeStore";
 
 /**
  * Tema activo de la aplicación.
  *
- * Responsabilidad única: mantener el tema en memoria, persistir la elección
- * del usuario y reflejarla en el documento.
+ * Responsabilidad única: mantener la preferencia en memoria, persistir la
+ * elección del usuario y reflejar en el documento el tema que corresponde.
  *
  * Precedencia: elección guardada > DEFAULT_THEME (oscuro). La app es
- * oscura de fábrica; el claro solo aparece si alguien lo pide.
+ * oscura de fábrica; el claro solo aparece si alguien lo pide. «Sistema»
+ * sigue al equipo y cambia solo cuando el equipo cambia.
  */
 
 interface ThemeContextValue {
+  /** El tema que se pinta. */
   readonly theme: Theme;
+  /** Lo que eligió la persona (claro, oscuro o el del sistema). */
+  readonly preference: ThemePreference;
   readonly setTheme: (theme: Theme) => void;
+  readonly setPreference: (preference: ThemePreference) => void;
   readonly toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function resolveInitialTheme(): Theme {
-  return themeStore.read() ?? DEFAULT_THEME;
+const DARK_QUERY = "(prefers-color-scheme: dark)";
+
+function systemPrefersDark(): boolean {
+  return typeof window !== "undefined" && Boolean(window.matchMedia?.(DARK_QUERY).matches);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(resolveInitialTheme);
+  const [preference, setPreferenceState] = useState<ThemePreference>(() => themeStore.read() ?? DEFAULT_THEME);
+  const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
+  const theme = resolveTheme(preference, prefersDark);
 
   useEffect(() => {
     applyThemeToDocument(theme);
   }, [theme]);
 
-  const setTheme = useCallback((next: Theme) => {
+  // Con «sistema», seguir al equipo cuando cambie (p. ej. modo noche automático).
+  useEffect(() => {
+    if (preference !== "system") return;
+    const query = window.matchMedia?.(DARK_QUERY);
+    if (!query) return;
+    const onChange = () => setPrefersDark(query.matches);
+    onChange();
+    query.addEventListener?.("change", onChange);
+    return () => query.removeEventListener?.("change", onChange);
+  }, [preference]);
+
+  const setPreference = useCallback((next: ThemePreference) => {
     themeStore.write(next);
-    setThemeState(next);
+    setPreferenceState(next);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setThemeState((current) => {
-      const next = oppositeTheme(current);
-      themeStore.write(next);
-      return next;
-    });
-  }, []);
+    const next = oppositeTheme(theme);
+    themeStore.write(next);
+    setPreferenceState(next);
+  }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, preference, setTheme: setPreference, setPreference, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

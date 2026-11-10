@@ -13,7 +13,7 @@ Este documento describe lo que existe hoy. Lo pendiente aparece marcado como tal
 | Aislamiento en persistencia SQL (tenants, memberships) | `infrastructure/persistence/sql` | `IMPLEMENTADO` |
 | Aislamiento en persistencia JSON (automations) | `infrastructure/persistence/json` | `IMPLEMENTADO` |
 | Alta inicial de tenant (onboarding transaccional e idempotente) | `domains/team` | `IMPLEMENTADO` |
-| Resolver de tenant para el runtime de simulación | `platform/tenancy` (`TenantResolver`) | `PREPARADO` — ver «Pendiente» |
+| Resolver de tenant del motor (con la zona horaria de cada empresa) | `platform/tenancy` (`TenantResolver`) · `infrastructure/persistence/sql/SqlTenantResolver.ts` | `IMPLEMENTADO` — la zona sale de `tenants.timezone` (Empresa) o de `DEFAULT_TENANT_TIMEZONE`; ver [`account.md`](account.md) |
 | Identidad de usuario | `platform/identity/contracts/UserIdentity.ts` | `IMPLEMENTADO` (vía Neon Auth; sin tabla propia — sólo `actorId`) |
 | Modelo `Tenant` | `platform/tenancy/contracts/Tenant.ts` | `IMPLEMENTADO` |
 | Modelo `Membership` | `domains/team/contracts/Membership.ts` | `IMPLEMENTADO` |
@@ -71,7 +71,7 @@ El `tenantId` nunca es una afirmación del cliente, pero sí puede ser una **sel
 
 Eso es distinto de "declarar el tenant": el cliente propone, el servidor decide contra la base de datos. Por eso el aislamiento sigue siendo verificable pese a que el header exista.
 
-`platform/tenancy` provee además `TenantResolver`, un concepto **separado**: resuelve el contexto de límites operativos que necesita el runtime de simulación del builder (`composeSimulationSandbox`), no la identidad de una petición HTTP. No debe confundirse con `resolveRequestContext`. Unificar ambos caminos sigue pendiente (ver «Pendiente»).
+`platform/tenancy` provee además `TenantResolver`, un concepto **separado**: resuelve lo que el motor necesita de una cuenta en ejecución (sus límites y su zona horaria), no la identidad de una petición HTTP. No debe confundirse con `resolveRequestContext`. Con base de datos lo cumple `SqlTenantResolver`, que lee la zona horaria que la empresa eligió en Empresa (`tenants.timezone`, ver [`account.md`](account.md)). Lo usan los flujos reales, el Laboratorio y «Probar» del comprobante. Unificar ambos caminos sigue pendiente (ver «Pendiente»).
 
 ## Contexto del tenant
 

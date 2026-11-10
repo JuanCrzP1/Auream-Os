@@ -1,0 +1,154 @@
+/* Mi perfil y Empresa: tarjetas de sección sobre la página del módulo. */
+.account-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 880px;
+}
+
+.account-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface, var(--bg-elevated));
+  box-shadow: var(--elevation-inset);
+}
+
+.account-hero__who {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.account-hero__name {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.account-hero__meta {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.account-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface, var(--bg-elevated));
+  box-shadow: var(--elevation-inset);
+}
+
+.account-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-section__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.account-section__subtitle,
+.account-section__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.account-section__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.account-section__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.account-section__ok {
+  margin-right: auto;
+  color: var(--status-success, #2fbf71);
+  font-size: 0.84rem;
+}
+
+.account-section__footer .ui-error {
+  margin-right: auto;
+}
+
+.account-phone {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.account-phone .ui-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* El prefijo, a su medida (en los editores ocupa todo el ancho de su celda). */
+.account-phone .kit-dial {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.account-email {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--chip-bg);
+}
+
+.account-email__value {
+  color: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.account-email__badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--primary-soft, var(--chip-bg));
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.account-readonly {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+@media (max-width: 720px) {
+  .account-section__grid {
+    grid-template-columns: 1fr;
+  }
+}

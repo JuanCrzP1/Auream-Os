@@ -6,6 +6,7 @@ import { LocalMediaStorage, defaultLocalMediaDirectory } from "../../../infrastr
 import { InMemoryRateLimiter } from "../../../platform/security/rate-limiting/application/InMemoryRateLimiter";
 import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
 import { CreateMediaUploadService, RegisterMediaService } from "../../../domains/media/application/MediaServices";
+import type { MediaStorage } from "../../../domains/media/application/ports/MediaStorage";
 
 // ---------------------------------------------------------------------------
 // composeMediaServices — el ÚNICO punto que elige dónde viven los medios:
@@ -19,6 +20,8 @@ import { CreateMediaUploadService, RegisterMediaService } from "../../../domains
 export interface MediaServices {
   readonly createUpload: CreateMediaUploadService;
   readonly register: RegisterMediaService;
+  /** El almacén elegido: también guarda las fotos de perfil y los logos. */
+  readonly storage: MediaStorage;
   /** Solo en desarrollo: recibe subidas y sirve archivos. */
   readonly local: LocalMediaStorage | null;
 }
@@ -31,6 +34,7 @@ export function composeMediaServices(config: ApiConfig, sqlClient: SqlClient, ra
   return {
     createUpload: new CreateMediaUploadService(storage, rateLimiter),
     register: new RegisterMediaService(new SqlMediaRepository(sqlClient), storage),
+    storage,
     local
   };
 }

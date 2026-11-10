@@ -23,7 +23,9 @@ export const AUTH_ERROR_CODES = {
   invalidToken: "INVALID_TOKEN",
   /** El origen del navegador no está en la lista de confianza del proveedor.
    *  Es un fallo de configuración del despliegue, no del usuario. */
-  invalidOrigin: "INVALID_ORIGIN"
+  invalidOrigin: "INVALID_ORIGIN",
+  /** Cambiar la contraseña: la actual no es la correcta (status 400). */
+  invalidPassword: "INVALID_PASSWORD"
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];

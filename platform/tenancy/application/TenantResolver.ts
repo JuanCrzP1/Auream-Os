@@ -18,17 +18,17 @@ export class StaticTenantResolver implements TenantResolver {
   }
 }
 /** Límites de una cuenta mientras no existan por plan (FASE F). */
-const DEFAULT_LIMITS = { maxActiveSessions: 10_000, maxWebhookRetries: 3 } as const;
+export const DEFAULT_TENANT_LIMITS = { maxActiveSessions: 10_000, maxWebhookRetries: 3 } as const;
 
 /**
- * Cualquier cuenta, con la zona horaria por defecto de la plataforma. Las
- * cuentas aún no guardan su zona; cuando la tengan, este resolvedor se
- * cambia por uno que la lea de `tenants`.
+ * Cualquier cuenta, con la zona horaria por defecto de la plataforma (sin
+ * base de datos: pruebas y almacén JSON). Con base, la zona de cada empresa
+ * la lee `SqlTenantResolver` (`infrastructure/persistence/sql`).
  */
 export class DefaultTimezoneTenantResolver implements TenantResolver {
   public constructor(private readonly timezone: string) {}
 
   public async resolve(tenantId: string): Promise<TenantContext> {
-    return { tenantId, tenantKey: tenantId, timezone: this.timezone, limits: DEFAULT_LIMITS };
+    return { tenantId, tenantKey: tenantId, timezone: this.timezone, limits: DEFAULT_TENANT_LIMITS };
   }
 }

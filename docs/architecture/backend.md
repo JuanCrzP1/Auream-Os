@@ -25,6 +25,9 @@ apps/api/
 | `GET` | `/health` | público |
 | `GET` | `/me/tenants` | identidad de usuario, sin tenant |
 | `POST` | `/me/onboarding` | identidad de usuario, sin tenant |
+| `GET` `PATCH` | `/me/profile` · `POST` `/me/profile/photo/uploads` · `PUT` `DELETE` `/me/profile/photo` (Mi perfil) | identidad de usuario, sin tenant |
+| `GET` | `/company` (Empresa: nombre, logo y zona horaria) | miembro de la cuenta |
+| `PATCH` | `/company` · `POST` `/company/logo/uploads` · `PUT` `DELETE` `/company/logo` | `tenant.manage` |
 | `GET` | `/automations` | `flows.read` |
 | `POST` | `/automations` (crear; el id lo decide el servidor) | `flows.write` |
 | `PATCH` `DELETE` | `/automations/:id` | `flows.write` |

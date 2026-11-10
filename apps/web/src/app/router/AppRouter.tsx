@@ -17,6 +17,7 @@ import { AppShell } from "@shared/ui/app-shell/AppShell";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { TemplatesPage } from "./placeholders/TemplatesPage";
 import { ArchivePage } from "./placeholders/ArchivePage";
+import { accountRoutes } from "./accountRoutes";
 
 /**
  * Rutas de la aplicación.
@@ -173,6 +174,8 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      {accountRoutes()}
 
       <Route path="*" element={<Navigate to="/automations" replace />} />
     </Routes>

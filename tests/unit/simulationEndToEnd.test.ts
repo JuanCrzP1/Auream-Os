@@ -26,7 +26,7 @@ function workspace(nodes: Record<string, BuilderFlowNode>, edges: Record<string,
 }
 
 function setup(http = new DisabledHttpRequester()) {
-  const service = new SimulateTurnService(composeSimulationSandbox({ ai: new DisabledAiGateway(), http, timezone: "America/Bogota" }));
+  const service = new SimulateTurnService(composeSimulationSandbox({ ai: new DisabledAiGateway(), http, timezoneOf: async () => "America/Bogota" }));
   let state: SimulationState | null = null;
   const turn = async (ws: PersistedBuilderWorkspace, event: SimulationEvent, options = { realAi: false, realIntegrations: false }): Promise<SimulationTurnResponse> => {
     const result = await service.execute(T, ws, { draft: ws.draft, state: JSON.parse(JSON.stringify(state)), event, options });

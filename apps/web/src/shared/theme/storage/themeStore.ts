@@ -1,4 +1,4 @@
-import { isTheme, type Theme } from "../contracts/Theme";
+import { isThemePreference, type ThemePreference } from "../contracts/Theme";
 
 /**
  * Preferencia de tema elegida explícitamente por el usuario.
@@ -13,19 +13,19 @@ import { isTheme, type Theme } from "../contracts/Theme";
 const STORAGE_KEY = "bots-ai-theme";
 
 export const themeStore = {
-  read(): Theme | null {
+  read(): ThemePreference | null {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      return isTheme(stored) ? stored : null;
+      return isThemePreference(stored) ? stored : null;
     } catch {
       // Modo privado o almacenamiento bloqueado: se cae al tema por defecto.
       return null;
     }
   },
 
-  write(theme: Theme): void {
+  write(preference: ThemePreference): void {
     try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
+      window.localStorage.setItem(STORAGE_KEY, preference);
     } catch {
       // Sin persistencia la app sigue funcionando; el tema dura la sesión.
     }

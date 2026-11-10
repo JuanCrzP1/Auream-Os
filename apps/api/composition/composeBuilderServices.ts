@@ -44,6 +44,8 @@ import type { DocumentTextReader } from "../../../flow-engine/ports/DocumentText
 import { SqlReceiptRegistry } from "../../../infrastructure/persistence/sql/SqlReceiptRegistry";
 import { InMemoryReceiptRegistry } from "../../../infrastructure/persistence/memory/InMemoryReceiptRegistry";
 import type { ApiConfig } from "../config/loadApiConfig";
+import { SqlTenantResolver } from "../../../infrastructure/persistence/sql/SqlTenantResolver";
+import { DefaultTimezoneTenantResolver } from "../../../platform/tenancy/application/TenantResolver";
 
 // ---------------------------------------------------------------------------
 // composeBuilderServices
@@ -133,6 +135,9 @@ export function composeBuilderServices(
   // y para «Probar» del bloque Integración.
   const http = new SafeHttpRequester({ allowPrivateNetworks: config.integrationsAllowPrivateNetwork });
   const receipts = config.automationsStore === "sql" ? new SqlReceiptRegistry(sqlClient) : new InMemoryReceiptRegistry();
+  // La zona horaria de la empresa (Empresa), igual que en los flujos reales.
+  const tenants = config.automationsStore === "sql" ? new SqlTenantResolver(sqlClient, config.defaultTimezone) : new DefaultTimezoneTenantResolver(config.defaultTimezone);
+  const timezoneOf = async (tenantId: string) => (await tenants.resolve(tenantId)).timezone;
 
   return {
     getWorkspaceService: new GetBuilderWorkspaceService(
@@ -141,12 +146,12 @@ export function composeBuilderServices(
       automationRepository
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
-    simulateTurnService: new SimulateTurnService(composeSimulationSandbox({ ai, http, timezone: config.defaultTimezone }), rateLimiter),
+    simulateTurnService: new SimulateTurnService(composeSimulationSandbox({ ai, http, timezoneOf }), rateLimiter),
     testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), rateLimiter),
     testAiService: new TestAiStepService(new EngineAiStepTester(ai), rateLimiter),
     testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), rateLimiter),
     testPaymentProofService: new TestPaymentProofService(
-      new EnginePaymentProofTester(documents, receipts, config.defaultTimezone),
+      new EnginePaymentProofTester(documents, receipts, timezoneOf),
       rateLimiter
     ),
     deleteAutomationService: new DeleteAutomationService(unitOfWork),

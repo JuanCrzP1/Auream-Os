@@ -32,24 +32,24 @@ El builder es sub-módulo, no feature: es una superficie grande de Automatizacio
 
 ## Features y navegación
 
-La navegación es fija: doce áreas en orden inmutable. `app/navigation/sidebar/sidebar-items.tsx` es la única fuente de verdad; reordenar o renombrar se hace ahí y en ningún otro sitio.
+La barra lateral tiene el trabajo del día, en orden fijo: `app/navigation/sidebar/sidebar-items.tsx` es la única fuente de verdad. Lo administrativo vive en el **menú de la cuenta**, la tarjeta de abajo en la barra (`app/navigation/account/account-menu-items.tsx`; detalle en [`account.md`](account.md)).
 
-| Área | Ruta | Estado |
-|---|---|---|
-| Dashboard | `/dashboard` | `NO IMPLEMENTADO` |
-| Conversaciones | `/conversations` | `IMPLEMENTADO` — bandeja con filtros y etiquetas, chat en vivo con chulos de WhatsApp, respuesta del asesor y «Ejecutar flujo» |
-| Automatizaciones | `/automations` | `IMPLEMENTADO` — hub y builder |
-| Conexiones | `/connections` | `PREPARADO` — placeholder |
-| Contactos | `/contacts` | `IMPLEMENTADO` — lista con búsqueda y filtro, ficha editable y catálogo de etiquetas |
-| Integraciones | `/integrations` | `IMPLEMENTADO` — conexiones de IA (conectar, verificar, cambiar clave, renombrar, eliminar) |
-| AI Agents | `/ai-agents` | `PREPARADO` — placeholder |
-| Equipo | `/team` | `NO IMPLEMENTADO` |
-| Facturación | `/billing` | `NO IMPLEMENTADO` |
-| Mi perfil | `/profile` | `NO IMPLEMENTADO` |
-| Configuración | `/settings` | `NO IMPLEMENTADO` |
-| Ayuda | `/help` | `NO IMPLEMENTADO` |
+| Área | Ruta | Dónde | Estado |
+|---|---|---|---|
+| Dashboard | `/dashboard` | Barra | `NO IMPLEMENTADO` — página «Próximamente» |
+| Conversaciones | `/conversations` | Barra | `IMPLEMENTADO` — bandeja con filtros y etiquetas, chat en vivo con chulos de WhatsApp, respuesta del asesor y «Ejecutar flujo» |
+| Automatizaciones | `/automations` | Barra | `IMPLEMENTADO` — hub y builder |
+| AI Agents | `/ai-agents` | Barra | `PREPARADO` — placeholder |
+| Conexiones | `/connections` | Barra | `IMPLEMENTADO` |
+| Contactos | `/contacts` | Barra | `IMPLEMENTADO` — lista con búsqueda y filtro, ficha editable y catálogo de etiquetas |
+| Integraciones | `/integrations` | Barra | `IMPLEMENTADO` |
+| Mi perfil | `/profile` | Menú de la cuenta | `IMPLEMENTADO` — foto, nombre, WhatsApp personal, correo de acceso y contraseña |
+| Empresa | `/settings` | Menú de la cuenta | `IMPLEMENTADO` — logo, nombre y zona horaria |
+| Equipo | `/team` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» |
+| Pagos y suscripciones | `/billing` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» (FASE F) |
+| Ayuda y soporte | `/help` | Menú de la cuenta | `NO IMPLEMENTADO` — «Pronto» |
 
-`NO IMPLEMENTADO` significa que la ruta está declarada en el sidebar pero no tiene `<Route>` en `AppRouter`: el catch-all redirige a `/automations`.
+Las rutas «Pronto» tienen su `<Route>` con una página «Próximamente» (`app/router/accountRoutes.tsx`): ninguna opción visible manda a otra pantalla sin avisar.
 
 Estructura interna de una feature con contenido:
 
@@ -71,6 +71,7 @@ Solo lo transversal:
 | `http/` | Cliente HTTP y cliente de la API del builder |
 | `config/` | Base URL de la API y lectura de la API key de desarrollo |
 | `ui/` | `AppSidebar` (con su CSS) y el layout `app-shell` |
+| `account/` | La cuenta: `AccountProvider`, la tarjeta y el menú de la cuenta, el avatar y la API de Mi perfil y Empresa |
 | `styles/` | Sólo `base.css` y `theme.css` — lo verdaderamente global |
 | `test-utils/` | Setup de pruebas |
 

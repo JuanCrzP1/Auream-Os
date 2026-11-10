@@ -4,6 +4,8 @@ import { handleOnboardingRequest } from "../handlers/handleOnboardingRequest";
 import type { MembershipRepository } from "../../../domains/team/application/MembershipRepository";
 import type { OnboardingPort } from "../../../domains/team/application/OnboardingPort";
 import type { AuthenticatedPrincipal } from "../../../platform/identity/contracts/AuthenticatedPrincipal";
+import type { ProfileServices } from "../../../domains/profiles/application/ProfileServices";
+import { routeMyProfileRequest } from "./routeMyProfileRequest";
 
 // ---------------------------------------------------------------------------
 // routeMeRequest
@@ -25,6 +27,8 @@ import type { AuthenticatedPrincipal } from "../../../platform/identity/contract
 export interface MeServices {
   readonly membershipRepository: MembershipRepository;
   readonly onboarding: OnboardingPort;
+  /** Mi perfil (`/me/profile`). Ausente: la ruta responde 503. */
+  readonly profiles?: ProfileServices;
 }
 
 export async function routeMeRequest(
@@ -50,5 +54,5 @@ export async function routeMeRequest(
     return true;
   }
 
-  return false;
+  return routeMyProfileRequest(request, response, url, services.profiles, userId);
 }

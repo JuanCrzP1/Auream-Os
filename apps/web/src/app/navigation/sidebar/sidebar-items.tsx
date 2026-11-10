@@ -12,15 +12,18 @@ export interface NavItem {
 }
 
 /**
- * sidebarItems — orden canónico de los ítems del sidebar.
+ * sidebarItems — orden canónico de los ítems del sidebar: el trabajo del día.
  *
  * Para agregar o reordenar ítems, modificar SOLO este array.
  * El AppSidebar renderiza este array sin conocer su contenido.
  *
+ * Lo administrativo (Mi perfil, Empresa, Equipo, Pagos y suscripciones,
+ * Ayuda) vive en el menú de la cuenta, abajo en la barra: es el estándar de
+ * las apps con barra lateral (`app/navigation/account/account-menu-items.tsx`).
+ *
  * Orden actual:
  *   Dashboard → Conversaciones → Automatizaciones → AI Agents →
- *   Conexiones → Contactos → Integraciones → Equipo →
- *   Facturación → Mi perfil → Configuración → Ayuda
+ *   Conexiones → Contactos → Integraciones
  */
 export const sidebarItems: NavItem[] = [
   { label: "Dashboard",       path: SIDEBAR_ROUTES.dashboard,     icon: SidebarIcons.dashboard     },
@@ -30,9 +33,4 @@ export const sidebarItems: NavItem[] = [
   { label: "Conexiones",      path: SIDEBAR_ROUTES.connections,    icon: SidebarIcons.connections    },
   { label: "Contactos",       path: SIDEBAR_ROUTES.contacts,       icon: SidebarIcons.contacts       },
   { label: "Integraciones",   path: SIDEBAR_ROUTES.integrations,   icon: SidebarIcons.integrations   },
-  { label: "Equipo",          path: SIDEBAR_ROUTES.team,           icon: SidebarIcons.team           },
-  { label: "Facturación",     path: SIDEBAR_ROUTES.billing,        icon: SidebarIcons.billing        },
-  { label: "Mi perfil",       path: SIDEBAR_ROUTES.profile,        icon: SidebarIcons.profile        },
-  { label: "Configuración",   path: SIDEBAR_ROUTES.settings,       icon: SidebarIcons.settings       },
-  { label: "Ayuda",           path: SIDEBAR_ROUTES.help,           icon: SidebarIcons.help           },
 ];

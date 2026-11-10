@@ -1,0 +1,216 @@
+/* El menú de la cuenta: se abre hacia arriba desde la tarjeta, en cristal. */
+.account-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 60;
+  width: 272px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface-floating, var(--bg-elevated));
+  box-shadow: var(--elevation-inset), 0 22px 48px -18px rgba(8, 6, 24, 0.55), var(--shadow);
+  backdrop-filter: blur(18px) saturate(1.2);
+  animation: account-menu-in 0.14s ease-out;
+}
+
+@keyframes account-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-menu {
+    animation: none;
+  }
+}
+
+.account-menu__identity,
+.account-menu__company {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 8px;
+}
+
+.account-menu__company {
+  margin: 2px 4px 4px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+}
+
+.account-menu__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.account-menu__who strong,
+.account-menu__who span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__who strong {
+  font-size: 0.86rem;
+  color: var(--text);
+}
+
+.account-menu__who span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.account-menu__group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0;
+  border-top: 1px solid var(--line);
+}
+
+.account-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: color-mix(in oklab, var(--text) 82%, var(--muted));
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-menu__item:hover,
+.account-menu__item:focus-visible {
+  background: var(--chip-bg-hover, var(--chip-bg));
+  color: var(--text);
+  outline: none;
+}
+
+.account-menu__icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  color: var(--muted);
+}
+
+.account-menu__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.account-menu__item:hover .account-menu__icon,
+.account-menu__item:focus-visible .account-menu__icon {
+  color: var(--primary);
+}
+
+.account-menu__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__soon {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--primary-soft, var(--chip-bg));
+  color: var(--primary);
+  font-size: 0.66rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.account-menu__item--danger,
+.account-menu__item--danger .account-menu__icon {
+  color: var(--status-danger, #e5484d);
+}
+
+.account-menu__item--danger:hover,
+.account-menu__item--danger:focus-visible {
+  background: color-mix(in oklab, var(--status-danger, #e5484d) 12%, transparent);
+  color: var(--status-danger, #e5484d);
+}
+
+.account-menu__item--danger:hover .account-menu__icon {
+  color: var(--status-danger, #e5484d);
+}
+
+/* Tema: tres opciones en una cápsula (claro, oscuro, sistema). */
+.account-menu__theme {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 10px 8px;
+}
+
+.account-menu__theme-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-theme {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+}
+
+.account-theme__option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.account-theme__option:hover,
+.account-theme__option:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.account-theme__option.is-active {
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  box-shadow: var(--glow-soft, none);
+}
+
+.account-theme__icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
+
+.account-theme__icon svg {
+  width: 14px;
+  height: 14px;
+}

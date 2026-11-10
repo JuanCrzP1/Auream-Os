@@ -39,8 +39,8 @@ export interface SimulationSandboxDependencies {
   readonly ai: AiGateway;
   /** Cliente HTTP protegido (solo si se pide «Integraciones reales»). */
   readonly http: HttpRequester;
-  /** Zona horaria del negocio (reglas de día y hora, Programador). */
-  readonly timezone: string;
+  /** Zona horaria de la empresa (reglas de día y hora, Programador). */
+  readonly timezoneOf: (tenantId: string) => Promise<string>;
 }
 
 class TurnSandbox implements SimulationSandbox {
@@ -73,7 +73,8 @@ class TurnSandbox implements SimulationSandbox {
     await registry.publish(snapshot);
     const sessionService = new SessionService(sessions);
     const loop = new ExecutionLoop(sessionService, new ContextService(), new JournaledNodeRuntime(nodes, journal), new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService()));
-    const tenants = new StaticTenantResolver({ [this.tenantId]: { tenantId: this.tenantId, tenantKey: this.tenantId, timezone: this.deps.timezone, limits: SIMULATION_LIMITS } });
+    const timezone = await this.deps.timezoneOf(this.tenantId);
+    const tenants = new StaticTenantResolver({ [this.tenantId]: { tenantId: this.tenantId, tenantKey: this.tenantId, timezone, limits: SIMULATION_LIMITS } });
 
     const result = await new ExecutionOrchestrator(tenants, registry, sessionService, loop).handle(envelope);
     const after = (await sessions.find(sessionIdFor(this.tenantId, envelope.conversationKey))) ?? null;

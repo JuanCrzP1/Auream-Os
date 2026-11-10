@@ -23,6 +23,8 @@
           var stored = window.localStorage.getItem("bots-ai-theme");
           if (stored === "light" || stored === "dark") {
             theme = stored;
+          } else if (stored === "system" && window.matchMedia) {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
           }
         } catch (error) {
           /* Sin almacenamiento se mantiene el tema por defecto. */

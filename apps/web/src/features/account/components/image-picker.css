@@ -1,0 +1,47 @@
+/* Foto de perfil o logo con sus acciones al lado. */
+.image-picker {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.image-picker__preview {
+  position: relative;
+  display: inline-flex;
+}
+
+.image-picker__progress {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(10, 8, 28, 0.55);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.image-picker__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.image-picker__buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.image-picker__hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.image-picker__input {
+  display: none;
+}
