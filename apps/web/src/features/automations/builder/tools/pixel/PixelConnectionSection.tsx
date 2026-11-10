@@ -89,7 +89,7 @@ export function PixelConnectionSection({
   if (status === "unavailable") return <Notice>Los píxeles no están disponibles en este servidor (falta configurar el cifrado de secretos).</Notice>;
 
   if (connections.length === 0 || connecting) {
-    if (!resources?.createPixelConnection) return <Notice>Conecta un píxel desde Integraciones para usar este bloque.</Notice>;
+    if (!resources?.createPixelConnection) return <Notice>Conecta un píxel desde Meta Ads para usar este bloque.</Notice>;
     return (
       <>
         {connections.length === 0 ? <p className="kit-hint">Conecta tu píxel una vez; después lo eliges de la lista en cualquier bloque.</p> : null}
@@ -116,12 +116,12 @@ export function PixelConnectionSection({
   return (
     <>
       <SelectField label="Píxel" value={selected ? selected.id : ""} options={options} onChange={(id) => id && onChange(id)} />
-      {selected?.status === "invalid" ? <Notice>Meta ya no acepta el token de este píxel. Cámbialo en Integraciones o elige otro.</Notice> : null}
+      {selected?.status === "invalid" ? <Notice>Meta ya no acepta el token de este píxel. Cámbialo en Meta Ads o elige otro.</Notice> : null}
       <div className="pixel-connect__links">
         <button type="button" className="pixel-connect__link nodrag" onClick={() => setConnecting(true)}>
           + Conectar otro píxel
         </button>
-        <a className="pixel-connect__link" href="/integrations" target="_blank" rel="noopener noreferrer">
+        <a className="pixel-connect__link" href="/meta-ads?tab=pixel" target="_blank" rel="noopener noreferrer">
           Administrar píxeles
         </a>
       </div>

@@ -15,10 +15,10 @@ Decisión de producto del 2026-11-10: tomar lo mejor de **Leona** (el bot, los c
 | Agentes de IA | `/ai-agents` | `ai-agents/` | — | `ai-agents` + motor `ai-sales-engine` | `ai` | FASE E |
 | Difusiones | `/broadcasts` | `broadcasts/` | `/broadcasts` | `broadcasts` | `scheduling` · `whatsapp` | Por construir |
 | Grupos y comunidades | `/groups` | `groups/` | `/groups` | `groups` | `whatsapp` | Por construir |
-| Meta Ads | `/meta-ads` | `ads/` | `/ads/*` | `ads` | `meta` | Por construir |
+| Meta Ads | `/meta-ads` | `ads/` (`pixel/`) | `/pixel-connections` · `/ads/*` | `integrations` (píxel) · `ads` | `meta` | Píxel ✅ (pestaña Píxel); campañas y cuentas por construir |
 | Ventas | `/sales` | `sales/` (`orders/` · `products/`) | `/sales` · `/products` | `sales` · `products` | — | Por construir |
 | Conexiones | `/connections` | `connections/` | `/connections` | `connections` | `whatsapp` | ✅ Funciona |
-| Integraciones | `/integrations` | `integrations/` | `/integrations/*` | `integrations` · `webhooks` · `mcp` | `ai` · `meta` | ✅ Funciona |
+| Integraciones | `/integrations` | `integrations/` | `/ai-credentials` · `/inbound-webhooks` · `/mcp-credentials` | `integrations` · `webhooks` · `mcp` | `ai` | ✅ Funciona (la tarjeta de Meta lleva a Meta Ads) |
 
 Lo administrativo (Mi perfil, Configuración, Equipo, Pagos y suscripciones, Ayuda) vive en el menú de la cuenta: ver [`account.md`](account.md).
 
@@ -43,4 +43,5 @@ Anuncio de Meta ──clic──> Conversaciones ──flujo──> Comprobante 
 2. **Un dominio no importa otro** ([`dependency-rules.md`](dependency-rules.md)): si Ventas necesita Productos, declara un puerto. Por eso Productos es un dominio aparte: lo usan Ventas, los flujos, los Agentes de IA y Meta Ads.
 3. **Proveedor detrás de un puerto.** Meta, uazapi o la API oficial son adaptadores en `infrastructure/`; el dominio no sabe cuál está debajo. `ads` no se llama `meta` para que TikTok o Google sean otro adaptador, no otro módulo.
 4. **Cada dominio nuevo nace con su ficha** (`domains/<dominio>/README.md`: qué le pertenece, qué no, de qué depende y qué capas tendrá) y cada módulo web con la suya (`features/<módulo>/README.md`). Las carpetas de código (`domain/`, `application/`, `components/`…) se crean cuando tienen contenido real, no vacías.
-5. **Cada página vive en su módulo** (`features/<módulo>/pages/`). Mientras se construye, cuenta lo que traerá (`PagePlaceholder`); las rutas están en `apps/web/src/app/router/moduleRoutes.tsx`.
+5. **Lo que usan dos módulos sube a `shared/`**: el kit de conexiones (`shared/ui/integration-kit/`: logos, tarjeta, sección, diálogos, campo secreto) lo usan Integraciones y Meta Ads.
+6. **Cada página vive en su módulo** (`features/<módulo>/pages/`). Mientras se construye, cuenta lo que traerá (`PagePlaceholder`); las rutas están en `apps/web/src/app/router/moduleRoutes.tsx`.

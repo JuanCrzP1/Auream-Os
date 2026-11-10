@@ -1,8 +1,10 @@
+import "@shared/ui/integration-kit/connect-dialog.css";
+import "./integrations.css";
 import { useId, useState } from "react";
 import { AI_PROVIDERS, aiProviderInfo, type AiProviderId, type CreateAiCredentialRequest } from "@contracts/AiContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
-import { ProviderMark } from "./ProviderMark";
-import { SecretInput } from "./SecretInput";
+import { ProviderMark } from "@shared/ui/integration-kit/IntegrationMark";
+import { SecretInput } from "@shared/ui/integration-kit/SecretInput";
 
 /**
  * Conectar una cuenta de IA: proveedor, nombre y clave. Al enviar, el servidor

@@ -7,7 +7,7 @@ import { StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 import { categoryLabel } from "../catalog/integrationCatalog";
 import { findIntegration } from "../catalog/integrationRegistry";
-import { IntegrationMark } from "../components/ProviderMark";
+import { IntegrationMark } from "@shared/ui/integration-kit/IntegrationMark";
 
 /**
  * Página de una integración (`/integrations/<id>`): miga de pan al centro, su

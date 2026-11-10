@@ -1,7 +1,8 @@
+import "@shared/ui/integration-kit/integration-card.css";
 import { Link } from "react-router-dom";
 import type { WebhookSummary } from "@contracts/WebhookContracts";
 import { formatDateTime } from "@shared/format/formatDate";
-import { IntegrationMark } from "../components/ProviderMark";
+import { IntegrationMark } from "@shared/ui/integration-kit/IntegrationMark";
 
 /** Un webhook en la lista: estado, número, lo recibido en el mes y su último envío. */
 export function WebhookCard({ webhook, connectionName, onDelete }: { readonly webhook: WebhookSummary; readonly connectionName: string | null; readonly onDelete: () => void }) {

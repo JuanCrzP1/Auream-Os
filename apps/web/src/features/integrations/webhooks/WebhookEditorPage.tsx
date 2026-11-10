@@ -6,7 +6,7 @@ import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { IntegrationMark } from "../components/ProviderMark";
+import { IntegrationMark } from "@shared/ui/integration-kit/IntegrationMark";
 import { useWebhookEditor } from "./useWebhookEditor";
 import { assignPath, targetLabel, type PathTarget } from "./mappingTarget";
 import { WebhookAddressCard } from "./WebhookAddressCard";

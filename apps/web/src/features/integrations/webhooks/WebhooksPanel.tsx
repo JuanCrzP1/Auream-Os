@@ -5,7 +5,7 @@ import { useWebhooks } from "@shared/webhooks/useWebhooks";
 import { useConnections } from "@shared/connections/useConnections";
 import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { IntegrationSection } from "../components/IntegrationSection";
+import { IntegrationSection } from "@shared/ui/integration-kit/IntegrationSection";
 import { CreateWebhookDialog } from "./CreateWebhookDialog";
 import { WebhookCard } from "./WebhookCard";
 

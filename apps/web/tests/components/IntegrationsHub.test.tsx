@@ -52,7 +52,7 @@ describe("centro de Integraciones", () => {
     const active = await screen.findByRole("region", { name: /Activas/ });
     expect(cardNames(active)).toEqual(["OpenAI"]);
     expect(within(active).getByText("1 conexión")).toBeInTheDocument();
-    expect(cardNames(group(/Disponibles/))).toEqual(["Agentes de IA (MCP)", "Google Gemini", "OpenRouter", "Píxel de Meta", "Webhooks de entrada"]);
+    expect(cardNames(group(/Disponibles/))).toEqual(["Agentes de IA (MCP)", "Google Gemini", "Meta Ads", "OpenRouter", "Webhooks de entrada"]);
   });
 
   it("filtra por categoría y por búsqueda", async () => {
@@ -60,7 +60,7 @@ describe("centro de Integraciones", () => {
     await screen.findByRole("region", { name: /Activas/ });
     await userEvent.click(screen.getByRole("tab", { name: "Seguimiento" }));
     expect(screen.queryByRole("region", { name: /Activas/ })).not.toBeInTheDocument();
-    expect(cardNames(group(/Disponibles/))).toEqual(["Píxel de Meta"]);
+    expect(cardNames(group(/Disponibles/))).toEqual(["Meta Ads"]);
 
     await userEvent.click(screen.getByRole("tab", { name: "Todas" }));
     await userEvent.type(screen.getByRole("searchbox", { name: "Buscar integración" }), "claude");

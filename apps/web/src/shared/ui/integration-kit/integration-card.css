@@ -1,0 +1,185 @@
+/* Tarjetas de conexión (IA, píxel, MCP, webhooks) y su rejilla. Solo tokens del tema. */
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.ai-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-glass);
+  box-shadow: var(--elevation-inset);
+  transition: border-color var(--speed-fast) ease;
+}
+
+.ai-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--line));
+}
+
+.ai-card--skeleton {
+  height: 168px;
+  background: linear-gradient(90deg, var(--chip-bg) 0%, color-mix(in srgb, var(--text) 7%, transparent) 50%, var(--chip-bg) 100%);
+  background-size: 200% 100%;
+  animation: ai-shimmer 1.4s ease-in-out infinite;
+}
+
+.ai-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-card__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ai-card__title h3 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-card__title p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.ai-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ai-card__status--ok {
+  background: color-mix(in srgb, var(--status-active-text) 14%, transparent);
+  color: var(--status-active-text);
+}
+
+.ai-card__status--ko {
+  background: color-mix(in srgb, var(--rose) 14%, transparent);
+  color: var(--rose);
+}
+
+.ai-card__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ai-card__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.ai-card__facts div {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--chip-bg);
+}
+
+.ai-card__facts dt {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ai-card__facts dd {
+  margin: 3px 0 0;
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.ai-card__hint {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.04em;
+}
+
+.ai-card__warning {
+  margin: 0;
+  color: color-mix(in srgb, var(--rose) 80%, var(--text));
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.ai-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.ai-card__icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ai-card__icon-btn + .ai-card__icon-btn {
+  margin-left: 0;
+}
+
+.ai-card__icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ai-card__icon-btn:hover {
+  color: var(--text);
+}
+
+.ai-card__icon-btn--danger:hover {
+  border-color: color-mix(in srgb, var(--rose) 40%, var(--line));
+  color: var(--rose);
+}
+
+.ai-card__icon-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@keyframes ai-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-card--skeleton {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-grid {
+    grid-template-columns: 1fr;
+  }
+}

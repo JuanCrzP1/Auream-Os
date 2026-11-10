@@ -2,17 +2,17 @@ import { useState } from "react";
 import type { PixelConnectionSummary } from "@contracts/PixelContracts";
 import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { ConnectionCard } from "./ConnectionCard";
+import { ConnectionCard } from "@shared/ui/integration-kit/ConnectionCard";
 import { ConnectPixelDialog } from "./ConnectPixelDialog";
-import { EditConnectionDialog } from "./EditConnectionDialog";
+import { EditConnectionDialog } from "@shared/ui/integration-kit/EditConnectionDialog";
 import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
-import { MetaMark } from "./ProviderMark";
-import { IntegrationSection } from "./IntegrationSection";
+import { MetaMark } from "@shared/ui/integration-kit/IntegrationMark";
+import { IntegrationSection } from "@shared/ui/integration-kit/IntegrationSection";
 import { formatDateTime } from "@shared/format/formatDate";
 
 type Dialog = { readonly kind: "connect" } | { readonly kind: "rename" | "secret" | "delete"; readonly connection: PixelConnectionSummary } | null;
 
-/** Integraciones → Píxeles de Meta: para el bloque «Pixel» (API de Conversiones). */
+/** Meta Ads → Píxel: los píxeles de Meta que usa el bloque «Pixel» (API de Conversiones). */
 export function PixelSection() {
   const pixels = usePixelConnections();
   const [dialog, setDialog] = useState<Dialog>(null);

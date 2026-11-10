@@ -1,8 +1,10 @@
 import { useId, useState } from "react";
 import { META_EVENTS_MANAGER_URL, type CreatePixelConnectionRequest } from "@contracts/PixelContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
-import { MetaMark } from "./ProviderMark";
-import { SecretInput } from "./SecretInput";
+import "@shared/ui/integration-kit/connect-dialog.css";
+import "./pixel.css";
+import { MetaMark } from "@shared/ui/integration-kit/IntegrationMark";
+import { SecretInput } from "@shared/ui/integration-kit/SecretInput";
 
 /**
  * Conectar un píxel de Meta: nombre, ID del conjunto de datos y token de la

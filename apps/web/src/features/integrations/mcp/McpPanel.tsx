@@ -5,7 +5,7 @@ import type { McpCredentialCreated, McpCredentialSummary } from "@contracts/McpC
 import { useMcpCredentials } from "@shared/mcp/useMcpCredentials";
 import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { IntegrationSection } from "../components/IntegrationSection";
+import { IntegrationSection } from "@shared/ui/integration-kit/IntegrationSection";
 import { McpServerCard } from "./McpServerCard";
 import { McpCredentialCard } from "./McpCredentialCard";
 import { CreateMcpCredentialDialog } from "./CreateMcpCredentialDialog";

@@ -1,0 +1,19 @@
+/* Diálogos de conectar un servicio: la etiqueta con su enlace de ayuda («¿Dónde lo encuentro?»). */
+
+.ai-dialog__label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ai-dialog__help {
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ai-dialog__help:hover {
+  text-decoration: underline;
+}

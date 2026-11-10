@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { aiProviderInfo, type AiCredentialSummary, type AiProviderId } from "@contracts/AiContracts";
 import { useAiCredentials } from "@shared/ai-credentials/useAiCredentials";
-import { ConnectionCard } from "./ConnectionCard";
+import { ConnectionCard } from "@shared/ui/integration-kit/ConnectionCard";
 import { ConnectAiDialog } from "./ConnectAiDialog";
-import { EditConnectionDialog } from "./EditConnectionDialog";
+import { EditConnectionDialog } from "@shared/ui/integration-kit/EditConnectionDialog";
 import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
-import { ProviderMark } from "./ProviderMark";
-import { IntegrationSection } from "./IntegrationSection";
+import { ProviderMark } from "@shared/ui/integration-kit/IntegrationMark";
+import { IntegrationSection } from "@shared/ui/integration-kit/IntegrationSection";
 import { formatDateTime } from "@shared/format/formatDate";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 

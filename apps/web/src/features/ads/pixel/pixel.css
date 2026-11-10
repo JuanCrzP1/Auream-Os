@@ -1,0 +1,11 @@
+/* Diálogo de conectar un píxel de Meta: el logo junto al título. */
+
+.pixel-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pixel-dialog__head p {
+  margin: 4px 0 0;
+}

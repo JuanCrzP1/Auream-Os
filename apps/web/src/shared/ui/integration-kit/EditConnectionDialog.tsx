@@ -5,7 +5,7 @@ import { SecretInput } from "./SecretInput";
 /**
  * Renombrar una conexión o reemplazar su secreto (clave de IA, token de
  * píxel). El servidor verifica el secreto nuevo antes de guardarlo. Común a
- * todas las conexiones de Integraciones.
+ * todas las conexiones (Integraciones, Meta Ads).
  */
 export function EditConnectionDialog({
   name,

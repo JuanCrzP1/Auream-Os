@@ -1,5 +1,5 @@
-import type { AiProviderId } from "@contracts/AiContracts";
-import type { ConnectionListStatus } from "../components/IntegrationSection";
+import type { IntegrationMarkKind } from "@shared/ui/integration-kit/markKinds";
+import type { ConnectionListStatus } from "@shared/ui/integration-kit/IntegrationSection";
 
 // ---------------------------------------------------------------------------
 // Catálogo de integraciones — el MODELO del centro de Integraciones (puro,
@@ -28,12 +28,14 @@ export function categoryLabel(id: IntegrationCategoryId): string {
   return INTEGRATION_CATEGORIES.find((category) => category.id === id)?.label ?? id;
 }
 
-/** El distintivo de una integración (iniciales con el color del tema; sin logos de marca). */
-export type IntegrationMarkKind = AiProviderId | "meta" | "webhook" | "mcp";
+/** El distintivo (logo) de una integración: lo dibuja el kit compartido. */
+export type { IntegrationMarkKind };
 
 export interface IntegrationDefinition {
   /** Único en el catálogo; también es su dirección: `/integrations/<id>`. */
   readonly id: string;
+  /** Si se administra en otro módulo (p. ej. Meta Ads), adónde lleva su tarjeta. */
+  readonly href?: string;
   readonly category: IntegrationCategoryId;
   readonly name: string;
   /** Una línea: para qué sirve. */

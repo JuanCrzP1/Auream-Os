@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { categoryLabel, connectedLabel, type IntegrationEntry } from "../catalog/integrationCatalog";
-import { IntegrationMark } from "../components/ProviderMark";
+import { IntegrationMark } from "@shared/ui/integration-kit/IntegrationMark";
 
 /** Tarjeta de una integración en el centro: distintivo, categoría, nombre, para qué sirve y su estado. */
 export function IntegrationCard({ entry }: { readonly entry: IntegrationEntry }) {
@@ -22,7 +22,7 @@ export function IntegrationCard({ entry }: { readonly entry: IntegrationEntry })
         ) : (
           <span className="integration-card__status integration-card__status--idle">Sin conectar</span>
         )}
-        <Link className="ui-btn ui-btn--ghost integration-card__action" to={`/integrations/${entry.id}`} aria-label={`${active ? "Administrar" : "Configurar"} ${entry.name}`}>
+        <Link className="ui-btn ui-btn--ghost integration-card__action" to={entry.href ?? `/integrations/${entry.id}`} aria-label={`${active ? "Administrar" : "Configurar"} ${entry.name}`}>
           {active ? "Administrar" : "Configurar"}
         </Link>
       </div>

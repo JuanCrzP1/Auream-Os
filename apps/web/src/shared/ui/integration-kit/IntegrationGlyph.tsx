@@ -1,5 +1,5 @@
 import { useId } from "react";
-import type { IntegrationMarkKind } from "../catalog/integrationCatalog";
+import type { IntegrationMarkKind } from "./markKinds";
 
 // ---------------------------------------------------------------------------
 // Logos de las integraciones, para el catálogo y sus tarjetas. Los de marca

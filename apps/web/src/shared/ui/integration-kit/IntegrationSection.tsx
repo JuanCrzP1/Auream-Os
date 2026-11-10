@@ -1,3 +1,5 @@
+import "./integration-card.css";
+import "./integration-section.css";
 import { useState, type ReactNode } from "react";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
@@ -5,7 +7,7 @@ import { StateIcons } from "@shared/ui/state/stateIcons";
 export type ConnectionListStatus = "loading" | "ready" | "forbidden" | "unavailable" | "error";
 
 /**
- * Una sección de Integraciones (IA, píxeles…): título, botón de conectar y
+ * Una sección de conexiones (IA en Integraciones, píxeles en Meta Ads…): título, botón de conectar y
  * los estados comunes (cargando, sin acceso, no disponible, error, vacío).
  * La sección concreta solo aporta sus tarjetas y diálogos.
  */

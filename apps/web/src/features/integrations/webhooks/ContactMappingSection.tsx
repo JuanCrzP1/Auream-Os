@@ -1,3 +1,4 @@
+import "@shared/ui/integration-kit/integration-card.css";
 import type { WebhookMapping } from "@contracts/WebhookContracts";
 import { CountryDialPicker } from "@shared/ui/country-dial/CountryDialPicker";
 import { sameTarget, type PathTarget } from "./mappingTarget";

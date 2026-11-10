@@ -1,3 +1,4 @@
+import "@shared/ui/integration-kit/integration-card.css";
 import { useEffect, useState } from "react";
 import type { ConnectionSummary } from "@contracts/ConnectionContracts";
 import type { WebhookMapping } from "@contracts/WebhookContracts";

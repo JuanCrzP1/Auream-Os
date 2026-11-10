@@ -1,6 +1,7 @@
+import "@shared/ui/integration-kit/integration-card.css";
 import type { McpCredentialSummary } from "@contracts/McpContracts";
 import { formatDateTime } from "@shared/format/formatDate";
-import { IntegrationMark } from "../components/ProviderMark";
+import { IntegrationMark } from "@shared/ui/integration-kit/IntegrationMark";
 import { permissionSummary } from "./permissionSummary";
 
 /**

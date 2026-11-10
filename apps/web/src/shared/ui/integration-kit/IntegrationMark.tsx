@@ -1,5 +1,6 @@
 import type { AiProviderId } from "@contracts/AiContracts";
-import type { IntegrationMarkKind } from "../catalog/integrationCatalog";
+import "./integration-mark.css";
+import type { IntegrationMarkKind } from "./markKinds";
 import { IntegrationGlyph } from "./IntegrationGlyph";
 
 type MarkSize = "sm" | "md" | "lg";
@@ -22,7 +23,7 @@ export function ProviderMark({ provider, size = "md" }: { readonly provider: AiP
   return <IntegrationMark kind={provider} size={size} />;
 }
 
-/** Distintivo de Meta (los píxeles de conversión). */
+/** Distintivo de Meta (Meta Ads y el Píxel). */
 export function MetaMark({ size = "md" }: { readonly size?: MarkSize }) {
   return <IntegrationMark kind="meta" size={size} />;
 }

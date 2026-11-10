@@ -1,0 +1,7 @@
+/* Meta Ads: el logo de Meta junto al título de la página. */
+.meta-ads__title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}

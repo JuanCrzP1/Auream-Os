@@ -1,0 +1,17 @@
+/* Sección de conexiones: título, descripción y botón de conectar. Solo tokens del tema. */
+
+.integrations-section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.integrations-section__title {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+}

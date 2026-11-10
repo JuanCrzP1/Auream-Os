@@ -1,3 +1,4 @@
+import "@shared/ui/integration-kit/integration-card.css";
 import { useId } from "react";
 import type { McpCredentialCreated } from "@contracts/McpContracts";
 import { CopyButton } from "./CopyButton";

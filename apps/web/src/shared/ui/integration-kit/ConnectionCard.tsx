@@ -1,8 +1,9 @@
+import "./integration-card.css";
 import { useState, type ReactNode } from "react";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 
 /**
- * Tarjeta de una conexión de Integraciones (IA, píxel…): distintivo, nombre,
+ * Tarjeta de una conexión con un servicio (IA, píxel de Meta…): distintivo, nombre,
  * estado, datos, aviso si el servicio la rechazó y acciones. Cada sección le
  * pasa sus datos; la tarjeta no sabe de qué servicio es.
  */

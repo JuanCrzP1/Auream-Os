@@ -1,7 +1,7 @@
 import { buildEntries, combineStatus, type IntegrationEntry } from "./integrationCatalog";
 import { INTEGRATION_DEFINITIONS } from "./integrationRegistry";
 import { useAiSource, useMcpSource, usePixelSource, useWebhookSource } from "./sources";
-import type { ConnectionListStatus } from "../components/IntegrationSection";
+import type { ConnectionListStatus } from "@shared/ui/integration-kit/IntegrationSection";
 
 /** Todas las integraciones con su conteo en vivo (una consulta por fuente). */
 export function useIntegrationCatalog(): { readonly status: ConnectionListStatus; readonly entries: ReadonlyArray<IntegrationEntry>; readonly refresh: () => Promise<void> } {

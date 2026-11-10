@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { AiSection } from "../components/AiSection";
-import { PixelSection } from "../components/PixelSection";
+import { Navigate } from "react-router-dom";
 import { WebhooksPanel } from "../webhooks/WebhooksPanel";
 import { WebhookEditorPage } from "../webhooks/WebhookEditorPage";
 import { McpPanel } from "../mcp/McpPanel";
@@ -21,6 +21,7 @@ export interface IntegrationModule {
 }
 
 const CONNECTIONS = { one: "conexión", many: "conexiones" } as const;
+const META_ADS_PIXEL = "/meta-ads?tab=pixel";
 const AI_KEYWORDS = ["ia", "extensión ia", "chatgpt", "modelo", "clave"];
 
 export const INTEGRATIONS: ReadonlyArray<IntegrationModule> = [
@@ -37,16 +38,19 @@ export const INTEGRATIONS: ReadonlyArray<IntegrationModule> = [
     Panel: () => <AiSection provider="openrouter" />
   },
   {
+    // El Píxel vive en Meta Ads (con sus campañas y cuentas): la tarjeta lleva
+    // allá, y la dirección vieja `/integrations/meta-pixel` también.
     definition: {
       id: "meta-pixel",
+      href: META_ADS_PIXEL,
       category: "tracking",
-      name: "Píxel de Meta",
+      name: "Meta Ads",
       mark: "meta",
       unit: { one: "píxel", many: "píxeles" },
-      tagline: "API de Conversiones: registra Leads y Compras en tus campañas de Facebook e Instagram.",
-      keywords: ["facebook", "instagram", "capi", "conversiones", "anuncios", "pixel"]
+      tagline: "Tu píxel con la API de Conversiones (Leads y Compras de Facebook e Instagram). Se administra en Meta Ads.",
+      keywords: ["facebook", "instagram", "capi", "conversiones", "anuncios", "pixel", "meta ads"]
     },
-    Panel: PixelSection
+    Panel: () => <Navigate to={META_ADS_PIXEL} replace />
   },
   {
     definition: {

@@ -13,9 +13,12 @@ Un catálogo por categorías (Inteligencia artificial, Seguimiento, Automatizaci
 | `catalog/sources.ts` | Una fuente por módulo: cuántas hay conectadas de cada integración, con los mismos datos que sus paneles |
 | `hub/` | La pantalla del catálogo y sus tarjetas |
 | `pages/` | La página del centro, la de cada integración y la de un elemento (no conocen ninguna integración en concreto) |
-| `components/`, `webhooks/` | Los paneles de cada módulo |
+| `components/`, `webhooks/`, `mcp/` | Los paneles de cada módulo |
+| `shared/ui/integration-kit/` | **El kit compartido** (también lo usa Meta Ads): logos de marca (`IntegrationMark`, `MetaMark`), tarjeta de conexión, sección con sus estados, diálogo de renombrar o cambiar la clave y campo secreto. Cada pieza con su CSS |
 
 Agregar una integración = su definición y su panel en el registro + su fuente. La página no cambia.
+
+**El Píxel de Meta vive en Meta Ads** (`/meta-ads?tab=pixel`, `features/ads/pixel/`), junto a las campañas y las cuentas, como en Leona. En el centro queda la tarjeta «Meta Ads» (`href` en su definición) que lleva allá, y `/integrations/meta-pixel` redirige. La API (`/pixel-connections`) y el bloque «Pixel» no cambian.
 
 ## Webhooks de entrada
 
