@@ -1,10 +1,9 @@
 import "./flow-lab.css";
-import "./lab-conversation.css";
 import "./lab-trace.css";
 import { useState } from "react";
 import { STATUS_LABEL } from "./labModel";
 import { CloseIcon, FlaskIcon, RestartIcon, SendIcon, SlidersIcon } from "./LabIcons";
-import { LabConversation } from "./LabConversation";
+import { LabChat } from "./LabChat";
 import { LabData } from "./LabData";
 import { LabSettings } from "./LabSettings";
 import { LabTrace } from "./LabTrace";
@@ -75,15 +74,15 @@ export function FlowLab({
         ))}
       </div>
 
-      <div className="flow-lab__body">
+      <div className={`flow-lab__body${tab === "chat" ? " flow-lab__body--chat" : ""}`}>
         {tab === "chat" ? (
-          <LabConversation
+          <LabChat
             turns={lab.turns}
             busy={lab.busy}
             blockName={blockName}
             onFocusBlock={onFocusBlock}
             onChoose={(optionId, title) => void lab.send({ type: "choice", optionId, title })}
-            onSkipWait={() => void lab.send({ type: "skip-wait" })}
+            onContinue={(auto) => void lab.send({ type: "skip-wait" }, { auto })}
             onStart={() => void lab.send({ type: "start" })}
           />
         ) : null}

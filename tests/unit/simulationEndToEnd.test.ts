@@ -36,7 +36,7 @@ function setup(http = new DisabledHttpRequester()) {
   return { turn, say: (ws: PersistedBuilderWorkspace, text: string) => turn(ws, { type: "message", text }) };
 }
 
-const texts = (result: SimulationTurnResponse) => result.messages.map((message) => message.text);
+const texts = (result: SimulationTurnResponse) => result.messages.filter((message) => message.kind !== "pause").map((message) => message.text);
 
 const greeting = () =>
   workspace(
@@ -153,5 +153,31 @@ describe("laboratorio — Menú, Condicional y Distribuidor juntos", () => {
     expect(texts(again)).toEqual(texts(first));
     expect(texts(await lab.say(flow("menu"), "tampoco sé"))).toEqual(texts(first));
     expect(texts(await lab.say(flow("menu"), "1"))).toEqual(["El plan cuesta $50.000"]);
+  });
+});
+
+describe("laboratorio — pausas entre mensajes", () => {
+  it("una pausa corta viaja con su duración y «escribiendo…»; una larga deja la prueba esperando con su hora", async () => {
+    const lab = setup();
+    const ws = workspace(
+      {
+        hola: node("hola", "message", {
+          items: [
+            { id: "a", kind: "text", text: "Hola" },
+            { id: "p", kind: "interval", amount: 3, unit: "seconds" },
+            { id: "b", kind: "text", text: "¿Seguimos?" },
+            { id: "q", kind: "interval", amount: 25, unit: "seconds" },
+            { id: "c", kind: "text", text: "Ya pasaron 25 s" }
+          ]
+        })
+      },
+      { start: [link("start", "hola")] }
+    );
+    const first = await lab.turn(ws, { type: "start" });
+    expect(first.messages.map((message) => [message.kind, message.text || message.delayMs])).toEqual([["text", "Hola"], ["pause", 3000], ["text", "¿Seguimos?"]]);
+    expect(first.messages[1]).toMatchObject({ presence: "composing" });
+    expect([first.status, first.wait?.reason, Date.parse(first.wait!.until) - Date.now()]).toEqual(["waiting_timer", "resume", expect.any(Number)]);
+    expect(Date.parse(first.wait!.until) - Date.now()).toBeGreaterThan(20_000);
+    expect(texts(await lab.turn(ws, { type: "skip-wait" }))).toEqual(["Ya pasaron 25 s"]);
   });
 });

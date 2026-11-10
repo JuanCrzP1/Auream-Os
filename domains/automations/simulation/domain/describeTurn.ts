@@ -67,7 +67,12 @@ export function describeSteps(draft: BuilderFlowSnapshot, records: ReadonlyArray
 }
 
 function toMessage(nodeId: string, message: OutboundMessage): SimulatedMessage | null {
-  if (message.kind === "pause" || message.kind === "presence") return null;
+  // La presencia de una espera larga la muestra el aviso de espera (no es una pausa de este turno).
+  if (message.kind === "presence") return null;
+  if (message.kind === "pause") {
+    const delayMs = Math.max(0, message.delayMs ?? 0);
+    return delayMs > 0 ? { nodeId, kind: "pause", text: "", delayMs, ...(message.presence ? { presence: message.presence } : {}) } : null;
+  }
   if (message.recipient) return { nodeId, kind: "notification", text: message.content, recipient: { name: message.recipient.name, phone: message.recipient.phone } };
   if (message.kind === "reaction") return { nodeId, kind: "reaction", text: message.content };
   if (message.kind === "media" && message.media) return { nodeId, kind: "media", text: message.content, media: { ...message.media } };
@@ -89,7 +94,7 @@ function toMessage(nodeId: string, message: OutboundMessage): SimulatedMessage |
   return { nodeId, kind: "text", text: message.content };
 }
 
-/** Lo que el flujo habría mandado, en orden (sin pausas ni «escribiendo…»). */
+/** Lo que el flujo habría mandado, en orden, con sus pausas («escribiendo…» incluido). */
 export function describeMessages(records: ReadonlyArray<JournalRecord>): SimulatedMessage[] {
   return records.flatMap((record) => record.result.outputMessages.map((message) => toMessage(record.nodeId, message)).filter((item): item is SimulatedMessage => item !== null));
 }

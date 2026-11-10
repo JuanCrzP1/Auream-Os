@@ -79,11 +79,19 @@ export interface SimulationStep {
   readonly notes: ReadonlyArray<string>;
 }
 
-/** Lo que el flujo le habría mandado al cliente (o al equipo). */
+/**
+ * Lo que el flujo le habría mandado al cliente (o al equipo), en orden. Las
+ * pausas entre mensajes y el «escribiendo…» van también, con su duración real,
+ * para reproducir la conversación como la vería el cliente en WhatsApp.
+ */
 export interface SimulatedMessage {
   readonly nodeId: string;
-  readonly kind: "text" | "media" | "menu" | "reaction" | "notification";
+  readonly kind: "text" | "media" | "menu" | "reaction" | "notification" | "pause";
   readonly text: string;
+  /** Con `kind: "pause"`: cuánto dura (ms). */
+  readonly delayMs?: number;
+  /** Con `kind: "pause"`: qué ve el cliente mientras tanto. */
+  readonly presence?: "composing" | "recording";
   readonly media?: { readonly type: "image" | "video" | "audio" | "file"; readonly url: string; readonly fileName?: string };
   readonly menu?: {
     readonly format: "buttons" | "list";

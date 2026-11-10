@@ -1,0 +1,196 @@
+/* ===== CONVERSACIÓN DE PRUEBA (estilo WhatsApp) =====
+   Como lo vería el cliente: fondo del chat, sus mensajes a la derecha en
+   verde, los del negocio a la izquierda en blanco, avisos centrados. */
+
+.lab-chat {
+  --lab-wall: #efeae2;
+  --lab-out: #d9fdd3;
+  --lab-in: #ffffff;
+  --lab-ink: #111b21;
+  --lab-meta: #667781;
+  --lab-system: rgba(255, 255, 255, 0.92);
+  --lab-accent: #027eb5;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+:root[data-theme="dark"] .lab-chat {
+  --lab-wall: #0b141a;
+  --lab-out: #005c4b;
+  --lab-in: #202c33;
+  --lab-ink: #e9edef;
+  --lab-meta: #8696a0;
+  --lab-system: #182229;
+  --lab-accent: #53bdeb;
+}
+
+.lab-chat__wall {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 100%;
+  padding: 12px 12px 16px;
+  overflow-y: auto;
+  background-color: var(--lab-wall);
+  background-image: radial-gradient(color-mix(in srgb, var(--lab-meta) 14%, transparent) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.lab-chat__wall--empty { align-items: center; justify-content: center; gap: 12px; text-align: center; }
+.lab-chat__intro { margin: 0; color: var(--lab-ink); font-size: 0.86rem; }
+.lab-chat__turn { display: flex; flex-direction: column; gap: 4px; }
+
+/* --- Burbujas --- */
+.lab-bubble {
+  position: relative;
+  max-width: 82%;
+  padding: 6px 9px 18px;
+  border-radius: 9px;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  color: var(--lab-ink);
+  font-size: 0.86rem;
+  line-height: 1.38;
+}
+
+.lab-bubble--out { align-self: flex-end; border-top-right-radius: 2px; background: var(--lab-out); }
+.lab-bubble--in { border-top-left-radius: 2px; background: var(--lab-in); }
+.lab-bubble--media { padding: 3px 3px 18px; }
+.lab-bubble__text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lab-bubble__header { margin: 0 0 2px; font-weight: 700; }
+.lab-bubble__footer { margin: 3px 0 0; color: var(--lab-meta); font-size: 0.76rem; }
+
+.lab-bubble__time {
+  position: absolute;
+  right: 8px;
+  bottom: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--lab-meta);
+  font-size: 0.64rem;
+}
+
+.lab-bubble__ticks { width: 15px; height: 10px; color: #53bdeb; }
+.lab-bubble__audio { display: block; width: 230px; max-width: 100%; height: 40px; }
+.lab-bubble__image { display: block; max-width: 100%; max-height: 260px; border-radius: 7px; }
+
+.lab-bubble__file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--lab-meta) 12%, transparent);
+  color: var(--lab-ink);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.lab-bubble__file-icon { flex: 0 0 auto; width: 26px; height: 26px; color: #e05a47; }
+
+/* El mensaje del negocio con su menú y el bloque que lo envió. */
+.lab-in { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: 82%; }
+.lab-in .lab-bubble { max-width: 100%; }
+.lab-in__source { padding-left: 4px; }
+
+.lab-bubble__source {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--lab-meta);
+  font: inherit;
+  font-size: 0.64rem;
+  cursor: pointer;
+}
+
+.lab-bubble__source:hover { color: var(--lab-accent); text-decoration: underline; }
+
+/* Botones de respuesta rápida (como los de WhatsApp, bajo la burbuja). */
+.lab-replies { display: flex; flex-direction: column; gap: 3px; align-self: stretch; }
+
+.lab-reply {
+  align-self: stretch;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--lab-in);
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  color: var(--lab-accent);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.lab-reply:hover:not(:disabled) { filter: brightness(0.97); }
+.lab-reply:disabled { cursor: default; opacity: 0.6; }
+
+/* «escribiendo…» */
+.lab-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 7px 11px;
+  border-radius: 9px;
+  border-top-left-radius: 2px;
+  background: var(--lab-in);
+  color: var(--lab-meta);
+  font-size: 0.76rem;
+  font-style: italic;
+}
+
+.lab-typing__dots { display: inline-flex; gap: 3px; }
+.lab-typing__dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--lab-meta); animation: lab-dot 1.2s infinite ease-in-out; }
+.lab-typing__dots i:nth-child(2) { animation-delay: 0.15s; }
+.lab-typing__dots i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes lab-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+
+/* Avisos del sistema, centrados (como los de WhatsApp). */
+.lab-system {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  max-width: 92%;
+  margin: 6px 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--lab-system);
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  color: var(--lab-meta);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+.lab-system--notice { color: var(--lab-ink); background: color-mix(in srgb, #ffd279 30%, var(--lab-system)); }
+.lab-system--wait { color: var(--lab-ink); }
+.lab-system--end { color: var(--lab-ink); }
+.lab-system--failed { color: var(--rose); }
+.lab-system__hint { color: var(--lab-meta); font-size: 0.68rem; }
+
+.lab-system__action {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lab-accent) 14%, transparent);
+  color: var(--lab-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lab-wait__clock { width: 14px; height: 14px; border: 2px solid var(--lab-accent); border-top-color: transparent; border-radius: 50%; animation: lab-spin 1s linear infinite; }
+@keyframes lab-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-typing__dots i, .lab-wait__clock { animation: none; }
+}

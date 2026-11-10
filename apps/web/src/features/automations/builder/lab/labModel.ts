@@ -10,6 +10,10 @@ export interface LabTurn {
   readonly id: number;
   readonly event: SimulationEvent;
   readonly response: SimulationTurnResponse;
+  /** Cuándo pasó (la hora de las burbujas). */
+  readonly at: Date;
+  /** Una espera que terminó sola (no la adelantó el probador). */
+  readonly auto?: boolean;
 }
 
 /** Lo que dijo el probador en ese turno (vacío si no dijo nada: iniciar, saltar espera). */
@@ -21,7 +25,7 @@ export function turnInput(event: SimulationEvent): string | null {
 
 export function turnTitle(turn: LabTurn): string {
   if (turn.event.type === "start") return "Inicio de la prueba";
-  if (turn.event.type === "skip-wait") return "Se saltó la espera";
+  if (turn.event.type === "skip-wait") return turn.auto ? "Terminó la espera" : "Se adelantó la espera";
   return `Respondió «${turnInput(turn.event)}»`;
 }
 

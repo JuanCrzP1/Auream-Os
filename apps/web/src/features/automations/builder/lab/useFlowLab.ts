@@ -36,7 +36,7 @@ export function useFlowLab(flowKey: string, getDraft: () => BuilderFlowSnapshot 
   const nextId = useRef(1);
 
   const send = useCallback(
-    async (event: SimulationEvent) => {
+    async (event: SimulationEvent, meta: { readonly auto?: boolean } = {}) => {
       const draft = getDraft();
       if (busy || !draft) return;
       setBusy(true);
@@ -47,7 +47,8 @@ export function useFlowLab(flowKey: string, getDraft: () => BuilderFlowSnapshot 
         const response = await runLabTurn(flowKey, request);
         state.current = response.state;
         setPersona(response.state.persona);
-        setTurns((current) => [...(event.type === "start" ? [] : current), { id: nextId.current++, event, response }]);
+        const turn = { id: nextId.current++, event, response, at: new Date(), ...(meta.auto ? { auto: true } : {}) };
+        setTurns((current) => [...(event.type === "start" ? [] : current), turn]);
       } catch (e) {
         setError(apiErrorMessage(e, "No se pudo ejecutar la prueba. Revisa tu conexión e inténtalo de nuevo."));
       } finally {
