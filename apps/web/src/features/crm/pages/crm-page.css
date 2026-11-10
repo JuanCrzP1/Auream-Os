@@ -1,0 +1,16 @@
+/* El CRM: el panel mide su ancho (container `crm`) para acomodar números,
+ * tablero y diálogos. Tokens del tema. */
+
+.crm-page__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  container: crm / inline-size;
+}
+
+.crm-page__loading {
+  min-height: 360px;
+  border-radius: 18px;
+  background: var(--chip-bg);
+}

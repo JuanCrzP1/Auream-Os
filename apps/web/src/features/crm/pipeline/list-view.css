@@ -1,0 +1,181 @@
+/* La lista de una etapa: cápsulas de etapas arriba y la tabla debajo, que
+ * se desplaza de lado en pantallas angostas. Tokens del tema. */
+
+.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-view__stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.list-view__stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.list-view__stage[aria-selected="true"] {
+  border-color: var(--stage-color);
+  box-shadow: 0 8px 20px -14px var(--stage-color);
+  font-weight: 800;
+}
+
+.list-view__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--stage-color);
+}
+
+.list-view__count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.list-view__panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.list-view__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.list-view__summary strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.list-view__scroll {
+  overflow-x: auto;
+}
+
+.list-view__table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.list-view__table th {
+  padding: 10px 18px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.list-view__table td {
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.list-view__client {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list-view__avatar {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.list-view__name,
+.list-view__meta {
+  display: block;
+}
+
+.list-view__name {
+  font-weight: 800;
+}
+
+.list-view__country {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: var(--chip-bg);
+  font-size: 0.68rem;
+}
+
+.list-view__meta {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.list-view__value {
+  display: block;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.list-view__owner {
+  color: var(--text);
+}
+
+.list-view__actions {
+  text-align: right;
+}
+
+.list-view__empty {
+  padding: 28px 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.list-view__more {
+  align-self: center;
+  margin: 12px;
+}
+
+.list-view__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

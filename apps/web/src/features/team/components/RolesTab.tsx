@@ -3,9 +3,9 @@ import "./roles-tab.css";
 import { TEAM_ROLES, type TeamRole } from "@contracts/TeamContracts";
 import { TEAM_ROLE_INFO } from "@shared/team/teamRoles";
 
-type Access = "all" | "edit" | "record" | "view" | "none" | "most";
+type Access = "all" | "edit" | "record" | "attend" | "view" | "none" | "most";
 
-const LABEL: Readonly<Record<Access, string>> = { all: "Todo", edit: "Editar", record: "Anotar", view: "Ver", none: "Sin acceso", most: "Menos dueños" };
+const LABEL: Readonly<Record<Access, string>> = { all: "Todo", edit: "Editar", record: "Anotar", attend: "Atender", view: "Ver", none: "Sin acceso", most: "Menos dueños" };
 
 /**
  * Qué puede hacer cada rol, por área. Refleja los permisos del servidor
@@ -13,6 +13,8 @@ const LABEL: Readonly<Record<Access, string>> = { all: "Todo", edit: "Editar", r
  */
 const AREAS: ReadonlyArray<{ readonly area: string; readonly access: Readonly<Record<TeamRole, Access>> }> = [
   { area: "Conversaciones y contactos", access: { tenant_owner: "all", tenant_admin: "all", operator: "all", viewer: "view" } },
+  // Atender: mover clientes de etapa, poner valor y responsable, seguimientos. Configurar embudos: dueños y administradores.
+  { area: "CRM (embudo y seguimientos)", access: { tenant_owner: "all", tenant_admin: "all", operator: "attend", viewer: "view" } },
   { area: "Automatizaciones", access: { tenant_owner: "edit", tenant_admin: "edit", operator: "view", viewer: "view" } },
   { area: "Ventas y productos", access: { tenant_owner: "all", tenant_admin: "all", operator: "record", viewer: "view" } },
   { area: "Conexiones de WhatsApp", access: { tenant_owner: "all", tenant_admin: "all", operator: "view", viewer: "view" } },

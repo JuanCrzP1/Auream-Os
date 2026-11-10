@@ -1,0 +1,71 @@
+/* La pestaña Seguimientos: cápsulas de cuándo y de quién, y la lista. */
+
+.follow-ups-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.follow-ups-tab__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.follow-ups-tab__group {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+}
+
+.follow-ups-tab__group--outline {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.follow-ups-tab__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.follow-ups-tab__toggle[aria-pressed="true"] {
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(30 21 48 / 8%);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.follow-ups-tab__count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.follow-ups-tab__toggle--alert .follow-ups-tab__count {
+  background: color-mix(in srgb, var(--rose) 18%, var(--surface));
+  color: var(--status-danger);
+}
+
+.follow-ups-tab__empty {
+  margin: 0;
+  padding: 28px 12px;
+  color: var(--muted);
+  text-align: center;
+}

@@ -3,6 +3,7 @@ import "@shared/ui/controls/controls.css";
 import "@shared/ui/page/page.css";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useConversations } from "@shared/conversations/useConversations";
 import { useConnections } from "@shared/connections/useConnections";
 import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
@@ -35,8 +36,11 @@ function ConversationsShell({ chatOpen = false, children }: { readonly chatOpen?
  * celular, una cosa a la vez.
  */
 export function ConversationsPage() {
-  const [filters, setFilters] = useState<InboxFilters>(EMPTY_FILTERS);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // `?search=573001112233` (desde la ficha del CRM, «Abrir chat»): la bandeja abre buscando ese cliente.
+  const [params] = useSearchParams();
+  const initialSearch = params.get("search")?.slice(0, 80) ?? "";
+  const [filters, setFilters] = useState<InboxFilters>({ ...EMPTY_FILTERS, search: initialSearch });
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -51,6 +55,14 @@ export function ConversationsPage() {
   // «Hoy» / «últimos 7 días» se calculan al cambiar los filtros (no en cada sondeo).
   const query = useMemo(() => toListQuery({ ...filters, search: debouncedSearch }), [filters, debouncedSearch]);
   const inbox = useConversations(query);
+
+  // Si se llegó buscando a un cliente y es un solo chat, se abre directo (una vez).
+  const [autoOpened, setAutoOpened] = useState(initialSearch === "");
+  useEffect(() => {
+    if (autoOpened || inbox.conversations.length === 0) return;
+    if (inbox.conversations.length === 1) setSelectedId(inbox.conversations[0]!.id);
+    setAutoOpened(true);
+  }, [autoOpened, inbox.conversations]);
 
   if (inbox.status === "forbidden") {
     return (

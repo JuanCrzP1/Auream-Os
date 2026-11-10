@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { Navigate, Route } from "react-router-dom";
-import { ContactsPage } from "@features/crm/contacts/pages/ContactsPage";
+import { CrmPage } from "@features/crm/pages/CrmPage";
 import { AppShell } from "@shared/ui/app-shell/AppShell";
 import { SIDEBAR_ROUTES } from "../navigation/sidebar/sidebar-routes";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -12,8 +12,8 @@ import { SalesPage } from "@features/sales/pages/SalesPage";
 
 /**
  * Las rutas de los módulos nuevos de la barra lateral. Cada página vive en su
- * módulo (`features/<módulo>/pages`): el CRM (hoy, los contactos con sus
- * etiquetas, que crecerán con etapas y seguimientos) y los que se están
+ * módulo (`features/<módulo>/pages`): el CRM (embudo, contactos y
+ * seguimientos), Ventas y los que se están
  * construyendo (Dashboard, Difusiones, Grupos y comunidades, Meta Ads y
  * Ventas), que cuentan lo que traerán. Mapa completo: `docs/architecture/modules.md`.
  *
@@ -24,7 +24,7 @@ import { SalesPage } from "@features/sales/pages/SalesPage";
  */
 const PAGES: ReadonlyArray<readonly [string, ReactElement]> = [
   [SIDEBAR_ROUTES.dashboard, <DashboardPage />],
-  [SIDEBAR_ROUTES.crm, <ContactsPage />],
+  [SIDEBAR_ROUTES.crm, <CrmPage />],
   [SIDEBAR_ROUTES.broadcasts, <BroadcastsPage />],
   [SIDEBAR_ROUTES.groups, <GroupsPage />],
   [SIDEBAR_ROUTES.metaAds, <MetaAdsPage />],

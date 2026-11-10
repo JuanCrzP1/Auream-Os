@@ -1,0 +1,76 @@
+/* La barra del embudo: cápsulas de vista y de responsable, y la búsqueda. */
+
+.board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.board-toolbar__group {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+}
+
+.board-toolbar__group--outline {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.board-toolbar__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.board-toolbar__toggle[aria-pressed="true"] {
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(30 21 48 / 8%);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.board-toolbar__group--outline .board-toolbar__toggle[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  box-shadow: none;
+  color: var(--primary);
+}
+
+.board-toolbar__search {
+  display: flex;
+  flex: 1 1 200px;
+  align-items: center;
+  gap: 8px;
+  max-width: 280px;
+  min-height: 40px;
+  margin-left: auto;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.board-toolbar__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+}

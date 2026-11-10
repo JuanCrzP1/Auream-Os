@@ -1,0 +1,14 @@
+/* La pestaña «Contactos» dentro del CRM: sub-pestañas y «Nuevo contacto» en una fila. */
+.contacts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.contacts-section__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}

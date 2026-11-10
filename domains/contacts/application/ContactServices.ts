@@ -1,5 +1,6 @@
 import type { ContactFieldValue } from "../../../contracts/ContactContracts";
 import type { ContactRepository, ContactWithLabels, LabelRepository } from "./ContactRepository";
+import type { LabelChangeOrigin } from "./LabelHooks";
 import { CUSTOM_FIELD_KEY, isValidCustomFieldValue, normalizeEmail, normalizeExternalKey, type Contact } from "../domain/Contact";
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
@@ -52,7 +53,7 @@ export class CreateContactService {
   public constructor(private readonly contacts: ContactRepository) {}
 
   /** Alta manual de un contacto de WhatsApp. Si el teléfono ya existe, devuelve ese contacto. */
-  public async execute(tenantId: string, input: { name?: unknown; phone?: unknown; email?: unknown }): Promise<ContactWithLabels> {
+  public async execute(tenantId: string, input: { name?: unknown; phone?: unknown; email?: unknown }, origin?: LabelChangeOrigin): Promise<ContactWithLabels> {
     const phone = typeof input.phone === "string" ? normalizeExternalKey("whatsapp", input.phone) : "";
     if (phone.length < 7 || phone.length > 15) throw new ValidationError("Indica un teléfono con código de país (7 a 15 dígitos).");
     const email = input.email === undefined || input.email === "" ? null : normalizeEmail(String(input.email));
@@ -71,7 +72,7 @@ export class CreateContactService {
       createdAt: now,
       updatedAt: now
     };
-    return this.contacts.create(contact);
+    return this.contacts.create(contact, origin);
   }
 }
 
@@ -111,13 +112,13 @@ export class SetContactLabelsService {
   ) {}
 
   /** Solo etiquetas del catálogo de ESTA cuenta; una ajena o inexistente es 404. */
-  public async execute(tenantId: string, id: string, labelIds: ReadonlyArray<string>): Promise<ContactWithLabels> {
+  public async execute(tenantId: string, id: string, labelIds: ReadonlyArray<string>, origin?: LabelChangeOrigin): Promise<ContactWithLabels> {
     const unique = [...new Set(labelIds)];
     if (!(await this.contacts.findById(tenantId, id))) throw new NotFoundError("El contacto no existe.");
     for (const labelId of unique) {
       if (!(await this.labels.findById(tenantId, labelId))) throw new NotFoundError("Una de las etiquetas no existe.");
     }
-    await this.contacts.setLabels(tenantId, id, unique);
+    await this.contacts.setLabels(tenantId, id, unique, origin);
     return (await this.contacts.findById(tenantId, id))!;
   }
 }

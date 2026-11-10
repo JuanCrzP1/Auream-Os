@@ -1,0 +1,148 @@
+/* Configurar el embudo: filas de etapas y los movimientos automáticos. */
+
+.pipeline-settings {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.stage-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stage-rows__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  padding: 0 44px 0 92px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stage-rows__row {
+  display: grid;
+  grid-template-columns: 28px 32px minmax(0, 1fr) 150px 36px;
+  gap: 8px;
+  align-items: center;
+}
+
+.stage-rows__order {
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-rows__order button,
+.stage-rows__remove {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.stage-rows__order button:disabled,
+.stage-rows__remove:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.stage-rows__remove {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+}
+
+.stage-rows__remove:hover:not(:disabled) {
+  background: var(--chip-bg);
+  color: var(--status-danger);
+}
+
+.stage-rows__color {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.stage-rows__color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.stage-rows__color::-webkit-color-swatch {
+  border: 0;
+  border-radius: 50%;
+}
+
+.stage-rows__add {
+  min-height: 42px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 40%, var(--line));
+  border-radius: 12px;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pipeline-settings__auto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--chip-bg);
+}
+
+.pipeline-settings__auto legend {
+  float: left;
+  padding: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.pipeline-settings__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.pipeline-settings__check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.pipeline-settings__hint {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.pipeline-settings__footer .ui-btn--danger {
+  margin-right: auto;
+}
+
+@media (max-width: 560px) {
+  .stage-rows__head {
+    display: none;
+  }
+
+  .stage-rows__row {
+    grid-template-columns: 28px 32px minmax(0, 1fr) 36px;
+  }
+
+  .stage-rows__outcome {
+    grid-column: 3 / 4;
+  }
+}

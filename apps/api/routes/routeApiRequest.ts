@@ -12,6 +12,7 @@ import { routeIntegrationsRequest } from "./routeIntegrationsRequest";
 import { routeCompanyRequest } from "./routeCompanyRequest";
 import { routeTeamRequest } from "./routeTeamRequest";
 import { routeSalesRequest, type SalesRoutes } from "./routeSalesRequest";
+import { routeCrmRequest, type CrmRoutes } from "./routeCrmRequest";
 import { recordLastSeen } from "../middleware/recordLastSeen";
 import { routeInvitationPublic } from "./routeInvitationPublic";
 import type { TeamServices } from "../../../domains/team/application/TeamServices";
@@ -81,6 +82,8 @@ export interface ApiRouterDependencies {
   readonly invitationServices?: InvitationServices;
   /** Ventas y Productos (`/sales`, `/products`). Ausente: la ruta responde 503. */
   readonly salesServices?: SalesRoutes;
+  /** CRM: embudos, tablero, seguimientos (`/crm`). Ausente: la ruta responde 503. */
+  readonly crmServices?: CrmRoutes;
 }
 
 export async function routeApiRequest(
@@ -166,6 +169,7 @@ export async function routeApiRequest(
   if (await routeCompanyRequest(request, response, url, dependencies.companyServices, requestContext)) return;
   if (await routeTeamRequest(request, response, url, dependencies.teamServices, requestContext)) return;
   if (await routeSalesRequest(request, response, url, dependencies.salesServices, requestContext)) return;
+  if (await routeCrmRequest(request, response, url, dependencies.crmServices, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;

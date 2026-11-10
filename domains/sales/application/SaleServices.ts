@@ -17,6 +17,7 @@ import { salePeriod } from "../domain/SalePeriod";
 import type { ProductCatalog } from "./ProductCatalog";
 import { decodeCursor, encodeCursor, toSummary } from "./saleViews";
 import type { SaleQuery, SaleRepository } from "./SaleRepository";
+import { NO_SALE_EVENTS, approvedEventOf, type SaleEvents } from "./SaleEvents";
 
 // ---------------------------------------------------------------------------
 // Ventas desde la API: la lista con filtros y totales, anotar una venta a mano
@@ -40,7 +41,8 @@ export class SaleServices {
     private readonly sales: SaleRepository,
     private readonly catalog: ProductCatalog,
     /** Zona horaria de la empresa (los filtros por fecha van en su hora). */
-    private readonly timezoneOf: (tenantId: string) => Promise<string>
+    private readonly timezoneOf: (tenantId: string) => Promise<string>,
+    private readonly events: SaleEvents = NO_SALE_EVENTS
   ) {}
 
   public async list(actor: SaleActor, filters: SaleFilters): Promise<SaleListResponse> {
@@ -91,6 +93,7 @@ export class SaleServices {
       },
       ...statusOf(initialStatus(draft))
     );
+    if (sale.status === "approved") await this.events.saleApproved(actor.tenantId, approvedEventOf(sale));
     return toSummary(sale);
   }
 
@@ -122,6 +125,7 @@ export class SaleServices {
     }
     const saved = await this.sales.update(actor.tenantId, saleId, { ...next, status: wanted, reviewReason, recordedBy: actor.userId });
     if (!saved) throw new NotFoundError("Esa venta no existe.");
+    if (saved.status === "approved" && current.status !== "approved") await this.events.saleApproved(actor.tenantId, approvedEventOf(saved));
     return toSummary(saved);
   }
 

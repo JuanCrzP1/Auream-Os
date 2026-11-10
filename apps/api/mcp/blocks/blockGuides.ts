@@ -60,7 +60,7 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
     example: { format: "buttons", message: "¿Qué te interesa?", options: [{ title: "Precios" }, { title: "Asesor" }] }
   },
   tags: {
-    purpose: "Pone o quita etiquetas al contacto (las que no existen se crean).",
+    purpose: "Pone o quita etiquetas al contacto (las que no existen se crean). Si la etiqueta es una etapa de un embudo del CRM, el cliente pasa a esa etapa (y sale de la anterior del mismo embudo).",
     fields: { action: "'add' | 'remove'.", tags: "Nombres de etiquetas: ['VIP', 'cliente']." },
     outputs: "Una sola salida.",
     example: { action: "add", tags: ["interesado"] }

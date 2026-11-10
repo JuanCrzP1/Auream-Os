@@ -35,3 +35,7 @@ export function updateContact(id: string, request: UpdateContactRequest): Promis
 export function setContactLabels(id: string, labelIds: ReadonlyArray<string>): Promise<ContactSummary> {
   return builderApiClient.put<ContactSummary>(`/contacts/${encodeURIComponent(id)}/labels`, { labelIds });
 }
+
+export function fetchContact(id: string): Promise<ContactSummary> {
+  return builderApiClient.get<ContactSummary>(`/contacts/${encodeURIComponent(id)}`);
+}

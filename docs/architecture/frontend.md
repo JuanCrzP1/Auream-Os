@@ -38,7 +38,7 @@ La barra lateral tiene el trabajo del día, en orden fijo: `app/navigation/sideb
 |---|---|---|---|
 | Dashboard | `/dashboard` | `features/dashboard` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
 | Conversaciones | `/conversations` | `features/conversations` | `IMPLEMENTADO` — bandeja con filtros y etiquetas, chat en vivo con chulos de WhatsApp, respuesta del asesor y «Ejecutar flujo» |
-| CRM | `/crm` | `features/crm` (`contacts/`) | `IMPLEMENTADO` (contactos y etiquetas) — etapas y seguimientos por construir. `/contacts` redirige aquí |
+| CRM | `/crm` | `features/crm` (`pipeline/` · `deal/` · `follow-ups/` · `contacts/`) | `IMPLEMENTADO` — embudo (tablero y lista), ficha del cliente, seguimientos y contactos. `/contacts` redirige aquí |
 | Automatizaciones | `/automations` | `features/automations` | `IMPLEMENTADO` — hub y builder |
 | Agentes de IA | `/ai-agents` | `features/ai-agents` | `PREPARADO` — placeholder (FASE E) |
 | Difusiones | `/broadcasts` | `features/broadcasts` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |

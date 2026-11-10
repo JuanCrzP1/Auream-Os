@@ -18,6 +18,7 @@
 | Conversaciones y contactos | Todo | Todo | Todo | Ver |
 | Automatizaciones | Editar | Editar | **Ver** | Ver |
 | Ventas y productos | Todo | Todo | **Anotar** | Ver |
+| CRM (embudo y seguimientos) | Todo | Todo | **Atender** (mover, valor, responsable, seguimientos) | Ver |
 | Conexiones de WhatsApp | Todo | Todo | Ver | Ver |
 | Integraciones (claves, píxeles) | Todo | Todo | — | — |
 | Equipo | Todo | Menos dueños | Ver | Ver |
@@ -75,4 +76,4 @@ Solo personas: una credencial de máquina recibe 403 en `/team`. Base: `029_team
 
 ## Después
 
-Asignar chats a cada asesor (y que vea solo los suyos) llega con el CRM; el envío por correo, con la FASE H; «Salir del equipo» por cuenta propia, cuando haga falta.
+El CRM ya asigna un responsable a cada cliente (a mano o por turnos); que Conversaciones muestre a cada asesor solo sus chats llega después; el envío por correo, con la FASE H; «Salir del equipo» por cuenta propia, cuando haga falta.

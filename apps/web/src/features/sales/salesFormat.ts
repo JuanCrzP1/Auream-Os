@@ -3,11 +3,7 @@ import type { ProductKind, SaleSource, SaleStatus } from "@contracts/SalesContra
 
 // Cómo se muestran montos, fechas y nombres en Ventas.
 
-/** «$ 150.000 COP» con los decimales de cada moneda (sin decimales si son ,00). */
-export function formatMoney(amount: number, currency: string): string {
-  const number = new Intl.NumberFormat("es-CO", { minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 }).format(amount);
-  return `$ ${number} ${currency}`;
-}
+export { formatMoney } from "@shared/format/formatMoney";
 
 export const currencyName = (code: string) => CURRENCY_NAMES[code] ?? code;
 

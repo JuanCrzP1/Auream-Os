@@ -1,5 +1,8 @@
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlContactRepository, SqlLabelRepository } from "../../../infrastructure/persistence/sql/SqlContactRepositories";
+import type { ContactRepository, LabelRepository } from "../../../domains/contacts/application/ContactRepository";
+import { LabelRulesContactRepository } from "../../../domains/contacts/application/LabelRulesContactRepository";
+import { NO_CONTACT_EVENTS, NO_EXCLUSIVE_GROUPS, type ContactEvents, type ExclusiveLabelGroups } from "../../../domains/contacts/application/LabelHooks";
 import { ContactDirectoryService } from "../../../domains/contacts/application/ContactDirectoryService";
 import {
   CreateContactService,
@@ -18,6 +21,9 @@ import {
 // ---------------------------------------------------------------------------
 // composeContactsServices — el módulo de Contactos sobre PostgreSQL. Único
 // punto que elige la implementación; los casos de uso solo conocen puertos.
+//
+// Todo cambio de etiquetas pasa por `LabelRulesContactRepository`: aplica los
+// grupos excluyentes (las etapas de un embudo del CRM) y avisa lo que cambió.
 // ---------------------------------------------------------------------------
 
 export interface ContactsServices {
@@ -32,10 +38,24 @@ export interface ContactsServices {
   readonly deleteLabel: DeleteLabelService;
   /** Lo que usa el motor en producción (puerto `ContactDirectory`). */
   readonly directory: ContactDirectoryService;
+  /** El repositorio con sus reglas (lo usa el CRM para mover etiquetas). */
+  readonly repository: ContactRepository;
+  readonly labelRepository: LabelRepository;
 }
 
-export function composeContactsServices(sqlClient: SqlClient): ContactsServices {
-  const contacts = new SqlContactRepository(sqlClient);
+export interface ContactHooks {
+  readonly groups: ExclusiveLabelGroups;
+  readonly events: ContactEvents;
+  readonly onError: (error: unknown) => void;
+}
+
+export function composeContactsServices(sqlClient: SqlClient, hooks?: ContactHooks): ContactsServices {
+  const contacts = new LabelRulesContactRepository(
+    new SqlContactRepository(sqlClient),
+    hooks?.groups ?? NO_EXCLUSIVE_GROUPS,
+    hooks?.events ?? NO_CONTACT_EVENTS,
+    hooks?.onError
+  );
   const labels = new SqlLabelRepository(sqlClient);
 
   return {
@@ -48,6 +68,8 @@ export function composeContactsServices(sqlClient: SqlClient): ContactsServices 
     createLabel: new CreateLabelService(labels),
     updateLabel: new UpdateLabelService(labels),
     deleteLabel: new DeleteLabelService(labels),
-    directory: new ContactDirectoryService(contacts, labels)
+    directory: new ContactDirectoryService(contacts, labels),
+    repository: contacts,
+    labelRepository: labels
   };
 }

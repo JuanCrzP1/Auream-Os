@@ -1,0 +1,80 @@
+/* Diálogos del CRM (agregar cliente, por qué no compró, configurar). */
+
+.crm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(520px, calc(100vw - 32px));
+}
+
+.crm-dialog h2,
+.crm-dialog p {
+  margin: 0;
+}
+
+.crm-dialog__switch {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.crm-dialog__results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.crm-dialog__result {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  align-items: center;
+  cursor: pointer;
+}
+
+.crm-dialog__result span {
+  color: var(--muted);
+}
+
+.crm-dialog__result[aria-selected="true"] {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+
+.crm-dialog__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.crm-dialog__chip {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.crm-dialog__chip[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--on-primary);
+}

@@ -1,27 +1,30 @@
 import "@shared/ui/page/page.css";
 import "@shared/ui/controls/controls.css";
-import "../components/contacts.css";
+import "./contacts.css";
+import "./contacts-section.css";
 import { useState } from "react";
 import type { ContactSummary } from "@contracts/ContactContracts";
 import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
 import { useContactList } from "../hooks/useContactList";
-import { ContactsTable } from "../components/ContactsTable";
-import { ContactDrawer } from "../components/ContactDrawer";
-import { NewContactDialog } from "../components/NewContactDialog";
-import { LabelsManager } from "../components/LabelsManager";
-import { ContactsTableSkeleton } from "../components/ContactsTableSkeleton";
+import { ContactsTable } from "./ContactsTable";
+import { ContactDrawer } from "./ContactDrawer";
+import { NewContactDialog } from "./NewContactDialog";
+import { LabelsManager } from "./LabelsManager";
+import { ContactsTableSkeleton } from "./ContactsTableSkeleton";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 
 type Tab = "contacts" | "labels";
 
 /**
- * ContactsPage — los contactos de la cuenta y su catálogo de etiquetas.
+ * ContactsSection — la pestaña «Contactos» del CRM: los contactos de la
+ * cuenta y su catálogo de etiquetas (las etapas de los embudos también son
+ * etiquetas).
  *
  * Los flujos crean y etiquetan contactos solos (bloque Etiquetas, preguntas
  * que guardan respuestas); aquí se consultan y se corrigen a mano.
  */
-export function ContactsPage() {
+export function ContactsSection() {
   const [tab, setTab] = useState<Tab>("contacts");
   const [open, setOpen] = useState<ContactSummary | null>(null);
   const [creating, setCreating] = useState(false);
@@ -41,27 +44,22 @@ export function ContactsPage() {
   const afterLabelChange = () => void list.reload();
 
   return (
-    <div className="ui-page">
-      <header className="ui-page__header">
-        <div>
-          <h1 className="ui-page__title">CRM</h1>
-          <p className="ui-page__subtitle">Las personas que escriben a tus conexiones, sus etiquetas y los datos que guardan tus flujos.</p>
-        </div>
+    <div className="contacts-section">
+      <div className="contacts-section__bar">
+        <nav className="ui-tabs" role="tablist" aria-label="Secciones">
+          <button type="button" role="tab" aria-selected={tab === "contacts"} className="ui-tab" onClick={() => setTab("contacts")}>
+            Contactos
+          </button>
+          <button type="button" role="tab" aria-selected={tab === "labels"} className="ui-tab" onClick={() => setTab("labels")}>
+            Etiquetas{catalog.labels.length > 0 ? ` · ${catalog.labels.length}` : ""}
+          </button>
+        </nav>
         {tab === "contacts" ? (
           <button type="button" className="ui-btn ui-btn--primary" onClick={() => setCreating(true)}>
             Nuevo contacto
           </button>
         ) : null}
-      </header>
-
-      <nav className="ui-tabs" role="tablist" aria-label="Secciones">
-        <button type="button" role="tab" aria-selected={tab === "contacts"} className="ui-tab" onClick={() => setTab("contacts")}>
-          Contactos
-        </button>
-        <button type="button" role="tab" aria-selected={tab === "labels"} className="ui-tab" onClick={() => setTab("labels")}>
-          Etiquetas{catalog.labels.length > 0 ? ` · ${catalog.labels.length}` : ""}
-        </button>
-      </nav>
+      </div>
 
       {tab === "contacts" ? (
         <section className="ui-panel" aria-label="Contactos">

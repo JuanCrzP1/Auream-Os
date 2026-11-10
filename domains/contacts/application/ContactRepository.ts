@@ -1,6 +1,7 @@
 import type { AdOrigin } from "../../../contracts/AdOrigin";
 import type { Contact } from "../domain/Contact";
 import type { Label } from "../domain/Label";
+import type { LabelChangeOrigin } from "./LabelHooks";
 
 export interface ContactQuery {
   /** Texto libre: nombre, teléfono o correo. */
@@ -22,15 +23,15 @@ export interface ContactRepository {
   list(tenantId: string, query: ContactQuery): Promise<{ items: ContactWithLabels[]; hasMore: boolean }>;
   findById(tenantId: string, id: string): Promise<ContactWithLabels | null>;
   findByIdentity(tenantId: string, channel: string, externalKey: string): Promise<ContactWithLabels | null>;
-  /** Inserta; si (canal, clave) ya existe en la cuenta devuelve el existente. */
-  create(contact: Contact): Promise<ContactWithLabels>;
+  /** Inserta; si (canal, clave) ya existe en la cuenta devuelve el existente. `origin`: quién lo creó (para quien escucha). */
+  create(contact: Contact, origin?: LabelChangeOrigin): Promise<ContactWithLabels>;
   update(contact: Contact): Promise<void>;
   /** Guarda el anuncio por el que entró (reemplaza el anterior). */
   setAdOrigin(tenantId: string, contactId: string, ad: AdOrigin): Promise<void>;
   /** Reemplaza las etiquetas del contacto por exactamente estas (atómico). */
-  setLabels(tenantId: string, contactId: string, labelIds: ReadonlyArray<string>): Promise<void>;
+  setLabels(tenantId: string, contactId: string, labelIds: ReadonlyArray<string>, origin?: LabelChangeOrigin): Promise<void>;
   /** Añade y quita etiquetas sin tocar las demás (atómico). */
-  changeLabels(tenantId: string, contactId: string, change: { add: ReadonlyArray<string>; remove: ReadonlyArray<string> }): Promise<void>;
+  changeLabels(tenantId: string, contactId: string, change: { add: ReadonlyArray<string>; remove: ReadonlyArray<string> }, origin?: LabelChangeOrigin): Promise<void>;
 }
 
 /** Puerto de persistencia del catálogo de etiquetas. */

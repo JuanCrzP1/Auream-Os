@@ -1,0 +1,133 @@
+/* Seguimientos: la lista con su círculo de «hecho» y el formulario rápido. */
+
+.follow-up-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.follow-up {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.follow-up--today {
+  background: color-mix(in srgb, var(--amber) 12%, var(--surface));
+}
+
+.follow-up__check {
+  display: grid;
+  flex: 0 0 22px;
+  place-items: center;
+  height: 22px;
+  margin-top: 1px;
+  border: 2px solid color-mix(in srgb, var(--primary) 40%, var(--line));
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--on-primary);
+  cursor: pointer;
+}
+
+.follow-up__check[aria-pressed="true"] {
+  border-color: var(--teal);
+  background: var(--teal);
+}
+
+.follow-up__check:disabled {
+  cursor: default;
+}
+
+.follow-up__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.follow-up__title {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.follow-up--done .follow-up__title {
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+.follow-up__meta {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.follow-up__contact {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.follow-up__due {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.follow-up__due--overdue { background: color-mix(in srgb, var(--rose) 16%, var(--surface)); color: var(--status-danger); }
+.follow-up__due--today { background: color-mix(in srgb, var(--amber) 22%, var(--surface)); color: var(--status-paused-text); }
+.follow-up__due--later { background: var(--chip-bg); color: var(--text); }
+
+.follow-up-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 35%, var(--line));
+  border-radius: 14px;
+}
+
+.follow-up-composer__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.follow-up-composer__chip {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.follow-up-composer__chip[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.follow-up-composer__date {
+  flex: 1 1 180px;
+  min-height: 34px;
+  font-size: 0.8rem;
+}
+
+.follow-up-composer__save {
+  align-self: flex-end;
+}

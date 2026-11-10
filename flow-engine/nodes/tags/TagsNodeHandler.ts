@@ -26,8 +26,8 @@ export class TagsNodeHandler implements NodeHandler {
       config.tags.length === 0
         ? contact
         : config.action === "add"
-          ? await this.contacts.addTags(session.tenantId, contact.id, config.tags)
-          : await this.contacts.removeTags(session.tenantId, contact.id, config.tags);
+          ? await this.contacts.addTags(session.tenantId, contact.id, config.tags, { flowKey: input.envelope.flowKey })
+          : await this.contacts.removeTags(session.tenantId, contact.id, config.tags, { flowKey: input.envelope.flowKey });
 
     return {
       executionStatus: "success",

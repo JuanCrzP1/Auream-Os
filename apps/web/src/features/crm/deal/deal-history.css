@@ -1,0 +1,50 @@
+/* El historial del cliente: una línea de tiempo con un punto del color de cada etapa. */
+
+.deal-history {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deal-history__item {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+
+.deal-history__item:not(:last-child)::before {
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  background: var(--line);
+  content: "";
+}
+
+.deal-history__dot {
+  flex: 0 0 12px;
+  height: 12px;
+  margin-top: 3px;
+  border-radius: 50%;
+}
+
+.deal-history__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.84rem;
+}
+
+.deal-history__text span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.deal-history__empty {
+  margin: 0;
+  font-size: 0.84rem;
+}

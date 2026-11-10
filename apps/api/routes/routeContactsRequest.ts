@@ -91,7 +91,7 @@ export async function routeContactsRequest(
   if (path === "/contacts" && method === "POST") {
     requireScope(context, ContactPermissions.write, tenantId);
     const body = await parseJsonBody<Partial<CreateContactRequest>>(request);
-    sendJson(response, 201, toContactSummary(await services.createContact.execute(tenantId, body)));
+    sendJson(response, 201, toContactSummary(await services.createContact.execute(tenantId, body, { kind: "user", userId: context.actorId })));
     return true;
   }
 
@@ -103,7 +103,7 @@ export async function routeContactsRequest(
       sendJson(response, 400, { message: "labelIds debe ser una lista de identificadores" });
       return true;
     }
-    sendJson(response, 200, toContactSummary(await services.setContactLabels.execute(tenantId, contactLabels[1]!, body.labelIds)));
+    sendJson(response, 200, toContactSummary(await services.setContactLabels.execute(tenantId, contactLabels[1]!, body.labelIds, { kind: "user", userId: context.actorId })));
     return true;
   }
 

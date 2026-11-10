@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { ConversationsPage } from "../../src/features/conversations/pages/ConversationsPage";
 import { stubConversationsApi as stubApi } from "../helpers/conversationsApi";
 
@@ -24,7 +25,7 @@ beforeEach(() => {
 describe("ConversationsPage", () => {
   it("lista los chats con sus etiquetas y abre uno con su hilo: cliente, bot con menú y un envío fallido", async () => {
     const api = stubApi();
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const row = await screen.findByRole("button", { name: "Laura Gómez, 2 sin leer" });
     expect(within(row).getByLabelText("Etiquetas: VIP")).toBeInTheDocument();
     await userEvent.click(row);
@@ -42,7 +43,7 @@ describe("ConversationsPage", () => {
 
   it("responder como asesor envía, aparece en el hilo y pausa el bot; se puede reactivar", async () => {
     stubApi();
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const chat = await openChat();
 
     await userEvent.type(await within(chat).findByLabelText("Escribe un mensaje"), "Hola, te ayudo yo{Enter}");
@@ -57,7 +58,7 @@ describe("ConversationsPage", () => {
 
   it("«Ejecutar flujo»: solo flujos no archivados, y confirma lo ejecutado", async () => {
     const api = stubApi();
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const chat = await openChat();
 
     await userEvent.click(await within(chat).findByRole("button", { name: "Ejecutar flujo" }));
@@ -73,7 +74,7 @@ describe("ConversationsPage", () => {
 
   it("filtra por estado, etiquetas y fecha; los filtros aplicados se ven y se quitan", async () => {
     const api = stubApi();
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     await screen.findByRole("button", { name: /Laura Gómez/ });
 
     await userEvent.click(screen.getByRole("tab", { name: "Con asesor" }));
@@ -102,7 +103,7 @@ describe("ConversationsPage", () => {
 
   it("«Info. del contacto»: etiquetar el chat guarda las etiquetas de su cliente", async () => {
     const api = stubApi();
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const chat = await openChat();
 
     await userEvent.click(within(chat).getByRole("button", { name: "Ver info. de Laura Gómez" }));
@@ -121,7 +122,7 @@ describe("ConversationsPage", () => {
 
   it("«Ver más chats» trae la página siguiente con el cursor", async () => {
     const api = stubApi({ paged: true });
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     await userEvent.click(await screen.findByRole("button", { name: "Ver más chats" }));
 
     expect(await screen.findByRole("button", { name: "Pedro Ruiz" })).toBeInTheDocument();
@@ -131,7 +132,7 @@ describe("ConversationsPage", () => {
 
   it("chat de un número eliminado: se lee el historial, pero sin barra para escribir, sin bot ni «Ejecutar flujo»", async () => {
     stubApi({ deleted: true });
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const row = await screen.findByRole("button", { name: /Laura Gómez/ });
     expect(within(row).getByText("venta · eliminado")).toBeInTheDocument();
     await userEvent.click(row);

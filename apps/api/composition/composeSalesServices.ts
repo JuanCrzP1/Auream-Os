@@ -3,6 +3,7 @@ import { ProductServices } from "../../../domains/products/application/ProductSe
 import { FlowSaleRecorder } from "../../../domains/sales/application/FlowSaleRecorder";
 import { SaleServices } from "../../../domains/sales/application/SaleServices";
 import { SalesInsights } from "../../../domains/sales/application/SalesInsights";
+import { NO_SALE_EVENTS, type SaleEvents } from "../../../domains/sales/application/SaleEvents";
 import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import { InMemoryProductRepository, InMemorySaleRepository, InMemorySalesStore } from "../../../infrastructure/persistence/memory/InMemorySalesRepositories";
 import { InMemorySalesInsights } from "../../../infrastructure/persistence/memory/InMemorySalesInsights";
@@ -31,7 +32,7 @@ export interface SalesModule {
   readonly preview: SalesLedger;
 }
 
-export function composeSalesServices(config: ApiConfig, sql: SqlClient): SalesModule {
+export function composeSalesServices(config: ApiConfig, sql: SqlClient, events: SaleEvents = NO_SALE_EVENTS): SalesModule {
   const useSql = config.automationsStore === "sql";
   const store = new InMemorySalesStore();
   const productRepository = useSql ? new SqlProductRepository(sql) : new InMemoryProductRepository(store);
@@ -41,10 +42,11 @@ export function composeSalesServices(config: ApiConfig, sql: SqlClient): SalesMo
 
   const products = new ProductServices(productRepository);
   // Ventas usa el catálogo por su puerto: `ProductServices.findActive` lo cumple.
-  const recorder = new FlowSaleRecorder(saleRepository, products);
+  // Una venta aprobada avisa (hoy al CRM: quien compra pasa a la etapa de compra).
+  const recorder = new FlowSaleRecorder(saleRepository, products, events);
   return {
     products,
-    sales: new SaleServices(saleRepository, products, timezoneOf),
+    sales: new SaleServices(saleRepository, products, timezoneOf, events),
     insights: new SalesInsights(saleRepository, useSql ? new SqlSalesInsights(sql) : new InMemorySalesInsights(store), timezoneOf),
     ledger: new DomainSalesLedger(recorder, "record"),
     preview: new DomainSalesLedger(recorder, "preview")

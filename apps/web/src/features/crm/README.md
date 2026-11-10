@@ -1,21 +1,24 @@
 # CRM — módulo web (`/crm`)
 
-Los clientes y su proceso de venta en un solo lugar, al estilo FunnelChat: contactos con etiquetas y campos, etapas de venta con su valor, quién los atiende y qué seguimiento toca.
+El embudo de ventas, los contactos y los seguimientos en un solo lugar. Detalle: [`docs/architecture/crm.md`](../../../../../docs/architecture/crm.md).
 
-**Hoy:** el sub-módulo `contacts/` (lista, ficha, etiquetas) es la página de `/crm`. `/contacts` redirige aquí.
-
-## Estructura (cada carpeta se crea cuando tiene contenido real)
+## Estructura
 ```
 features/crm/
-├── contacts/     contactos, ficha y etiquetas (ya funciona)
-├── pipeline/     etapas de venta y oportunidades con su valor
-└── follow-ups/   seguimientos con fecha y responsable
+├── pages/        CrmPage: cabecera, pestañas (Embudo · Contactos · Seguimientos) y la ficha
+├── pipeline/     tablero (columnas, tarjetas, arrastrar, «Mover a…»), lista, cinta del embudo,
+│                 números, configurar, agregar cliente, «¿por qué no compró?»
+├── deal/         la ficha del cliente: etapa, valor, responsable, seguimientos, historial
+├── follow-ups/   la pestaña Seguimientos y el formulario rápido
+├── contacts/     contactos y etiquetas (la pestaña Contactos)
+├── services/     crmApi (`/crm/*`)
+└── crmFormat.ts  las palabras del CRM (hace cuánto, cuándo toca, porcentajes)
 ```
 - Cada componente importa su propio CSS. Archivos de hasta 200 líneas.
-- Los datos que cruzan con la API se tipan en `contracts/` (`@contracts/*`), nunca aquí.
+- Los datos que cruzan con la API se tipan en `contracts/CrmContracts.ts` y `CrmActivityContracts.ts`.
+- La pestaña, la vista y el embudo viajan en la dirección (`?tab=follow-ups`, `?view=list&stage=…`, `?pipeline=…`).
 
 ## Habla con
+- `pipeline/`, `deal/`, `follow-ups/` → API `/crm/*` → dominio `domains/crm`.
 - `contacts/` → API `/contacts`, `/labels` → dominio `domains/contacts`.
-- `pipeline/` y `follow-ups/` → API `/crm/*` → dominio `domains/crm`.
-
-Mapa de todos los módulos: `docs/architecture/modules.md`.
+- «Abrir chat» lleva a Conversaciones buscando el número (`/conversations?search=…`).

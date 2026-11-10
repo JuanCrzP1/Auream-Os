@@ -1,0 +1,150 @@
+/* El cliente en un embudo: la barra de etapas y sus tarjetas de valor y responsable. */
+
+.deal-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.deal-stage__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.deal-stage__header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.deal-stage__header span,
+.deal-stage__hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.deal-stage__bar,
+.deal-stage__names {
+  display: grid;
+  grid-template-columns: repeat(var(--stages), minmax(0, 1fr));
+  gap: 4px;
+}
+
+.deal-stage__segment {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+
+.deal-stage__segment--current {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.deal-stage__names span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deal-stage__names .deal-stage__name--current {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.deal-stage__lost {
+  margin: 0;
+  color: var(--status-danger);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.deal-stage__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deal-stage__next,
+.deal-stage__lose {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.deal-stage__next {
+  flex: 1;
+  border: 0;
+  background: color-mix(in srgb, var(--teal) 22%, var(--surface));
+  color: var(--status-active-text);
+}
+
+.deal-stage__lose {
+  border: 1px solid color-mix(in srgb, var(--rose) 35%, var(--line));
+  background: var(--surface);
+  color: var(--status-danger);
+}
+
+.deal-stage__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.deal-stage__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--chip-bg);
+}
+
+.deal-stage__card--editing {
+  grid-column: 1 / -1;
+}
+
+.deal-stage__label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.deal-stage__value {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.deal-stage__change {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.deal-stage__row {
+  display: flex;
+  gap: 8px;
+}
+
+.deal-stage__row .ui-input:first-child {
+  flex: 1;
+}

@@ -1,0 +1,56 @@
+/* La cinta del embudo: una banda de color que se angosta, con un brillo
+ * suave arriba y el porcentaje que avanza en cada frontera. Tokens del tema. */
+
+.funnel-ribbon {
+  position: relative;
+  min-width: 0;
+}
+
+.funnel-ribbon__svg {
+  display: block;
+  width: 100%;
+  height: 112px;
+}
+
+.funnel-ribbon--compact .funnel-ribbon__svg {
+  height: 64px;
+}
+
+.funnel-ribbon__band {
+  opacity: 0.92;
+}
+
+.funnel-ribbon__shine {
+  fill: #ffffff;
+  opacity: 0.16;
+  clip-path: inset(0 0 55% 0);
+}
+
+.funnel-ribbon__divider {
+  stroke: var(--surface);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.funnel-ribbon__chip {
+  position: absolute;
+  top: 50%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 6px 18px -6px rgb(30 21 48 / 35%);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
+.funnel-ribbon--compact .funnel-ribbon__chip {
+  padding: 3px 8px;
+  font-size: 0.68rem;
+}
+
+.funnel-ribbon--empty .funnel-ribbon__band {
+  opacity: 0.28;
+}

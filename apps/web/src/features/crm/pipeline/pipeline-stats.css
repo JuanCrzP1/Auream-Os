@@ -1,0 +1,60 @@
+/* Los cuatro números del embudo: el primero sobre un lila suave. Tokens del tema. */
+
+.pipeline-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@container crm (max-width: 860px) {
+  .pipeline-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pipeline-stats__card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.pipeline-stats__card--lead {
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 9%, var(--surface)) 0%, var(--surface) 80%);
+}
+
+.pipeline-stats__label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pipeline-stats__value {
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pipeline-stats__value--won {
+  color: var(--status-active-text);
+}
+
+.pipeline-stats__meta {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

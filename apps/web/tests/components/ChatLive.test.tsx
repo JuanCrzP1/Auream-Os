@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { ConversationsPage } from "../../src/features/conversations/pages/ConversationsPage";
 import { msg, stubConversationsApi } from "../helpers/conversationsApi";
 
@@ -31,7 +32,7 @@ describe("chat en vivo", () => {
         msg({ direction: "outbound", author: "bot", status: "read", text: "Tres" })
       ]
     });
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const chat = await openChat();
 
     expect(await within(chat).findByText("Tres")).toBeInTheDocument();
@@ -44,7 +45,7 @@ describe("chat en vivo", () => {
   it("lo que sale y los avisos de leído aparecen solos, sin volver a abrir el chat, pidiendo solo lo cambiado", async () => {
     const menu = msg({ direction: "outbound", author: "bot", status: "sent", text: "¿Qué buscas?" });
     const api = stubConversationsApi({ messages: [msg({ text: "Hola" }), menu] });
-    render(<ConversationsPage />);
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const chat = await openChat();
     expect(await within(chat).findByText("¿Qué buscas?")).toBeInTheDocument();
 

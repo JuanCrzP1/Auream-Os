@@ -4,6 +4,7 @@ import type { ContactRepository, ContactWithLabels, LabelRepository } from "./Co
 import { isValidCustomFieldValue, normalizeExternalKey, type Contact } from "../domain/Contact";
 import { labelKey, normalizeLabelName } from "../domain/Label";
 import type { AdOrigin } from "../../../contracts/AdOrigin";
+import type { LabelChangeOrigin } from "./LabelHooks";
 
 // ---------------------------------------------------------------------------
 // ContactDirectoryService — lo que el MOTOR necesita de Contactos mientras
@@ -16,6 +17,7 @@ import type { AdOrigin } from "../../../contracts/AdOrigin";
 //                que aún no está en el catálogo se crea, para que un flujo no
 //                se rompa porque alguien la borró; queda en el catálogo.
 //   removeTags   por nombre; las que no tiene se ignoran.
+//                Los dos dicen qué flujo lo hizo (lo guarda el historial del CRM).
 //   setFields    guarda campos personalizados (los usan Integración, IA…).
 //
 // Si el mensaje vino de un anuncio de clic a WhatsApp, `identify` guarda ese
@@ -33,6 +35,10 @@ function toProfile({ contact, labels }: ContactWithLabels): ContactProfile {
     fields: contact.customFields,
     ad: contact.adOrigin ?? null
   };
+}
+
+function flowOrigin(source: { readonly flowKey?: string | null } | undefined): LabelChangeOrigin {
+  return { kind: "flow", flowKey: source?.flowKey ?? null };
 }
 
 function sameAd(a: AdOrigin | null, b: AdOrigin): boolean {
@@ -92,19 +98,19 @@ export class ContactDirectoryService {
       updatedAt: now
     };
     // Si otro mensaje lo creó a la vez, `create` devuelve el existente: no es nuevo.
-    const stored = await this.contacts.create(contact);
+    const stored = await this.contacts.create(contact, { kind: "flow" });
     return { profile: toProfile(stored), isNew: stored.contact.id === contact.id };
   }
 
-  public async addTags(tenantId: string, contactId: string, names: ReadonlyArray<string>): Promise<ContactProfile> {
+  public async addTags(tenantId: string, contactId: string, names: ReadonlyArray<string>, source?: { readonly flowKey?: string | null }): Promise<ContactProfile> {
     const ids = await this.labelIds(tenantId, names, true);
-    await this.contacts.changeLabels(tenantId, contactId, { add: ids, remove: [] });
+    await this.contacts.changeLabels(tenantId, contactId, { add: ids, remove: [] }, flowOrigin(source));
     return this.profile(tenantId, contactId);
   }
 
-  public async removeTags(tenantId: string, contactId: string, names: ReadonlyArray<string>): Promise<ContactProfile> {
+  public async removeTags(tenantId: string, contactId: string, names: ReadonlyArray<string>, source?: { readonly flowKey?: string | null }): Promise<ContactProfile> {
     const ids = await this.labelIds(tenantId, names, false);
-    await this.contacts.changeLabels(tenantId, contactId, { add: [], remove: ids });
+    await this.contacts.changeLabels(tenantId, contactId, { add: [], remove: ids }, flowOrigin(source));
     return this.profile(tenantId, contactId);
   }
 

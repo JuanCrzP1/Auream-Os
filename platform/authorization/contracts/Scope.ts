@@ -17,4 +17,7 @@ export type Scope =
   | "team.manage"
   | "sales.read"
   | "sales.write"
-  | "sales.manage";
+  | "sales.manage"
+  | "crm.read"
+  | "crm.write"
+  | "crm.manage";

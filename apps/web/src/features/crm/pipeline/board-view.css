@@ -1,0 +1,115 @@
+/* El tablero: columnas del mismo ancho que se desplazan de lado en pantallas
+ * angostas, con la cinta del embudo encima de las suyas. Tokens del tema. */
+
+.board-view {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.board-view__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--board-columns), minmax(232px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.board-view__ribbon {
+  margin-bottom: -2px;
+}
+
+.board-view__column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 220px;
+  padding: 12px;
+  border: 2px solid transparent;
+  border-top: 4px solid var(--stage-color);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+  transition: border-color var(--speed-fast), background var(--speed-fast);
+}
+
+.board-view__column--lost {
+  background: color-mix(in srgb, var(--rose) 5%, var(--surface));
+}
+
+.board-view__column--over {
+  border-color: var(--stage-color);
+  background: color-mix(in srgb, var(--stage-color) 9%, var(--surface));
+}
+
+.board-view__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 4px 4px;
+}
+
+.board-view__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.board-view__title h2 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-view__dot {
+  flex: 0 0 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--stage-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--stage-color) 18%, transparent);
+}
+
+.board-view__count {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.board-view__total {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-view__drop {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  padding: 8px;
+  border: 2px dashed var(--stage-color);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--stage-color) 7%, var(--surface));
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.board-view__more {
+  padding: 6px 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}

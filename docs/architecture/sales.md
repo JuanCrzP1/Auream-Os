@@ -96,6 +96,10 @@ La portada sale de `SalesInsights` (`domains/sales/application/SalesInsights.ts`
 
 `tests/unit/salesMoney.test.ts`, `productServices.test.ts`, `saleServices.test.ts`, `salesInsights.test.ts`, `recordSaleBlock.test.ts`, `recordSaleHandler.test.ts`, `tests/security/routeSales.test.ts`, `tests/integration/salesPersistence.test.ts` (PostgreSQL real, con dos copias del mismo comprobante a la vez) y en la web `SalesPage.test.tsx` y `RecordSaleEditor.test.tsx`.
 
+## Con el CRM
+
+Una venta aprobada (del bloque o aprobada a mano) avisa por el puerto `SaleEvents`: el cliente pasa a la etapa de compra de cada embudo con el valor real. Ver [`crm.md`](crm.md).
+
 ## Después
 
 Webhook de entrada que registra ventas (pasarelas de pago), devoluciones parciales, factura electrónica, y el Dashboard (G1) y Meta Ads (G8) leyendo estas ventas (ROAS por anuncio con `ad_source_id`).

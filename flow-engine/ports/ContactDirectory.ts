@@ -8,13 +8,18 @@ import type { ContactIdentity, ContactProfile } from "../../contracts/ContactCon
 // sobre SQL en producción; sobre memoria en la simulación del builder).
 // ---------------------------------------------------------------------------
 
+/** Quién puso o quitó la etiqueta (un etiqueta puede ser una etapa del CRM y queda en su historial). */
+export interface TagSource {
+  readonly flowKey?: string | null;
+}
+
 export interface ContactDirectory {
   /** El contacto de esa identidad; si es la primera vez, se crea. */
   resolve(tenantId: string, identity: ContactIdentity): Promise<ContactProfile>;
-  /** Añade etiquetas por nombre (crea en el catálogo las que falten). */
-  addTags(tenantId: string, contactId: string, names: ReadonlyArray<string>): Promise<ContactProfile>;
+  /** Añade etiquetas por nombre (crea en el catálogo las que falten). `source`: el flujo que lo hizo. */
+  addTags(tenantId: string, contactId: string, names: ReadonlyArray<string>, source?: TagSource): Promise<ContactProfile>;
   /** Quita etiquetas por nombre; las que no tiene se ignoran. */
-  removeTags(tenantId: string, contactId: string, names: ReadonlyArray<string>): Promise<ContactProfile>;
+  removeTags(tenantId: string, contactId: string, names: ReadonlyArray<string>, source?: TagSource): Promise<ContactProfile>;
   /** Guarda campos personalizados (se combinan con los existentes). */
   setFields(tenantId: string, contactId: string, fields: Readonly<Record<string, unknown>>): Promise<ContactProfile>;
 }

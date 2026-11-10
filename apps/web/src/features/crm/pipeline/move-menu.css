@@ -1,0 +1,85 @@
+/* «Mover a…»: un menú pequeño sobre la tarjeta. Tokens del tema. */
+
+.move-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.move-menu__trigger {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--chip-bg);
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.move-menu__trigger:hover,
+.move-menu__trigger[aria-expanded="true"] {
+  background: var(--chip-bg-hover);
+}
+
+.move-menu__list {
+  position: absolute;
+  z-index: 60;
+  right: 0;
+  bottom: calc(100% + 6px);
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-floating, var(--surface));
+  box-shadow: var(--shadow);
+}
+
+.move-menu__title {
+  padding: 6px 8px 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.move-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move-menu__item:hover:not(:disabled) {
+  background: var(--chip-bg);
+}
+
+.move-menu__item:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.move-menu__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.move-menu__here {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+}

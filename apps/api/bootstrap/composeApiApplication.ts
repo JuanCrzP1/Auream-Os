@@ -28,6 +28,10 @@ import { wakeTasksOnTraffic } from "./wakeTasksOnTraffic";
 import { composeAccountServices } from "../composition/composeAccountServices";
 import { composeTeamServices } from "../composition/composeTeamServices";
 import { composeSalesServices } from "../composition/composeSalesServices";
+import { composeCrmServices } from "../composition/composeCrmServices";
+import { CrmEventsRelay } from "../composition/CrmEventsRelay";
+import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
+import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
 
 // ---------------------------------------------------------------------------
 // composeApiApplication — lee la configuración del entorno y compone TODA la
@@ -68,10 +72,29 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const documents = new TesseractDocumentReader();
   // Límite de peticiones compartido por todas las instancias (Neon). Si la base falla, deja pasar y lo avisa.
   const rateLimiter = new SqlRateLimiter(tenancy.sqlClient, undefined, (error) => logger.warn("rate_limit.store_failed", { error: error instanceof Error ? error.message : String(error) }));
+  // El CRM escucha a Contactos (las etapas son etiquetas) y a Ventas (quien compra pasa a «Pagó»).
+  // Se compone después de ellos porque usa sus servicios: sus avisos pasan por este relevo.
+  const crmEvents = new CrmEventsRelay();
+  const crmError = (error: unknown, context: Record<string, unknown> = {}) =>
+    logger.warn("crm.event_failed", { ...context, error: error instanceof Error ? error.message : String(error) });
   // Ventas y Productos: el bloque Registrar venta guarda en los flujos reales y calcula sin guardar en la simulación.
-  const sales = composeSalesServices(config, tenancy.sqlClient);
+  const sales = composeSalesServices(config, tenancy.sqlClient, crmEvents);
   const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview);
-  const contactsServices = composeContactsServices(tenancy.sqlClient);
+  const contactsServices = composeContactsServices(tenancy.sqlClient, {
+    // Un cliente está en una sola etapa por embudo, venga la etiqueta de donde venga.
+    groups: new StageLabelRules(new SqlCrmPipelineRepository(tenancy.sqlClient)),
+    events: crmEvents,
+    onError: crmError
+  });
+  const crm = composeCrmServices({
+    config,
+    sql: tenancy.sqlClient,
+    contacts: contactsServices.repository,
+    labels: contactsServices.labelRepository,
+    products: sales.products,
+    onError: crmError
+  });
+  crmEvents.attach(crm.tracker);
   const connectionsServices = composeConnectionsServices(tenancy.sqlClient, {
     keyRing: config.credentialsKeyRing,
     uazapi: config.uazapi,
@@ -141,6 +164,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     teamServices: team.team,
     invitationServices: team.invitations,
     salesServices: { products: sales.products, sales: sales.sales, insights: sales.insights },
+    crmServices: crm.routes,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,

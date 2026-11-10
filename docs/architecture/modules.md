@@ -10,7 +10,7 @@ Decisión de producto del 2026-11-10: tomar lo mejor de **Leona** (el bot, los c
 |---|---|---|---|---|---|---|
 | Dashboard | `/dashboard` | `dashboard/` | `/dashboard` | `analytics` | — | Por construir |
 | Conversaciones | `/conversations` | `conversations/` | `/conversations` | `conversations` · `messaging` | `whatsapp` | ✅ Funciona |
-| CRM | `/crm` | `crm/` (`contacts/` · `pipeline/` · `follow-ups/`) | `/contacts` · `/labels` · `/crm/*` | `contacts` · `crm` | — | Contactos ✅; etapas y seguimientos por construir |
+| CRM | `/crm` | `crm/` (`contacts/` · `pipeline/` · `follow-ups/`) | `/contacts` · `/labels` · `/crm/*` | `contacts` · `crm` | — | ✅ Embudo, contactos y seguimientos ([crm.md](crm.md)) |
 | Automatizaciones | `/automations` | `automations/` | `/automations` · `/api/builder/*` | `automations` | — | ✅ Funciona |
 | Agentes de IA | `/ai-agents` | `ai-agents/` | — | `ai-agents` + motor `ai-sales-engine` | `ai` | FASE E |
 | Difusiones | `/broadcasts` | `broadcasts/` | `/broadcasts` | `broadcasts` | `scheduling` · `whatsapp` | Por construir |
