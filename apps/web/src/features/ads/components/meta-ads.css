@@ -5,3 +5,10 @@
   gap: 14px;
   min-width: 0;
 }
+
+/* El panel de la sección elegida es el contenedor «ads»: sus piezas se
+   acomodan al ancho del panel (la barra lateral también ocupa), no al de la
+   ventana. */
+.meta-ads__panel {
+  container: ads / inline-size;
+}

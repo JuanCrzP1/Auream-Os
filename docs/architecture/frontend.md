@@ -43,7 +43,7 @@ La barra lateral tiene el trabajo del día, en orden fijo: `app/navigation/sideb
 | Agentes de IA | `/ai-agents` | `features/ai-agents` | `PREPARADO` — placeholder (FASE E) |
 | Difusiones | `/broadcasts` | `features/broadcasts` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
 | Grupos y comunidades | `/groups` | `features/groups` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
-| Meta Ads | `/meta-ads` | `features/ads` | `IMPLEMENTADO` (pestaña Píxel) — campañas y cuentas por construir |
+| Meta Ads | `/meta-ads` | `features/ads` | `IMPLEMENTADO` (sección Píxel) — rendimiento y cuentas por construir |
 | Ventas | `/sales` | `features/sales` | `NO IMPLEMENTADO` — su página cuenta lo que traerá |
 | Conexiones | `/connections` | `features/connections` | `IMPLEMENTADO` |
 | Integraciones | `/integrations` | `features/integrations` | `IMPLEMENTADO` |
@@ -80,7 +80,7 @@ Solo lo transversal:
 | `http/` | Cliente HTTP y cliente de la API del builder |
 | `config/` | Base URL de la API y lectura de la API key de desarrollo |
 | `ui/` | `AppSidebar` (con su CSS) y el layout `app-shell` |
-| `ui/integration-kit/` | Kit de conexiones con servicios (Integraciones y Meta Ads): logos de marca, tarjeta de conexión, sección, diálogo de renombrar o cambiar la clave y campo secreto |
+| `ui/integration-kit/` | Kit de conexiones con servicios (Integraciones y Meta Ads): logos de marca, tarjeta de conexión, sección, avisos de carga y error (`ConnectionListNotice`, para secciones con diseño propio), diálogo de renombrar o cambiar la clave y campo secreto |
 | `account/` | La cuenta: `AccountProvider`, la tarjeta y el menú de la cuenta, el avatar y la API de Mi perfil y Empresa |
 | `styles/` | Sólo `base.css` y `theme.css` — lo verdaderamente global |
 | `test-utils/` | Setup de pruebas |

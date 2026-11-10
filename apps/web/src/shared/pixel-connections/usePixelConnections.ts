@@ -38,3 +38,6 @@ export function usePixelConnections() {
 
   return { connections, status, refresh, create, update, remove, verify };
 }
+
+/** Los píxeles y sus operaciones, tal como los entrega el hook (para pasarlos de la página a sus secciones). */
+export type PixelConnections = ReturnType<typeof usePixelConnections>;

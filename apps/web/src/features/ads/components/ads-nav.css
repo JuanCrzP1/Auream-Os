@@ -1,0 +1,198 @@
+/* Meta Ads: las secciones como tarjetas de estado (no pestañas subrayadas).
+ * La elegida se enciende con el degradado de energía de Auream —el mismo azul,
+ * cian y violeta de las tarjetas del Hub y las conexiones del editor—.
+ * Solo tokens del tema. */
+
+/* El envoltorio es el contenedor «ads-nav»: las tarjetas se acomodan a su
+   propio ancho (la barra lateral también ocupa), no al de la ventana. */
+.ads-nav-wrap {
+  container: ads-nav / inline-size;
+  padding: 20px 32px 0;
+}
+
+.ads-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ads-nav__tile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 3px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--elevation-inset);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--speed-fast) var(--ease-out),
+    box-shadow var(--speed-base) var(--ease-out),
+    transform var(--speed-fast) var(--ease-out);
+}
+
+.ads-nav__tile:hover {
+  border-color: var(--border);
+  transform: translateY(-1px);
+}
+
+/* La elegida: borde en degradado (fondo en dos capas: el relleno y, debajo,
+   el degradado que asoma por el borde transparente) y un halo de su color. */
+.ads-nav__tile[aria-selected="true"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(120deg, var(--hub-card-flow-from), var(--hub-card-flow-mid) 45%, var(--hub-card-flow-to)) border-box;
+  box-shadow: 0 16px 36px -20px var(--hub-card-flow-halo), var(--elevation-inset);
+}
+
+.ads-nav__tile:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.ads-nav__icon {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--chip-bg);
+  color: var(--muted);
+  transition: background var(--speed-base) var(--ease-out), color var(--speed-base) var(--ease-out);
+}
+
+.ads-nav__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ads-nav__tile:hover .ads-nav__icon {
+  color: var(--primary);
+}
+
+.ads-nav__tile[aria-selected="true"] .ads-nav__icon {
+  background: var(--gradient-primary);
+  box-shadow: var(--glow-primary);
+  color: var(--on-primary);
+}
+
+.ads-nav__label {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ads-nav__status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ads-nav__status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ads-nav__dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.ads-nav__status--ok {
+  color: var(--status-active-text);
+}
+
+.ads-nav__status--ok .ads-nav__dot {
+  background: var(--status-success);
+  opacity: 1;
+  animation: ads-nav-live 2.4s var(--ease-out) infinite;
+}
+
+.ads-nav__status--warn {
+  color: var(--status-paused-text);
+}
+
+.ads-nav__status--warn .ads-nav__dot {
+  background: var(--amber);
+  opacity: 1;
+}
+
+/* «En vivo»: una onda que sale del punto verde. */
+@keyframes ads-nav-live {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--status-success) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+/* A media anchura el icono cede su espacio al texto, para no cortarlo. */
+@container ads-nav (max-width: 720px) {
+  .ads-nav__tile {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px 14px;
+  }
+
+  .ads-nav__icon {
+    display: none;
+  }
+}
+
+/* Angosto (celular): las tarjetas se deslizan de lado, sin aplastarse. */
+@container ads-nav (max-width: 520px) {
+  .ads-nav {
+    grid-template-columns: none;
+    grid-auto-columns: minmax(170px, 1fr);
+    grid-auto-flow: column;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .ads-nav__tile {
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .ads-nav-wrap {
+    padding: 16px 16px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ads-nav__tile,
+  .ads-nav__icon {
+    transition: none;
+  }
+
+  .ads-nav__tile:hover {
+    transform: none;
+  }
+
+  .ads-nav__status--ok .ads-nav__dot {
+    animation: none;
+  }
+}

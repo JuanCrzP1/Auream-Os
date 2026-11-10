@@ -15,6 +15,7 @@ export function ConnectionCard({
   facts,
   invalidWarning,
   invalidLabel,
+  activeLabel = "Activa",
   replaceLabel,
   onVerify,
   onRename,
@@ -29,6 +30,8 @@ export function ConnectionCard({
   readonly invalidWarning: string;
   /** Etiqueta de estado cuando el servicio rechazó el secreto («Clave rechazada»). */
   readonly invalidLabel: string;
+  /** Etiqueta de estado cuando funciona, concordando con lo que se conecta: «Activa» (una clave), «Activo» (un píxel). */
+  readonly activeLabel?: string;
   readonly replaceLabel: string;
   readonly onVerify: () => Promise<unknown>;
   readonly onRename: () => void;
@@ -60,7 +63,7 @@ export function ConnectionCard({
         </div>
         <span className={`ai-card__status ai-card__status--${active ? "ok" : "ko"}`}>
           <span className="ai-card__status-dot" aria-hidden="true" />
-          {active ? "Activa" : invalidLabel}
+          {active ? activeLabel : invalidLabel}
         </span>
       </header>
 

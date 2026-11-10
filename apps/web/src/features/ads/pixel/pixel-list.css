@@ -1,0 +1,102 @@
+/* Píxeles conectados: título corto y, al final de la rejilla, la tarjeta para
+ * conectar otro (en vez de un botón suelto arriba). Solo tokens del tema. */
+
+.pixel-list {
+  display: grid;
+  gap: 14px;
+}
+
+.pixel-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.pixel-list__title {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.pixel-list__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.pixel-add {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  min-height: 190px;
+  padding: 20px;
+  border: 1.5px dashed var(--border);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--speed-fast) var(--ease-out),
+    background var(--speed-fast) var(--ease-out),
+    color var(--speed-fast) var(--ease-out);
+}
+
+.pixel-add:hover {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+.pixel-add:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.pixel-add__plus {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  box-shadow: var(--glow-primary);
+  color: var(--on-primary);
+  transition: transform var(--speed-fast) var(--ease-out);
+}
+
+.pixel-add__plus svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pixel-add:hover .pixel-add__plus {
+  transform: scale(1.06);
+}
+
+.pixel-add__label {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.pixel-add__hint {
+  font-size: 0.78rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-add,
+  .pixel-add__plus {
+    transition: none;
+  }
+
+  .pixel-add:hover .pixel-add__plus {
+    transform: none;
+  }
+}

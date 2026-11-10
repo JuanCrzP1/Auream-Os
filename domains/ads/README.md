@@ -12,7 +12,7 @@ Lo que se gasta en anuncios y lo que trae cada uno: las cuentas publicitarias co
 
 ## No le pertenece
 - Las ventas: `domains/sales` (aquí solo se cruzan con el gasto).
-- El Píxel (Conversions API): en `domains/integrations` (`/pixel-connections`); se administra en la página de Meta Ads, pestaña Píxel.
+- El Píxel (Conversions API): en `domains/integrations` (`/pixel-connections`); se administra en la página de Meta Ads, sección Píxel.
 
 ## Depende de (por puertos)
 Un puerto `AdsProvider` que implementa `infrastructure/meta` (Marketing API; ahí ya vive el Píxel). Proveedor-agnóstico: TikTok o Google se suman como otro adaptador. Sincroniza con `scheduling`.

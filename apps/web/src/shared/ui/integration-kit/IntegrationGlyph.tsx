@@ -39,12 +39,24 @@ function WebhookGlyph() {
   );
 }
 
-export function IntegrationGlyph({ kind }: { readonly kind: IntegrationMarkKind }) {
+export function IntegrationGlyph({
+  kind,
+  mono = false
+}: {
+  readonly kind: IntegrationMarkKind;
+  /** De un solo color (el del texto), para ponerlo sobre un fondo de marca: el botón azul de Meta. */
+  readonly mono?: boolean;
+}) {
   // Sin «:» (los de useId rompen la referencia url(#…) en algunos navegadores).
   const gradientId = `g${useId().replace(/:/g, "")}`;
   if (kind === "webhook") return <WebhookGlyph />;
-  const gradient =
-    kind === "gemini" ? <Gradient id={gradientId} from="#4285F4" to="#9B72CB" /> : kind === "meta" ? <Gradient id={gradientId} from="#0081FB" to="#0064E0" /> : null;
+  const gradient = mono
+    ? null
+    : kind === "gemini"
+      ? <Gradient id={gradientId} from="#4285F4" to="#9B72CB" />
+      : kind === "meta"
+        ? <Gradient id={gradientId} from="#0081FB" to="#0064E0" />
+        : null;
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       {gradient}

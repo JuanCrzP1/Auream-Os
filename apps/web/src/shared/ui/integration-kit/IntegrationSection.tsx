@@ -1,15 +1,16 @@
 import "./integration-card.css";
 import "./integration-section.css";
-import { useState, type ReactNode } from "react";
-import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
-import { StateIcons } from "@shared/ui/state/stateIcons";
+import type { ReactNode } from "react";
+import { StateCard } from "@shared/ui/state/StateCard";
+import { ConnectionListNotice, type ConnectionListStatus } from "./ConnectionListNotice";
 
-export type ConnectionListStatus = "loading" | "ready" | "forbidden" | "unavailable" | "error";
+export type { ConnectionListStatus } from "./ConnectionListNotice";
 
 /**
- * Una sección de conexiones (IA en Integraciones, píxeles en Meta Ads…): título, botón de conectar y
- * los estados comunes (cargando, sin acceso, no disponible, error, vacío).
- * La sección concreta solo aporta sus tarjetas y diálogos.
+ * Una sección de conexiones (las de IA en Integraciones…): título, botón de
+ * conectar y los estados comunes (cargando, sin acceso, no disponible, error,
+ * vacío). La sección concreta solo aporta sus tarjetas y diálogos. Las que
+ * traen su propio diseño (el Píxel en Meta Ads) usan solo `ConnectionListNotice`.
  */
 export function IntegrationSection({
   id,
@@ -27,7 +28,7 @@ export function IntegrationSection({
 }: {
   readonly id: string;
   readonly title: string;
-  /** Cómo se nombra lo que lista, para los avisos: «tus píxeles». */
+  /** Cómo se nombra lo que lista, para los avisos: «tus claves». */
   readonly noun: string;
   readonly description: string;
   readonly status: ConnectionListStatus;
@@ -41,14 +42,7 @@ export function IntegrationSection({
   /** Diálogos de la sección (conectar, editar, borrar). */
   readonly dialogs?: ReactNode;
 }) {
-  const [retrying, setRetrying] = useState(false);
   const titleId = `${id}-section-title`;
-
-  const retry = async () => {
-    setRetrying(true);
-    await onRetry();
-    setRetrying(false);
-  };
 
   return (
     <section className="ui-panel" aria-labelledby={titleId}>
@@ -64,24 +58,8 @@ export function IntegrationSection({
         ) : null}
       </div>
 
-      {status === "error" || retrying ? (
-        <StateCard
-          role="alert"
-          tone="warning"
-          icon={StateIcons.offline}
-          title={`No pudimos cargar ${noun}`}
-          description="Parece un problema de conexión momentáneo. Vuelve a intentarlo en unos segundos."
-          actions={<RetryButton busy={retrying} onRetry={() => void retry()} />}
-        />
-      ) : status === "unavailable" ? (
-        <StateCard tone="warning" icon={StateIcons.lock} title={`${title}: no disponible`} description="El servidor todavía no tiene configurado el cifrado de secretos. Pide al administrador de la plataforma que lo active." />
-      ) : status === "forbidden" ? (
-        <StateCard icon={StateIcons.lock} title={`Sin acceso a ${noun}`} description="Tu rol no permite ver estas conexiones. Pide acceso a un administrador." />
-      ) : status === "loading" ? (
-        <div className="ai-grid" aria-busy="true" aria-label={`Cargando ${noun}`}>
-          <div className="ai-card ai-card--skeleton" />
-          <div className="ai-card ai-card--skeleton" />
-        </div>
+      {status !== "ready" ? (
+        <ConnectionListNotice status={status} title={title} noun={noun} onRetry={onRetry} />
       ) : count === 0 ? (
         <StateCard
           icon={empty.icon}

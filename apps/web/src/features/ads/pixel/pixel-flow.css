@@ -1,0 +1,141 @@
+/* Recorrido de una conversión (chat → bloque Pixel → Meta) sobre el lienzo de
+ * puntos del editor. Tokens del tema, salvo los colores de marca de cada pieza:
+ * el verde de WhatsApp y el fucsia del bloque Pixel (los mismos del editor). */
+
+.pixel-flow {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 1.6px) 0 0 / 18px 18px,
+    var(--surface-alt);
+}
+
+.pixel-flow__node {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 1px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--icon-float-shadow);
+}
+
+.pixel-flow__icon,
+.pixel-flow__node .provider-mark {
+  grid-row: 1 / 3;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+}
+
+.pixel-flow__icon {
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+}
+
+.pixel-flow__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pixel-flow__icon--chat {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  box-shadow: 0 6px 14px -6px rgba(18, 140, 126, 0.6);
+}
+
+.pixel-flow__icon--pixel {
+  background: linear-gradient(135deg, #ec4899, #831843);
+  box-shadow: 0 6px 14px -6px rgba(236, 72, 153, 0.6);
+}
+
+.pixel-flow__title {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixel-flow__caption {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+/* El cable sale del centro del icono: 1 de borde + 14 de relleno + 19 de medio
+   icono = 34; el cable mide 2, así que empieza en 33. */
+.pixel-flow__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 46px;
+  margin-left: 33px;
+  padding-left: 18px;
+}
+
+.pixel-flow__link::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: repeating-linear-gradient(to bottom, var(--edge-stroke) 0 5px, transparent 5px 9px);
+}
+
+/* El evento que viaja por el cable. */
+.pixel-flow__pulse {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hub-card-flow-mid);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--hub-card-flow-mid) 25%, transparent),
+    0 0 12px var(--hub-card-flow-mid);
+  animation: pixel-flow-travel 2.2s var(--ease-out) infinite both;
+}
+
+.pixel-flow__link--late .pixel-flow__pulse {
+  animation-delay: 1.1s;
+}
+
+@keyframes pixel-flow-travel {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(44px);
+  }
+}
+
+.pixel-flow__tag {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-flow__pulse {
+    display: none;
+  }
+}
