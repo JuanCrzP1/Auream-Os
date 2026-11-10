@@ -5,6 +5,7 @@ import type { MediaAssetSummary, MediaKind } from "@contracts/MediaContracts";
 import type { PixelConnectionSummary } from "@contracts/PixelContracts";
 import type { PaymentProofTestResult } from "@contracts/PaymentProofTestContracts";
 import type { PixelTestRequest, PixelTestResult } from "@contracts/PixelTestContracts";
+import type { ProductSummary } from "@contracts/SalesContracts";
 
 // ---------------------------------------------------------------------------
 // Lo que un editor puede usar de la cuenta al configurar:
@@ -81,6 +82,9 @@ export interface ToolResources extends ToolCapabilities {
   /** Píxeles de Meta de la cuenta (sin tokens: solo su pista). */
   readonly pixelConnections?: ReadonlyArray<PixelConnectionSummary>;
   readonly pixelConnectionsStatus?: ToolAiCredentialsStatus;
+  /** Catálogo de productos (Ventas → Productos), para Registrar venta. */
+  readonly products?: ReadonlyArray<ProductSummary>;
+  readonly productsStatus?: ToolAiCredentialsStatus;
 }
 
 export const EMPTY_TOOL_RESOURCES: ToolResources = { labels: [] };

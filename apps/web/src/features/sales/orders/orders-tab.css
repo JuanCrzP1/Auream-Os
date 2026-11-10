@@ -1,0 +1,43 @@
+/* La pestaña de ventas: totales, filtros y tabla, con su espera y su vacío. */
+
+.orders-tab {
+  display: grid;
+  gap: 14px;
+}
+
+.orders-tab__loading {
+  height: 220px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--chip-bg), var(--surface-alt), var(--chip-bg));
+  background-size: 200% 100%;
+  animation: orders-tab-shimmer 1.2s ease-in-out infinite;
+}
+
+.orders-tab__empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.orders-tab__more {
+  justify-self: center;
+}
+
+@keyframes orders-tab-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orders-tab__loading {
+    animation: none;
+  }
+}

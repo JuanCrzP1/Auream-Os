@@ -5,16 +5,18 @@ import { BLOCK_CATALOG, findBlockRules } from "../../../../contracts/blocks/bloc
 import { NotFoundError } from "../../../../platform/observability/errors/NotFoundError";
 import { BLOCK_GUIDES, VARIABLES_NOTE } from "../blocks/blockGuides";
 import type { McpTool } from "../McpTool";
+import type { ProductServices } from "../../../../domains/products/application/ProductServices";
 import { presentFlow } from "./flowPresenter";
 
 // Flujos (permiso «Flujos: ver»): listarlos, leer uno con sus bloques y
-// conexiones, y conocer los tipos de bloque y los recursos (IA, píxeles) que
+// conexiones, y conocer los tipos de bloque y los recursos (IA, píxeles, productos) que
 // se pueden usar al configurarlos.
 
 export interface FlowReadServices {
   readonly builder: Pick<ApiServices, "listAutomationsService">;
   readonly editing: FlowEditingService;
   readonly integrations?: Pick<IntegrationsServices, "aiCredentials" | "pixelConnections">;
+  readonly products?: Pick<ProductServices, "list">;
 }
 
 const PALETTE = BLOCK_CATALOG.filter((block) => block.availableInPalette);
@@ -72,13 +74,18 @@ export function flowTools(services: FlowReadServices): McpTool[] {
     {
       name: "list_flow_resources",
       title: "Recursos para configurar bloques",
-      description: "Las conexiones de IA (para «Extensión IA»: credentialId) y los píxeles de Meta (para «Pixel»: connectionId) de la cuenta. Sin claves ni tokens.",
+      description: "Las conexiones de IA (para «Extensión IA»: credentialId), los píxeles de Meta (para «Pixel»: connectionId) y los productos activos (para «Registrar venta»: productId, con su precio por país) de la cuenta. Sin claves ni tokens.",
       scope: "flows.read",
       readOnly: true,
       inputSchema: { type: "object", properties: {} },
       run: async (_args, { tenantId }) => ({
         aiConnections: (await services.integrations?.aiCredentials?.list.execute(tenantId) ?? []).map((item) => ({ id: item.id, name: item.name, provider: item.provider, status: item.status })),
-        metaPixels: (await services.integrations?.pixelConnections?.list.execute(tenantId) ?? []).map((item) => ({ id: item.id, name: item.name, pixelId: item.pixelId, status: item.status }))
+        metaPixels: (await services.integrations?.pixelConnections?.list.execute(tenantId) ?? []).map((item) => ({ id: item.id, name: item.name, pixelId: item.pixelId, status: item.status })),
+        products: services.products
+          ? (await services.products.list(tenantId, false)).products
+              .filter((product) => product.status === "active")
+              .map((product) => ({ id: product.id, name: product.name, kind: product.kind, prices: product.prices }))
+          : []
       })
     }
   ];

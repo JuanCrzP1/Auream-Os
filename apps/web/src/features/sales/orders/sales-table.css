@@ -1,0 +1,156 @@
+/* La tabla de ventas: grilla de 6 columnas que en pantallas angostas se
+ * apila en tarjetas. Container query `sales`. Tokens del tema. */
+
+.sales-table {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.sales-table__head,
+.sales-row {
+  display: grid;
+  grid-template-columns: 138px minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 148px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.sales-table__head {
+  min-height: 38px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sales-table__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sales-table__rows li + li {
+  border-top: 1px solid var(--line);
+}
+
+.sales-row {
+  width: 100%;
+  min-height: 62px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out);
+}
+
+.sales-row:hover {
+  background: var(--chip-bg);
+}
+
+.sales-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.sales-row__date,
+.sales-row__meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.sales-row__who,
+.sales-row__source-text,
+.sales-row__status {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sales-row__name,
+.sales-row__product,
+.sales-row__meta,
+.sales-row__reason {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sales-row__name,
+.sales-row__amount {
+  font-weight: 700;
+}
+
+.sales-row__amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.sales-row__missing {
+  color: var(--status-paused-text);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.sales-row__source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sales-row__source-icon {
+  display: flex;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.sales-row__source-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.sales-row__reason {
+  color: var(--status-paused-text);
+  font-size: 0.74rem;
+}
+
+@container sales (max-width: 760px) {
+  .sales-table__head {
+    display: none;
+  }
+
+  .sales-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 12px 14px;
+  }
+
+  .sales-row__date {
+    grid-column: 1 / -1;
+  }
+
+  .sales-row__product,
+  .sales-row__source {
+    grid-column: 1;
+  }
+
+  .sales-row__amount,
+  .sales-row__status {
+    grid-column: 2;
+    justify-items: end;
+    text-align: right;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sales-row {
+    transition: none;
+  }
+}

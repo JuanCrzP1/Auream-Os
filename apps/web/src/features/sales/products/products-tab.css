@@ -1,0 +1,160 @@
+/* El catálogo en tarjetas, y la tarjeta de «Crea tu catálogo». Tokens del tema. */
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out), box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.product-card:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--line));
+  box-shadow: var(--glow-soft);
+}
+
+.product-card:disabled {
+  cursor: default;
+}
+
+.product-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.product-card--archived {
+  opacity: 0.6;
+}
+
+.product-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.product-card__name {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.product-card__kind {
+  flex: 0 0 auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.product-card__kind--main {
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.product-card__kind--upsell {
+  background: color-mix(in srgb, var(--teal) 18%, transparent);
+  color: var(--status-active-text);
+}
+
+.product-card__kind--downsell {
+  background: color-mix(in srgb, var(--amber) 22%, transparent);
+  color: var(--status-paused-text);
+}
+
+.product-card__description {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.product-card__prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.product-card__price {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-card__foot {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.products-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--line));
+  border-radius: var(--radius-md);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--primary) 9%, var(--surface)), var(--surface));
+}
+
+.products-empty > div {
+  flex: 1 1 280px;
+}
+
+.products-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.products-empty__icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.products-empty__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.products-empty__text {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.products-empty .ui-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card {
+    transition: none;
+  }
+}

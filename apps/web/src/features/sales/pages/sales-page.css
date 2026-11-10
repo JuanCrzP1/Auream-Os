@@ -1,0 +1,28 @@
+/* Ventas: acciones en la cabecera y un panel que se acomoda (container
+ * query `sales`, que usan la tabla y las tarjetas). Tokens del tema. */
+
+.sales-page__panel {
+  container: sales / inline-size;
+}
+
+.sales-page__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sales-page__actions .ui-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sales-page__loading {
+  height: 160px;
+  border-radius: var(--radius-md);
+  background: var(--chip-bg);
+}
+
+@media (max-width: 720px) {
+  .ui-page__header:has(.sales-page__actions) {
+    flex-wrap: wrap;
+  }
+}

@@ -1,3 +1,4 @@
+import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import { ContactAvatarService } from "../../../domains/contacts/application/ContactAvatarService";
 import { SqlContactAvatarStore } from "../../../infrastructure/persistence/sql/SqlContactAvatarStore";
 import type { ApiConfig } from "../config/loadApiConfig";
@@ -73,6 +74,8 @@ export interface MessagingDependencies {
   readonly scheduler: TaskScheduler;
   /** Historial interno de los turnos (Neon + registro). Ausente: no se anota. */
   readonly journal?: TurnJournal;
+  /** Ventas del bloque Registrar venta (se guardan en Ventas). */
+  readonly sales: SalesLedger;
 }
 
 export function composeMessagingServices(deps: MessagingDependencies): MessagingServices {
@@ -88,7 +91,8 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     conversions: deps.integrations.conversionTracker,
     media: http,
     documents: deps.documents,
-    receipts: new SqlReceiptRegistry(deps.sql)
+    receipts: new SqlReceiptRegistry(deps.sql),
+    sales: deps.sales
   });
 
   const engine = new ExecutionOrchestrator(

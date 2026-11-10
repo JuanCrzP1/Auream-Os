@@ -5,6 +5,7 @@ import { messageTool } from "./message/definition";
 import { waitResponseTool } from "./wait-response/definition";
 import { tagsTool } from "./tags/definition";
 import { paymentProofTool } from "./payment-proof/definition";
+import { recordSaleTool } from "./record-sale/definition";
 import { conditionalTool } from "./conditional/definition";
 import { distributorTool } from "./distributor/definition";
 import { pixelTool } from "./pixel/definition";
@@ -38,6 +39,7 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   waitResponseTool,
   tagsTool,
   paymentProofTool,
+  recordSaleTool,
   conditionalTool,
   distributorTool,
   pixelTool,

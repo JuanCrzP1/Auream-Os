@@ -21,6 +21,7 @@ export const SINGLE_OUTPUT_NODE_TYPES: ReadonlySet<NodeType> = new Set<NodeType>
   "delay",
   "tags",
   "pixel",
+  "record-sale",
   "notification"
 ]);
 

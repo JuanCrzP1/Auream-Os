@@ -9,6 +9,9 @@ import { MenuNodeHandler } from "../../../flow-engine/nodes/menu/MenuNodeHandler
 import { MessageNodeHandler } from "../../../flow-engine/nodes/message/MessageNodeHandler";
 import { NotificationNodeHandler } from "../../../flow-engine/nodes/notification/NotificationNodeHandler";
 import { PaymentProofNodeHandler } from "../../../flow-engine/nodes/payment-proof/PaymentProofNodeHandler";
+import { RecordSaleNodeHandler } from "../../../flow-engine/nodes/record-sale/RecordSaleNodeHandler";
+import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
+import { DisabledSalesLedger } from "../../../infrastructure/sales/DisabledSalesLedger";
 import { PixelNodeHandler } from "../../../flow-engine/nodes/pixel/PixelNodeHandler";
 import { StartNodeHandler } from "../../../flow-engine/nodes/start/StartNodeHandler";
 import { QuestionNodeHandler } from "../../../flow-engine/nodes/question/QuestionNodeHandler";
@@ -53,6 +56,8 @@ export interface NodeRuntimeDependencies {
   readonly documents: DocumentTextReader;
   /** Comprobantes ya aceptados. Simulación: en memoria; producción: PostgreSQL. */
   readonly receipts: ReceiptRegistry;
+  /** Ventas del bloque Registrar venta. Producción: guarda; simulación: calcula sin guardar. */
+  readonly sales: SalesLedger;
 }
 
 /**
@@ -61,7 +66,7 @@ export interface NodeRuntimeDependencies {
  * pasarela de IA de la cuenta para que la simulación del builder llame de verdad.
  */
 export function simulationDependencies(
-  overrides: Partial<Pick<NodeRuntimeDependencies, "http" | "ai" | "conversions" | "media" | "documents">> = {}
+  overrides: Partial<Pick<NodeRuntimeDependencies, "http" | "ai" | "conversions" | "media" | "documents" | "sales">> = {}
 ): NodeRuntimeDependencies {
   const store = new InMemoryContactsStore();
   return {
@@ -73,7 +78,9 @@ export function simulationDependencies(
     media: overrides.media ?? new DisabledHttpRequester(),
     documents: overrides.documents ?? new DisabledDocumentReader(),
     // Una simulación nunca gasta comprobantes reales.
-    receipts: new InMemoryReceiptRegistry()
+    receipts: new InMemoryReceiptRegistry(),
+    // Ni guarda ventas: la API inyecta una que calcula la venta sin guardarla.
+    sales: overrides.sales ?? new DisabledSalesLedger()
   };
 }
 
@@ -103,6 +110,7 @@ export function composeNodeRuntime(
       { fetcher: dependencies.media, reader: dependencies.documents, receipts: dependencies.receipts },
       dependencies.contacts
     ),
+    new RecordSaleNodeHandler(dependencies.sales, dependencies.contacts),
     new ConditionNodeHandler(dependencies.contacts),
     new DistributorNodeHandler(dependencies.roundRobin),
     new PixelNodeHandler(dependencies.conversions, dependencies.contacts),

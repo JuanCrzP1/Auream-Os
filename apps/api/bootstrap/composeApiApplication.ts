@@ -27,6 +27,7 @@ import { createApiRequestListener, type ApiRequestListener } from "./createApiSe
 import { wakeTasksOnTraffic } from "./wakeTasksOnTraffic";
 import { composeAccountServices } from "../composition/composeAccountServices";
 import { composeTeamServices } from "../composition/composeTeamServices";
+import { composeSalesServices } from "../composition/composeSalesServices";
 
 // ---------------------------------------------------------------------------
 // composeApiApplication — lee la configuración del entorno y compone TODA la
@@ -67,7 +68,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const documents = new TesseractDocumentReader();
   // Límite de peticiones compartido por todas las instancias (Neon). Si la base falla, deja pasar y lo avisa.
   const rateLimiter = new SqlRateLimiter(tenancy.sqlClient, undefined, (error) => logger.warn("rate_limit.store_failed", { error: error instanceof Error ? error.message : String(error) }));
-  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter);
+  // Ventas y Productos: el bloque Registrar venta guarda en los flujos reales y calcula sin guardar en la simulación.
+  const sales = composeSalesServices(config, tenancy.sqlClient);
+  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview);
   const contactsServices = composeContactsServices(tenancy.sqlClient);
   const connectionsServices = composeConnectionsServices(tenancy.sqlClient, {
     keyRing: config.credentialsKeyRing,
@@ -104,7 +107,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     connections: connectionsServices,
     documents,
     scheduler: scheduling.scheduler,
-    journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger)
+    journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
+    sales: sales.ledger
   });
   const runner = scheduling.attachHandlers([new FlowTimerTaskHandler(messagingServices.timers)]);
   // Medios de los bloques; el mismo almacén guarda las fotos de perfil y los logos (Mi perfil, Empresa).
@@ -136,6 +140,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     companyServices: accountServices.company,
     teamServices: team.team,
     invitationServices: team.invitations,
+    salesServices: { products: sales.products, sales: sales.sales },
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,
@@ -145,6 +150,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       contacts: contactsServices,
       connections: connectionsServices,
       messaging: messagingServices,
+      products: sales.products,
       // Cada acción de un agente queda en el registro (sin sus datos).
       onToolCall: (access, report) => logger.info("mcp.tool_call", { tenantId: access.tenantId, credentialId: access.credentialId, ...report })
     }),

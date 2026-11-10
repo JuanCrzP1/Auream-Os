@@ -1,0 +1,61 @@
+/* Búsqueda y filtros de Ventas en una fila que se acomoda. Tokens del tema. */
+
+.sales-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sales-filters__search {
+  display: flex;
+  flex: 1 1 260px;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.sales-filters__search:focus-within {
+  border-color: var(--primary);
+}
+
+.sales-filters__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.sales-filters__icon {
+  display: flex;
+  color: var(--muted);
+}
+
+.sales-filters__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.sales-filters__select {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.sales-filters__select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

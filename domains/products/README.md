@@ -12,4 +12,6 @@ Lo usan varios: Ventas (qué se vendió), los flujos y los Agentes de IA (qué o
 El inventario y los pagos (fuera de alcance por ahora).
 
 ## Capas
-`domain/` (Product, Price) · `application/` · persistencia SQL. API prevista: `/products`.
+`domain/Product.ts` (validación, precio por país) · `application/ProductServices.ts` y el puerto `ProductRepository` · `SqlProductRepository` (`products` y `product_prices`, 031) · API `/products`. Un producto con ventas no se borra: se archiva.
+
+Detalle: [`docs/architecture/sales.md`](../../docs/architecture/sales.md).

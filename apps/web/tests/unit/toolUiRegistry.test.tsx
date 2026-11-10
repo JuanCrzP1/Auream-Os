@@ -133,7 +133,7 @@ describe("contrato ToolUi", () => {
     // Las herramientas con salidas con nombre también lo declaran (las pinta su cuerpo).
     const conCompacto = listUiTypes().filter((type) => findToolUi(type)?.CompactBody);
     expect(conCompacto.sort()).toEqual(
-      ["message", "question", "distributor", "delay", "condition", "menu", "integration", "ai", "payment-proof", "tags", "notification", "pixel"].sort()
+      ["message", "question", "distributor", "delay", "condition", "menu", "integration", "ai", "payment-proof", "tags", "notification", "pixel", "record-sale"].sort()
     );
     expect(conCompacto.length).toBeLessThan(listUiTypes().length);
   });

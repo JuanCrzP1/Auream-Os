@@ -73,9 +73,11 @@
 
 .role-card__item--all .role-card__mark,
 .role-card__item--edit .role-card__mark,
+.role-card__item--record .role-card__mark,
 .role-card__item--most .role-card__mark,
 .role-card__item--all .role-card__access,
-.role-card__item--edit .role-card__access {
+.role-card__item--edit .role-card__access,
+.role-card__item--record .role-card__access {
   color: var(--status-active-text);
 }
 

@@ -1,0 +1,28 @@
+/* El estado de una venta: verde (aprobada), ámbar (por revisar), gris tachado (anulada). */
+
+.sale-status {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sale-status--approved {
+  background: color-mix(in srgb, var(--teal) 18%, transparent);
+  color: var(--status-active-text);
+}
+
+.sale-status--review {
+  background: color-mix(in srgb, var(--amber) 22%, transparent);
+  color: var(--status-paused-text);
+}
+
+.sale-status--void {
+  background: var(--chip-neutral-bg);
+  color: var(--muted);
+  text-decoration: line-through;
+}

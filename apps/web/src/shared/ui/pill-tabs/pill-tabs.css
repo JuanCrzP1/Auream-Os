@@ -1,0 +1,48 @@
+/* Pestañas en cápsula: la elegida se levanta como una tarjeta. Tokens del tema. */
+
+.pill-tabs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--chip-bg);
+}
+
+.pill-tabs__tab {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--speed-fast) var(--ease-out), color var(--speed-fast) var(--ease-out);
+}
+
+.pill-tabs__tab:hover {
+  color: var(--text);
+}
+
+.pill-tabs__tab[aria-selected="true"] {
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgba(30, 21, 48, 0.08), var(--elevation-inset);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pill-tabs__tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill-tabs__tab {
+    transition: none;
+  }
+}

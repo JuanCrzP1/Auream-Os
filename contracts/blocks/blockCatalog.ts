@@ -10,6 +10,7 @@ import { readMessageItems } from "../MessageConfig";
 import { NOTIFICATION_DEFAULT_CONFIG, readNotificationConfig } from "../NotificationConfig";
 import { PAYMENT_PROOF_DEFAULT_CONFIG, readPaymentProofConfig } from "../PaymentProofConfig";
 import { PIXEL_DEFAULT_CONFIG, readPixelConfig } from "../PixelConfig";
+import { RECORD_SALE_DEFAULT_CONFIG, readRecordSaleConfig } from "../RecordSaleConfig";
 import { TAGS_DEFAULT_CONFIG, readTagsConfig } from "../TagsConfig";
 import { WAIT_RESPONSE_DEFAULT_CONFIG, readWaitResponseConfig } from "../WaitResponseConfig";
 import type { BlockData, BlockOutput, BlockRules } from "./BlockRules";
@@ -24,6 +25,7 @@ import { validateMessageContent } from "./validation/message";
 import { validateNotification } from "./validation/notification";
 import { validatePaymentProof } from "./validation/paymentProof";
 import { validatePixel } from "./validation/pixel";
+import { validateRecordSale } from "./validation/recordSale";
 import { validateTags } from "./validation/tags";
 import { validateWaitResponse } from "./validation/waitResponse";
 
@@ -160,6 +162,9 @@ export const NOTIFICATION_BLOCK: BlockRules = {
   normalizeConfig: (config) => data(readNotificationConfig(config))
 };
 
+/** Registrar venta: guarda la venta en Ventas (va después del Comprobante «válido» o de un pago confirmado). */
+export const RECORD_SALE_BLOCK: BlockRules = { type: "record-sale", label: "Registrar venta", defaultContent: {}, defaultConfig: data(RECORD_SALE_DEFAULT_CONFIG), availableInPalette: true, terminal: false, validate: validateRecordSale, normalizeConfig: (config) => data(readRecordSaleConfig(config)) };
+
 /** Finalizar: bloque de SISTEMA que cierra una rama; no se ofrece en la paleta. */
 export const END_BLOCK: BlockRules = { type: "end", label: "Finalizar", defaultContent: { text: "Cerrar rama del flujo" }, defaultConfig: {}, availableInPalette: false, terminal: true, normalizeConfig: empty };
 
@@ -170,6 +175,7 @@ export const BLOCK_CATALOG: ReadonlyArray<BlockRules> = [
   WAIT_RESPONSE_BLOCK,
   TAGS_BLOCK,
   PAYMENT_PROOF_BLOCK,
+  RECORD_SALE_BLOCK,
   CONDITION_BLOCK,
   DISTRIBUTOR_BLOCK,
   PIXEL_BLOCK,

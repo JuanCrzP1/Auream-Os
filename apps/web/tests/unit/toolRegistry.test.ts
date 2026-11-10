@@ -24,6 +24,7 @@ const OFFICIAL_PALETTE_TYPES = [
   "question",
   "tags",
   "payment-proof",
+  "record-sale",
   "condition",
   "distributor",
   "pixel",
@@ -38,7 +39,7 @@ const OFFICIAL_PALETTE_TYPES = [
 const REMOVED_TYPES = ["capture", "action", "fallback", "sale-approved"] as const;
 
 describe("registry de herramientas", () => {
-  it("registra las 12 herramientas del catálogo oficial", () => {
+  it("registra las 13 herramientas del catálogo oficial", () => {
     for (const type of OFFICIAL_PALETTE_TYPES) {
       expect(getTool(type), `falta la herramienta '${type}'`).not.toBeNull();
     }
@@ -46,7 +47,7 @@ describe("registry de herramientas", () => {
     expect(listPaletteTools()).toHaveLength(OFFICIAL_PALETTE_TYPES.length);
   });
 
-  it("ofrece las 12 en la paleta y en el orden acordado", () => {
+  it("ofrece las 13 en la paleta y en el orden acordado", () => {
     expect(listPaletteTools().map((tool) => tool.type)).toEqual([...OFFICIAL_PALETTE_TYPES]);
   });
 
@@ -112,7 +113,7 @@ describe("registry de herramientas", () => {
     // (y su handler debe existir). Las demás fallan con `*_not_implemented` y
     // el lienzo dice «Próximamente».
     const executable = listAllTools().filter((tool) => tool.executable).map((tool) => tool.type).sort();
-    expect(executable).toEqual(["ai", "condition", "delay", "distributor", "end", "integration", "menu", "message", "notification", "payment-proof", "pixel", "question", "start", "tags"]);
+    expect(executable).toEqual(["ai", "condition", "delay", "distributor", "end", "integration", "menu", "message", "notification", "payment-proof", "pixel", "question", "record-sale", "start", "tags"]);
   });
 
   it("degrada un tipo desconocido en lugar de romper el canvas", () => {

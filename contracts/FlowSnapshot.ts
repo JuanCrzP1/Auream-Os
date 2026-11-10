@@ -28,7 +28,7 @@
  * `question` vía `config.targetKey`; `fallback` — el rescate de una rama es
  * una propiedad del edge (`isFallback`), no un tipo de nodo; `action` — pasó a
  * llamarse `integration`, que es el mismo concepto con el nombre del producto;
- * `sale-approved` — retirado del catálogo por decisión de producto (2026-11-08).
+ * `sale-approved` — retirado (2026-11-08); lo reemplaza `record-sale` (2026-11-10).
  *
  * `start` es el bloque de inicio, nodo de sistema: ver `FlowEntry.ts`.
  */
@@ -38,6 +38,7 @@ export type NodeType =
   | "question"
   | "tags"
   | "payment-proof"
+  | "record-sale"
   | "condition"
   | "distributor"
   | "pixel"

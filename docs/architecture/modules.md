@@ -16,7 +16,7 @@ Decisión de producto del 2026-11-10: tomar lo mejor de **Leona** (el bot, los c
 | Difusiones | `/broadcasts` | `broadcasts/` | `/broadcasts` | `broadcasts` | `scheduling` · `whatsapp` | Por construir |
 | Grupos y comunidades | `/groups` | `groups/` | `/groups` | `groups` | `whatsapp` | Por construir |
 | Meta Ads | `/meta-ads` | `ads/` (`pixel/`) | `/pixel-connections` · `/ads/*` | `integrations` (píxel) · `ads` | `meta` | Píxel ✅ (sección Píxel); rendimiento de campañas y cuentas por construir |
-| Ventas | `/sales` | `sales/` (`orders/` · `products/`) | `/sales` · `/products` | `sales` · `products` | — | Por construir |
+| Ventas | `/sales` | `sales/` (`orders/` · `products/`) | `/sales` · `/products` | `sales` · `products` | `record-sale` (Registrar venta) | 🟢 Hecho ([`sales.md`](sales.md)) |
 | Conexiones | `/connections` | `connections/` | `/connections` | `connections` | `whatsapp` | ✅ Funciona |
 | Integraciones | `/integrations` | `integrations/` | `/ai-credentials` · `/inbound-webhooks` · `/mcp-credentials` | `integrations` · `webhooks` · `mcp` | `ai` | ✅ Funciona (la tarjeta de Meta lleva a Meta Ads) |
 
@@ -25,7 +25,7 @@ Lo administrativo (Mi perfil, Configuración, Equipo, Pagos y suscripciones, Ayu
 ## Cómo se relacionan
 
 ```
-Anuncio de Meta ──clic──> Conversaciones ──flujo──> Comprobante aprobado ──> Ventas
+Anuncio de Meta ──clic──> Conversaciones ──flujo──> Comprobante válido ──> Registrar venta ──> Ventas
       │                        │                                              │
    Meta Ads (gasto)         CRM (etapa, valor,                         Productos (qué,
       │                     seguimientos)                               a qué precio)

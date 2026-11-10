@@ -2,6 +2,7 @@ import "./team.css";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useActiveTenantOptional } from "@shared/auth/tenant/ActiveTenantContext";
+import { PillTabs } from "@shared/ui/pill-tabs/PillTabs";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 import { useTeam } from "../hooks/useTeam";
@@ -62,13 +63,17 @@ export function TeamSettings() {
   return (
     <section className="team" aria-label="Equipo">
       <div className="team__bar">
-        <div className="team-tabs" role="tablist" aria-label="Secciones del equipo">
-          {TABS.map((id) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} className="team-tabs__tab" onClick={() => setParams({ tab: id }, { replace: true })}>
-              {labels[id]}
-            </button>
-          ))}
-        </div>
+        <PillTabs
+          label="Secciones del equipo"
+          tabs={[
+            { id: "members", label: "Miembros", count: view.members.length },
+            { id: "invitations", label: "Invitaciones", count: view.invitations.length },
+            { id: "roles", label: "Roles" },
+            { id: "activity", label: "Actividad" }
+          ]}
+          selected={tab}
+          onSelect={(id) => setParams({ tab: id }, { replace: true })}
+        />
         {canInvite && !(alone && tab === "members") ? (
           <button type="button" className="ui-btn ui-btn--primary team__invite" onClick={invite}>
             {TeamIcons.plus}

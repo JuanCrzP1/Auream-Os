@@ -17,6 +17,7 @@
 |---|---|---|---|---|
 | Conversaciones y contactos | Todo | Todo | Todo | Ver |
 | Automatizaciones | Editar | Editar | **Ver** | Ver |
+| Ventas y productos | Todo | Todo | **Anotar** | Ver |
 | Conexiones de WhatsApp | Todo | Todo | Ver | Ver |
 | Integraciones (claves, píxeles) | Todo | Todo | — | — |
 | Equipo | Todo | Menos dueños | Ver | Ver |

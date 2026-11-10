@@ -3,9 +3,9 @@ import "./roles-tab.css";
 import { TEAM_ROLES, type TeamRole } from "@contracts/TeamContracts";
 import { TEAM_ROLE_INFO } from "@shared/team/teamRoles";
 
-type Access = "all" | "edit" | "view" | "none" | "most";
+type Access = "all" | "edit" | "record" | "view" | "none" | "most";
 
-const LABEL: Readonly<Record<Access, string>> = { all: "Todo", edit: "Editar", view: "Ver", none: "Sin acceso", most: "Menos dueños" };
+const LABEL: Readonly<Record<Access, string>> = { all: "Todo", edit: "Editar", record: "Anotar", view: "Ver", none: "Sin acceso", most: "Menos dueños" };
 
 /**
  * Qué puede hacer cada rol, por área. Refleja los permisos del servidor
@@ -14,6 +14,7 @@ const LABEL: Readonly<Record<Access, string>> = { all: "Todo", edit: "Editar", v
 const AREAS: ReadonlyArray<{ readonly area: string; readonly access: Readonly<Record<TeamRole, Access>> }> = [
   { area: "Conversaciones y contactos", access: { tenant_owner: "all", tenant_admin: "all", operator: "all", viewer: "view" } },
   { area: "Automatizaciones", access: { tenant_owner: "edit", tenant_admin: "edit", operator: "view", viewer: "view" } },
+  { area: "Ventas y productos", access: { tenant_owner: "all", tenant_admin: "all", operator: "record", viewer: "view" } },
   { area: "Conexiones de WhatsApp", access: { tenant_owner: "all", tenant_admin: "all", operator: "view", viewer: "view" } },
   { area: "Integraciones (claves de IA, píxeles)", access: { tenant_owner: "all", tenant_admin: "all", operator: "none", viewer: "none" } },
   { area: "Equipo", access: { tenant_owner: "all", tenant_admin: "most", operator: "view", viewer: "view" } },

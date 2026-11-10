@@ -1,0 +1,53 @@
+/* Totales por moneda: tarjetas que se acomodan al ancho. Tokens del tema. */
+
+.sales-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sales-summary__card {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--elevation-inset);
+}
+
+.sales-summary__card:first-child {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 9%, var(--surface)), var(--surface));
+}
+
+.sales-summary__label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sales-summary__amount {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sales-summary__meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.sales-summary__empty {
+  margin: 0;
+  padding: 14px 18px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: 0.86rem;
+}

@@ -65,3 +65,20 @@ export const CURRENCY_NAMES: Readonly<Record<string, string>> = {
 
 /** Monedas ofrecidas (ISO 4217). */
 export const CURRENCY_CODES: ReadonlyArray<string> = Object.keys(CURRENCY_NAMES);
+
+/** Áreas de República Dominicana dentro del +1 (el resto del +1, Estados Unidos). */
+const DOMINICAN_AREAS = ["809", "829", "849"];
+
+/**
+ * El país de un teléfono internacional («573001234567» → `CO`) por su prefijo
+ * más largo. `null` si no es de ninguno de los países de la lista.
+ */
+export function countryOfPhone(phone: string | null | undefined): string | null {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (digits.length < 8) return null;
+  if (digits.startsWith("1")) return DOMINICAN_AREAS.some((area) => digits.startsWith(`1${area}`)) ? "DO" : "US";
+  const match = [...COUNTRIES]
+    .filter((country) => country.dial !== "1" && digits.startsWith(country.dial))
+    .sort((a, b) => b.dial.length - a.dial.length)[0];
+  return match?.code ?? null;
+}

@@ -11,6 +11,7 @@ import { ExecutionEventTracker } from "../../../flow-engine/execution/ExecutionE
 import { ExecutionLoop } from "../../../flow-engine/execution/ExecutionLoop";
 import { ExecutionOrchestrator } from "../../../flow-engine/execution/ExecutionOrchestrator";
 import type { AiGateway } from "../../../flow-engine/ports/AiGateway";
+import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import type { HttpRequester } from "../../../flow-engine/ports/HttpRequester";
 import { DisabledDocumentReader } from "../../../infrastructure/documents/DisabledDocumentReader";
 import { DisabledHttpRequester } from "../../../infrastructure/http/DisabledHttpRequester";
@@ -41,6 +42,8 @@ export interface SimulationSandboxDependencies {
   readonly http: HttpRequester;
   /** Zona horaria de la empresa (reglas de día y hora, Programador). */
   readonly timezoneOf: (tenantId: string) => Promise<string>;
+  /** Registrar venta: calcula la venta con el catálogo de la cuenta SIN guardarla. */
+  readonly sales: SalesLedger;
 }
 
 class TurnSandbox implements SimulationSandbox {
@@ -64,7 +67,8 @@ class TurnSandbox implements SimulationSandbox {
       conversions: new SimulatedConversionTracker(journal),
       media: new DisabledHttpRequester(),
       documents: new DisabledDocumentReader(),
-      receipts: new InMemoryReceiptRegistry()
+      receipts: new InMemoryReceiptRegistry(),
+      sales: this.deps.sales
     });
 
     const sessions = new InMemorySessionRepository();

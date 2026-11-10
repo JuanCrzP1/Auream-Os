@@ -10,6 +10,8 @@ import type { Scope } from "../contracts/Scope";
 // lectura (viewer). Principio: cada uno con lo que necesita. El Asesor atiende
 // chats y contactos y VE las automatizaciones, sin editarlas: un flujo dañado
 // por error afecta a todos los clientes (decisión del dueño, 2026-11-10).
+// Ventas: el Asesor anota las que cierra por chat; revisarlas, anularlas y
+// tocar el catálogo es de dueños y administradores.
 export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
   platform_admin: [
     "flows.read",
@@ -27,7 +29,10 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "conversations.read",
     "conversations.write",
     "team.read",
-    "team.manage"
+    "team.manage",
+    "sales.read",
+    "sales.write",
+    "sales.manage"
   ],
   tenant_owner: [
     "flows.read",
@@ -45,7 +50,10 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "conversations.read",
     "conversations.write",
     "team.read",
-    "team.manage"
+    "team.manage",
+    "sales.read",
+    "sales.write",
+    "sales.manage"
   ],
   tenant_admin: [
     "flows.read",
@@ -62,7 +70,10 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "conversations.read",
     "conversations.write",
     "team.read",
-    "team.manage"
+    "team.manage",
+    "sales.read",
+    "sales.write",
+    "sales.manage"
   ],
   operator: [
     "flows.read",
@@ -73,7 +84,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "connections.read",
     "conversations.read",
     "conversations.write",
-    "team.read"
+    "team.read",
+    "sales.read",
+    "sales.write"
   ],
   viewer: [
     "flows.read",
@@ -81,7 +94,8 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "contacts.read",
     "connections.read",
     "conversations.read",
-    "team.read"
+    "team.read",
+    "sales.read"
   ],
   api_client: [
     "flows.read",

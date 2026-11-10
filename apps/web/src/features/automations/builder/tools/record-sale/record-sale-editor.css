@@ -1,0 +1,69 @@
+/* Registrar venta: la lista de precios del producto elegido y el aviso de
+ * «todavía no tienes productos». Tokens del tema. */
+
+.record-sale__prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.record-sale__price {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.record-sale__links {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.record-sale__link {
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.record-sale__link:hover {
+  text-decoration: underline;
+}
+
+.record-sale__empty {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.record-sale__empty-title {
+  margin: 0;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.record-sale__go {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.record-sale__link:focus-visible,
+.record-sale__go:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

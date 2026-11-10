@@ -136,6 +136,19 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
     outputs: "«valid» y «rejected»; con splitRejections: «valid», «wrong-key», «wrong-recipient», «wrong-amount», «too-old», «duplicate» (según lo activado), «invalid» y «failure».",
     example: { accounts: [{ country: "CO", provider: "nequi", number: "3001234567", holder: "Tienda Laura" }], amountCheck: "off" }
   },
+  "record-sale": {
+    purpose: "Guarda la venta en Ventas (va después de la salida 'válido' del Comprobante o de un pago confirmado). Si falta el producto, el monto o la moneda, la venta queda 'Por revisar' y no suma en los totales: nunca inventa un precio. Deja {venta.valor}, {venta.moneda}, {venta.producto}, {venta.estado} (aprobada · por_revisar · error) y {venta.id}.",
+    fields: {
+      productId: "Id de un producto ACTIVO del catálogo (Ventas → Productos). Obligatorio.",
+      amountMode: "'variable' (monto y moneda de variables, lo normal tras el Comprobante) | 'product' (precio del producto en el país del cliente, por su teléfono).",
+      amount: "Monto con 'variable' (por defecto '{comprobante.valor}').",
+      currency: "Moneda ISO o variable con 'variable' (por defecto '{comprobante.moneda}').",
+      customerName: "Nombre del cliente (por defecto '{comprobante.nombre_pagador}'; si no hay, el del contacto).",
+      reference: "Referencia del pago (por defecto '{comprobante.referencia}'): el mismo comprobante no se registra dos veces."
+    },
+    outputs: "Una sola salida.",
+    example: { productId: "<id>", amountMode: "variable", amount: "{comprobante.valor}", currency: "{comprobante.moneda}" }
+  },
   pixel: {
     purpose: "Envía un evento de conversión a Meta (Lead o Compra).",
     fields: {

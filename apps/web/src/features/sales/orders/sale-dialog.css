@@ -1,0 +1,77 @@
+/* Diálogos de una venta (anotar, revisar): formulario en dos columnas y el
+ * detalle de dónde vino. Tokens del tema. */
+
+.sale-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.sale-dialog__form {
+  display: grid;
+  gap: 16px;
+}
+
+.sale-dialog__form h2,
+.sale-dialog__form p {
+  margin: 0;
+}
+
+.sale-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sale-fields__wide {
+  grid-column: 1 / -1;
+}
+
+.sale-dialog__facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--chip-bg);
+  font-size: 0.82rem;
+}
+
+.sale-dialog__facts dt {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sale-dialog__facts dd {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sale-dialog__reason {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  color: var(--status-paused-text);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.sale-dialog__void {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 520px) {
+  .sale-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Cada par «dato: valor» participa de la grilla de la lista. */
+.sale-dialog__fact {
+  display: contents;
+}

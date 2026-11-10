@@ -9,6 +9,7 @@ import { uploadMediaForTool } from "@features/automations/builder/services/media
 import { testPixelEvent } from "@features/automations/builder/services/pixelCapabilities";
 import { testPaymentProof } from "@features/automations/builder/services/paymentProofCapabilities";
 import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
+import { useProductCatalog } from "@shared/products/useProductCatalog";
 
 // ---------------------------------------------------------------------------
 // Recursos de la cuenta (datos y capacidades) para los editores de herramientas.
@@ -30,16 +31,21 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
   const { create: createAiCredential } = ai;
   const pixels = usePixelConnections();
   const { refresh: refreshPixels } = pixels;
+  const catalogOfProducts = useProductCatalog();
+  const { refresh: refreshProducts } = catalogOfProducts;
 
-  // Los píxeles se conectan en Meta Ads, que el bloque abre en otra pestaña:
-  // al volver al editor, la lista se pone al día sola, sin recargar.
+  // Los píxeles se conectan en Meta Ads y los productos se crean en Ventas, que
+  // los bloques abren en otra pestaña: al volver al editor, las listas se ponen
+  // al día solas, sin recargar.
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === "visible") void refreshPixels();
+      if (document.visibilityState !== "visible") return;
+      void refreshPixels();
+      void refreshProducts();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refreshPixels]);
+  }, [refreshPixels, refreshProducts]);
 
   const resources = useMemo<ToolResources>(
     () => ({
@@ -63,9 +69,11 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       pixelConnections: pixels.connections,
       pixelConnectionsStatus: pixels.status,
       testPixel: testPixelEvent,
-      testPaymentProof
+      testPaymentProof,
+      products: catalogOfProducts.products,
+      productsStatus: catalogOfProducts.status
     }),
-    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status]
+    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, catalogOfProducts.products, catalogOfProducts.status]
   );
 
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;

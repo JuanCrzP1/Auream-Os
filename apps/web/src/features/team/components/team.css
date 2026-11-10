@@ -16,45 +16,6 @@
   gap: 12px;
 }
 
-.team-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 14px;
-  background: var(--chip-bg);
-}
-
-.team-tabs__tab {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--speed-fast) var(--ease-out), color var(--speed-fast) var(--ease-out);
-}
-
-.team-tabs__tab:hover {
-  color: var(--text);
-}
-
-.team-tabs__tab[aria-selected="true"] {
-  background: var(--surface);
-  box-shadow: 0 2px 8px rgba(30, 21, 48, 0.08), var(--elevation-inset);
-  color: var(--text);
-  font-weight: 700;
-}
-
-.team-tabs__tab:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
 .team__invite svg {
   width: 16px;
   height: 16px;
@@ -102,10 +63,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .team-tabs__tab {
-    transition: none;
-  }
-
   .team__loading {
     animation: none;
   }

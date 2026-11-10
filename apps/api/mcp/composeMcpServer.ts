@@ -1,3 +1,4 @@
+import type { ProductServices } from "../../../domains/products/application/ProductServices";
 import { randomBytes, randomUUID } from "node:crypto";
 import type { ApiConfig } from "../config/loadApiConfig";
 import { publicBaseUrlOf } from "../config/publicBaseUrl";
@@ -51,6 +52,8 @@ export interface McpDependencies {
   readonly builder: FlowEditingBuilderServices;
   /** Conexiones de IA y píxeles (para configurar esos bloques). */
   readonly integrations?: Pick<IntegrationsServices, "aiCredentials" | "pixelConnections">;
+  /** Catálogo de productos (para configurar Registrar venta). */
+  readonly products?: Pick<ProductServices, "list">;
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
@@ -71,7 +74,12 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
   });
   const editing = composeFlowEditingService(deps.builder);
   const tools: McpTool[] = [
-    ...flowTools({ builder: deps.builder, editing, ...(deps.integrations ? { integrations: deps.integrations } : {}) }),
+    ...flowTools({
+      builder: deps.builder,
+      editing,
+      ...(deps.integrations ? { integrations: deps.integrations } : {}),
+      ...(deps.products ? { products: deps.products } : {})
+    }),
     ...flowEditTools(editing),
     ...contactTools(deps.contacts),
     ...(deps.messaging ? conversationTools(deps.messaging.conversations) : []),

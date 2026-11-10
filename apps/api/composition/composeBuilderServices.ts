@@ -44,6 +44,8 @@ import type { DocumentTextReader } from "../../../flow-engine/ports/DocumentText
 import { SqlReceiptRegistry } from "../../../infrastructure/persistence/sql/SqlReceiptRegistry";
 import { InMemoryReceiptRegistry } from "../../../infrastructure/persistence/memory/InMemoryReceiptRegistry";
 import type { ApiConfig } from "../config/loadApiConfig";
+import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
+import { DisabledSalesLedger } from "../../../infrastructure/sales/DisabledSalesLedger";
 import { SqlTenantResolver } from "../../../infrastructure/persistence/sql/SqlTenantResolver";
 import { DefaultTimezoneTenantResolver } from "../../../platform/tenancy/application/TenantResolver";
 
@@ -127,7 +129,9 @@ export function composeBuilderServices(
   /** Lector de comprobantes compartido (un motor de OCR por instancia). */
   documents: DocumentTextReader = new TesseractDocumentReader(),
   /** Límite de los botones de prueba (en producción, compartido en Neon). */
-  rateLimiter: RateLimiter = new InMemoryRateLimiter()
+  rateLimiter: RateLimiter = new InMemoryRateLimiter(),
+  /** Registrar venta en la simulación: calcula la venta con el catálogo real, sin guardarla. */
+  salesPreview: SalesLedger = new DisabledSalesLedger()
 ): ApiServices {
   const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
     composeAutomationsPersistence(config, sqlClient);
@@ -146,7 +150,7 @@ export function composeBuilderServices(
       automationRepository
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
-    simulateTurnService: new SimulateTurnService(composeSimulationSandbox({ ai, http, timezoneOf }), rateLimiter),
+    simulateTurnService: new SimulateTurnService(composeSimulationSandbox({ ai, http, timezoneOf, sales: salesPreview }), rateLimiter),
     testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), rateLimiter),
     testAiService: new TestAiStepService(new EngineAiStepTester(ai), rateLimiter),
     testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), rateLimiter),

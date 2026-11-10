@@ -5,6 +5,7 @@ import { messageUi } from "./message/ui";
 import { waitResponseUi } from "./wait-response/ui";
 import { tagsUi } from "./tags/ui";
 import { paymentProofUi } from "./payment-proof/ui";
+import { recordSaleUi } from "./record-sale/ui";
 import { conditionalUi } from "./conditional/ui";
 import { distributorUi } from "./distributor/ui";
 import { pixelUi } from "./pixel/ui";
@@ -27,6 +28,7 @@ const TOOL_UIS: ReadonlyArray<ToolUi> = [
   waitResponseUi,
   tagsUi,
   paymentProofUi,
+  recordSaleUi,
   conditionalUi,
   distributorUi,
   pixelUi,
