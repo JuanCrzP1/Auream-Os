@@ -8,10 +8,10 @@ Lo que es de la persona (su foto, cómo se llama, su WhatsApp personal y su cont
 
 ## La tarjeta y el menú de la cuenta
 
-Abajo en la barra lateral, como en las apps con barra lateral (Slack, Linear, Notion, Vercel). Muestra la foto (o las iniciales), el nombre y la empresa activa. Al tocarla se abre hacia arriba, **con el mismo ancho de la tarjeta** (no se sale de la barra):
+Abajo en la barra lateral, como en las apps con barra lateral (Slack, Linear, Notion, Vercel). Muestra la foto (o las iniciales), el nombre y la empresa activa. Al tocarla se abre hacia arriba, **de borde a borde de la barra lateral** (ni más angosto ni saliéndose; se extiende lo que mide el margen de la barra más su borde, `--app-sidebar-inset`):
 
 ```
-(foto) Nombre
+(foto) Nombre            ⌄     ← la flecha baja (cierra) el menú
        correo de acceso
 [logo] Empresa activa · rol  ›        ← abre Configuración → Empresa; con varias empresas, «Cambiar a …»
 ──────────────────────
@@ -30,7 +30,8 @@ Cerrar sesión
 - Lo del día a día queda en la barra (Dashboard, Conversaciones, Automatizaciones, AI Agents, Conexiones, Contactos, Integraciones); lo administrativo, en el menú.
 - **«Pronto»**: la opción ya se ve para conocer el menú completo, pero su módulo llega después. Abre una página «Próximamente», en vez de mandar a otra pantalla sin avisar. Las opciones están en `app/navigation/account/account-menu-items.tsx`.
 - **Al ancho de la barra**: las etiquetas largas bajan a un segundo renglón en vez de cortarse, y el tema pone el icono sobre el nombre.
-- **Teclado**: el foco entra al menú; flechas, Inicio y Fin lo recorren; Escape lo cierra y devuelve el foco a la tarjeta. También se cierra al tocar fuera o al cambiar de página.
+- **Cerrar**: la flecha junto al nombre y el correo, Escape, elegir algo o tocar fuera: el menú baja y se desvanece (0,14 s; sin animación si el equipo pide menos movimiento) y el foco vuelve a la tarjeta. Al cambiar de página se quita enseguida.
+- **Teclado**: el foco entra al menú; flechas, Inicio y Fin lo recorren.
 - **Tema**: claro, oscuro o «sistema» (sigue al equipo y cambia solo con él). El script anti-parpadeo de `index.html` también entiende «sistema».
 - `AccountProvider` (`shared/account/AccountContext.tsx`) carga el perfil y la empresa una vez y los comparte. Por eso cambiar la foto en Mi perfil la cambia al instante en la tarjeta. Un fallo pasajero se reintenta solo (2 s, 4 s y 8 s).
 

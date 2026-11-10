@@ -9,7 +9,11 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 10px 10px 12px;
+  /* Margen lateral de la barra y, sumado al borde, lo que el menú de la cuenta
+     se extiende para abrirse de borde a borde (`account-menu.css`). */
+  --app-sidebar-pad: 10px;
+  --app-sidebar-inset: calc(var(--app-sidebar-pad) + 1px);
+  padding: var(--app-sidebar-pad) var(--app-sidebar-pad) 12px;
   background: var(--bg-elevated);
   border: 1px solid var(--line);
   border-radius: 24px;

@@ -1,4 +1,5 @@
 import "./account-menu.css";
+import "./account-menu-header.css";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { useActiveTenant } from "@shared/auth/tenant/ActiveTenantContext";
@@ -33,10 +34,10 @@ function MenuLink({ link, onNavigate }: { readonly link: AccountMenuLink; readon
  * El menú de la cuenta (se abre desde la tarjeta de abajo en la barra lateral,
  * con su mismo ancho): quién eres, en qué empresa estás (su tarjeta abre sus
  * datos; con varias, cambiar de empresa), tu perfil, la configuración y lo que
- * llega pronto, el tema, la ayuda y cerrar sesión. Con teclado: flechas,
- * Inicio/Fin y Escape.
+ * llega pronto, el tema, la ayuda y cerrar sesión. La flecha junto al nombre
+ * lo baja (lo cierra). Con teclado: flechas, Inicio/Fin y Escape.
  */
-export function AccountMenu({ onClose }: { readonly onClose: (refocus?: boolean) => void }) {
+export function AccountMenu({ onClose, closing = false }: { readonly onClose: (refocus?: boolean) => void; readonly closing?: boolean }) {
   const { profile, company, displayName, email } = useAccount();
   const { state: tenants, activeTenantId, selectTenant } = useActiveTenant();
   const signOut = useSignOut();
@@ -76,13 +77,16 @@ export function AccountMenu({ onClose }: { readonly onClose: (refocus?: boolean)
   };
 
   return (
-    <div className="account-menu" role="menu" aria-label="Menú de la cuenta" ref={menu} onKeyDown={onKeyDown}>
+    <div className={`account-menu${closing ? " is-closing" : ""}`} role="menu" aria-label="Menú de la cuenta" ref={menu} onKeyDown={onKeyDown}>
       <div className="account-menu__identity">
         <AccountAvatar name={displayName} imageUrl={profile?.photoUrl ?? null} size={36} />
-        <span className="account-menu__who">
+        <span className="account-menu__who" title={`${displayName} · ${email}`}>
           <strong>{displayName}</strong>
           <span>{email}</span>
         </span>
+        <button type="button" className="account-menu__collapse" aria-label="Cerrar el menú" title="Cerrar el menú" onClick={() => onClose(true)}>
+          {AccountMenuIcons.chevronDown}
+        </button>
       </div>
 
       {companyName ? (

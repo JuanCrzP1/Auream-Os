@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { ThemeProvider } from "../../src/shared/theme/context/ThemeContext";
@@ -81,13 +81,24 @@ describe("tarjeta de la cuenta", () => {
     const card = screen.getByRole("button", { name: "Cuenta de Juan Camilo" });
     await userEvent.click(card);
     await userEvent.keyboard("{Escape}");
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
     expect(card).toHaveFocus();
 
     await userEvent.click(card);
     await userEvent.click(screen.getByRole("menuitem", { name: "Mi perfil" }));
     expect(screen.getByTestId("where")).toHaveTextContent("/profile");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("la flecha junto al nombre y el correo baja el menú (se desliza y se quita) y devuelve el foco a la tarjeta", async () => {
+    renderCard();
+    const card = screen.getByRole("button", { name: "Cuenta de Juan Camilo" });
+    await userEvent.click(card);
+    await userEvent.click(screen.getByRole("button", { name: "Cerrar el menú" }));
+    expect(screen.getByRole("menu")).toHaveClass("is-closing");
+    expect(card).toHaveAttribute("aria-expanded", "false");
+    expect(card).toHaveFocus();
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
   });
 
   it("las flechas recorren las opciones; la tarjeta de la empresa lleva a Configuración", async () => {

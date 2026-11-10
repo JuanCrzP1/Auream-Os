@@ -1,0 +1,96 @@
+/* Cabecera del menú de la cuenta: quién eres (con la flecha que baja el menú) y la tarjeta de la empresa. */
+.account-menu__identity,
+.account-menu__company {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.account-menu__identity {
+  padding: 8px 7px 7px;
+}
+
+.account-menu__company {
+  margin: 1px 2px 4px;
+  padding: 7px;
+  border-radius: 11px;
+  background: var(--chip-bg);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-menu__company:hover,
+.account-menu__company:focus-visible {
+  background: var(--chip-bg-hover, var(--chip-bg));
+  outline: none;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+.account-menu__chevron {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.account-menu__chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.account-menu__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.account-menu__who strong,
+.account-menu__who span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__who strong {
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.account-menu__who span {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* La flecha junto al nombre y el correo: baja (cierra) el menú. */
+.account-menu__collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.account-menu__collapse svg {
+  width: 16px;
+  height: 16px;
+}
+
+.account-menu__collapse:hover,
+.account-menu__collapse:focus-visible {
+  background: var(--chip-bg-hover, var(--chip-bg));
+  color: var(--primary);
+  outline: none;
+}

@@ -6,28 +6,72 @@ import { AccountAvatar } from "./AccountAvatar";
 import { AccountMenu } from "./AccountMenu";
 import { useAccount } from "./AccountContext";
 
+/** Lo que dura la bajada del menú al cerrarse (igual que en `account-menu.css`). */
+const CLOSE_MS = 140;
+
+type Phase = "closed" | "open" | "closing";
+
+const reducedMotion = () => Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+
 /**
  * La tarjeta de la cuenta, abajo en la barra lateral (el estándar de las apps
  * con barra lateral): tu foto, tu nombre y la empresa activa. Al tocarla abre
- * el menú de la cuenta hacia arriba. Se cierra al elegir algo, con Escape, al
- * tocar fuera o al cambiar de página.
+ * el menú de la cuenta hacia arriba. Se cierra (bajando) con la flecha junto
+ * al nombre, al elegir algo, con Escape o al tocar fuera; al cambiar de página
+ * se quita enseguida.
  */
 export function AccountCard() {
   const { profile, company, displayName, email } = useAccount();
   const { state: tenants, activeTenantId } = useActiveTenant();
-  const [open, setOpen] = useState(false);
+  const [phase, setPhaseState] = useState<Phase>("closed");
+  const current = useRef<Phase>("closed");
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const timer = useRef<number | undefined>(undefined);
   const { pathname } = useLocation();
+  const open = phase === "open";
+
+  const setPhase = (next: Phase) => {
+    current.current = next;
+    setPhaseState(next);
+  };
 
   useEffect(() => {
-    setOpen(false);
+    window.clearTimeout(timer.current);
+    setPhase("closed");
   }, [pathname]);
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(timer.current);
+    };
+  }, []);
+
+  const close = (refocus = true) => {
+    if (refocus) button.current?.focus();
+    if (current.current !== "open") return;
+    window.clearTimeout(timer.current);
+    if (reducedMotion()) {
+      setPhase("closed");
+      return;
+    }
+    setPhase("closing");
+    timer.current = window.setTimeout(() => setPhase("closed"), CLOSE_MS);
+  };
+
+  const toggle = () => {
+    if (current.current === "open") {
+      close(true);
+      return;
+    }
+    window.clearTimeout(timer.current);
+    setPhase("open");
+  };
 
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
-      if (!wrap.current?.contains(event.target as Node)) setOpen(false);
+      if (!wrap.current?.contains(event.target as Node)) close(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => {
@@ -35,17 +79,12 @@ export function AccountCard() {
     };
   }, [open]);
 
-  const close = (refocus = true) => {
-    setOpen(false);
-    if (refocus) button.current?.focus();
-  };
-
   const tenantName = tenants.status === "ready" ? tenants.tenants.find((tenant) => tenant.tenantId === activeTenantId)?.tenantName : undefined;
   const subtitle = company?.name ?? tenantName ?? email;
 
   return (
     <div className="account-card" ref={wrap}>
-      {open ? <AccountMenu onClose={close} /> : null}
+      {phase !== "closed" ? <AccountMenu onClose={close} closing={phase === "closing"} /> : null}
       <button
         ref={button}
         type="button"
@@ -53,7 +92,7 @@ export function AccountCard() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Cuenta de ${displayName}`}
-        onClick={() => setOpen((current) => !current)}
+        onClick={toggle}
       >
         <AccountAvatar name={displayName || "?"} imageUrl={profile?.photoUrl ?? null} size={36} ring />
         <span className="account-card__text">
