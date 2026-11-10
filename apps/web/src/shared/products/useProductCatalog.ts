@@ -12,20 +12,34 @@ export function useProductCatalog() {
   const [canManage, setCanManage] = useState(false);
   const [status, setStatus] = useState<ProductCatalogStatus>("loading");
 
-  const refresh = useCallback(async () => {
+  /** `true` si cargó (o el servidor dijo que no se puede); `false` si fue un fallo pasajero. */
+  const refresh = useCallback(async (): Promise<boolean> => {
     try {
       const response = await fetchProducts();
       setProducts(response.products);
       setCanManage(response.canManage);
       setStatus("ready");
+      return true;
     } catch (error) {
       const code = error instanceof RequestError ? error.status : 0;
       setStatus(code === 403 ? "forbidden" : code === 503 ? "unavailable" : "error");
+      return code === 403 || code === 503;
     }
   }, []);
 
+  // Al abrir, un fallo pasajero (la sesión renovándose, la base despertando) se reintenta solo: 2 s, 4 s y 8 s.
   useEffect(() => {
-    void refresh();
+    let timer = 0;
+    let alive = true;
+    const load = async (attempt: number) => {
+      if ((await refresh()) || !alive || attempt >= 3) return;
+      timer = window.setTimeout(() => void load(attempt + 1), 2000 * 2 ** attempt);
+    };
+    void load(0);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
   }, [refresh]);
 
   const create = useCallback(

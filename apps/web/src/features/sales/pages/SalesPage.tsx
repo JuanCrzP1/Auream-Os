@@ -1,13 +1,14 @@
 import "@shared/ui/page/page.css";
 import "@shared/ui/controls/controls.css";
 import "./sales-page.css";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { ProductSummary } from "@contracts/SalesContracts";
 import { useProductCatalog } from "@shared/products/useProductCatalog";
 import { PillTabs } from "@shared/ui/pill-tabs/PillTabs";
-import { recordSale } from "../services/salesApi";
+import { fetchSales, recordSale } from "../services/salesApi";
 import { OrdersTab } from "../orders/OrdersTab";
+import { PeriodPills, type SalesPeriod } from "../orders/PeriodPills";
 import { RecordSaleDialog } from "../orders/RecordSaleDialog";
 import { ProductDialog } from "../products/ProductDialog";
 import { ProductsTab } from "../products/ProductsTab";
@@ -33,7 +34,19 @@ export function SalesPage() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [counts, setCounts] = useState({ review: 0, canRecord: false, canManage: false });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [period, setPeriod] = useState<SalesPeriod>("30d");
   const onCounts = useCallback((next: typeof counts) => setCounts(next), []);
+
+  // El número de «Por revisar» y los permisos, abra la pestaña que abra (Productos no carga ventas).
+  useEffect(() => {
+    let alive = true;
+    fetchSales({ status: "review" })
+      .then((response) => alive && setCounts({ review: response.reviewCount, canRecord: response.canRecord, canManage: response.canManage }))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [refreshKey]);
   const canManageProducts = catalog.canManage;
 
   return (
@@ -61,16 +74,19 @@ export function SalesPage() {
       </header>
 
       <div className="ui-panel sales-page__panel">
-        <PillTabs
-          label="Secciones de ventas"
-          tabs={[
-            { id: "sales", label: "Ventas" },
-            { id: "review", label: "Por revisar", count: counts.review },
-            { id: "products", label: "Productos", count: catalog.products.length }
-          ]}
-          selected={tab}
-          onSelect={(next) => setParams({ tab: next }, { replace: true })}
-        />
+        <div className="sales-page__toolbar">
+          <PillTabs
+            label="Secciones de ventas"
+            tabs={[
+              { id: "sales", label: "Ventas" },
+              { id: "review", label: "Por revisar", count: counts.review, alert: true },
+              { id: "products", label: "Productos", count: catalog.products.length }
+            ]}
+            selected={tab}
+            onSelect={(next) => setParams({ tab: next }, { replace: true })}
+          />
+          {tab === "sales" ? <PeriodPills value={period} onChange={setPeriod} /> : null}
+        </div>
         <div role="tabpanel" aria-label={tab === "products" ? "Productos" : tab === "review" ? "Por revisar" : "Ventas"}>
           {tab === "products" ? (
             catalog.status === "loading" ? (
@@ -84,7 +100,7 @@ export function SalesPage() {
               />
             )
           ) : (
-            <OrdersTab key={tab} view={tab} products={catalog.products} refreshKey={refreshKey} onCounts={onCounts} />
+            <OrdersTab key={tab} view={tab} period={period} products={catalog.products} refreshKey={refreshKey} onCounts={onCounts} />
           )}
         </div>
       </div>

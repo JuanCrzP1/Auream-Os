@@ -22,7 +22,8 @@ const res = () => {
 
 const module = () => ({
   products: { list: vi.fn(async () => ({ products: [], canManage: false })), create: vi.fn(async () => ({ id: ID })), update: vi.fn(async () => ({ id: ID })) },
-  sales: { list: vi.fn(async () => ({ sales: [] })), record: vi.fn(async () => ({ id: ID })), update: vi.fn(async () => ({ id: ID })) }
+  sales: { list: vi.fn(async () => ({ sales: [] })), record: vi.fn(async () => ({ id: ID })), update: vi.fn(async () => ({ id: ID })) },
+  insights: { overview: vi.fn(async () => ({ currencies: [] })), productStats: vi.fn(async () => ({ products: [] })) }
 });
 
 async function run(m: ReturnType<typeof module> | undefined, method: string, path: string, scopes: string[], body?: unknown) {
@@ -42,6 +43,15 @@ describe("routeSalesRequest", () => {
     expect((await run(m, "GET", "/products", ["sales.read"])).status).toBe(200);
     expect(m.products.list).toHaveBeenCalledWith("tenant-a", false);
     await expect(run(m, "GET", "/sales", ["flows.read"])).rejects.toBeInstanceOf(AccessError);
+  });
+
+  it("la portada y las semanas de cada producto: todo el equipo, de SU cuenta", async () => {
+    const m = module();
+    expect((await run(m, "GET", "/sales/insights?from=2026-10-01&to=2026-10-30&productId=x", ["sales.read"])).status).toBe(200);
+    expect(m.insights.overview).toHaveBeenCalledWith("tenant-a", { from: "2026-10-01", to: "2026-10-30", productId: "x" });
+    expect((await run(m, "GET", "/sales/product-stats", ["sales.read"])).status).toBe(200);
+    expect(m.insights.productStats).toHaveBeenCalledWith("tenant-a");
+    await expect(run(m, "GET", "/sales/insights", ["flows.read"])).rejects.toBeInstanceOf(AccessError);
   });
 
   it("anotar una venta exige sales.write (el Asesor la tiene)", async () => {

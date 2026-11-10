@@ -1,0 +1,42 @@
+/* La tendencia: verde si sube, rojo si baja, gris si igual. */
+
+.trend-chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.trend-chip--compact {
+  padding: 0;
+  background: none !important;
+}
+
+.trend-chip--up {
+  background: color-mix(in srgb, var(--teal) 20%, transparent);
+  color: var(--status-active-text);
+}
+
+.trend-chip--down {
+  background: color-mix(in srgb, var(--rose) 14%, transparent);
+  color: color-mix(in srgb, var(--rose) 75%, var(--text));
+}
+
+.trend-chip--flat {
+  background: var(--chip-bg);
+  color: var(--muted);
+}
+
+.trend-chip__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

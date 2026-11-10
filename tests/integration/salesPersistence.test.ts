@@ -5,6 +5,8 @@ import { SqlSaleRepository } from "../../infrastructure/persistence/sql/SqlSaleR
 import { ProductServices } from "../../domains/products/application/ProductServices.js";
 import { FlowSaleRecorder } from "../../domains/sales/application/FlowSaleRecorder.js";
 import { SaleServices } from "../../domains/sales/application/SaleServices.js";
+import { SalesInsights } from "../../domains/sales/application/SalesInsights.js";
+import { SqlSalesInsights } from "../../infrastructure/persistence/sql/SqlSalesInsights.js";
 import { cleanupTestData, createTestSqlClient, TEST_KEY_PREFIX } from "./setup/testDatabase.js";
 
 // ---------------------------------------------------------------------------
@@ -97,6 +99,24 @@ describe("Ventas y Productos en PostgreSQL", () => {
     const list = await sales.list({ tenantId, userId: "u", canRecord: true, canManage: true }, { from: "2026-11-01", to: "2026-11-01" });
     expect(list.totals).toEqual([{ currency: "COP", amount: 150000, count: 2 }, { currency: "USD", amount: 12, count: 1 }]);
     expect(list.reviewCount).toBe(1);
+  });
+
+  it("la portada: curva por día en la hora de la empresa, lo que más vende y las semanas por producto", async () => {
+    const tenantId = await insertTenant("ventas-e");
+    const { products, recorder } = services();
+    const video = await products.create(tenantId, { name: "Video", kind: "main", prices: [{ country: "CO", currency: "COP", amount: 1 }] });
+    // 11:30 p. m. del 7 en Bogotá = 04:30 UTC del 8: es venta del 7.
+    await recorder.record(tenantId, flowSale(video.id, { reference: "D1", amount: "40", soldAt: "2026-10-08T04:30:00.000Z" }));
+    await recorder.record(tenantId, flowSale(video.id, { reference: "D2", amount: "25", soldAt: "2026-10-09T15:00:00.000Z" }));
+    const insights = new SalesInsights(new SqlSaleRepository(sql), new SqlSalesInsights(sql), async () => "America/Bogota", () => new Date("2026-10-10T12:00:00.000Z"));
+    const overview = await insights.overview(tenantId, { from: "2026-10-07", to: "2026-10-09" });
+    expect(overview.series[0]?.points).toEqual([
+      { day: "2026-10-07", amount: 40 },
+      { day: "2026-10-08", amount: 0 },
+      { day: "2026-10-09", amount: 25 }
+    ]);
+    expect(overview.topProducts).toEqual([{ productId: video.id, name: "Video", kind: "main", count: 2, share: 100 }]);
+    expect((await insights.productStats(tenantId)).products).toEqual([{ productId: video.id, weekly: [0, 0, 0, 0, 0, 0, 0, 2], recent: 2, change: null }]);
   });
 
   it("la base rechaza una venta aprobada sin producto, monto o moneda", async () => {

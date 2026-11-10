@@ -1,0 +1,70 @@
+/* La tarjeta de la lista de ventas. Tokens del tema. */
+
+.sales-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.sales-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sales-list__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.sales-list__head .sales-filters {
+  flex: 1 1 360px;
+  justify-content: flex-end;
+}
+
+.sales-list__loading {
+  height: 220px;
+  margin: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--chip-bg), var(--surface-alt), var(--chip-bg));
+  background-size: 200% 100%;
+  animation: sales-list-shimmer 1.2s ease-in-out infinite;
+}
+
+.sales-list__empty {
+  margin: 0;
+  padding: 28px 18px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.sales-list__more {
+  align-self: center;
+  margin: 12px 0 16px;
+}
+
+@keyframes sales-list-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sales-list__loading {
+    animation: none;
+  }
+}

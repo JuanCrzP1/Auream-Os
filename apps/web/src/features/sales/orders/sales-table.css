@@ -1,51 +1,29 @@
-/* La tabla de ventas: grilla de 6 columnas que en pantallas angostas se
- * apila en tarjetas. Container query `sales`. Tokens del tema. */
+/* La tabla de ventas: cada fila con el círculo del cliente, el producto, el
+ * monto y el estado; en pantallas angostas se apila. Container query `sales`. */
 
 .sales-table {
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-}
-
-.sales-table__head,
-.sales-row {
-  display: grid;
-  grid-template-columns: 138px minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 148px;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-}
-
-.sales-table__head {
-  min-height: 38px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-alt);
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.sales-table__rows {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.sales-table__rows li + li {
+.sales-table li + li {
   border-top: 1px solid var(--line);
 }
 
 .sales-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 1fr) 118px;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  min-height: 62px;
+  min-height: 64px;
+  padding: 10px 18px;
   border: 0;
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   text-align: left;
   cursor: pointer;
   transition: background var(--speed-fast) var(--ease-out);
@@ -60,92 +38,98 @@
   outline-offset: -2px;
 }
 
-.sales-row__date,
-.sales-row__meta {
-  color: var(--muted);
-  font-size: 0.78rem;
+.sales-row__who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
-.sales-row__who,
-.sales-row__source-text,
-.sales-row__status {
+.sales-row__avatar {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.sales-row__avatar--violet {
+  background: var(--bg-elevated);
+  color: var(--primary);
+}
+
+.sales-row__avatar--teal {
+  background: color-mix(in srgb, var(--teal) 20%, transparent);
+  color: var(--status-active-text);
+}
+
+.sales-row__avatar--amber {
+  background: color-mix(in srgb, var(--amber) 24%, transparent);
+  color: var(--status-paused-text);
+}
+
+.sales-row__text {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
 .sales-row__name,
-.sales-row__product,
 .sales-row__meta,
-.sales-row__reason {
+.sales-row__product,
+.sales-row__missing {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.sales-row__name,
-.sales-row__amount {
+.sales-row__name {
   font-weight: 700;
 }
 
+.sales-row__meta {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
 .sales-row__amount {
+  min-width: 0;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
 .sales-row__missing {
+  display: block;
   color: var(--status-paused-text);
+  font-size: 0.8rem;
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.sales-row__source {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.sales-row__source-icon {
-  display: flex;
-  flex: 0 0 auto;
-  color: var(--muted);
-}
-
-.sales-row__source-icon svg {
-  width: 17px;
-  height: 17px;
-}
-
-.sales-row__reason {
-  color: var(--status-paused-text);
-  font-size: 0.74rem;
-}
-
-@container sales (max-width: 760px) {
-  .sales-table__head {
-    display: none;
-  }
-
+@container sales (max-width: 700px) {
   .sales-row {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 4px 12px;
-    padding: 12px 14px;
+    gap: 6px 12px;
   }
 
-  .sales-row__date {
-    grid-column: 1 / -1;
-  }
-
-  .sales-row__product,
-  .sales-row__source {
+  .sales-row__product {
     grid-column: 1;
+    padding-left: 44px;
+    color: var(--muted);
   }
 
   .sales-row__amount,
   .sales-row__status {
     grid-column: 2;
-    justify-items: end;
+    grid-row: 1;
+    justify-self: end;
     text-align: right;
+  }
+
+  .sales-row__status {
+    grid-row: 2;
   }
 }
 

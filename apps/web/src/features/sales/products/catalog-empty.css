@@ -1,0 +1,95 @@
+/* «Crea tu catálogo»: los tres pasos para empezar. Tokens del tema. */
+
+.catalog-empty {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--line));
+  border-radius: 24px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--primary) 9%, var(--surface)) 0%, var(--surface) 65%);
+  box-shadow: var(--shadow);
+}
+
+.catalog-empty__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.catalog-empty__icon {
+  display: grid;
+  flex: 0 0 56px;
+  place-items: center;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--gradient-primary);
+  box-shadow: var(--glow-primary);
+  color: var(--on-primary);
+}
+
+.catalog-empty__icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.catalog-empty__title {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.catalog-empty__text {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.catalog-empty__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.catalog-empty__step {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.catalog-empty__number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--chip-bg-hover);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.catalog-empty__button {
+  justify-self: start;
+}
+
+.catalog-empty__button svg {
+  width: 16px;
+  height: 16px;
+}
+
+@container sales (max-width: 640px) {
+  .catalog-empty__steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

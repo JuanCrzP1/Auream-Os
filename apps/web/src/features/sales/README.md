@@ -8,11 +8,13 @@ Arquitectura y reglas: [`docs/architecture/sales.md`](../../../../../docs/archit
 ```
 features/sales/
 ├── pages/        SalesPage (pestañas Ventas · Por revisar · Productos, en `?tab=`)
-├── orders/       OrdersTab, SalesSummary (totales por moneda), SalesFilters, SalesTable,
-│                 SaleDialog (ver, corregir, aprobar, anular), RecordSaleDialog, SaleFields
-├── products/     ProductsTab (tarjetas), ProductDialog, PriceRows (precio por país)
-├── hooks/        useSales (filtros, «Ver más», corregir; la lista del servidor manda)
-├── services/     salesApi (/sales)
+├── insights/     la portada: SalesHero (total, tendencia y curva), SalesChart (curva monótona),
+│                 CurrencyCard (otras monedas), TopProducts, TrendChip
+├── orders/       OrdersTab, PeriodPills, SalesListPanel, SalesFilters, SalesTable (iniciales, país y origen),
+│                 ReviewEmpty («Todo al día»), SaleDialog (ver, corregir, aprobar, anular), RecordSaleDialog, SaleFields
+├── products/     ProductsTab, ProductCard (8 semanas en barras), CatalogEmpty (3 pasos), ProductDialog, PriceRows
+├── hooks/        useSales (filtros, «Ver más», corregir) · useSalesInsights (la portada; reintenta sola)
+├── services/     salesApi (/sales, /sales/insights, /sales/product-stats)
 └── salesFormat.ts · salesIcons.tsx
 ```
 - El catálogo (`/products`) vive en `shared/products` (`useProductCatalog`): también lo usa el bloque Registrar venta del editor de flujos.

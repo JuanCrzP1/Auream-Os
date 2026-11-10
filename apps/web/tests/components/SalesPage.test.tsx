@@ -73,32 +73,53 @@ function stubApi({ canManage = true, canRecord = true } = {}) {
       };
       return reply(200, body);
     }
+    if (url.pathname === "/sales/insights") {
+      return reply(200, {
+        currencies: [
+          { currency: "COP", amount: 4820000, count: 112, average: 43035.71, previousAmount: 4084746, change: 18 },
+          { currency: "USD", amount: 1240, count: 98, average: 12.65, previousAmount: 1300, change: -5 }
+        ],
+        series: [
+          { currency: "COP", points: [{ day: "2026-10-30", amount: 100 }, { day: "2026-10-31", amount: 312000 }, { day: "2026-11-01", amount: 900 }] },
+          { currency: "USD", points: [{ day: "2026-10-30", amount: 1 }, { day: "2026-10-31", amount: 2 }, { day: "2026-11-01", amount: 3 }] }
+        ],
+        bestDay: { day: "2026-10-31", amount: 312000, currency: "COP" },
+        topProducts: [{ productId: "p1", name: "Video", kind: "main", count: 76, share: 68 }]
+      });
+    }
+    if (url.pathname === "/sales/product-stats") return reply(200, { products: [{ productId: "p1", weekly: [0, 1, 2, 3, 4, 5, 6, 9], recent: 24, change: 22 }] });
     if (url.pathname === "/sales" && method === "POST") return reply(201, sale({ id: "s9" }));
     if (url.pathname.startsWith("/sales/") && method === "PATCH") return reply(200, sale({ id: "s2" }));
     return reply(404, { message: "no" });
   }));
 }
 
-const renderPage = (path = "/sales") =>
-  render(
-    <MemoryRouter initialEntries={[path]}>
-      <SalesPage />
-    </MemoryRouter>
-  );
+const renderPage = (path = "/sales") => render(<MemoryRouter initialEntries={[path]}><SalesPage /></MemoryRouter>);
 
 beforeEach(() => vi.restoreAllMocks());
 
 describe("Ventas", () => {
-  it("totales por moneda (pesos y dólares nunca se suman) y la pestaña «Por revisar» con su número", async () => {
+  it("portada: lo vendido con su tendencia y la curva; cada otra moneda aparte; lo que más vende; «Por revisar» con su insignia", async () => {
     stubApi();
     renderPage();
-    const totals = await screen.findByRole("list", { name: "Totales del periodo" });
-    expect(within(totals).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
-      expect.stringContaining("$ 49.900 COP"),
-      expect.stringContaining("$ 12 USD")
-    ]);
-    expect(screen.getByRole("tab", { name: "Por revisar · 1" })).toBeInTheDocument();
-    expect(calls.find((call) => call.path.startsWith("/sales?"))?.path).toMatch(/from=\d{4}-\d{2}-\d{2}&to=/);
+    const hero = await screen.findByRole("region", { name: "Lo vendido en el periodo" });
+    expect(hero).toHaveTextContent("$ 4.820.000");
+    expect(hero).toHaveTextContent("18 % frente al periodo anterior");
+    expect(hero).toHaveTextContent("112 ventas · ticket promedio $ 43.035,71 COP");
+    expect(within(hero).getByRole("img", { name: /el mejor día fue el 31 oct/ })).toBeInTheDocument();
+    expect(screen.getByRole("article", { name: "Vendido en Dólar estadounidense" })).toHaveTextContent("98 ventas");
+    expect(screen.getByRole("complementary", { name: "Lo que más vende" })).toHaveTextContent("Video68 %");
+    expect(screen.getByRole("tab", { name: /Por revisar\s*1/ })).toBeInTheDocument();
+    expect(calls.find((call) => call.path.startsWith("/sales/insights?"))?.path).toMatch(/from=\d{4}-\d{2}-\d{2}&to=/);
+  });
+
+  it("el periodo se cambia con un botón y todo se vuelve a pedir", async () => {
+    stubApi();
+    renderPage();
+    await screen.findByRole("region", { name: "Lo vendido en el periodo" });
+    await userEvent.click(screen.getByRole("button", { name: "Todo" }));
+    expect(screen.getByRole("button", { name: "Todo" })).toHaveAttribute("aria-pressed", "true");
+    expect(calls.some((call) => call.path === "/sales/insights")).toBe(true);
   });
 
   it("«Por revisar» muestra el motivo; al completarla se aprueba", async () => {
@@ -147,7 +168,8 @@ describe("Ventas", () => {
     renderPage("/sales?tab=products");
     const card = await screen.findByRole("button", { name: "Editar Video" });
     expect(card).toHaveTextContent("Colombia · $ 49.900 COP");
-    expect(card).toHaveTextContent("2 ventas");
+    expect(card).toHaveTextContent("24 ventas en 4 semanas · 2 en total");
+    expect(within(card).getByRole("img", { name: /últimas 8 semanas/ })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Nuevo producto" }));
     const dialog = screen.getByRole("dialog", { name: "Nuevo producto" });

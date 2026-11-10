@@ -73,6 +73,8 @@ API /products ──> ProductServices ──> ProductRepository
 | `GET /products` | `sales.read` | El catálogo (y `canManage`) |
 | `POST /products` · `PATCH /products/:id` | `sales.manage` | Crear · editar o archivar |
 | `GET /sales?status&productId&currency&source&from&to&search&cursor` | `sales.read` | Ventas (50 por página, la más reciente primero), totales por moneda de las aprobadas y cuántas hay por revisar. Las fechas van en la zona horaria de la empresa |
+| `GET /sales/insights?from&to&productId` | `sales.read` | La portada: por moneda con su cambio frente al periodo anterior, curvas por día (hasta 3 monedas), mejor día y lo que más vende |
+| `GET /sales/product-stats` | `sales.read` | Ventas aprobadas de cada producto por semana (8) y el cambio de las 4 últimas |
 | `POST /sales` | `sales.write` | Anotar una venta |
 | `PATCH /sales/:id` | `sales.manage` | Corregir; `status: approved` (solo completa) o `void` (con `voidReason`) |
 
@@ -80,13 +82,19 @@ Para agentes (MCP): `list_flow_resources` trae los productos activos con su prec
 
 ## La pantalla
 
-- **Ventas**: totales del periodo por moneda (total, cantidad y ticket promedio), búsqueda (cliente, teléfono, referencia o anuncio), periodo y producto, y la tabla. Tocar una venta la abre: de dónde vino y, para quien puede, corregir, aprobar o anular.
-- **Por revisar · N**: las incompletas con su motivo; se completan y se aprueban.
-- **Productos · N**: tarjetas con el tipo, el precio en cada país y cuántas ventas lleva; crear, editar y archivar.
+- **Ventas**, con el periodo en botones (Hoy · 7 días · 30 días · Este mes · Todo):
+  - **Portada**: lo vendido en la moneda principal, su tendencia frente al periodo anterior del mismo largo («▲ 18 %»), cuántas ventas y el ticket promedio, y la curva por día (monótona: suave sin inventar picos) con el mejor día marcado.
+  - **Las otras monedas** al lado, cada una con su tendencia y su mini línea (nunca se suman).
+  - **Últimas ventas**: cada cliente con su inicial, cuándo, su país y de dónde vino («por anuncio», «por flujo», «anotada por Camilo»); búsqueda y producto en la cabecera. Tocar una venta la abre: de dónde vino y, para quien puede, corregir, aprobar o anular.
+  - **Lo que más vende**: barras por producto con su parte de las ventas (y, con Meta Ads, los anuncios).
+- **Por revisar** (insignia ámbar con el número): las incompletas con su motivo; se completan y se aprueban. Vacía: «Todo al día» explica qué llega ahí.
+- **Productos · N**: tarjetas con el tipo, el precio en cada país y sus ventas de las últimas 8 semanas en barras, con la tendencia de las 4 últimas. Sin productos: «Crea tu catálogo» en tres pasos.
+
+La portada sale de `SalesInsights` (`domains/sales/application/SalesInsights.ts`), separada de `SaleServices`: analizar no es registrar. Lee por su puerto `SalesInsightsReader` (`SqlSalesInsights`), solo ventas aprobadas, con los días cortados en la zona de la empresa.
 
 ## Pruebas
 
-`tests/unit/salesMoney.test.ts`, `productServices.test.ts`, `saleServices.test.ts`, `recordSaleBlock.test.ts`, `recordSaleHandler.test.ts`, `tests/security/routeSales.test.ts`, `tests/integration/salesPersistence.test.ts` (PostgreSQL real, con dos copias del mismo comprobante a la vez) y en la web `SalesPage.test.tsx` y `RecordSaleEditor.test.tsx`.
+`tests/unit/salesMoney.test.ts`, `productServices.test.ts`, `saleServices.test.ts`, `salesInsights.test.ts`, `recordSaleBlock.test.ts`, `recordSaleHandler.test.ts`, `tests/security/routeSales.test.ts`, `tests/integration/salesPersistence.test.ts` (PostgreSQL real, con dos copias del mismo comprobante a la vez) y en la web `SalesPage.test.tsx` y `RecordSaleEditor.test.tsx`.
 
 ## Después
 

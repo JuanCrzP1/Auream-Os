@@ -1,0 +1,107 @@
+/* «Lo que más vende»: barras por producto y la nota de Meta Ads. Tokens del tema. */
+
+.top-products {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.top-products__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.top-products__list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.top-products__item {
+  display: grid;
+  gap: 6px;
+}
+
+.top-products__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.84rem;
+}
+
+.top-products__name {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-products__kind--upsell {
+  color: var(--status-active-text);
+  font-weight: 600;
+}
+
+.top-products__kind--downsell {
+  color: var(--status-paused-text);
+  font-weight: 600;
+}
+
+.top-products__share,
+.top-products__count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.top-products__track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--chip-bg);
+}
+
+.top-products__bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gradient-primary);
+}
+
+.top-products__bar--1 {
+  background: var(--teal);
+}
+
+.top-products__bar--2 {
+  background: var(--amber);
+}
+
+.top-products__empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.top-products__note {
+  margin: auto 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--chip-bg);
+  color: color-mix(in srgb, var(--text) 80%, var(--muted));
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.top-products__note strong {
+  color: var(--text);
+}

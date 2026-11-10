@@ -6,6 +6,7 @@ import { SalesPermissions } from "../../../platform/authorization/permissions/Sa
 import type { RecordSaleRequest, SaleFilters, SaleSource, SaleStatus, SaveProductRequest, UpdateSaleRequest } from "../../../contracts/SalesContracts";
 import type { ProductServices } from "../../../domains/products/application/ProductServices";
 import type { SaleServices } from "../../../domains/sales/application/SaleServices";
+import type { SalesInsights } from "../../../domains/sales/application/SalesInsights";
 import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
 
@@ -16,6 +17,8 @@ import { sendJson } from "../http/sendJson";
 //   POST   /products          crear un producto                   (sales.manage)
 //   PATCH  /products/:id      editar o archivar                   (sales.manage)
 //   GET    /sales             ventas con filtros, totales y página (sales.read)
+//   GET    /sales/insights    portada: tendencia, curva, lo que más vende (sales.read)
+//   GET    /sales/product-stats  ventas de cada producto por semana  (sales.read)
 //   POST   /sales             anotar una venta a mano             (sales.write)
 //   PATCH  /sales/:id         corregir, aprobar o anular          (sales.manage)
 //
@@ -26,6 +29,7 @@ import { sendJson } from "../http/sendJson";
 export interface SalesRoutes {
   readonly products: ProductServices;
   readonly sales: SaleServices;
+  readonly insights: SalesInsights;
 }
 
 const PRODUCT = /^\/products\/([0-9a-f-]{36})$/i;
@@ -73,6 +77,17 @@ export async function routeSalesRequest(
   if (path === "/sales" && method === "GET") {
     requireScope(context, SalesPermissions.read, tenantId);
     sendJson(response, 200, await module.sales.list(actor, filtersOf(url)));
+    return true;
+  }
+  if (path === "/sales/insights" && method === "GET") {
+    requireScope(context, SalesPermissions.read, tenantId);
+    const { from, to, productId } = filtersOf(url);
+    sendJson(response, 200, await module.insights.overview(tenantId, { from, to, productId }));
+    return true;
+  }
+  if (path === "/sales/product-stats" && method === "GET") {
+    requireScope(context, SalesPermissions.read, tenantId);
+    sendJson(response, 200, await module.insights.productStats(tenantId));
     return true;
   }
   if (path === "/sales" && method === "POST") {

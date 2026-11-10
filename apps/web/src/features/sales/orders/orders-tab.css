@@ -1,43 +1,43 @@
-/* La pestaña de ventas: totales, filtros y tabla, con su espera y su vacío. */
+/* La pestaña Ventas: portada (2/3) con las otras monedas al lado (1/3), y
+ * debajo la lista (2/3) con lo que más vende (1/3). En angosto, una columna.
+ * Container query `sales`. */
 
 .orders-tab {
   display: grid;
   gap: 14px;
 }
 
-.orders-tab__loading {
-  height: 220px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(90deg, var(--chip-bg), var(--surface-alt), var(--chip-bg));
-  background-size: 200% 100%;
-  animation: orders-tab-shimmer 1.2s ease-in-out infinite;
+.orders-tab__top,
+.orders-tab__bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
 }
 
-.orders-tab__empty {
-  margin: 0;
-  padding: 18px;
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-md);
-  color: var(--muted);
-  font-size: 0.86rem;
-  text-align: center;
+.orders-tab__top--single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.orders-tab__more {
-  justify-self: center;
+.orders-tab__side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 
-@keyframes orders-tab-shimmer {
-  from {
-    background-position: 200% 0;
+@container sales (max-width: 900px) {
+  .orders-tab__top,
+  .orders-tab__bottom {
+    grid-template-columns: minmax(0, 1fr);
   }
-  to {
-    background-position: -200% 0;
-  }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .orders-tab__loading {
-    animation: none;
+  .orders-tab__side {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .orders-tab__side > * {
+    flex: 1 1 220px;
   }
 }

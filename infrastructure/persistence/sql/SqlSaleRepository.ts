@@ -70,7 +70,7 @@ function toRecord(row: SaleRow): SaleRecord {
 }
 
 /** Los filtros como SQL con parámetros numerados a partir de `$2` (`$1` es la cuenta). */
-function where(query: SaleQuery, params: unknown[]): string {
+export function saleWhere(query: SaleQuery, params: unknown[]): string {
   const clauses = ["s.tenant_id = $1"];
   const add = (sql: string, value: unknown) => {
     params.push(value);
@@ -133,7 +133,7 @@ export class SqlSaleRepository implements SaleRepository {
 
   public async list(tenantId: string, query: SaleQuery, cursor: SaleCursor | null, limit: number): Promise<ReadonlyArray<SaleRecord>> {
     const params: unknown[] = [tenantId];
-    let condition = where(query, params);
+    let condition = saleWhere(query, params);
     if (cursor) {
       params.push(cursor.soldAt, cursor.id);
       condition += ` and (s.sold_at, s.id) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)`;
@@ -145,7 +145,7 @@ export class SqlSaleRepository implements SaleRepository {
 
   public async totals(tenantId: string, query: SaleQuery): Promise<ReadonlyArray<SalesTotal>> {
     const params: unknown[] = [tenantId];
-    const condition = where({ ...query, status: "approved" }, params);
+    const condition = saleWhere({ ...query, status: "approved" }, params);
     const result = await this.sql.query<{ currency: string; amount: string; count: string }>(
       `select s.currency, sum(s.amount) as amount, count(*) as count from sales s where ${condition} group by s.currency order by sum(s.amount) desc`,
       params

@@ -140,7 +140,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     companyServices: accountServices.company,
     teamServices: team.team,
     invitationServices: team.invitations,
-    salesServices: { products: sales.products, sales: sales.sales },
+    salesServices: { products: sales.products, sales: sales.sales, insights: sales.insights },
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,

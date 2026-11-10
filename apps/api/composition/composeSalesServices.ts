@@ -2,8 +2,11 @@ import type { ApiConfig } from "../config/loadApiConfig";
 import { ProductServices } from "../../../domains/products/application/ProductServices";
 import { FlowSaleRecorder } from "../../../domains/sales/application/FlowSaleRecorder";
 import { SaleServices } from "../../../domains/sales/application/SaleServices";
+import { SalesInsights } from "../../../domains/sales/application/SalesInsights";
 import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import { InMemoryProductRepository, InMemorySaleRepository, InMemorySalesStore } from "../../../infrastructure/persistence/memory/InMemorySalesRepositories";
+import { InMemorySalesInsights } from "../../../infrastructure/persistence/memory/InMemorySalesInsights";
+import { SqlSalesInsights } from "../../../infrastructure/persistence/sql/SqlSalesInsights";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlProductRepository } from "../../../infrastructure/persistence/sql/SqlProductRepository";
 import { SqlSaleRepository } from "../../../infrastructure/persistence/sql/SqlSaleRepository";
@@ -20,6 +23,8 @@ import { DomainSalesLedger } from "./DomainSalesLedger";
 export interface SalesModule {
   readonly products: ProductServices;
   readonly sales: SaleServices;
+  /** La portada de Ventas (solo lee). */
+  readonly insights: SalesInsights;
   /** Flujos reales: guarda la venta. */
   readonly ledger: SalesLedger;
   /** Simulación y Laboratorio: calcula la venta sin guardarla. */
@@ -40,6 +45,7 @@ export function composeSalesServices(config: ApiConfig, sql: SqlClient): SalesMo
   return {
     products,
     sales: new SaleServices(saleRepository, products, timezoneOf),
+    insights: new SalesInsights(saleRepository, useSql ? new SqlSalesInsights(sql) : new InMemorySalesInsights(store), timezoneOf),
     ledger: new DomainSalesLedger(recorder, "record"),
     preview: new DomainSalesLedger(recorder, "preview")
   };
