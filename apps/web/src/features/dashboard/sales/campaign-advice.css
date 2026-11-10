@@ -1,0 +1,87 @@
+/* Qué hacer con tus campañas: una fila por campaña con su consejo y sus cifras.
+ * Las cápsulas de consejo son las de la tabla de anuncios (shared/ads). */
+
+.campaign-advice {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.campaign-advice__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.campaign-advice__header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.campaign-advice__all {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.campaign-advice__empty {
+  margin: 0;
+  padding: 20px;
+}
+
+.campaign-advice__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campaign-advice__row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: center;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  font-size: 0.82rem;
+}
+
+.campaign-advice__row:first-child {
+  border-top: 0;
+}
+
+@container dashboard (max-width: 700px) {
+  .campaign-advice__row {
+    grid-template-columns: 90px minmax(0, 1fr) minmax(0, 0.8fr);
+  }
+
+  .campaign-advice__row .campaign-advice__metric:nth-last-child(-n + 2) {
+    display: none;
+  }
+}
+
+.campaign-advice__name,
+.campaign-advice__metric {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.campaign-advice__name span,
+.campaign-advice__metric span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.campaign-advice__metric strong {
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}

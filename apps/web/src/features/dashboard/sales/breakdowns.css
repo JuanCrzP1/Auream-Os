@@ -1,0 +1,94 @@
+/* Ventas por hora (barras con la hora pico) y por número, producto y país. */
+
+.breakdowns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@container dashboard (max-width: 700px) {
+  .breakdowns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.breakdowns__card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.breakdowns__card h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.breakdowns__card p {
+  margin: 0;
+}
+
+.breakdowns__hint {
+  font-size: 0.78rem;
+}
+
+.breakdowns__hours {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 130px;
+}
+
+.breakdowns__hours span {
+  flex: 1;
+  border-radius: 4px 4px 2px 2px;
+  background: color-mix(in srgb, var(--primary) 30%, var(--surface));
+}
+
+.breakdowns__hours .breakdowns__hour--peak {
+  background: var(--primary);
+}
+
+.breakdowns__hours-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.breakdowns__row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.82rem;
+}
+
+.breakdowns__line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.breakdowns__line span {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.breakdowns__track {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+
+.breakdowns__track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a78bfa, var(--primary));
+}

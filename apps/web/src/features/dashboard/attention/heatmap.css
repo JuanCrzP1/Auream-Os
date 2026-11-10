@@ -1,0 +1,62 @@
+/* Cuándo te escriben: una cuadrícula día × franja de 2 horas. */
+
+.attention-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.attention-heatmap header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.attention-heatmap h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.attention-heatmap__scroll {
+  overflow-x: auto;
+}
+
+.attention-heatmap__grid {
+  width: 100%;
+  min-width: 620px;
+  border-spacing: 4px;
+}
+
+.attention-heatmap__grid th {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.attention-heatmap__grid td {
+  padding: 0;
+}
+
+.attention-heatmap__cell {
+  display: block;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--primary);
+}
+
+.attention-heatmap__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

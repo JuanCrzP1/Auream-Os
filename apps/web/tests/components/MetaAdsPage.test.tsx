@@ -25,6 +25,8 @@ function stubApi(pixels: ReadonlyArray<typeof PIXEL> = [PIXEL]) {
     if (url.pathname === "/ai-credentials") return reply(200, { credentials: [] });
     if (url.pathname === "/inbound-webhooks") return reply(200, { webhooks: [] });
     if (url.pathname === "/mcp-credentials") return reply(200, { server: { url: "https://x/api/mcp" }, credentials: [] });
+    if (url.pathname === "/ads/accounts") return reply(200, { connection: { connected: false, method: null, userName: null, expiresAt: null, needsReconnect: false, lastError: null }, accounts: [], canManage: true, oauthAvailable: false });
+    if (url.pathname === "/dashboard/ads") return reply(200, { connected: false, rows: [], totals: {}, currency: "COP", level: "campaign", unseenSales: 0, lateShare: null, lastSyncedAt: null });
     return reply(404, { message: "no" });
   }));
 }
@@ -53,8 +55,8 @@ beforeEach(() => {
 });
 
 describe("Meta Ads", () => {
-  it("abre en el Píxel con el logo de Meta, sus píxeles y su estado en la tarjeta", async () => {
-    renderAt("/meta-ads");
+  it("el Píxel muestra el logo de Meta, sus píxeles y su estado en la tarjeta", async () => {
+    renderAt("/meta-ads?tab=pixel");
     expect(screen.getByRole("heading", { level: 1, name: "Meta Ads" })).toBeInTheDocument();
     expect(document.querySelector(".ui-page__header .provider-mark--meta")).not.toBeNull();
     const pixelTab = screen.getByRole("tab", { name: "Píxel" });
@@ -70,7 +72,7 @@ describe("Meta Ads", () => {
   it("con varios píxeles muestra todos, y la tarjeta Píxel cuenta los activos y los que Meta rechazó", async () => {
     const SECOND = { ...PIXEL, id: "p2", name: "Píxel marca 2", pixelId: "998877665544332", status: "invalid" };
     stubApi([PIXEL, SECOND]);
-    renderAt("/meta-ads");
+    renderAt("/meta-ads?tab=pixel");
     expect(await screen.findByText("Píxel tienda")).toBeInTheDocument();
     expect(screen.getByText("Píxel marca 2")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Píxel" })).toHaveAccessibleDescription("1 activo · 1 rechazado");
@@ -79,14 +81,14 @@ describe("Meta Ads", () => {
 
   it("si Meta rechazó el único token, la tarjeta Píxel lo avisa", async () => {
     stubApi([{ ...PIXEL, status: "invalid" }]);
-    renderAt("/meta-ads");
+    renderAt("/meta-ads?tab=pixel");
     expect(await screen.findByText("Píxel tienda")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Píxel" })).toHaveAccessibleDescription("1 token rechazado");
   });
 
   it("sin píxeles muestra la portada con el recorrido de la conversión, y su botón abre el diálogo de conectar", async () => {
     stubApi([]);
-    renderAt("/meta-ads");
+    renderAt("/meta-ads?tab=pixel");
     expect(await screen.findByRole("heading", { level: 2, name: "Cada venta del chat, de vuelta a tus anuncios" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /del chat de WhatsApp al bloque Pixel/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Píxel" })).toHaveAccessibleDescription("Sin conectar");
@@ -95,21 +97,24 @@ describe("Meta Ads", () => {
     expect(screen.getByRole("dialog", { name: "Conectar un píxel de Meta" })).toBeInTheDocument();
   });
 
-  it("Rendimiento muestra la tabla en blanco y lleva a Cuentas; la sección viaja en la dirección", async () => {
+  it("sin Meta conectado abre en Cuentas; Rendimiento lleva a Cuentas; la sección viaja en la dirección", async () => {
     renderAt("/meta-ads");
-    await userEvent.click(screen.getByRole("tab", { name: "Rendimiento" }));
-    expect(screen.getByRole("heading", { level: 2, name: "Tus campañas, medidas en ventas" })).toBeInTheDocument();
-    expect(screen.getByTestId("where")).toHaveTextContent("/meta-ads?tab=performance");
-
-    await userEvent.click(screen.getByRole("button", { name: "Conectar cuenta" }));
-    expect(screen.getByRole("tab", { name: "Cuentas" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("heading", { level: 2, name: "Conecta tu cuenta de Meta" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 2, name: "Conecta tu cuenta de Meta" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Cuentas" })).toHaveAccessibleDescription("Sin conectar");
+    // Sin la app de Meta en el servidor, el inicio de sesión no se ofrece; el token sí.
     expect(screen.getByRole("button", { name: "Conectar con Meta" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Pégalo aquí/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: "Rendimiento" }));
+    expect(await screen.findByRole("heading", { level: 2, name: "Conecta tus cuentas para ver el rendimiento" })).toBeInTheDocument();
+    expect(screen.getByTestId("where")).toHaveTextContent("/meta-ads?tab=performance");
+    await userEvent.click(screen.getByRole("button", { name: "Ir a Cuentas" }));
+    expect(screen.getByRole("tab", { name: "Cuentas" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("where")).toHaveTextContent("/meta-ads?tab=accounts");
   });
 
   it("las tarjetas se recorren con las flechas, Inicio y Fin, como pestañas", async () => {
-    renderAt("/meta-ads");
+    renderAt("/meta-ads?tab=pixel");
     screen.getByRole("tab", { name: "Píxel" }).focus();
 
     await userEvent.keyboard("{ArrowRight}");

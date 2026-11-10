@@ -18,6 +18,7 @@
 | Conversaciones y contactos | Todo | Todo | Todo | Ver |
 | Automatizaciones | Editar | Editar | **Ver** | Ver |
 | Ventas y productos | Todo | Todo | **Anotar** | Ver |
+| Meta Ads: gasto, ROAS y ganancia (`ads.*`) | Todo | Todo | — | — |
 | CRM (embudo y seguimientos) | Todo | Todo | **Atender** (mover, valor, responsable, seguimientos) | Ver |
 | Conexiones de WhatsApp | Todo | Todo | Ver | Ver |
 | Integraciones (claves, píxeles) | Todo | Todo | — | — |

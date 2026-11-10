@@ -12,3 +12,22 @@
 .meta-ads__panel {
   container: ads / inline-size;
 }
+
+/* Al volver del inicio de sesión de Meta. */
+.meta-ads__banner {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.meta-ads__banner--ok {
+  background: color-mix(in srgb, var(--teal) 16%, var(--surface));
+  color: var(--status-active-text);
+}
+
+.meta-ads__banner--warn {
+  background: color-mix(in srgb, var(--amber) 18%, var(--surface));
+  color: var(--status-paused-text);
+}

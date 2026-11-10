@@ -69,6 +69,15 @@ export function normalizeCountry(value: unknown): string {
   return code;
 }
 
+/** El costo (opcional): cero o más, con la misma regla de montos. Vacío: no se sabe. */
+function normalizeCost(value: unknown, countryName: string): number | null {
+  if (value === undefined || value === null || value === "") return null;
+  const cost = typeof value === "string" ? parseAmount(value) : value;
+  if (typeof cost !== "number" || !Number.isFinite(cost) || cost < 0) throw new ValidationError(`El costo en ${countryName} debe ser cero o más.`);
+  if (cost > AMOUNT_MAX) throw new ValidationError(`El costo en ${countryName} es demasiado grande.`);
+  return Math.round(cost * 100) / 100;
+}
+
 function normalizePrices(value: unknown): ReadonlyArray<ProductPrice> {
   if (!Array.isArray(value) || value.length === 0) throw new ValidationError("Pon el precio en al menos un país.");
   if (value.length > PRODUCT_PRICES_MAX) throw new ValidationError("Hay demasiados precios.");
@@ -81,7 +90,8 @@ function normalizePrices(value: unknown): ReadonlyArray<ProductPrice> {
     return {
       country,
       currency: record["currency"] ? normalizeCurrency(record["currency"]) : findCountry(country).currency,
-      amount: normalizeAmount(record["amount"], `El precio en ${findCountry(country).name}`)
+      amount: normalizeAmount(record["amount"], `El precio en ${findCountry(country).name}`),
+      cost: normalizeCost(record["cost"], findCountry(country).name)
     };
   });
 }

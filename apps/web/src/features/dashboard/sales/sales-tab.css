@@ -1,0 +1,67 @@
+/* Dashboard › Ventas: las piezas una debajo de otra. */
+
+.sales-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.sales-tab__loading {
+  min-height: 420px;
+  border-radius: 22px;
+  background: linear-gradient(100deg, var(--chip-bg) 30%, color-mix(in srgb, var(--chip-bg) 40%, var(--surface)) 50%, var(--chip-bg) 70%);
+  background-size: 200% 100%;
+  animation: sales-tab-shimmer 1.4s linear infinite;
+}
+
+@keyframes sales-tab-shimmer {
+  to { background-position: -200% 0; }
+}
+
+.sales-tab__card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.sales-tab__card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sales-tab__card-header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.sales-tab__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.sales-tab__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sales-tab__key {
+  display: inline-block;
+  width: 14px;
+}
+
+.sales-tab__key--line { height: 3px; border-radius: 2px; background: var(--primary); }
+.sales-tab__key--bar { width: 10px; height: 10px; border-radius: 3px; background: #fda4af; }
+.sales-tab__key--dash { height: 0; border-top: 2px dashed var(--teal); }

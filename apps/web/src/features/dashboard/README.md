@@ -1,21 +1,16 @@
 # Dashboard — módulo web (`/dashboard`)
 
-Cómo va el negocio: ventas, facturación, conversaciones, tasa de cierre, ticket promedio y el embudo del anuncio a la venta; con Meta Ads, gasto, ROAS y costo por venta. Filtros por periodo, producto, país, número y anuncio, comparando con el periodo anterior.
+Cómo va el negocio, en tres pestañas: **Ventas** (primero la plata de los anuncios: ROAS real frente a Meta, ganancia y costo por venta), **Anuncios** (cada campaña con su venta real) y **Atención** (leads, tiempos de respuesta y cada asesor). Detalle: [`docs/architecture/dashboard.md`](../../../../../docs/architecture/dashboard.md).
 
-**Hoy:** `pages/DashboardPage.tsx` cuenta lo que traerá.
-
-## Estructura (cada carpeta se crea cuando tiene contenido real)
 ```
 features/dashboard/
-├── pages/        DashboardPage (pestañas Ventas · Atención)
-├── components/   tarjetas de indicadores, gráficos, tablas por producto/país/anuncio
-├── hooks/        filtros (periodo, producto, número) y carga de métricas
-└── services/     dashboardApi (GET /dashboard)
+├── pages/        DashboardPage: periodo y filtros (en la dirección) y las pestañas
+├── components/   DashboardFilters
+├── sales/        AdsHero, SalesKpis, RevenueChart, AdFunnel, CampaignAdvice, Breakdowns, RecentSales
+├── ads/          AdsTab (usa la tabla compartida de `shared/ads`)
+├── attention/    AttentionTab, Heatmap, AgentsTable
+├── services/     dashboardApi (`/dashboard/sales`, `/dashboard/attention`)
+└── dashboardFormat.ts · useDashboardData.ts
 ```
-- Cada componente importa su propio CSS. Archivos de hasta 200 líneas.
-- Los datos que cruzan con la API se tipan en `contracts/` (`@contracts/*`), nunca aquí.
-
-## Habla con
-- API `/dashboard` → dominio `domains/analytics` (lee ventas, chats, gasto y recorrido de los flujos).
-
-Mapa de todos los módulos: `docs/architecture/modules.md`.
+- Quien no tiene `ads.read` (Asesor, Solo lectura) no ve la franja de anuncios ni la pestaña Anuncios, y la página no los pide.
+- Cada componente importa su CSS; el panel es un *container* (`dashboard`).

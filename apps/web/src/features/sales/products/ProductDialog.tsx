@@ -27,7 +27,7 @@ export function ProductDialog({
   const [description, setDescription] = useState(product?.description ?? "");
   const [kind, setKind] = useState<ProductKind>(product?.kind ?? "main");
   const [prices, setPrices] = useState<ReadonlyArray<PriceDraft>>(
-    product ? product.prices.map((price) => ({ ...newPriceRow(price.country), currency: price.currency, amount: String(price.amount) })) : [newPriceRow()]
+    product ? product.prices.map((price) => ({ ...newPriceRow(price.country), currency: price.currency, amount: String(price.amount), cost: price.cost === null || price.cost === undefined ? "" : String(price.cost) })) : [newPriceRow()]
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function ProductDialog({
     setBusy(true);
     setError(null);
     try {
-      await onSave({ name, description, kind, status, prices: prices.map(({ country, currency, amount }) => ({ country, currency, amount })) });
+      await onSave({ name, description, kind, status, prices: prices.map(({ country, currency, amount, cost }) => ({ country, currency, amount, cost: cost.trim() || null })) });
       onClose();
     } catch (e) {
       setError(apiErrorMessage(e, "No se pudo guardar el producto."));

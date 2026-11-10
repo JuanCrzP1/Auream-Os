@@ -15,6 +15,8 @@ import type { Scope } from "../contracts/Scope";
 // CRM: todos ven el embudo; el Asesor mueve clientes, pone valor y
 // responsable y lleva sus seguimientos; configurar embudos es de dueños y
 // administradores.
+// Meta Ads: el gasto, el ROAS y la ganancia (y conectar la cuenta) son de
+// dueños y administradores; el Asesor y Solo lectura ven Ventas y Atención.
 export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
   platform_admin: [
     "flows.read",
@@ -38,7 +40,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "sales.manage",
     "crm.read",
     "crm.write",
-    "crm.manage"
+    "crm.manage",
+    "ads.read",
+    "ads.manage"
   ],
   tenant_owner: [
     "flows.read",
@@ -62,7 +66,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "sales.manage",
     "crm.read",
     "crm.write",
-    "crm.manage"
+    "crm.manage",
+    "ads.read",
+    "ads.manage"
   ],
   tenant_admin: [
     "flows.read",
@@ -85,7 +91,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "sales.manage",
     "crm.read",
     "crm.write",
-    "crm.manage"
+    "crm.manage",
+    "ads.read",
+    "ads.manage"
   ],
   operator: [
     "flows.read",

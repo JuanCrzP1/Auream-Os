@@ -74,6 +74,13 @@ export interface ApiConfig {
   /** Versión de la Graph API de Meta para el Pixel (`META_GRAPH_API_VERSION`, p. ej. `v23.0`). */
   readonly metaGraphVersion: string;
   /**
+   * La app de Meta para «Conectar con Meta» en Meta Ads (`META_APP_ID` +
+   * `META_APP_SECRET`). `null`: solo se conecta pegando un token.
+   */
+  readonly metaApp: { readonly appId: string; readonly appSecret: string } | null;
+  /** Adonde vuelve el inicio de sesión de Meta (`META_OAUTH_REDIRECT_URL`; por defecto `<dominio>/api/ads/meta/callback`). */
+  readonly metaOAuthRedirectUrl: string;
+  /**
    * Proveedor de WhatsApp por código QR (`UAZAPI_BASE_URL` + `UAZAPI_ADMIN_TOKEN`).
    * `null`: las conexiones por QR se crean, pero vincular dice que falta el proveedor.
    */
@@ -193,6 +200,10 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`,
     publicAppOrigin: env["PUBLIC_APP_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}` : (allowedOrigins[0] ?? "http://localhost:5173")),
     metaGraphVersion,
+    metaApp: env["META_APP_ID"]?.trim() && env["META_APP_SECRET"]?.trim() ? { appId: env["META_APP_ID"]!.trim(), appSecret: env["META_APP_SECRET"]!.trim() } : null,
+    metaOAuthRedirectUrl:
+      env["META_OAUTH_REDIRECT_URL"]?.trim() ||
+      (productionHost ? `https://${productionHost}/api/ads/meta/callback` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/ads/meta/callback`),
     uazapi: uazapiUrl ? { baseUrl: uazapiUrl, adminToken: uazapiToken } : null,
     whatsappWebhookBaseUrl,
     tasks: loadTasksConfig(env, productionHost)

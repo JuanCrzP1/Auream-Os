@@ -142,3 +142,18 @@
     border-left: 0;
   }
 }
+
+.ads-accounts__token {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.ads-accounts__locked {
+  margin: 0;
+  padding: 28px;
+  color: var(--muted);
+  text-align: center;
+}

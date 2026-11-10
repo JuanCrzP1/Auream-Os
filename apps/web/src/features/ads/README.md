@@ -4,8 +4,9 @@ Las cuentas publicitarias conectadas y el rendimiento de cada campaña y anuncio
 
 **Hoy:** `pages/MetaAdsPage.tsx`. Las secciones son **tarjetas de estado** (`components/AdsNav.tsx`), no pestañas subrayadas: cada una dice cómo está («1 activo», «1 token rechazado», «Sin conectar») y la elegida se enciende con el degradado de Auream. Por dentro es una lista de pestañas accesible (flechas, Inicio y Fin). La sección viaja en la dirección (`?tab=pixel` · `performance` · `accounts`).
 - **Píxel** funciona (`pixel/`): sin píxeles, una portada con el recorrido de la conversión (chat → bloque Pixel → Meta) y los tres pasos; con píxeles, sus tarjetas y una más para conectar otro. Conectar, verificar, cambiar token, renombrar y eliminar.
-- **Rendimiento** muestra la forma de la tabla de campañas, sin números inventados, y lleva a Cuentas.
-- **Cuentas** muestra «Conectar con Meta» (aún sin usar) y lo que se obtiene al conectar.
+- **Rendimiento** (`components/PerformanceSection.tsx`): la tabla compartida `shared/ads/AdsPerformanceTable` por campaña, conjunto o anuncio, con la venta real frente a Meta y qué hacer. Sin cuentas, lleva a Cuentas.
+- **Cuentas** (`AccountsPanel`, `MetaAccountsList`, `MetaTokenDialog`): «Conectar con Meta» (inicio de sesión) o pegar un token, elegir cuentas, «Actualizar ahora» y desconectar. Al volver de Meta, la página avisa (`?meta=connected|error`).
+- La página abre en Rendimiento si Meta está conectado y en Cuentas si no.
 
 ## Estructura (cada carpeta se crea cuando tiene contenido real)
 ```

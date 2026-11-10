@@ -1,0 +1,89 @@
+/* Desempeño por asesor. */
+
+.attention-agents {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.attention-agents header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8rem;
+}
+
+.attention-agents h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.attention-agents__empty {
+  margin: 0;
+  padding: 20px;
+}
+
+.attention-agents__scroll {
+  overflow-x: auto;
+}
+
+.attention-agents table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.attention-agents thead th {
+  padding: 10px 20px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.attention-agents tbody th,
+.attention-agents td {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.attention-agents__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attention-agents__avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.attention-agents__speed {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.attention-agents__speed--ok { background: color-mix(in srgb, var(--teal) 18%, var(--surface)); color: var(--status-active-text); }
+.attention-agents__speed--warn { background: color-mix(in srgb, var(--amber) 22%, var(--surface)); color: var(--status-paused-text); }
+.attention-agents__speed--bad { background: color-mix(in srgb, var(--rose) 16%, var(--surface)); color: var(--status-danger); }
+.attention-agents__speed--none { background: var(--chip-bg); color: var(--muted); }

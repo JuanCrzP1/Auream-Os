@@ -29,6 +29,7 @@ import { composeAccountServices } from "../composition/composeAccountServices";
 import { composeTeamServices } from "../composition/composeTeamServices";
 import { composeSalesServices } from "../composition/composeSalesServices";
 import { composeCrmServices } from "../composition/composeCrmServices";
+import { composeAdsServices } from "../composition/composeAdsServices";
 import { CrmEventsRelay } from "../composition/CrmEventsRelay";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
@@ -133,7 +134,11 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
     sales: sales.ledger
   });
-  const runner = scheduling.attachHandlers([new FlowTimerTaskHandler(messagingServices.timers)]);
+  // Meta Ads (se sincroniza en la cola de tareas) y el Dashboard.
+  const ads = composeAdsServices(config, tenancy.sqlClient, scheduling.scheduler, (error, context) =>
+    logger.warn("ads.sync_failed", { ...context, error: error instanceof Error ? error.message : String(error) })
+  );
+  const runner = scheduling.attachHandlers([new FlowTimerTaskHandler(messagingServices.timers), ...(ads.syncHandler ? [ads.syncHandler] : [])]);
   // Medios de los bloques; el mismo almacén guarda las fotos de perfil y los logos (Mi perfil, Empresa).
   const mediaServices = composeMediaServices(config, tenancy.sqlClient, rateLimiter);
   const accountServices = composeAccountServices(config, tenancy.sqlClient, mediaServices?.storage ?? null, rateLimiter);
@@ -165,6 +170,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     invitationServices: team.invitations,
     salesServices: { products: sales.products, sales: sales.sales, insights: sales.insights },
     crmServices: crm.routes,
+    adsServices: ads,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,

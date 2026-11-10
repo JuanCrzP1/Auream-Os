@@ -13,6 +13,10 @@ import { routeCompanyRequest } from "./routeCompanyRequest";
 import { routeTeamRequest } from "./routeTeamRequest";
 import { routeSalesRequest, type SalesRoutes } from "./routeSalesRequest";
 import { routeCrmRequest, type CrmRoutes } from "./routeCrmRequest";
+import { routeAdsRequest } from "./routeAdsRequest";
+import { routeAdsCallback } from "./routeAdsCallback";
+import { routeDashboardRequest } from "./routeDashboardRequest";
+import type { AdsModule } from "../composition/composeAdsServices";
 import { recordLastSeen } from "../middleware/recordLastSeen";
 import { routeInvitationPublic } from "./routeInvitationPublic";
 import type { TeamServices } from "../../../domains/team/application/TeamServices";
@@ -84,6 +88,8 @@ export interface ApiRouterDependencies {
   readonly salesServices?: SalesRoutes;
   /** CRM: embudos, tablero, seguimientos (`/crm`). Ausente: la ruta responde 503. */
   readonly crmServices?: CrmRoutes;
+  /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
+  readonly adsServices?: AdsModule;
 }
 
 export async function routeApiRequest(
@@ -111,6 +117,8 @@ export async function routeApiRequest(
 
   // OAuth del servidor MCP (descubrimiento, registro y tokens): lo usa el agente, sin sesión.
   if (await routeOAuthPublic(request, response, url, dependencies.mcpServer, dependencies.rateLimiter)) return;
+  // La vuelta del inicio de sesión de Meta: sin sesión, la cuenta sale del `state` firmado.
+  if (await routeAdsCallback(request, response, url, dependencies.adsServices?.connection, dependencies.adsServices?.appOrigin ?? "", dependencies.rateLimiter)) return;
 
   // Enlace de invitación al equipo: lo autoriza su secreto; quien lo abre puede no tener cuenta.
   if (await routeInvitationPublic(request, response, url, dependencies.invitationServices, dependencies.rateLimiter)) return;
@@ -170,6 +178,8 @@ export async function routeApiRequest(
   if (await routeTeamRequest(request, response, url, dependencies.teamServices, requestContext)) return;
   if (await routeSalesRequest(request, response, url, dependencies.salesServices, requestContext)) return;
   if (await routeCrmRequest(request, response, url, dependencies.crmServices, requestContext)) return;
+  if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
+  if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;

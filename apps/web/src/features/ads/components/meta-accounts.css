@@ -1,0 +1,101 @@
+/* Meta conectado: cabecera, aviso de reconectar y una fila por cuenta con
+ * su interruptor. Tokens del tema. */
+
+.meta-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.meta-accounts__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.meta-accounts__header > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta-accounts__header h2,
+.meta-accounts__header p {
+  margin: 0;
+}
+
+.meta-accounts__header h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.meta-accounts__warn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--amber) 16%, var(--surface));
+  color: var(--status-paused-text);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.meta-accounts__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.meta-accounts__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.meta-accounts__row--on {
+  border-color: color-mix(in srgb, #0866ff 35%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, #0866ff 6%, var(--surface)) 0%, var(--surface) 70%);
+}
+
+.meta-accounts__info {
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.84rem;
+}
+
+.meta-accounts__info strong {
+  font-size: 0.95rem;
+}
+
+.meta-accounts__error {
+  color: var(--status-danger);
+  font-weight: 600;
+}
+
+.meta-accounts__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.meta-accounts__switch input {
+  width: 40px;
+  height: 22px;
+  accent-color: #0866ff;
+}

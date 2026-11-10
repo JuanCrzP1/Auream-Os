@@ -18,14 +18,14 @@ interface ProductRow {
   readonly status: string;
   readonly created_at: Date | string;
   readonly updated_at: Date | string;
-  readonly prices: ReadonlyArray<{ country: string; currency: string; amount: string | number }> | null;
+  readonly prices: ReadonlyArray<{ country: string; currency: string; amount: string | number; cost: string | number | null }> | null;
   readonly sales_count?: string | number;
 }
 
 const iso = (value: Date | string) => (value instanceof Date ? value : new Date(value)).toISOString();
 
 /** Los precios como JSON, en el orden en que se cargaron. */
-const PRICES = `coalesce((select json_agg(json_build_object('country', p.country, 'currency', p.currency, 'amount', p.amount) order by p.country)
+const PRICES = `coalesce((select json_agg(json_build_object('country', p.country, 'currency', p.currency, 'amount', p.amount, 'cost', p.cost) order by p.country)
                    from product_prices p where p.product_id = pr.id), '[]'::json) as prices`;
 
 function toProduct(row: ProductRow): Product {
@@ -36,7 +36,12 @@ function toProduct(row: ProductRow): Product {
     description: row.description,
     kind: row.kind as ProductKind,
     status: row.status as ProductStatus,
-    prices: (row.prices ?? []).map((price): ProductPrice => ({ country: price.country.trim(), currency: price.currency.trim(), amount: Number(price.amount) })),
+    prices: (row.prices ?? []).map((price): ProductPrice => ({
+      country: price.country.trim(),
+      currency: price.currency.trim(),
+      amount: Number(price.amount),
+      cost: price.cost === null || price.cost === undefined ? null : Number(price.cost)
+    })),
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at)
   };
@@ -105,10 +110,10 @@ export class SqlProductRepository implements ProductRepository {
 async function writePrices(tx: SqlExecutor, tenantId: string, productId: string, prices: ReadonlyArray<ProductPrice>): Promise<void> {
   if (prices.length === 0) return;
   await tx.query(
-    `insert into product_prices (product_id, tenant_id, country, currency, amount)
-     select $1, $2, p.country, p.currency, p.amount
-       from unnest($3::text[], $4::text[], $5::numeric[]) as p(country, currency, amount)`,
-    [productId, tenantId, prices.map((p) => p.country), prices.map((p) => p.currency), prices.map((p) => p.amount)]
+    `insert into product_prices (product_id, tenant_id, country, currency, amount, cost)
+     select $1, $2, p.country, p.currency, p.amount, p.cost
+       from unnest($3::text[], $4::text[], $5::numeric[], $6::numeric[]) as p(country, currency, amount, cost)`,
+    [productId, tenantId, prices.map((p) => p.country), prices.map((p) => p.currency), prices.map((p) => p.amount), prices.map((p) => p.cost ?? null)]
   );
 }
 

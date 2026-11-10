@@ -84,7 +84,7 @@
 
 .price-rows__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 1fr) 32px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 0.9fr) 32px;
   gap: 8px;
   align-items: center;
 }
@@ -143,7 +143,7 @@
   }
 
   .price-rows__row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 32px;
   }
 
   .price-rows__row select:first-child {

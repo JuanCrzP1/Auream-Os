@@ -1,6 +1,7 @@
 import type { Money, StageOutcome } from "@contracts/CrmContracts";
 import type { CrmSource } from "@contracts/CrmActivityContracts";
 import { formatMoney } from "@shared/format/formatMoney";
+import { timeAgo } from "@shared/format/timeAgo";
 
 // Cómo se dicen las cosas en el CRM: en palabras simples, sin jerga.
 
@@ -20,6 +21,9 @@ export function formatTotals(totals: ReadonlyArray<Money>, empty = "Sin valor"):
   return totals.length === 0 ? empty : totals.map((total) => formatMoney(total.amount, total.currency)).join(" · ");
 }
 
+/** Hace cuánto: «hace 4 min», «ayer» (compartido con el resto de la app). */
+export { timeAgo };
+
 export function percent(value: number | null): string {
   return value === null ? "—" : `${Math.round(value * 100)} %`;
 }
@@ -27,18 +31,6 @@ export function percent(value: number | null): string {
 const MINUTE = 60_000;
 const TIME = new Intl.DateTimeFormat("es", { hour: "numeric", minute: "2-digit" });
 const DAY = new Intl.DateTimeFormat("es", { weekday: "short", day: "numeric", month: "short" });
-
-/** Hace cuánto: «hace 4 min», «hace 3 h», «ayer», «hace 5 días». */
-export function timeAgo(at: string | null, now = Date.now()): string {
-  if (!at) return "";
-  const minutes = Math.max(0, Math.floor((now - new Date(at).getTime()) / MINUTE));
-  if (minutes < 1) return "ahora";
-  if (minutes < 60) return `hace ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `hace ${hours} h`;
-  const days = Math.floor(hours / 24);
-  return days === 1 ? "ayer" : `hace ${days} días`;
-}
 
 /** Cuándo toca un seguimiento: «Hoy 3:00 p. m.», «Mañana 9:00 a. m.», «vie, 14 nov», «Vencido · hace 2 h». */
 export function dueLabel(dueAt: string, now = new Date()): { readonly text: string; readonly tone: "overdue" | "today" | "later" } {

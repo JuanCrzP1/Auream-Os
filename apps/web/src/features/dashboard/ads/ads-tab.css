@@ -1,0 +1,179 @@
+/* Dashboard › Anuncios: resumen, nivel, tabla y por qué Meta dice menos. */
+
+.ads-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ads-tab__tops {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@container dashboard (max-width: 860px) {
+  .ads-tab__tops {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ads-tab__top {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  font-size: 0.76rem;
+}
+
+.ads-tab__top--lead {
+  border-color: color-mix(in srgb, var(--teal) 35%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--teal) 10%, var(--surface)) 0%, var(--surface) 70%);
+}
+
+.ads-tab__top strong {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ads-tab__label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ads-tab__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.ads-tab__levels {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+}
+
+.ads-tab__levels button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ads-tab__levels button[aria-selected="true"] {
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(30 21 48 / 8%);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.ads-tab__notes {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+@container dashboard (max-width: 760px) {
+  .ads-tab__notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ads-tab__why,
+.ads-tab__best {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.ads-tab__why {
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 7%, var(--surface)) 0%, var(--surface) 70%);
+}
+
+.ads-tab__why h2,
+.ads-tab__best h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.ads-tab__why p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.ads-tab__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.ads-tab__facts span {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.ads-tab__facts strong {
+  display: block;
+  font-size: 1.15rem;
+}
+
+.ads-tab__thumb {
+  width: 100%;
+  max-height: 140px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.ads-tab__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 16px;
+  text-align: center;
+}
+
+.ads-tab__empty h2,
+.ads-tab__empty p {
+  margin: 0;
+}
+
+.ads-tab__loading {
+  min-height: 360px;
+  border-radius: 20px;
+  background: var(--chip-bg);
+}

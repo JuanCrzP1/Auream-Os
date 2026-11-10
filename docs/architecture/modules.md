@@ -8,14 +8,14 @@ Decisión de producto del 2026-11-10: tomar lo mejor de **Leona** (el bot, los c
 
 | Opción | Ruta web | Módulo web (`apps/web/src/features/`) | API | Dominio (`domains/`) | Proveedor (`infrastructure/`) | Estado |
 |---|---|---|---|---|---|---|
-| Dashboard | `/dashboard` | `dashboard/` | `/dashboard` | `analytics` | — | Por construir |
+| Dashboard | `/dashboard` | `dashboard/` | `/dashboard/*` | `analytics` | — | ✅ Ventas · Anuncios · Atención ([dashboard.md](dashboard.md)) |
 | Conversaciones | `/conversations` | `conversations/` | `/conversations` | `conversations` · `messaging` | `whatsapp` | ✅ Funciona |
 | CRM | `/crm` | `crm/` (`contacts/` · `pipeline/` · `follow-ups/`) | `/contacts` · `/labels` · `/crm/*` | `contacts` · `crm` | — | ✅ Embudo, contactos y seguimientos ([crm.md](crm.md)) |
 | Automatizaciones | `/automations` | `automations/` | `/automations` · `/api/builder/*` | `automations` | — | ✅ Funciona |
 | Agentes de IA | `/ai-agents` | `ai-agents/` | — | `ai-agents` + motor `ai-sales-engine` | `ai` | FASE E |
 | Difusiones | `/broadcasts` | `broadcasts/` | `/broadcasts` | `broadcasts` | `scheduling` · `whatsapp` | Por construir |
 | Grupos y comunidades | `/groups` | `groups/` | `/groups` | `groups` | `whatsapp` | Por construir |
-| Meta Ads | `/meta-ads` | `ads/` (`pixel/`) | `/pixel-connections` · `/ads/*` | `integrations` (píxel) · `ads` | `meta` | Píxel ✅ (sección Píxel); rendimiento de campañas y cuentas por construir |
+| Meta Ads | `/meta-ads` | `ads/` (`pixel/`) | `/pixel-connections` · `/ads/*` | `integrations` (píxel) · `ads` | `meta` | ✅ Píxel · Rendimiento · Cuentas ([dashboard.md](dashboard.md)) |
 | Ventas | `/sales` | `sales/` (`orders/` · `products/`) | `/sales` · `/products` | `sales` · `products` | `record-sale` (Registrar venta) | 🟢 Hecho ([`sales.md`](sales.md)) |
 | Conexiones | `/connections` | `connections/` | `/connections` | `connections` | `whatsapp` | ✅ Funciona |
 | Integraciones | `/integrations` | `integrations/` | `/ai-credentials` · `/inbound-webhooks` · `/mcp-credentials` | `integrations` · `webhooks` · `mcp` | `ai` | ✅ Funciona (la tarjeta de Meta lleva a Meta Ads) |

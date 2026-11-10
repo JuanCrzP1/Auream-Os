@@ -1,0 +1,82 @@
+/* Últimas ventas con su anuncio. */
+
+.recent-sales {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.recent-sales__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.recent-sales__header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.recent-sales__header a {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.recent-sales__empty {
+  margin: 0;
+  padding: 20px;
+}
+
+.recent-sales__scroll {
+  overflow-x: auto;
+}
+
+.recent-sales__table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.recent-sales__table th {
+  padding: 10px 20px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.recent-sales__table td {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-sales__table td > span:not(.recent-sales__ad) {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.recent-sales__ad {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #4f6bed 14%, var(--surface));
+  color: #3949ab;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.recent-sales__ad--organic {
+  background: var(--chip-bg);
+  color: var(--muted);
+}

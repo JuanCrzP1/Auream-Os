@@ -1,0 +1,107 @@
+/* Del anuncio a la venta: cuatro pasos con una banda que se angosta y el
+ * porcentaje que pasa al siguiente. */
+
+.ad-funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.ad-funnel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ad-funnel__header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.ad-funnel__steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@container dashboard (max-width: 700px) {
+  .ad-funnel__steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ad-funnel__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px 22px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--step-color) 7%, var(--surface));
+}
+
+.ad-funnel__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ad-funnel__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--step-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--step-color) 20%, transparent);
+}
+
+.ad-funnel__value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-funnel__cost {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.ad-funnel__band {
+  position: absolute;
+  bottom: 8px;
+  left: 14px;
+  width: calc(var(--step-width) - 28px);
+  height: 6px;
+  border-radius: 999px;
+  background: var(--step-color);
+}
+
+.ad-funnel__rate {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: -18px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 6px 18px -6px rgb(30 21 48 / 35%);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateY(-50%);
+}

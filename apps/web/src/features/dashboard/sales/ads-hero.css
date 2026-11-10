@@ -1,0 +1,100 @@
+/* La franja del ROAS real: oscura con el degradado de Auream y tarjetas de
+ * vidrio. Es lo primero que se ve: la plata de los anuncios. */
+
+.ads-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding: 24px 26px;
+  border-radius: 24px;
+  background: linear-gradient(125deg, #1e1530 0%, #33246b 55%, #5b4bd4 100%);
+  box-shadow: 0 18px 40px -18px rgb(59 42 122 / 60%);
+  color: #ffffff;
+}
+
+.ads-hero__lead {
+  display: flex;
+  flex: 1 1 250px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ads-hero__label,
+.ads-hero__card-label {
+  color: #c4b5fd;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ads-hero__roas {
+  font-family: var(--font-display);
+  font-size: 3.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ads-hero__sentence {
+  color: #ede9fe;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.ads-hero__meta {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 12%);
+  color: #ddd6fe;
+  font-size: 0.8rem;
+}
+
+.ads-hero__grid {
+  display: grid;
+  flex: 2 1 520px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@container dashboard (max-width: 760px) {
+  .ads-hero__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ads-hero__card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 8%);
+}
+
+.ads-hero__card--profit {
+  border: 1px solid rgb(153 246 228 / 35%);
+  background: rgb(20 184 166 / 18%);
+}
+
+.ads-hero__card--profit .ads-hero__card-label,
+.ads-hero__card--profit .ads-hero__card-note {
+  color: #99f6e4;
+}
+
+.ads-hero__card-value {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ads-hero__card-note {
+  color: #ddd6fe;
+  font-size: 0.76rem;
+}

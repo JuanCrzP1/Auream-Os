@@ -182,7 +182,7 @@ describe("Ventas", () => {
       description: "",
       kind: "upsell",
       status: "active",
-      prices: [{ country: "CO", currency: "COP", amount: "15.000" }]
+      prices: [{ country: "CO", currency: "COP", amount: "15.000", cost: null }]
     });
   });
 

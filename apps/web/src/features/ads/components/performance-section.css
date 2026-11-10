@@ -1,0 +1,68 @@
+/* Meta Ads → Rendimiento: barra de nivel y periodo sobre la tabla. */
+
+.ads-performance {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ads-performance__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ads-performance__group {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+}
+
+.ads-performance__toggle {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ads-performance__toggle[aria-selected="true"],
+.ads-performance__toggle[aria-pressed="true"] {
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(30 21 48 / 8%);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.ads-performance__sync {
+  margin-left: auto;
+  font-size: 0.82rem;
+}
+
+.ads-performance__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 16px;
+  text-align: center;
+}
+
+.ads-performance__empty h2,
+.ads-performance__empty p {
+  margin: 0;
+}
+
+.ads-performance__loading {
+  min-height: 280px;
+  border-radius: 18px;
+  background: var(--chip-bg);
+}

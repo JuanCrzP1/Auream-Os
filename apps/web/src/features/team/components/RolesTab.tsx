@@ -16,6 +16,7 @@ const AREAS: ReadonlyArray<{ readonly area: string; readonly access: Readonly<Re
   // Atender: mover clientes de etapa, poner valor y responsable, seguimientos. Configurar embudos: dueños y administradores.
   { area: "CRM (embudo y seguimientos)", access: { tenant_owner: "all", tenant_admin: "all", operator: "attend", viewer: "view" } },
   { area: "Automatizaciones", access: { tenant_owner: "edit", tenant_admin: "edit", operator: "view", viewer: "view" } },
+  { area: "Meta Ads: gasto, ROAS y ganancia", access: { tenant_owner: "all", tenant_admin: "all", operator: "none", viewer: "none" } },
   { area: "Ventas y productos", access: { tenant_owner: "all", tenant_admin: "all", operator: "record", viewer: "view" } },
   { area: "Conexiones de WhatsApp", access: { tenant_owner: "all", tenant_admin: "all", operator: "view", viewer: "view" } },
   { area: "Integraciones (claves de IA, píxeles)", access: { tenant_owner: "all", tenant_admin: "all", operator: "none", viewer: "none" } },

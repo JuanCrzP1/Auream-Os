@@ -22,6 +22,8 @@ export interface ProductPrice {
   /** ISO 4217. Por defecto la del país; puede ser otra (USD en Venezuela). */
   readonly currency: string;
   readonly amount: number;
+  /** Lo que le cuesta al negocio (en la misma moneda), para la ganancia real; `null` si no se sabe. */
+  readonly cost?: number | null;
 }
 
 export interface ProductSummary {
@@ -49,6 +51,8 @@ export interface ProductPriceInput {
   /** Vacío: la moneda del país. */
   readonly currency?: string;
   readonly amount: number | string;
+  /** Opcional: lo que le cuesta al negocio (vacío o `null`: no se sabe). */
+  readonly cost?: number | string | null;
 }
 
 export interface SaveProductRequest {

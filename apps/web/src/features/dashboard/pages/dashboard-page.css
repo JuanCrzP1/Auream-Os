@@ -1,0 +1,16 @@
+/* El Dashboard: el panel mide su ancho (container `dashboard`) para
+ * acomodar tarjetas, gráficos y tablas. */
+
+.dashboard-page__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  container: dashboard / inline-size;
+}
+
+.dashboard-page__wait {
+  min-height: 320px;
+  border-radius: 20px;
+  background: var(--chip-bg);
+}

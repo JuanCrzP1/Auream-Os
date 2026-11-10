@@ -1,0 +1,122 @@
+/* La tabla de campañas: cifras alineadas, «Auream / Meta» con lo de Meta en
+ * gris, y el consejo de cada fila como cápsula de color. Tokens del tema. */
+
+.ads-table__scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.ads-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ads-table th {
+  padding: 12px 14px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ads-table th span {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ads-table td,
+.ads-table tfoot th {
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ads-table tfoot td,
+.ads-table tfoot th {
+  border-top: 2px solid color-mix(in srgb, var(--primary) 20%, var(--line));
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.ads-table__name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+  white-space: normal;
+}
+
+.ads-table__name > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ads-table__thumb {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.ads-table__meta {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.ads-table__reason {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.ads-table__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.ads-table__dot--on {
+  background: var(--teal);
+}
+
+.ads-table__good {
+  color: var(--status-active-text);
+}
+
+.ads-table__bad {
+  color: var(--status-danger);
+}
+
+.ads-table__advice {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.ads-table__advice--scale { background: color-mix(in srgb, var(--teal) 20%, var(--surface)); color: var(--status-active-text); }
+.ads-table__advice--keep { background: color-mix(in srgb, var(--primary) 12%, var(--surface)); color: var(--primary); }
+.ads-table__advice--review { background: color-mix(in srgb, var(--amber) 22%, var(--surface)); color: var(--status-paused-text); }
+.ads-table__advice--pause { background: color-mix(in srgb, var(--rose) 16%, var(--surface)); color: var(--status-danger); }
+.ads-table__advice--learning { background: var(--chip-bg); color: var(--muted); }

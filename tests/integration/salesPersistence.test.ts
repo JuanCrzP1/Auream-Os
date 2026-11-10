@@ -67,11 +67,12 @@ describe("Ventas y Productos en PostgreSQL", () => {
     const created = await products.create(tenantId, {
       name: "Video",
       kind: "main",
-      prices: [{ country: "CO", currency: "COP", amount: 10000 }, { country: "VE", currency: "USD", amount: 12.5 }]
+      prices: [{ country: "CO", currency: "COP", amount: 10000, cost: "2.500" }, { country: "VE", currency: "USD", amount: 12.5 }]
     });
-    expect(created.prices).toEqual([{ country: "CO", currency: "COP", amount: 10000 }, { country: "VE", currency: "USD", amount: 12.5 }]);
+    // El costo (opcional) se guarda junto al precio; sin él queda `null`.
+    expect(created.prices).toEqual([{ country: "CO", currency: "COP", amount: 10000, cost: 2500 }, { country: "VE", currency: "USD", amount: 12.5, cost: null }]);
     const edited = await products.update(tenantId, created.id, { name: "Video HD", kind: "main", prices: [{ country: "MX", currency: "MXN", amount: 199 }] });
-    expect(edited.prices).toEqual([{ country: "MX", currency: "MXN", amount: 199 }]);
+    expect(edited.prices).toEqual([{ country: "MX", currency: "MXN", amount: 199, cost: null }]);
     await expect(products.create(tenantId, { name: "video hd", kind: "upsell", prices: [{ country: "CO", currency: "COP", amount: 1 }] })).rejects.toThrow("Ya tienes");
   });
 

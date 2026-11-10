@@ -1,0 +1,135 @@
+/* Dashboard › Atención: tarjetas, quién espera y cada número. */
+
+.attention-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.attention-tab__cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@container dashboard (max-width: 860px) {
+  .attention-tab__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.attention-tab__card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  font-size: 0.76rem;
+}
+
+.attention-tab__card strong {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+}
+
+.attention-tab__card--lead {
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 8%, var(--surface)) 0%, var(--surface) 70%);
+}
+
+.attention-tab__card--warn {
+  border-color: color-mix(in srgb, var(--amber) 40%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--amber) 14%, var(--surface)) 0%, var(--surface) 70%);
+}
+
+.attention-tab__label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.attention-tab__waiting {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 18%, var(--surface));
+  color: var(--status-paused-text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.attention-tab__connections {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.attention-tab__connections h2 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.attention-tab__connections p {
+  margin: 0;
+}
+
+.attention-tab__connections ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attention-tab__connections li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.84rem;
+}
+
+.attention-tab__connections li:first-child {
+  border-top: 0;
+}
+
+.attention-tab__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rose);
+}
+
+.attention-tab__dot--on {
+  background: var(--teal);
+}
+
+.attention-tab__state {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--teal) 18%, var(--surface));
+  color: var(--status-active-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.attention-tab__state--off {
+  background: color-mix(in srgb, var(--rose) 16%, var(--surface));
+  color: var(--status-danger);
+}
+
+.attention-tab__loading {
+  min-height: 360px;
+  border-radius: 20px;
+  background: var(--chip-bg);
+}

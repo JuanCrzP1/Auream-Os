@@ -17,13 +17,14 @@ describe("ProductServices", () => {
     const product = await s.create(TENANT, {
       name: "  Video   Dilo cantando ",
       kind: "main",
-      prices: [{ country: "co", currency: "", amount: 10000 }, { country: "VE", currency: "USD", amount: 12.5 }]
+      prices: [{ country: "co", currency: "", amount: 10000, cost: "3.500" }, { country: "VE", currency: "USD", amount: 12.5 }]
     });
     expect(product.name).toBe("Video Dilo cantando");
     expect(product.status).toBe("active");
+    // El costo es opcional («3.500» = 3500); sin él queda `null` (no se sabe, no es cero).
     expect(product.prices).toEqual([
-      { country: "CO", currency: "COP", amount: 10000 },
-      { country: "VE", currency: "USD", amount: 12.5 }
+      { country: "CO", currency: "COP", amount: 10000, cost: 3500 },
+      { country: "VE", currency: "USD", amount: 12.5, cost: null }
     ]);
   });
 
@@ -35,6 +36,7 @@ describe("ProductServices", () => {
       s.create(TENANT, { name: "A", kind: "main", prices: [{ country: "CO", currency: "COP", amount: 1 }, { country: "CO", currency: "USD", amount: 2 }] })
     ).rejects.toThrow("Colombia tiene dos precios");
     await expect(s.create(TENANT, { name: "A", kind: "main", prices: [{ country: "CO", currency: "COP", amount: 0 }] })).rejects.toThrow("mayor que cero");
+    await expect(s.create(TENANT, { name: "A", kind: "main", prices: [{ country: "CO", currency: "COP", amount: 1, cost: "-5" }] })).rejects.toThrow("El costo en Colombia debe ser cero o más.");
     await expect(s.create(TENANT, { name: "A", kind: "main", prices: [{ country: "XX", currency: "COP", amount: 5 }] })).rejects.toThrow("país");
   });
 
