@@ -5,6 +5,7 @@ import { PillTabs } from "@shared/ui/pill-tabs/PillTabs";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 import { BroadcastRow } from "./BroadcastRow";
+import { FirstBroadcast } from "./FirstBroadcast";
 import { MonthHero } from "./MonthHero";
 import { useBroadcasts } from "./useBroadcasts";
 
@@ -34,7 +35,7 @@ export function BroadcastsList({ onNew, onOpen }: { readonly onNew: () => void; 
           <h1 className="ui-page__title">Difusiones</h1>
           <p className="ui-page__subtitle">Un flujo o un mensaje a muchos clientes a la vez, sin poner en riesgo tu número.</p>
         </div>
-        {data?.canManage ? (
+        {data?.canManage && list.length > 0 ? (
           <button type="button" className="ui-btn ui-btn--primary" onClick={onNew}>
             + Nueva difusión
           </button>
@@ -77,25 +78,5 @@ export function BroadcastsList({ onNew, onOpen }: { readonly onNew: () => void; 
         </>
       ) : null}
     </div>
-  );
-}
-
-function FirstBroadcast({ canManage, onNew }: { readonly canManage: boolean; readonly onNew: () => void }) {
-  return (
-    <section className="bc-first" aria-label="Tu primera difusión">
-      <h2>Escríbele a todos tus clientes sin quemar tu número</h2>
-      <ul>
-        <li><strong>A quien ya te escribió</strong> y con los filtros que quieras: etiquetas, etapa del CRM, país, días.</li>
-        <li><strong>A un ritmo seguro</strong>: pausas al azar, solo en tu horario, tope por día y versiones distintas del mensaje.</li>
-        <li><strong>Con lo que vendió</strong>: quién leyó, quién respondió y quién compró en los 3 días siguientes.</li>
-      </ul>
-      {canManage ? (
-        <button type="button" className="ui-btn ui-btn--primary" onClick={onNew}>
-          Crear la primera difusión
-        </button>
-      ) : (
-        <p className="ui-muted">Las difusiones las crean los dueños y administradores.</p>
-      )}
-    </section>
   );
 }

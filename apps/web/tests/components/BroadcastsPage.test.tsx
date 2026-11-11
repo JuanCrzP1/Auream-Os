@@ -105,6 +105,20 @@ describe("Difusiones", () => {
     await waitFor(() => expect(calls.some((c) => c.method === "POST" && c.path === `/broadcasts/${ID}/pause`)).toBe(true));
   });
 
+  it("la primera vez: vende la idea, cuenta cómo funciona y lleva a crear la primera", async () => {
+    stub();
+    const empty = { ...LIST(true), broadcasts: [], month: { ...LIST(true).month, broadcasts: 0 } };
+    const base = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => (new URL(String(input), "http://api.test").pathname === "/broadcasts" && (init?.method ?? "GET") === "GET" ? reply(200, empty) : base(input, init))));
+    page();
+    const hero = await screen.findByRole("region", { name: "Tu primera difusión" });
+    expect(hero).toHaveTextContent("sin quemar tu número");
+    expect(screen.getByRole("region", { name: "Cómo funciona" })).toHaveTextContent("Enviar y medir");
+    expect(screen.queryByRole("button", { name: "+ Nueva difusión" })).not.toBeInTheDocument();
+    await userEvent.click(within(hero).getByRole("button", { name: "Crear la primera difusión →" }));
+    expect(await screen.findByRole("heading", { name: "Nueva difusión" })).toBeInTheDocument();
+  });
+
   it("la vista previa pone el nombre sin dejar huecos", () => {
     expect(previewText("Hola {first_name} 👋", "Laura Gómez")).toBe("Hola Laura 👋");
     expect(previewText("Hola {first_name}, ¿te muestro?", null)).toBe("Hola, ¿te muestro?");

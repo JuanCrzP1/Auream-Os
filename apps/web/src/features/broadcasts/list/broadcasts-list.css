@@ -41,34 +41,3 @@
   color: var(--muted);
   text-align: center;
 }
-
-.bc-first {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: var(--surface);
-}
-
-.bc-first h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-}
-
-.bc-first ul {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0;
-  padding-left: 18px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.bc-first strong {
-  color: var(--text);
-}

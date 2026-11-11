@@ -1,0 +1,130 @@
+/* Difusiones la primera vez: tarjetas, cómo funciona y la fila de ejemplo. */
+
+.bc-first__features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bc-first__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: 0 14px 32px -26px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+
+.bc-first__card--safe {
+  border-color: color-mix(in srgb, var(--teal) 30%, transparent);
+}
+
+.bc-first__card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.bc-first__icon {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--chip-bg);
+  font-size: 1.35rem;
+}
+
+.bc-first__card--safe .bc-first__icon {
+  background: color-mix(in srgb, var(--teal) 15%, transparent);
+}
+
+.bc-first__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.bc-first__chip {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.bc-first__chip--on {
+  border-color: transparent;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.bc-first__chip--dark {
+  border-color: transparent;
+  background: #1e1530;
+  color: #ffffff;
+}
+
+.bc-first__pace {
+  display: flex;
+  height: 34px;
+  align-items: flex-end;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.bc-first__pace span {
+  flex: 1;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--teal) 55%, transparent);
+}
+
+.bc-first__warm {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+  color: var(--amber);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.bc-first__funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: auto;
+}
+
+.bc-first__funnel div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.bc-first__funnel span {
+  flex: 0 0 78px;
+}
+
+.bc-first__funnel i {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a78bfa, var(--primary));
+}
+
+.bc-first__funnel .bc-first__funnel--sold {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.bc-first__funnel--sold i {
+  background: var(--teal);
+}

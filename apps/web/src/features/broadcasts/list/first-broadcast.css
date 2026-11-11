@@ -1,0 +1,103 @@
+/* Difusiones la primera vez: la franja oscura que vende la idea, tres
+ * tarjetas con un ejemplo, cómo funciona y una fila de cómo se verá. */
+
+.bc-first {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.bc-first__hero {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+  overflow: hidden;
+  padding: 34px 36px;
+  border-radius: 28px;
+  background: linear-gradient(125deg, #1e1530 0%, #33246b 52%, #5b4bd4 100%);
+  box-shadow: 0 24px 50px -24px rgb(59 42 122 / 70%);
+  color: #ffffff;
+}
+
+.bc-first__glow {
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(167 139 250 / 35%), transparent 70%);
+}
+
+.bc-first__pitch {
+  position: relative;
+  display: flex;
+  flex: 1 1 380px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bc-first__pill {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 10%);
+  color: #c4b5fd;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bc-first__pitch h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  line-height: 1.12;
+}
+
+.bc-first__pitch h2 span {
+  color: #a5f3fc;
+}
+
+.bc-first__pitch p {
+  max-width: 520px;
+  margin: 0;
+  color: #ede9fe;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.bc-first__cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.bc-first__button {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px -12px rgb(0 0 0 / 50%);
+  color: #4c1d95;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform var(--speed-fast) var(--ease-out);
+}
+
+.bc-first__button:hover {
+  transform: translateY(-1px);
+}
+
+.bc-first__note {
+  color: #c4b5fd;
+  font-size: 0.82rem;
+}

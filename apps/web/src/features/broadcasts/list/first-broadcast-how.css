@@ -1,0 +1,130 @@
+/* Difusiones la primera vez: cómo funciona y la fila de cómo se verá. */
+
+.bc-first__how {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--primary) 3%, var(--surface));
+}
+
+.bc-first__how ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bc-first__how li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.bc-first__how li strong {
+  display: block;
+  color: var(--text);
+}
+
+.bc-first__num {
+  display: inline-flex;
+  height: 32px;
+  flex: 0 0 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  font-weight: 800;
+}
+
+.bc-first__num--last {
+  background: var(--teal);
+}
+
+.bc-first__sample {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bc-first__sample-tag {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.bc-first__sample-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) repeat(4, minmax(0, 0.75fr)) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 30%, transparent);
+  border-radius: 18px;
+  background: var(--surface);
+  opacity: 0.6;
+}
+
+.bc-first__sample-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bc-first__sample-row small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.bc-first__sample-state em {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--teal) 16%, transparent);
+  color: var(--teal);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.bc-first__sample-state i {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--teal);
+}
+
+.bc-first__sample-money {
+  align-items: flex-end;
+}
+
+.bc-first__sample-money strong {
+  color: var(--teal);
+  font-family: var(--font-display);
+}
+
+@container broadcasts (max-width: 900px) {
+  .bc-first__features,
+  .bc-first__how ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bc-first__sample-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .bc-first__sample-row > span:not(:first-child):not(.bc-first__sample-money) {
+    display: none;
+  }
+}
