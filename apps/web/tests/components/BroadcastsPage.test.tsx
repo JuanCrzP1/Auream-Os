@@ -112,10 +112,10 @@ describe("Difusiones", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => (new URL(String(input), "http://api.test").pathname === "/broadcasts" && (init?.method ?? "GET") === "GET" ? reply(200, empty) : base(input, init))));
     page();
     const hero = await screen.findByRole("region", { name: "Tu primera difusión" });
-    expect(hero).toHaveTextContent("sin quemar tu número");
-    expect(screen.getByRole("region", { name: "Cómo funciona" })).toHaveTextContent("Enviar y medir");
+    expect(hero).toHaveTextContent("Envía tu primera difusión");
+    expect(within(hero).getByRole("list", { name: "Cómo funciona" })).toHaveTextContent("Ves quién leyó, respondió y compró");
     expect(screen.queryByRole("button", { name: "+ Nueva difusión" })).not.toBeInTheDocument();
-    await userEvent.click(within(hero).getByRole("button", { name: "Crear la primera difusión →" }));
+    await userEvent.click(within(hero).getByRole("button", { name: "Crear difusión" }));
     expect(await screen.findByRole("heading", { name: "Nueva difusión" })).toBeInTheDocument();
   });
 

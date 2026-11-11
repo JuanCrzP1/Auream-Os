@@ -1,62 +1,53 @@
-import "./first-groups.css";
-import "./first-groups-parts.css";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { apiErrorMessage } from "@shared/http/apiErrorMessage";
+import { EmptyState } from "@shared/ui/empty-state/EmptyState";
+import { groupsApi } from "../services/groupsApi";
 
-const FEATURES: ReadonlyArray<readonly [string, string, string]> = [
-  ["🔗", "Un enlace que nunca se llena", "Lo pones en tus anuncios, tu bio e historias. Cuando un grupo llega al cupo, Auream crea el siguiente con el mismo nombre, foto y reglas."],
-  ["📣", "Un mensaje a todos tus grupos", "Texto, foto, video, audio o encuesta, ahora o programado, y avisa a todos aunque tengan el grupo silenciado."],
-  ["💰", "Lo que vende cada grupo", "Del clic a la compra: quién entró, quién se quedó y cuánto vendieron las personas de cada grupo."]
-];
-const STEPS: ReadonlyArray<readonly [string, string]> = [
-  ["Crea la campaña", "Nombre, foto, descripción y cupo"],
-  ["Comparte el enlace", "En anuncios, bio, historias o un QR"],
-  ["Envía a los grupos", "Lanzamientos, ofertas y encuestas"],
-  ["Mira lo que vende", "Cada grupo con su plata"]
-];
+const ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
 
-/** Grupos la primera vez: vende la idea, cuenta cómo funciona y lleva a crear la primera campaña. */
-export function FirstGroups({ canManage, hasNumbers, onNew }: { readonly canManage: boolean; readonly hasNumbers: boolean; readonly onNew: () => void }) {
+/** Grupos sin campañas: qué es, crear la primera o traer los grupos que ya tienes. */
+export function FirstGroups({ canManage, hasNumbers, onNew, onMine }: { readonly canManage: boolean; readonly hasNumbers: boolean; readonly onNew: () => void; readonly onMine: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const bring = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await groupsApi.sync();
+      onMine();
+    } catch (failure) {
+      setError(apiErrorMessage(failure, "No se pudieron traer tus grupos."));
+      setBusy(false);
+    }
+  };
+  const actions = !canManage ? (
+    <span className="ui-muted">Las campañas las crean los dueños y administradores.</span>
+  ) : !hasNumbers ? (
+    <Link className="ui-btn ui-btn--primary" to="/connections">Conectar un número</Link>
+  ) : (
+    <>
+      <button type="button" className="ui-btn ui-btn--primary" onClick={onNew}>Crear campaña</button>
+      <button type="button" className="ui-btn" disabled={busy} onClick={() => void bring()}>{busy ? "Trayendo…" : "Traer mis grupos"}</button>
+      {error ? <span className="ui-error">{error}</span> : null}
+    </>
+  );
   return (
-    <div className="gr-first">
-      <section className="gr-first__hero" aria-label="Tu primera campaña de grupos">
-        <div className="gr-first__pitch">
-          <span className="gr-first__pill">Grupos de WhatsApp que venden</span>
-          <h2>Un solo enlace que <span>llena tus grupos</span> solo</h2>
-          <p>Para lanzamientos, ofertas y clientes VIP: los grupos se crean solos, la bienvenida sale sola, y ves cuánto vende cada uno.</p>
-          {canManage && hasNumbers ? <button type="button" className="gr-first__button" onClick={onNew}>Crear la primera campaña →</button> : null}
-          {canManage && !hasNumbers ? <span className="gr-first__note">Primero conecta un número con QR en Conexiones: los grupos se crean por él.</span> : null}
-          {!canManage ? <span className="gr-first__note">Las campañas las crean los dueños y administradores.</span> : null}
-        </div>
-        <div className="gr-first__visual" aria-hidden="true">
-          <div className="gr-first__link">
-            <small>Tu enlace</small>
-            <strong>/g/navidad</strong>
-          </div>
-          {[["Navidad #1", 100, "Lleno"], ["Navidad #2", 100, "Lleno"], ["Navidad #3", 63, "Recibiendo"], ["Navidad #4", 0, "Se crea solo"]].map(([name, fill, state]) => (
-            <div key={name as string} className="gr-first__group">
-              <span><strong>{name}</strong><small>{state}</small></span>
-              <i><b style={{ width: `${fill}%` }} className={fill === 100 ? "gr-first__full" : undefined} /></i>
-            </div>
-          ))}
-          <div className="gr-first__money"><small>Ejemplo de resultado</small><strong>$ 3.912.000</strong><span>78 compraron · 93 % se quedaron</span></div>
-        </div>
-      </section>
-      <section className="gr-first__features" aria-label="Lo que hace">
-        {FEATURES.map(([icon, title, text]) => (
-          <article key={title} className="gr-first__card">
-            <span className="gr-first__icon" aria-hidden="true">{icon}</span>
-            <strong>{title}</strong>
-            <p>{text}</p>
-          </article>
-        ))}
-      </section>
-      <section className="gr-first__how" aria-label="Cómo funciona">
-        <strong>Cómo funciona</strong>
-        <ol>
-          {STEPS.map(([title, text], index) => (
-            <li key={title}><span className={index === 3 ? "gr-first__num gr-first__num--last" : "gr-first__num"}>{index + 1}</span><span><strong>{title}</strong>{text}</span></li>
-          ))}
-        </ol>
-      </section>
-    </div>
+    <EmptyState
+      icon={ICON}
+      label="Tu primera campaña de grupos"
+      title="Crea tu primera campaña de grupos"
+      description={hasNumbers
+        ? "Un enlace que lleva a tus grupos de WhatsApp, crea el siguiente cuando uno se llena y te muestra cuánto vende cada grupo."
+        : "Los grupos se crean y se manejan por un número de WhatsApp conectado con QR. Conéctalo primero en Conexiones."}
+      actions={actions}
+      steps={["Comparte un enlace", "Los grupos se llenan y se crean solos", "Ves lo que vende cada grupo"]}
+    />
   );
 }

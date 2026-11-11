@@ -52,8 +52,9 @@ describe("Grupos", () => {
     stub([]);
     page();
     const hero = await screen.findByRole("region", { name: "Tu primera campaña de grupos" });
-    expect(hero).toHaveTextContent("llena tus grupos");
-    await userEvent.click(within(hero).getByRole("button", { name: "Crear la primera campaña →" }));
+    expect(hero).toHaveTextContent("Crea tu primera campaña de grupos");
+    expect(within(hero).getByRole("button", { name: "Traer mis grupos" })).toBeInTheDocument();
+    await userEvent.click(within(hero).getByRole("button", { name: "Crear campaña" }));
     expect(await screen.findByRole("heading", { name: "Nueva campaña de grupos" })).toBeInTheDocument();
   });
 

@@ -53,7 +53,7 @@ export function GroupsOverview({ tab, onTab, onOpen, onNew, onSend }: {
       {data ? (
         <PillTabs label="Ver" tabs={[{ id: "campaigns", label: "Campañas", count: campaigns.length }, { id: "mine", label: "Mis grupos" }]} selected={tab} onSelect={onTab} />
       ) : null}
-      {empty ? <FirstGroups canManage={data.canManage} hasNumbers={data.hasNumbers} onNew={onNew} /> : null}
+      {empty ? <FirstGroups canManage={data.canManage} hasNumbers={data.hasNumbers} onNew={onNew} onMine={() => onTab("mine")} /> : null}
       {data && tab === "campaigns" && campaigns.length > 0 ? (
         <section className="gr-cards" aria-label="Campañas">
           {campaigns.map((campaign) => <CampaignCard key={campaign.id} campaign={campaign} onOpen={onOpen} />)}

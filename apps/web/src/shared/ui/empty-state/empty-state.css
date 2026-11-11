@@ -1,0 +1,109 @@
+/* Pantalla vacía estándar: una tarjeta corta con ícono, título, texto,
+ * acciones y los pasos en una línea. */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.empty-state__main {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 24px 26px;
+}
+
+.empty-state__icon {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.empty-state__icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.empty-state__body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.empty-state__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.empty-state__text {
+  max-width: 560px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.empty-state__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 0;
+  padding: 14px 26px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--primary) 3%, var(--surface));
+  color: var(--muted);
+  font-size: 0.82rem;
+  list-style: none;
+}
+
+.empty-state__steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-state__num {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--chip-bg);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+@media (max-width: 560px) {
+  .empty-state__main {
+    flex-direction: column;
+  }
+}
+
+/* Un enlace con forma de botón (p. ej. «Conectar un número») no va subrayado. */
+.empty-state__actions a.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
