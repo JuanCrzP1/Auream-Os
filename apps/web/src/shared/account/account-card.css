@@ -1,8 +1,22 @@
 /* La tarjeta de la cuenta: abajo en la barra lateral, ancla del menú. */
 .account-card {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
+}
+
+.account-card__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.account-card__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
 }
 
 .account-card__button {
@@ -56,9 +70,3 @@
   color: var(--muted);
 }
 
-.account-card__chevron {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
-  color: var(--muted);
-}

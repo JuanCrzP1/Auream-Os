@@ -1,0 +1,95 @@
+/* La tarjeta de soporte (la diadema): quién responde, cuándo y por dónde. */
+.support-pop__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 20px 16px;
+  background: linear-gradient(125deg, #1e1530 0%, #33246b 60%, #5b4bd4 100%);
+  color: #ffffff;
+}
+
+.support-pop__head strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.support-pop__head small {
+  color: #e2dcfb;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.support-pop__icon {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 14%);
+}
+
+.support-pop__icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.support-pop__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.support-pop__whatsapp,
+.support-pop__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  text-decoration: none;
+}
+
+.support-pop__whatsapp span:first-child,
+.support-pop__option span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.support-pop__whatsapp small,
+.support-pop__option small {
+  font-size: 0.76rem;
+}
+
+.support-pop__whatsapp {
+  background: #25d366;
+  color: #ffffff;
+}
+
+.support-pop__whatsapp:hover {
+  background: #1fbe5b;
+  color: #ffffff;
+}
+
+.support-pop__option {
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.support-pop__option small {
+  color: var(--muted);
+}
+
+.support-pop__option:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  color: var(--text);
+}

@@ -1,0 +1,104 @@
+/* La lista de la campana y la tarjeta de soporte. */
+.notice-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  color: var(--text);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.notice-row:hover {
+  background: var(--chip-bg);
+  color: var(--text);
+}
+
+.notice-row.is-unread {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.notice-row__dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.notice-row__dot--rose { background: var(--rose, #e11d48); }
+.notice-row__dot--amber { background: var(--amber, #d97706); }
+.notice-row__dot--teal { background: var(--teal, #0d9488); }
+
+.notice-row__text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notice-row__text strong {
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.notice-row__text span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.notice-row__text small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.notice-row__new {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.notice-list__loading {
+  height: 120px;
+  margin: 4px;
+  border-radius: 14px;
+  background: var(--chip-bg);
+}
+
+.notice-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 22px 30px;
+  text-align: center;
+}
+
+.notice-list__empty > span {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--teal, #0d9488) 16%, transparent);
+  color: var(--teal, #0d9488);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.notice-list__empty small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}

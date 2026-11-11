@@ -1,0 +1,58 @@
+/* La campana y la diadema junto a la cuenta: botones redondos con borde suave, como el resto del menú. */
+.sidebar-action {
+  position: relative;
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sidebar-action svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sidebar-action:hover,
+.sidebar-action.is-open {
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.sidebar-action:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.sidebar-action__badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--app-canvas, var(--surface));
+  border-radius: 999px;
+  background: var(--rose, #e11d48);
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+}

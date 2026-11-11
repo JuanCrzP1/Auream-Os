@@ -17,6 +17,8 @@ import { routeBroadcastsRequest, type BroadcastRoutes } from "./routeBroadcastsR
 import { routeGroupsRequest, type GroupRoutes } from "./routeGroupsRequest";
 import { routeGroupLink } from "./routeGroupLink";
 import { routeHelpRequest, type HelpRoutes } from "./routeHelpRequest";
+import { routeNotificationsRequest } from "./routeNotificationsRequest";
+import type { NotificationServices } from "../../../domains/notifications/application/NotificationServices";
 import { routeHelpDocs } from "./routeHelpDocs";
 import type { LinkService } from "../../../domains/groups/application/LinkService";
 import type { GroupActivity } from "../../../domains/groups/application/GroupActivity";
@@ -100,6 +102,8 @@ export interface ApiRouterDependencies {
   /** Grupos y comunidades (`/groups`) y el enlace público de sus campañas (`/g/<slug>`). */
   /** Ayuda y soporte (`/help`), y la documentación pública (`/llms.txt`, `/help/docs/<slug>.md`). */
   readonly helpServices?: HelpRoutes & { readonly docsBase: string };
+  /** La campana (`/notifications`). Ausente: responde 503. */
+  readonly notificationServices?: NotificationServices;
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
   /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
   readonly adsServices?: AdsModule;
@@ -196,6 +200,7 @@ export async function routeApiRequest(
   if (await routeBroadcastsRequest(request, response, url, dependencies.broadcastServices, requestContext)) return;
   if (await routeGroupsRequest(request, response, url, dependencies.groupServices, requestContext)) return;
   if (await routeHelpRequest(request, response, url, dependencies.helpServices, requestContext)) return;
+  if (await routeNotificationsRequest(request, response, url, dependencies.notificationServices, requestContext)) return;
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
   if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
