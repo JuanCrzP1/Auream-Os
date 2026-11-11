@@ -1,6 +1,6 @@
 # notifications — la campana del menú (bounded context)
 
-La campana debajo de la tarjeta de la cuenta, abajo en la barra lateral (solo ícono, junto a la de soporte); su ventana se abre hacia arriba, del ancho del menú, como el menú del perfil. Web: `apps/web/src/shared/account/NotificationBell.tsx` y `apps/web/src/shared/notifications/`.
+La campana debajo de la tarjeta de la cuenta, abajo en la barra lateral (solo ícono, junto a la de soporte); su ventana se abre al lado del menú, alineada abajo con el botón, con espacio para leer cada aviso. Web: `apps/web/src/shared/account/NotificationBell.tsx` y `apps/web/src/shared/notifications/`.
 
 ## Responsabilidad
 Avisar lo que pide atención en la cuenta y llevar a la pantalla donde se resuelve.

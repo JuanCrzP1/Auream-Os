@@ -1,13 +1,22 @@
 import "./sidebar-popover.css";
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 
 /**
- * La ventana de la campana o de soporte: se abre HACIA ARRIBA desde la
- * tarjeta de la cuenta y ocupa todo el ancho del menú, igual que el menú del
- * perfil. Se cierra con Escape o tocando fuera.
+ * La ventana de la campana o de soporte: se abre AL LADO de la barra lateral,
+ * con su borde de abajo alineado con el botón que la abrió (crece hacia
+ * arriba desde ahí), con más ancho que el menú para que los avisos se lean
+ * en dos renglones. Se cierra con Escape o tocando fuera.
  */
 export function SidebarPopover({ anchor, label, onClose, children }: { readonly anchor: RefObject<HTMLElement>; readonly label: string; readonly onClose: () => void; readonly children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
+  const [place, setPlace] = useState<{ left: number; bottom: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const sidebar = anchor.current?.closest(".app-sidebar") ?? anchor.current;
+    const rect = sidebar?.getBoundingClientRect();
+    const button = anchor.current?.getBoundingClientRect();
+    if (rect && button) setPlace({ left: rect.right + 12, bottom: Math.max(12, window.innerHeight - button.bottom) });
+  }, [anchor]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -29,7 +38,7 @@ export function SidebarPopover({ anchor, label, onClose, children }: { readonly 
   }, [anchor, onClose]);
 
   return (
-    <div ref={box} className="sidebar-popover" role="dialog" aria-label={label}>
+    <div ref={box} className="sidebar-popover" role="dialog" aria-label={label} style={place ?? undefined}>
       {children}
     </div>
   );

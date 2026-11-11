@@ -54,7 +54,7 @@ En Vercel, `/llms.txt` se reescribe a la API y `content/help/**` viaja con la fu
 ## Soporte
 
 - Ni el artículo ni el panel «?» muestran soporte: son solo ayuda.
-- **La diadema**, debajo de la tarjeta de la cuenta, abre hacia arriba «¿Necesitas ayuda?»: WhatsApp, correo, horario y tiempo de respuesta. Si aún no están configurados, lo dice y deja el Centro de ayuda.
+- **La diadema**, debajo de la tarjeta de la cuenta, abre al lado del menú «¿Necesitas ayuda?»: WhatsApp, correo, horario y tiempo de respuesta. Si aún no están configurados, lo dice y deja el Centro de ayuda.
 - **Banner** solo en la portada del Centro de ayuda, con WhatsApp y correo, y solo si el equipo de Auream los configuró (WhatsApp, correo, horario y tiempo de respuesta en «Administrar ayuda»).
 - **Casos de soporte:** la web ya no los ofrece. La API y la tabla `support_cases` siguen (`/help/support/cases`), sin pantalla, por si se retoman.
 
