@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { SupportSettings } from "@contracts/HelpContracts";
 import { helpApi } from "@shared/help/helpApi";
+import { openHelpPanel } from "@shared/help/helpPanelEvents";
 import { whatsappLink } from "@shared/help/moduleForPath";
 import { SidebarPopover } from "./SidebarPopover";
 
@@ -49,6 +50,18 @@ export function SupportButton() {
                 <span><strong>Correo</strong><small>{settings.email}</small></span><span aria-hidden="true">→</span>
               </a>
             ) : null}
+            {pathname.startsWith("/help") ? null : (
+              <button
+                type="button"
+                className="support-pop__option"
+                onClick={() => {
+                  setOpen(false);
+                  openHelpPanel();
+                }}
+              >
+                <span><strong>Ayuda de esta pantalla</strong><small>Guías y video de lo que estás viendo</small></span><span aria-hidden="true">→</span>
+              </button>
+            )}
             <Link className="support-pop__option" to="/help" onClick={() => setOpen(false)}>
               <span><strong>Centro de ayuda</strong><small>Guías paso a paso y videos</small></span><span aria-hidden="true">→</span>
             </Link>

@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import type { NotificationFeed } from "@contracts/NotificationContracts";
 import { NotificationBell } from "../../src/shared/account/NotificationBell";
 import { SupportButton } from "../../src/shared/account/SupportButton";
+import { HelpPanel } from "../../src/shared/help/HelpPanel";
 
 // ---------------------------------------------------------------------------
 // Junto a la cuenta: la campana (número de lo nuevo, cada aviso lleva a donde
@@ -29,6 +30,8 @@ function stub(support: Record<string, string | null>) {
     if (url.pathname === "/notifications") return reply(200, FEED);
     if (url.pathname === "/notifications/seen") return reply(204);
     if (url.pathname === "/help/support") return reply(200, { settings: support, cases: [] });
+    if (url.pathname.startsWith("/help/modules/")) return reply(200, { articles: [] });
+    if (url.pathname === "/help/tutorials") return reply(200, { tutorials: [] });
     return reply(404, {});
   }));
   return calls;
@@ -69,5 +72,15 @@ describe("Campana y soporte junto a la cuenta", () => {
     expect(within(card).getByRole("link", { name: /Centro de ayuda/ })).toHaveAttribute("href", "/help");
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Soporte" })).not.toBeInTheDocument());
+  });
+
+  it("soporte abre la ayuda de la pantalla donde estás (sin botón flotante que la tape)", async () => {
+    stub({ whatsapp: null, email: null, hours: null, responseTime: null });
+    render(<MemoryRouter initialEntries={["/conversations"]}><SupportButton /><HelpPanel /></MemoryRouter>);
+    expect(screen.queryByRole("button", { name: "Ayuda" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Soporte" }));
+    await userEvent.click(await screen.findByRole("button", { name: /Ayuda de esta pantalla/ }));
+    expect(await screen.findByRole("complementary", { name: "Ayuda" })).toHaveTextContent(/Estás en Conversaciones/);
+    expect(screen.queryByRole("dialog", { name: "Soporte" })).not.toBeInTheDocument();
   });
 });

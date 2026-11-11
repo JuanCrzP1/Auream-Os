@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { ArticleDetail, HelpHomeResponse } from "@contracts/HelpContracts";
 import { HelpPage } from "../../src/features/help/pages/HelpPage";
 import { HelpPanel } from "../../src/shared/help/HelpPanel";
+import { openHelpPanel } from "../../src/shared/help/helpPanelEvents";
 
 // ---------------------------------------------------------------------------
 // Ayuda: la portada (buscar, empezar, módulos, soporte), un artículo con su
@@ -85,7 +86,9 @@ describe("Ayuda", () => {
   it("el panel «?»: solo ayuda, lo de la pantalla en que estás y un buscador", async () => {
     stub();
     render(<MemoryRouter initialEntries={["/broadcasts"]}><HelpPanel /></MemoryRouter>);
-    await userEvent.click(screen.getByRole("button", { name: "Ayuda" }));
+    // Sin botón flotante: se abre desde la diadema de soporte («Ayuda de esta pantalla»).
+    expect(screen.queryByRole("button", { name: "Ayuda" })).not.toBeInTheDocument();
+    act(() => openHelpPanel());
     expect(await screen.findByRole("link", { name: /Enviar tu primera difusión/ })).toHaveAttribute("href", "/help?article=primera-difusion");
     expect(screen.getByText(/Para esta pantalla · Difusiones/)).toBeInTheDocument();
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();

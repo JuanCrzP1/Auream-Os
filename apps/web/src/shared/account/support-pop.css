@@ -93,3 +93,12 @@
   border-color: color-mix(in srgb, var(--primary) 40%, transparent);
   color: var(--text);
 }
+
+/* «Ayuda de esta pantalla» es un botón (abre el panel), igual a los enlaces. */
+button.support-pop__option {
+  width: 100%;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}

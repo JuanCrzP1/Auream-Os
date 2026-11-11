@@ -1,6 +1,6 @@
 # Ayuda, documentación y soporte
 
-**Ayuda** (`/help`) es el Centro de ayuda. Además hay un botón **«?»** en cada pantalla, y la **documentación** sirve también a los agentes de IA (MCP) y a los modelos de lenguaje (`/llms.txt`).
+**Ayuda** (`/help`) es el Centro de ayuda. Además, cada pantalla tiene su **ayuda** (se abre desde la diadema de soporte, «Ayuda de esta pantalla»), y la **documentación** sirve también a los agentes de IA (MCP) y a los modelos de lenguaje (`/llms.txt`).
 
 | Pieza | Dónde vive |
 |---|---|
@@ -8,7 +8,7 @@
 | Dominio | [`domains/help`](../../domains/help/README.md) |
 | API | `apps/api/routes/routeHelpRequest.ts` (con sesión) y `routeHelpDocs.ts` (pública) |
 | MCP | `apps/api/mcp/tools/helpTools.ts` |
-| Web | `apps/web/src/features/help`; el panel «?» en `apps/web/src/shared/help` |
+| Web | `apps/web/src/features/help`; el panel de ayuda de cada pantalla en `apps/web/src/shared/help` (se abre desde la diadema de soporte, «Ayuda de esta pantalla»: no hay botón flotante que tape la pantalla) |
 
 ## Por qué así
 
@@ -48,12 +48,12 @@ En Vercel, `/llms.txt` se reescribe a la API y `content/help/**` viaja con la fu
 - El equipo de Auream pega el enlace de **YouTube (no listado) o Vimeo**, con título, módulo, duración, el artículo donde aparece y si va destacado. Puede guardarlo como borrador o publicarlo para todas las cuentas.
 - Se reproducen dentro de Auream: YouTube sin cookies (`youtube-nocookie.com`) o el reproductor de Vimeo.
 - Cada persona deja marcado lo que vio («✓ Visto»), y el equipo ve las vistas.
-- Aparecen en tres lugares: el Centro de ayuda, el panel «?» del módulo y dentro del artículo.
+- Aparecen en tres lugares: el Centro de ayuda, el panel de ayuda del módulo y dentro del artículo.
 - Si un módulo no tiene videos, no aparece ningún espacio vacío.
 
 ## Soporte
 
-- Ni el artículo ni el panel «?» muestran soporte: son solo ayuda.
+- Ni el artículo ni el panel de ayuda muestran soporte: son solo ayuda.
 - **La diadema**, debajo de la tarjeta de la cuenta, abre al lado del menú «¿Necesitas ayuda?»: WhatsApp, correo, horario y tiempo de respuesta. Si aún no están configurados, lo dice y deja el Centro de ayuda.
 - **Banner** solo en la portada del Centro de ayuda, con WhatsApp y correo, y solo si el equipo de Auream los configuró (WhatsApp, correo, horario y tiempo de respuesta en «Administrar ayuda»).
 - **Casos de soporte:** la web ya no los ofrece. La API y la tabla `support_cases` siguen (`/help/support/cases`), sin pantalla, por si se retoman.

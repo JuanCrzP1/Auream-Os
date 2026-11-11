@@ -5,12 +5,15 @@ import { Link, useLocation } from "react-router-dom";
 import { HELP_MODULES, type ArticleSummary, type Tutorial } from "@contracts/HelpContracts";
 import { helpApi } from "./helpApi";
 import { HelpIcon } from "./HelpIcons";
+import { onOpenHelpPanel } from "./helpPanelEvents";
 import { moduleForPath } from "./moduleForPath";
 import { useHelpSearch } from "./useHelpSearch";
 
 /**
- * El botón «?» de cada pantalla y su panel: buscar en la ayuda y, sin
- * búsqueda, los artículos y el video de ESA pantalla. Se carga al abrirlo.
+ * El panel de ayuda de cada pantalla: buscar en la ayuda y, sin búsqueda, los
+ * artículos y el video de ESA pantalla. Se abre desde la diadema de soporte
+ * («Ayuda de esta pantalla», `openHelpPanel`); sin botón flotante que tape
+ * la pantalla. Se carga al abrirlo.
  */
 export function HelpPanel() {
   const location = useLocation();
@@ -36,6 +39,7 @@ export function HelpPanel() {
   }, [open]);
 
   useEffect(() => setQuery(""), [open]);
+  useEffect(() => onOpenHelpPanel(() => setOpen(true)), []);
 
   if (location.pathname.startsWith("/help")) return null;
   const close = () => setOpen(false);
@@ -43,7 +47,6 @@ export function HelpPanel() {
 
   return (
     <>
-      <button type="button" className="help-fab" aria-label="Ayuda" aria-expanded={open} onClick={() => setOpen(!open)}>?</button>
       {open ? (
         <div className="help-panel__backdrop" onClick={close} role="presentation">
           <aside className="help-panel" aria-label="Ayuda" onClick={(event) => event.stopPropagation()}>
