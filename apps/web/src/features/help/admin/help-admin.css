@@ -1,0 +1,210 @@
+/* Administrar ayuda (equipo de Auream). */
+
+.help-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.help-admin__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.help-admin__title span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1e1530;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.help-admin__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.help-admin__list,
+.help-admin__form,
+.help-admin__cases {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+
+.help-admin__list {
+  min-width: 0;
+  flex: 1 1 520px;
+}
+
+.help-admin__form {
+  flex: 1 1 360px;
+}
+
+.help-admin__contact {
+  max-width: 560px;
+}
+
+.help-admin__form h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.help-admin__list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.help-admin__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.help-admin__row--on {
+  background: var(--chip-bg);
+}
+
+.help-admin__order {
+  display: flex;
+  flex-direction: column;
+}
+
+.help-admin__order button {
+  width: 24px;
+  height: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.6rem;
+  cursor: pointer;
+}
+
+.help-admin__pick {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.help-admin__pick small,
+.help-admin__case small {
+  color: var(--muted);
+}
+
+.help-admin__state {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.help-admin__state--on {
+  background: color-mix(in srgb, var(--teal) 15%, transparent);
+  color: var(--teal);
+}
+
+.help-admin__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.help-admin__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.help-admin__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.help-admin__remove {
+  align-self: flex-start;
+  color: var(--rose);
+}
+
+.help-admin__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.help-admin__filters button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.help-admin__filters button[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.help-admin__case {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.help-admin__case header {
+  display: flex;
+  flex-direction: column;
+}
+
+.help-admin__case p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.help-admin__reply {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--chip-bg);
+}
+
+.help-admin__answer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.help-admin__answer span {
+  display: flex;
+  gap: 8px;
+}

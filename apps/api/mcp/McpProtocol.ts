@@ -17,6 +17,7 @@ export const SUPPORTED_PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11
 
 export const SERVER_INSTRUCTIONS =
   "Servidor MCP de Auream (automatización de WhatsApp). Todo ocurre dentro de la cuenta de la credencial y solo con sus permisos. " +
+  "Antes de cambiar algo, lee la guía (read_platform_guide) y, si dudas cómo funciona una parte, búscalo en la ayuda (search_help, read_help_article). " +
   "Busca antes de actuar (list_*), usa los ids que devuelven y confirma con el usuario antes de enviar mensajes o iniciar flujos: le llegan al cliente por WhatsApp.";
 
 export interface JsonRpcResponse {
@@ -86,14 +87,14 @@ export class McpProtocol {
   }
 
   private allowed(access: McpAccess): McpTool[] {
-    return this.tools.filter((tool) => access.scopes.has(tool.scope));
+    return this.tools.filter((tool) => tool.scope === null || access.scopes.has(tool.scope));
   }
 
   private async call(id: string | number | null, params: Record<string, unknown>, access: McpAccess): Promise<JsonRpcResponse> {
     const name = params["name"];
     const tool = this.tools.find((candidate) => candidate.name === name);
     if (!tool) return error(id, -32602, `Herramienta desconocida: ${String(name)}.`);
-    if (!access.scopes.has(tool.scope)) return error(id, -32602, `La credencial no tiene permiso para «${tool.name}».`);
+    if (tool.scope !== null && !access.scopes.has(tool.scope)) return error(id, -32602, `La credencial no tiene permiso para «${tool.name}».`);
     const args = typeof params["arguments"] === "object" && params["arguments"] !== null ? (params["arguments"] as Record<string, unknown>) : {};
     const invalid = invalidArguments(tool.inputSchema, args);
     if (invalid) return error(id, -32602, invalid);

@@ -1,3 +1,5 @@
+import type { HelpServices } from "../../../domains/help/application/HelpServices";
+import { helpTools } from "./tools/helpTools";
 import type { ProductServices } from "../../../domains/products/application/ProductServices";
 import { randomBytes, randomUUID } from "node:crypto";
 import type { ApiConfig } from "../config/loadApiConfig";
@@ -57,6 +59,8 @@ export interface McpDependencies {
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
+  /** La documentación de Auream (guía para agentes, buscar y leer artículos). */
+  readonly help?: Pick<HelpServices, "documents" | "search">;
   readonly onToolCall?: (access: McpAccess, report: ToolCallReport) => void;
 }
 
@@ -83,7 +87,8 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     ...flowEditTools(editing),
     ...contactTools(deps.contacts),
     ...(deps.messaging ? conversationTools(deps.messaging.conversations) : []),
-    ...connectionTools(deps.connections)
+    ...connectionTools(deps.connections),
+    ...(deps.help ? helpTools(deps.help) : [])
   ];
   return {
     credentials,

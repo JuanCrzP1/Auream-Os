@@ -33,6 +33,7 @@ import { composeAdsServices } from "../composition/composeAdsServices";
 import { CrmEventsRelay } from "../composition/CrmEventsRelay";
 import { composeBroadcastServices } from "../composition/composeBroadcastServices";
 import { composeGroupServices } from "../composition/composeGroupServices";
+import { composeHelpServices } from "../composition/composeHelpServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
@@ -173,6 +174,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const accountServices = composeAccountServices(config, tenancy.sqlClient, mediaServices?.storage ?? null, rateLimiter);
   const team = composeTeamServices(tenancy.sqlClient);
 
+  // Ayuda: artículos del repositorio (también para el MCP y llms.txt), tutoriales y soporte.
+  const help = composeHelpServices(tenancy.sqlClient);
+
   const listener = createApiRequestListener(config, {
     services,
     contactsServices,
@@ -201,6 +205,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     crmServices: crm.routes,
     broadcastServices: { broadcasts: broadcasts.broadcasts, audiences: broadcasts.audiences },
     groupServices: groups,
+    helpServices: { ...help, docsBase: config.helpDocsBase },
     adsServices: ads,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
@@ -212,6 +217,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       connections: connectionsServices,
       messaging: messagingServices,
       products: sales.products,
+      help: help.help,
       // Cada acción de un agente queda en el registro (sin sus datos).
       onToolCall: (access, report) => logger.info("mcp.tool_call", { tenantId: access.tenantId, credentialId: access.credentialId, ...report })
     }),

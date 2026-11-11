@@ -1,0 +1,179 @@
+/* El texto de un artículo: títulos, pasos numerados, avisos y tablas. */
+
+.help-markdown {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.help-markdown h2 {
+  margin: 12px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  scroll-margin-top: 20px;
+}
+
+.help-markdown h3 {
+  margin: 6px 0 0;
+  font-size: 1.05rem;
+}
+
+.help-markdown p,
+.help-markdown ul {
+  margin: 0;
+}
+
+.help-markdown code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--chip-bg);
+  font-size: 0.88em;
+}
+
+.help-markdown pre {
+  margin: 0;
+  padding: 14px;
+  overflow-x: auto;
+  border-radius: 12px;
+  background: #1e1530;
+  color: #ede9fe;
+}
+
+.help-markdown pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.help-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.help-steps li {
+  position: relative;
+  padding-left: 44px;
+  counter-increment: step;
+}
+
+.help-steps li::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  content: counter(step);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.help-callout {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.help-callout strong {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.help-callout--warn {
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
+  background: color-mix(in srgb, var(--amber) 8%, var(--surface));
+}
+
+.help-callout--warn strong {
+  color: var(--amber);
+}
+
+.help-callout--tip {
+  border-color: color-mix(in srgb, var(--teal) 35%, transparent);
+  background: color-mix(in srgb, var(--teal) 7%, var(--surface));
+}
+
+.help-callout--tip strong {
+  color: var(--teal);
+}
+
+.help-table {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.help-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.help-table th,
+.help-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.help-table th {
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+}
+
+.help-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+}
+
+.help-feedback__buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.help-feedback__buttons button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.help-feedback__more {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.help-feedback__more textarea {
+  width: 100%;
+  box-sizing: border-box;
+}

@@ -4,6 +4,7 @@ import "./app-shell.css";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { rememberAppLocation } from "@shared/navigation/lastAppLocation";
+import { HelpPanel } from "@shared/help/HelpPanel";
 
 interface AppShellProps {
   children: ReactNode;
@@ -26,6 +27,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="app-shell">
       <AppSidebar />
       <main className="app-shell__main">{children}</main>
+      <HelpPanel />
     </div>
   );
 }

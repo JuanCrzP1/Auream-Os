@@ -23,7 +23,8 @@ export interface McpTool {
   readonly name: string;
   readonly title: string;
   readonly description: string;
-  readonly scope: Scope;
+  /** `null`: no toca datos de la cuenta (p. ej. la documentación) y la ve cualquier credencial. */
+  readonly scope: Scope | null;
   readonly inputSchema: McpInputSchema;
   /** Solo lee (el agente puede usarla sin pedir confirmación). */
   readonly readOnly: boolean;

@@ -5,14 +5,14 @@ import { SIDEBAR_ROUTES } from "../navigation/sidebar/sidebar-routes";
 import { SETTINGS_ROUTES } from "../settings/settings-sections";
 import { SettingsScreen } from "../settings/SettingsScreen";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { HelpComingSoon } from "./placeholders/ComingSoonPages";
+import { HelpPage } from "@features/help/pages/HelpPage";
 
 /**
  * Las rutas de la cuenta. Configuración (`/settings/:section`) va a pantalla
  * completa, SIN la barra de la app: Mi perfil, Apariencia, General, Equipo,
  * Plan y pagos y Seguridad son secciones suyas. Las direcciones de antes
  * (`/profile`, `/team`, `/billing`, `/settings?tab=…`) llevan a su sección.
- * Ayuda sigue dentro de la app («Próximamente»).
+ * Ayuda (`/help`) es el Centro de ayuda, dentro de la app.
  *
  * Se devuelven como elementos `<Route>` (no como componente) para ir dentro de
  * `<Routes>`.
@@ -50,7 +50,7 @@ export function accountRoutes(): ReactElement[] {
       element={
         <ProtectedRoute>
           <AppShell>
-            <HelpComingSoon />
+            <HelpPage />
           </AppShell>
         </ProtectedRoute>
       }

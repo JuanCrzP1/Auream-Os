@@ -16,6 +16,8 @@ import { routeCrmRequest, type CrmRoutes } from "./routeCrmRequest";
 import { routeBroadcastsRequest, type BroadcastRoutes } from "./routeBroadcastsRequest";
 import { routeGroupsRequest, type GroupRoutes } from "./routeGroupsRequest";
 import { routeGroupLink } from "./routeGroupLink";
+import { routeHelpRequest, type HelpRoutes } from "./routeHelpRequest";
+import { routeHelpDocs } from "./routeHelpDocs";
 import type { LinkService } from "../../../domains/groups/application/LinkService";
 import type { GroupActivity } from "../../../domains/groups/application/GroupActivity";
 import { routeAdsRequest } from "./routeAdsRequest";
@@ -96,6 +98,8 @@ export interface ApiRouterDependencies {
   /** Difusiones (`/broadcasts`). Ausente: la ruta responde 503. */
   readonly broadcastServices?: BroadcastRoutes;
   /** Grupos y comunidades (`/groups`) y el enlace público de sus campañas (`/g/<slug>`). */
+  /** Ayuda y soporte (`/help`), y la documentación pública (`/llms.txt`, `/help/docs/<slug>.md`). */
+  readonly helpServices?: HelpRoutes & { readonly docsBase: string };
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
   /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
   readonly adsServices?: AdsModule;
@@ -127,6 +131,7 @@ export async function routeApiRequest(
   // OAuth del servidor MCP (descubrimiento, registro y tokens): lo usa el agente, sin sesión.
   if (await routeOAuthPublic(request, response, url, dependencies.mcpServer, dependencies.rateLimiter)) return;
   // La vuelta del inicio de sesión de Meta: sin sesión, la cuenta sale del `state` firmado.
+  if (await routeHelpDocs(request, response, url, dependencies.helpServices?.help, dependencies.helpServices?.docsBase ?? "")) return;
   if (await routeGroupLink(request, response, url, dependencies.groupServices?.link, dependencies.rateLimiter)) return;
   if (await routeAdsCallback(request, response, url, dependencies.adsServices?.connection, dependencies.adsServices?.appOrigin ?? "", dependencies.rateLimiter)) return;
 
@@ -190,6 +195,7 @@ export async function routeApiRequest(
   if (await routeCrmRequest(request, response, url, dependencies.crmServices, requestContext)) return;
   if (await routeBroadcastsRequest(request, response, url, dependencies.broadcastServices, requestContext)) return;
   if (await routeGroupsRequest(request, response, url, dependencies.groupServices, requestContext)) return;
+  if (await routeHelpRequest(request, response, url, dependencies.helpServices, requestContext)) return;
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
   if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;

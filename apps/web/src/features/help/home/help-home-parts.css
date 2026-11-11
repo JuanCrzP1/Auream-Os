@@ -1,0 +1,94 @@
+/* Centro de ayuda: videos, columnas de lo más leído y novedades. */
+
+.help-home__videos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.help-home__video {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.help-home__thumb {
+  position: relative;
+  display: flex;
+  aspect-ratio: 16 / 9;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1e1530, #5b4bd4) center / cover;
+  color: #ffffff;
+  font-size: 1.4rem;
+}
+
+.help-home__thumb small {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 65%);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.help-home__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.help-home__panel {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+}
+
+.help-home__link,
+.help-home__news {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.help-home__link span:first-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.help-home__link small {
+  color: var(--muted);
+}
+
+.help-home__news {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.help-home__news small {
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 820px) {
+  .help-home__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -46,7 +46,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "broadcasts.read",
     "broadcasts.manage",
     "groups.read",
-    "groups.manage"
+    "groups.manage",
+    // Solo el equipo de Auream: tutoriales de Ayuda y soporte de todas las cuentas.
+    "help.manage"
   ],
   tenant_owner: [
     "flows.read",

@@ -59,6 +59,5 @@ export const accountHelpLink: AccountMenuLink = {
   label: "Ayuda",
   hint: "Guías, novedades y soporte",
   path: SIDEBAR_ROUTES.help,
-  icon: SidebarIcons.help,
-  soon: true
+  icon: SidebarIcons.help
 };
