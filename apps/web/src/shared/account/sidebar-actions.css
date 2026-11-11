@@ -1,16 +1,14 @@
-/* La campana y la diadema junto a la cuenta: botones redondos con borde suave, como el resto del menú. */
+/* La campana y la diadema debajo de la cuenta: botones de solo ícono, del mismo ancho, con el nombre al pasar el mouse. */
 .sidebar-action {
-  position: relative;
   display: inline-flex;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  height: 32px;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  gap: 6px;
+  padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
   color: var(--text);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
@@ -39,20 +37,16 @@
 }
 
 .sidebar-action__badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
   display: inline-flex;
   min-width: 18px;
   height: 18px;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
-  border: 2px solid var(--app-canvas, var(--surface));
+  padding: 0 5px;
   border-radius: 999px;
   background: var(--rose, #e11d48);
   color: #ffffff;
-  font-size: 0.62rem;
+  font-size: 0.66rem;
   font-weight: 800;
   line-height: 1;
 }

@@ -8,7 +8,7 @@ import { helpApi } from "@shared/help/helpApi";
 import { whatsappLink } from "@shared/help/moduleForPath";
 import { SidebarPopover } from "./SidebarPopover";
 
-/** La diadema junto a la cuenta: cómo hablar con el equipo de Auream (lo configura el equipo en «Administrar ayuda»). */
+/** La diadema debajo de la cuenta (solo ícono, con su nombre al pasar el mouse): cómo hablar con el equipo de Auream (lo configura el equipo en «Administrar ayuda»). */
 export function SupportButton() {
   const button = useRef<HTMLButtonElement>(null);
   const { pathname } = useLocation();
@@ -25,7 +25,7 @@ export function SupportButton() {
 
   return (
     <>
-      <button ref={button} type="button" className={`sidebar-action${open ? " is-open" : ""}`} aria-label="Soporte" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button ref={button} type="button" className={`sidebar-action${open ? " is-open" : ""}`} aria-label="Soporte" title="Soporte" aria-expanded={open} onClick={() => setOpen(!open)}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="4" height="6" rx="1.6" /><rect x="17" y="13" width="4" height="6" rx="1.6" /><path d="M19 19c0 1.4-1.6 2.5-4 2.5h-2" /></svg>
       </button>
       {open ? (

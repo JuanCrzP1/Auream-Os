@@ -2,21 +2,18 @@
 .account-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 4px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
 }
 
-.account-card__main {
-  min-width: 0;
-  flex: 1;
-}
-
+/* Debajo de la cuenta: campana y soporte, dos botones del mismo ancho. */
 .account-card__actions {
-  display: flex;
-  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
+  padding: 0 7px;
 }
 
 .account-card__button {
@@ -70,3 +67,9 @@
   color: var(--muted);
 }
 
+.account-card__chevron {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--muted);
+}

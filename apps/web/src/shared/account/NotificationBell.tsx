@@ -15,7 +15,7 @@ const TONE: Record<NotificationKind, string> = {
   group_created: "teal"
 };
 
-/** La campana junto a la cuenta: lo que pide atención, con el número de lo nuevo. Cada aviso lleva a donde se resuelve. */
+/** La campana debajo de la cuenta (solo ícono, con su nombre al pasar el mouse): lo que pide atención, con el número de lo nuevo. Cada aviso lleva a donde se resuelve. */
 export function NotificationBell() {
   const button = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -30,7 +30,7 @@ export function NotificationBell() {
 
   return (
     <>
-      <button ref={button} type="button" className={`sidebar-action${open ? " is-open" : ""}`} aria-label={unread > 0 ? `Notificaciones, ${unread} nuevas` : "Notificaciones"} aria-expanded={open} onClick={toggle}>
+      <button ref={button} type="button" className={`sidebar-action${open ? " is-open" : ""}`} aria-label={unread > 0 ? `Notificaciones, ${unread} nuevas` : "Notificaciones"} title="Notificaciones" aria-expanded={open} onClick={toggle}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 1.5h-15z" /><path d="M10 20.5a2.2 2.2 0 0 0 4 0" /></svg>
         {unread > 0 ? <span className="sidebar-action__badge">{unread > 9 ? "9+" : unread}</span> : null}
       </button>
