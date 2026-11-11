@@ -1,0 +1,121 @@
+/* =====================================================================
+ * App Shell en celular (hasta 860px): la barra lateral se esconde y se abre
+ * con ☰ desde la barra de arriba, por encima del contenido, con un fondo
+ * oscuro detrás. Se cierra con ✕, tocando fuera, con Escape o al elegir algo.
+ * En PC nada de esto se ve.
+ * ===================================================================== */
+
+.app-shell__topbar,
+.app-shell__backdrop {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .app-shell__topbar {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .app-shell__menu {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .app-shell__menu svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .app-shell__menu:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* El menú: la misma tarjeta de PC, flotando a la izquierda. Escondido no se puede enfocar. */
+  .app-shell .app-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 80;
+    height: auto;
+    margin: 12px;
+    overflow-y: auto;
+    visibility: hidden;
+    transform: translateX(calc(-100% - 24px));
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+
+  .app-shell.is-menu-open .app-sidebar {
+    visibility: visible;
+    transform: none;
+    box-shadow: 0 24px 60px -20px rgba(8, 6, 24, 0.6);
+    transition: transform 0.22s ease;
+  }
+
+  .app-shell__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 79;
+    background: rgba(30, 21, 48, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .app-shell.is-menu-open .app-shell__backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* En celular la barra no se contrae: el botón de contraer cede su lugar al ✕. */
+  .app-shell .app-sidebar__toggle {
+    display: none;
+  }
+
+  .app-shell .app-sidebar__close {
+    display: inline-flex;
+  }
+
+  .app-shell__main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Las páginas miden la pantalla menos la barra de arriba. */
+  .app-shell__main > .ui-page {
+    height: 100%;
+  }
+}
+
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  .app-shell .app-sidebar,
+  .app-shell.is-menu-open .app-sidebar,
+  .app-shell__backdrop {
+    transition: none;
+  }
+}

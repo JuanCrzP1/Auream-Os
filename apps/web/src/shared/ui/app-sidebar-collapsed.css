@@ -1,0 +1,103 @@
+/* La barra contraída (solo PC): una franja de íconos. Se ve dónde estás, los
+   avisos y tu cuenta; el nombre de cada opción sale al pasar el mouse. En
+   celular no aplica: allí la barra es el menú de ☰ (`app-shell-mobile.css`). */
+
+@media (min-width: 861px) {
+  .app-sidebar {
+    transition: width 0.2s ease, flex-basis 0.2s ease;
+  }
+
+  .app-sidebar.is-collapsed {
+    width: 68px;
+    flex: 0 0 68px;
+  }
+
+  .app-sidebar.is-collapsed .app-sidebar__head {
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px 0 14px;
+  }
+
+  .app-sidebar.is-collapsed .app-sidebar__brand {
+    justify-content: center;
+  }
+
+  .app-sidebar.is-collapsed .auream-lockup__name {
+    display: none;
+  }
+
+  .app-sidebar.is-collapsed .app-sidebar__item {
+    position: relative;
+    justify-content: center;
+    padding: 9px 0;
+  }
+
+  /* El nombre sigue ahí para los lectores de pantalla; solo deja de verse. */
+  .app-sidebar.is-collapsed .app-sidebar__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* El nombre al pasar el mouse o con el teclado. */
+  .app-sidebar.is-collapsed .app-sidebar__item::after {
+    content: attr(data-label);
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 14px);
+    z-index: 90;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: #1e1530;
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-4px, -50%);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+
+  .app-sidebar.is-collapsed .app-sidebar__item:hover::after,
+  .app-sidebar.is-collapsed .app-sidebar__item:focus-visible::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+
+  /* La cuenta: solo tu foto; debajo, la campana y soporte uno encima del otro. */
+  .app-sidebar.is-collapsed .account-card__button {
+    justify-content: center;
+    padding: 6px 0;
+  }
+
+  .app-sidebar.is-collapsed .account-card__text,
+  .app-sidebar.is-collapsed .account-card__chevron {
+    display: none;
+  }
+
+  .app-sidebar.is-collapsed .account-card__actions {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0;
+  }
+
+  .app-sidebar.is-collapsed .sidebar-action {
+    padding: 0;
+  }
+
+  /* Con la franja angosta, el menú de la cuenta sale hacia la derecha con su ancho de siempre. */
+  .app-sidebar.is-collapsed .account-menu {
+    right: auto;
+    width: 248px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar {
+    transition: none;
+  }
+}

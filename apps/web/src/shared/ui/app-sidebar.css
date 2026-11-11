@@ -8,12 +8,66 @@
   --app-sidebar-inset: calc(var(--side-panel-pad) + 1px);
 }
 
-.app-sidebar__brand {
-  /* El conjunto de marca trae su propia composición interna; aquí sólo se le
-     da sitio y se le separa de la navegación. */
+/* Arriba: la marca y el botón para contraer (en celular, el ✕ para cerrar). */
+.app-sidebar__head {
   display: flex;
-  padding: 10px 8px 16px;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 16px 8px;
   border-bottom: 1px solid var(--line);
+}
+
+.app-sidebar__brand {
+  /* El conjunto de marca trae su propia composición interna; aquí sólo se le da sitio. */
+  display: flex;
+  min-width: 0;
+  flex: 1;
+}
+
+.app-sidebar__toggle,
+.app-sidebar__close {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.app-sidebar__toggle svg,
+.app-sidebar__close svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-sidebar__toggle:hover,
+.app-sidebar__close:hover {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  color: var(--primary);
+}
+
+.app-sidebar__toggle:focus-visible,
+.app-sidebar__close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* El ✕ solo existe en celular (`app-shell-mobile.css`). */
+.app-sidebar__close {
+  display: none;
 }
 
 .app-sidebar__nav {
