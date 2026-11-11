@@ -4,7 +4,8 @@ import type {
   ConversationListResponse,
   ConversationLiveResponse,
   ConversationMessagesResponse,
-  ConversationSummary
+  ConversationSummary,
+  SendAgentMessageRequest
 } from "@contracts/ConversationContracts";
 
 // La bandeja de Conversaciones de la cuenta activa.
@@ -47,8 +48,19 @@ export function setConversationBot(id: string, botEnabled: boolean): Promise<Con
   return builderApiClient.patch<ConversationSummary>(one(id), { botEnabled });
 }
 
-export function sendAgentMessage(id: string, text: string): Promise<ConversationSummary> {
-  return builderApiClient.post<ConversationSummary>(`${one(id)}/messages`, { text });
+/** Responder como asesor: un texto o varias piezas en orden (archivos, notas de voz), citando un mensaje si se quiere. */
+export function sendAgentMessage(id: string, request: SendAgentMessageRequest): Promise<ConversationSummary> {
+  return builderApiClient.post<ConversationSummary>(`${one(id)}/messages`, request);
+}
+
+/** Reaccionar a un mensaje con un emoji (vacío la quita). */
+export async function reactToMessage(id: string, messageId: string, emoji: string): Promise<void> {
+  await builderApiClient.post<unknown>(`${one(id)}/messages/${encodeURIComponent(messageId)}/reaction`, { emoji });
+}
+
+/** Eliminar el chat con su historial (el cliente sigue en Contactos). */
+export async function deleteConversation(id: string): Promise<void> {
+  await builderApiClient.delete<unknown>(one(id));
 }
 
 /** Etiquetas del chat (las de su cliente en Contactos). */

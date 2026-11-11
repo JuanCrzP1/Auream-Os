@@ -7,6 +7,7 @@ import { useSearchParams } from "react-router-dom";
 import { useConversations } from "@shared/conversations/useConversations";
 import { useConnections } from "@shared/connections/useConnections";
 import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
+import { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
 import { StateCard, RetryButton } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 import { ConversationList } from "../components/ConversationList";
@@ -46,6 +47,7 @@ export function ConversationsPage() {
   const [retrying, setRetrying] = useState(false);
   const { connections } = useConnections();
   const catalog = useLabelCatalog();
+  const quickReplies = useQuickReplies();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(filters.search), 300);
@@ -116,11 +118,19 @@ export function ConversationsPage() {
             conversationId={selectedId}
             labels={catalog.labels}
             labelsStatus={catalog.status}
+            quickReplies={quickReplies}
+            canManage={inbox.canManage}
             infoOpen={infoOpen}
             onInfo={setInfoOpen}
             onBack={() => {
               setSelectedId(null);
               setInfoOpen(false);
+            }}
+            onDeleted={() => {
+              inbox.forget(selectedId);
+              setSelectedId(null);
+              setInfoOpen(false);
+              void inbox.refresh();
             }}
             onCreateLabel={catalog.create}
           />

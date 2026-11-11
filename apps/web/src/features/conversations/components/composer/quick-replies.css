@@ -1,0 +1,276 @@
+/* Respuestas rápidas: la lista sobre el compositor y el editor. */
+.chat-quick__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+}
+
+.chat-quick__new {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: var(--wa-chip-on-bg);
+  color: var(--wa-chip-on-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-quick__search {
+  margin: 0 14px 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--wa-input-border);
+  border-radius: 10px;
+  background: var(--wa-search-bg);
+  color: var(--wa-text);
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.chat-quick__search:focus {
+  border-color: var(--wa-accent);
+}
+
+.chat-quick__list {
+  flex: 1;
+  margin: 0;
+  padding: 0 6px 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.chat-quick__hint {
+  padding: 14px 10px;
+  color: var(--wa-secondary);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.chat-quick__item {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.chat-quick__item.is-active {
+  background: var(--wa-row-active);
+}
+
+.chat-quick__pick {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--wa-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-quick__pick strong {
+  color: var(--wa-accent);
+  font-size: 0.86rem;
+}
+
+.chat-quick__pick span {
+  overflow: hidden;
+  color: var(--wa-secondary);
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-quick__pick em {
+  color: var(--wa-secondary);
+  font-size: 0.74rem;
+  font-style: normal;
+}
+
+.chat-quick__edit {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--wa-secondary);
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chat-quick__item:hover .chat-quick__edit,
+.chat-quick__item.is-active .chat-quick__edit,
+.chat-quick__edit:focus-visible {
+  opacity: 1;
+}
+
+.chat-quick__edit:hover {
+  background: var(--wa-chip-bg);
+  color: var(--wa-text);
+}
+
+.chat-quick__edit svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.chat-quick__foot {
+  margin: 0;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--wa-separator);
+  color: var(--wa-secondary);
+  font-size: 0.74rem;
+}
+
+.chat-quick__foot kbd {
+  padding: 0 5px;
+  border: 1px solid var(--wa-separator);
+  border-radius: 4px;
+  font: inherit;
+}
+
+@media (hover: none) {
+  .chat-quick__edit {
+    opacity: 1;
+  }
+
+  .chat-quick__foot {
+    display: none;
+  }
+}
+
+/* El editor (diálogo). */
+.qr-editor {
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.qr-editor__field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.qr-editor__shortcut {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.qr-editor__pieces {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qr-piece {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-alt, var(--surface));
+}
+
+.qr-piece__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qr-piece__tag {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.qr-piece__tools {
+  display: flex;
+  gap: 2px;
+}
+
+.qr-piece__tools button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.qr-piece__tools button:hover:not(:disabled) {
+  background: var(--chip-bg, var(--surface));
+  color: var(--text);
+}
+
+.qr-piece__tools button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.qr-piece__text {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.qr-piece__file {
+  position: relative;
+  display: block;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--primary-hover);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.qr-piece__file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.qr-editor__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.qr-editor__add .ui-btn {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+.qr-editor__footer {
+  flex-wrap: wrap;
+}
+
+.qr-editor__delete {
+  margin-right: auto;
+  color: var(--status-danger);
+}

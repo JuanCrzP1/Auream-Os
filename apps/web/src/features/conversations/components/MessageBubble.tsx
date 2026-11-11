@@ -2,6 +2,8 @@ import type { ConversationMessage } from "@contracts/ConversationContracts";
 import { messageTime } from "./chatTime";
 import { AlertGlyph, DocGlyph } from "./ChatGlyphs";
 import { DeliveryTicks } from "./DeliveryTicks";
+import { MessageActions } from "./MessageActions";
+import { QuotedMessage } from "./QuotedMessage";
 import "./chatBubbles.css";
 
 // ---------------------------------------------------------------------------
@@ -9,7 +11,9 @@ import "./chatBubbles.css";
 // (bot o asesor) a la derecha, con su hora y sus chulos (enviado, entregado,
 // leído; la colita va en el último de cada tanda); los menús enviados con sus
 // botones; las fotos y archivos con su vista previa. Un envío fallido lo dice
-// con su motivo.
+// con su motivo. Si cita otro mensaje, lo muestra arriba; el emoji que le
+// puso el equipo cuelga de la burbuja; la flechita abre responder,
+// reaccionar y copiar.
 // ---------------------------------------------------------------------------
 
 function Media({ message }: { readonly message: ConversationMessage }) {
@@ -35,7 +39,21 @@ function Media({ message }: { readonly message: ConversationMessage }) {
   );
 }
 
-export function MessageBubble({ message, tail = true }: { readonly message: ConversationMessage; readonly tail?: boolean }) {
+export function MessageBubble({
+  message,
+  tail = true,
+  reaction,
+  onReply,
+  onReact
+}: {
+  readonly message: ConversationMessage;
+  readonly tail?: boolean;
+  /** Emoji que le puso el equipo. */
+  readonly reaction?: string;
+  /** Sin estas acciones (chat de un número eliminado), la burbuja solo se lee y se copia. */
+  readonly onReply?: () => void;
+  readonly onReact?: (emoji: string) => void;
+}) {
   if (message.kind === "reaction") {
     return <p className={`ios-reaction ios-reaction--${message.direction}`} aria-label={`Reacción ${message.text}`}>{message.text}</p>;
   }
@@ -51,8 +69,12 @@ export function MessageBubble({ message, tail = true }: { readonly message: Conv
   );
 
   return (
-    <div className={`ios-msg ios-msg--${message.direction}${tail && message.options.length === 0 ? " has-tail" : ""}`}>
+    <div className={`ios-msg ios-msg--${message.direction}${tail && message.options.length === 0 ? " has-tail" : ""}${reaction ? " has-reaction" : ""}`}>
       <div className={`ios-bubble ios-bubble--${message.direction}${message.status === "failed" ? " is-failed" : ""}`} title={sender}>
+        {message.status !== "failed" ? (
+          <MessageActions text={message.text} reaction={reaction} {...(onReply ? { onReply } : {})} {...(onReact ? { onReact } : {})} />
+        ) : null}
+        {message.replyTo ? <QuotedMessage quote={message.replyTo} /> : null}
         <Media message={message} />
         {message.kind === "button_reply" || message.kind === "list_reply" ? <span className="ios-bubble__reply-tag">Eligió una opción</span> : null}
         {message.text ? (
@@ -63,6 +85,7 @@ export function MessageBubble({ message, tail = true }: { readonly message: Conv
           </p>
         ) : null}
         {meta}
+        {reaction ? <span className="chat-reaction" aria-label={`Reaccionaste ${reaction}`}>{reaction}</span> : null}
       </div>
       {message.options.length > 0 ? (
         <div className="ios-options" aria-label="Opciones enviadas">

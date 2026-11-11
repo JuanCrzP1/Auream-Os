@@ -67,6 +67,7 @@ export class ConversationRecorder {
       agentId: null,
       agentName: null,
       providerMessageId: message.providerMessageId,
+      replyToId: null,
       createdAt: message.sentAt
     });
     return conversation;
@@ -102,14 +103,17 @@ export class ConversationRecorder {
     return advanced;
   }
 
-  /** Guarda lo que salió (o no) hacia el cliente: del bot o de un asesor. */
+  /**
+   * Guarda lo que salió (o no) hacia el cliente: del bot o de un asesor.
+   * `replyToId` (mensaje del hilo citado, o el de una reacción) va en el primero.
+   */
   public async recordOutbound(
     tenantId: string,
     conversationId: string,
     results: ReadonlyArray<SendResult>,
-    origin: { readonly author: Exclude<MessageAuthor, "contact">; readonly flowKey?: string; readonly agentId?: string; readonly agentName?: string }
+    origin: { readonly author: Exclude<MessageAuthor, "contact">; readonly flowKey?: string; readonly agentId?: string; readonly agentName?: string; readonly replyToId?: string }
   ): Promise<void> {
-    for (const result of results) {
+    for (const [index, result] of results.entries()) {
       this.lastAt = Math.max(this.now().getTime(), this.lastAt + 1);
       const at = this.lastAt;
       const record = outboundRecord(result);
@@ -126,6 +130,7 @@ export class ConversationRecorder {
         agentId: origin.agentId ?? null,
         agentName: origin.agentName ?? null,
         providerMessageId: result.providerMessageId ?? null,
+        replyToId: index === 0 ? (origin.replyToId ?? null) : null,
         createdAt: new Date(at).toISOString()
       });
     }

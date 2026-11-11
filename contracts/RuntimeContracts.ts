@@ -73,6 +73,8 @@ export interface OutboundMedia {
   readonly url: string;
   /** Nombre con que lo ve el cliente (documentos). */
   readonly fileName?: string;
+  /** Audio grabado en el chat: sale como nota de voz (no como archivo de audio). */
+  readonly voice?: boolean;
 }
 
 export interface OutboundMessage {

@@ -53,3 +53,18 @@ bandeja web ── cada 1,5–4 s: /conversations/:id/live?since=<marca> ──>
 ## Consumo
 
 Cada mensaje del bot genera hasta tres avisos de uazapi (enviado, entregado, leído) y cada chat abierto consulta cada 1,5–4 s mientras la pestaña está a la vista. En el plan Hobby de Vercel (1 millón de invocaciones al mes) alcanza de sobra para pruebas.
+
+## Herramientas del chat (fase 1)
+
+`038_chat_tools.sql` · `domains/conversations/application/AgentReply.ts` · `domains/quick-replies` · `apps/web/src/features/conversations/components/composer/`
+
+| Qué | Cómo funciona |
+|---|---|
+| **Responder con varias piezas** | `POST /conversations/:id/messages` acepta `{ text }` o `{ parts, replyToId }`. Cada parte es un texto o un archivo (foto, video, audio o documento, con leyenda) y salen en orden. `AgentReply.parseAgentReply` valida lo que llega del navegador: hasta 10 partes, solo enlaces https y textos de hasta 4096 caracteres. |
+| **Archivos y notas de voz** | La web los sube con `/media` (los bytes no pasan por la API) y envía su enlace. Una nota grabada en el chat lleva `voice: true` y uazapi la entrega como `ptt` (nota de voz). El navegador graba en ogg/opus o mp4/aac, que WhatsApp acepta; si no puede, se avisa. `vercel.json` permite el micrófono solo a la propia app (`microphone=(self)`). |
+| **Citar un mensaje** | `replyToId` es un mensaje del mismo chat. Se envía a WhatsApp con su id (`replyid`) y se guarda en `conversation_messages.reply_to_id`. El hilo devuelve `replyTo` (autor, tipo y texto) para mostrar la cita en la burbuja. |
+| **Reaccionar** | `POST /conversations/:id/messages/:mid/reaction { emoji }`. Si el emoji va vacío, se quita la reacción. Sale como reacción de WhatsApp y se guarda como mensaje `reaction` con `reply_to_id`. La web (`threadView`) la muestra sobre su mensaje: manda la última. No pausa el bot. |
+| **Eliminar un chat** | `DELETE /conversations/:id` borra el chat y sus mensajes (`on delete cascade`). Requiere `conversations.manage`, que tienen dueños y administradores. El cliente sigue en Contactos y en Ventas; si vuelve a escribir, empieza un chat nuevo. La bandeja devuelve `canManage` para mostrar el botón solo a quien puede usarlo. |
+| **Respuestas rápidas** | Ver `domains/quick-replies/README.md`. |
+
+Web: `ChatView` coordina y delega en `ChatHeader`, `ChatThread`, `MessageBubble` (con `MessageActions` y `QuotedMessage`) y `composer/Composer`. `Composer` usa `ComposerTools`, `PendingPieces`, `useDraftPieces`, `useVoiceRecorder`, `EmojiPicker`, `QuickReplyPicker` y `QuickReplyEditor`.

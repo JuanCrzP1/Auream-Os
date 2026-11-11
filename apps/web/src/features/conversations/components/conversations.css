@@ -660,6 +660,8 @@
 .ios-chat--empty {
   display: grid;
   place-items: center;
+  /* El aviso queda un poco arriba del centro (centro óptico): se ve más equilibrado. */
+  padding-bottom: 14vh;
 }
 
 .ios-welcome {

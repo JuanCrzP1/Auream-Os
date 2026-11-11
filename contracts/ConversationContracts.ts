@@ -57,7 +57,20 @@ export interface ConversationMessage {
   readonly flowName: string | null;
   /** Asesor que lo envió. */
   readonly agentName: string | null;
+  /**
+   * El mensaje que cita (respuesta) o, en una reacción, al que se le puso el
+   * emoji. `null`: no se refiere a otro.
+   */
+  readonly replyTo: MessageQuote | null;
   readonly createdAt: string;
+}
+
+/** Lo que se muestra del mensaje citado. */
+export interface MessageQuote {
+  readonly id: string;
+  readonly author: MessageAuthor;
+  readonly kind: ConversationMessageKind;
+  readonly text: string;
 }
 
 /** Etiqueta del cliente del chat (catálogo de Contactos: la misma que ponen los flujos). */
@@ -126,6 +139,8 @@ export interface ConversationListResponse {
   readonly conversations: ReadonlyArray<ConversationSummary>;
   /** Hay más chats: pedirlos con `cursor`. */
   readonly nextCursor: string | null;
+  /** Quien mira puede eliminar chats (`conversations.manage`). */
+  readonly canManage: boolean;
 }
 
 export interface SetConversationLabelsRequest {
@@ -138,8 +153,34 @@ export interface ConversationMessagesResponse {
   readonly hasMore: boolean;
 }
 
+/** Archivo que envía el asesor: URL pública de un medio subido a la cuenta (`/media`). */
+export interface AgentMedia {
+  readonly type: "image" | "video" | "audio" | "file";
+  readonly url: string;
+  /** Nombre con que lo ve el cliente (documentos). */
+  readonly fileName?: string;
+  /** Audio grabado en el chat: llega como nota de voz. */
+  readonly voice?: boolean;
+}
+
+/** Una pieza de lo que envía el asesor, en orden: un texto o un archivo (con leyenda). */
+export type AgentMessagePart =
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "media"; readonly media: AgentMedia; readonly caption?: string };
+
+/**
+ * Responder como asesor: `text` (un mensaje) o `parts` (varios en orden: una
+ * respuesta rápida, archivos adjuntos…). `replyToId` cita un mensaje del hilo.
+ */
 export interface SendAgentMessageRequest {
-  readonly text: string;
+  readonly text?: string;
+  readonly parts?: ReadonlyArray<AgentMessagePart>;
+  readonly replyToId?: string;
+}
+
+/** Reaccionar a un mensaje del hilo. `emoji` vacío quita la reacción. */
+export interface ReactToMessageRequest {
+  readonly emoji: string;
 }
 
 export interface UpdateConversationRequest {
@@ -152,6 +193,10 @@ export interface StartFlowRequest {
 }
 
 export const MAX_AGENT_MESSAGE_LENGTH = 4096;
+/** Piezas que el asesor puede enviar de una vez. */
+export const MAX_AGENT_MESSAGE_PARTS = 10;
+/** Reacciones rápidas del menú de un mensaje (como WhatsApp). */
+export const QUICK_REACTIONS: ReadonlyArray<string> = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 /** Chats por página de la bandeja. */
 export const CONVERSATIONS_PAGE_SIZE = 50;
 /** Etiquetas por las que se puede filtrar a la vez. */

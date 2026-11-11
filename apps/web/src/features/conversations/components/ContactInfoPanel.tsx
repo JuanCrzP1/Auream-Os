@@ -7,6 +7,7 @@ import { Avatar } from "./Avatar";
 import { BoltGlyph, BotGlyph, CheckGlyph, CloseGlyph, TagGlyph } from "./ChatGlyphs";
 import { ChatLabel } from "./ChatLabels";
 import { displayName } from "./ConversationList";
+import { DeleteChatSection } from "./DeleteChatSection";
 
 // ---------------------------------------------------------------------------
 // «Info. del contacto» (como al tocar el nombre en WhatsApp iOS): quién es,
@@ -28,7 +29,8 @@ export function ContactInfoPanel({
   onToggleBot,
   onRunFlow,
   onSetLabels,
-  onCreateLabel
+  onCreateLabel,
+  onDelete
 }: {
   readonly conversation: ConversationSummary;
   readonly labels: ReadonlyArray<LabelSummary>;
@@ -38,6 +40,8 @@ export function ContactInfoPanel({
   readonly onRunFlow: () => void;
   readonly onSetLabels: (labelIds: ReadonlyArray<string>) => Promise<void>;
   readonly onCreateLabel: (request: CreateLabelRequest) => Promise<LabelSummary>;
+  /** Eliminar el chat (solo si quien mira puede). */
+  readonly onDelete?: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
@@ -210,6 +214,8 @@ export function ContactInfoPanel({
             <strong>{DATE.format(new Date(conversation.createdAt))}</strong>
           </div>
         </section>
+
+        {onDelete ? <DeleteChatSection name={name} onDelete={onDelete} /> : null}
       </div>
     </aside>
   );

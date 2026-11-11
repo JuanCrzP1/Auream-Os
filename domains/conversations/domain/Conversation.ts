@@ -37,6 +37,8 @@ export interface StoredMessage {
   readonly agentId: string | null;
   readonly agentName: string | null;
   readonly providerMessageId: string | null;
+  /** El mensaje del hilo que cita, o al que apunta una reacción. */
+  readonly replyToId: string | null;
   readonly createdAt: string;
 }
 

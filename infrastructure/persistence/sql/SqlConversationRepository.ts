@@ -124,6 +124,17 @@ export class SqlConversationRepository implements ConversationRepository {
     return this.thread.liveCursor(tenantId, conversationId);
   }
 
+  public findMessage(tenantId: string, conversationId: string, messageId: string) {
+    return this.thread.findMessage(tenantId, conversationId, messageId);
+  }
+
+  /** Sus mensajes se borran con él (`on delete cascade`). */
+  public async remove(tenantId: string, id: string): Promise<boolean> {
+    if (!isUuid(tenantId) || !isUuid(id)) return false;
+    const result = await this.sql.query("delete from conversations where tenant_id = $1 and id = $2", [tenantId, id]);
+    return result.rowCount > 0;
+  }
+
   public markDelivery(tenantId: string, connectionId: string, providerMessageIds: ReadonlyArray<string>, status: DeliveryStatus) {
     return this.thread.markDelivery(tenantId, connectionId, providerMessageIds, status);
   }

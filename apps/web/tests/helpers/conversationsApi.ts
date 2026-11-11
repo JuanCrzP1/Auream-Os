@@ -1,5 +1,6 @@
 import { vi } from "vitest";
-import type { ConversationMessage, ConversationSummary } from "@contracts/ConversationContracts";
+import type { AgentMessagePart, ConversationMessage, ConversationSummary } from "@contracts/ConversationContracts";
+import type { QuickReply } from "@contracts/QuickReplyContracts";
 
 // ---------------------------------------------------------------------------
 // API falsa CON ESTADO de la bandeja de Conversaciones. Como el servidor, el
@@ -27,12 +28,27 @@ export const OLD_CHAT: ConversationSummary = {
 let sequence = 0;
 export const msg = (over: Partial<ConversationMessage>): ConversationMessage => ({
   id: `m${++sequence}`, conversationId: "c1", direction: "inbound", author: "contact", kind: "text", text: "", mediaUrl: null, mediaType: null,
-  options: [], status: "received", error: null, flowName: null, agentName: null, createdAt: NOW, ...over
+  options: [], status: "received", error: null, flowName: null, agentName: null, replyTo: null, createdAt: NOW, ...over
 });
 
-export function stubConversationsApi(options: { paged?: boolean; deleted?: boolean; messages?: ConversationMessage[] } = {}) {
+export const QUICK_REPLIES: QuickReply[] = [
+  { id: "q1", shortcut: "saludo", pieces: [{ kind: "text", text: "Hola {nombre}, ¿en qué te ayudo?" }], useCount: 3, lastUsedAt: NOW, createdAt: NOW, updatedAt: NOW },
+  {
+    id: "q2",
+    shortcut: "precios",
+    pieces: [
+      { kind: "text", text: "Te paso los precios 👇" },
+      { kind: "media", media: { type: "file", url: "https://blob.test/precios.pdf", fileName: "precios.pdf" } }
+    ],
+    useCount: 0, lastUsedAt: null, createdAt: NOW, updatedAt: NOW
+  }
+];
+
+export function stubConversationsApi(options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[] } = {}) {
   let chat = { ...CHAT, connectionDeleted: options.deleted ?? false };
   const listCalls: URLSearchParams[] = [];
+  const canManage = options.canManage ?? false;
+  let removed = false;
   const liveCalls: URLSearchParams[] = [];
   const messages: ConversationMessage[] = options.messages ?? [
     msg({ text: "Hola" }),
@@ -59,10 +75,22 @@ export function stubConversationsApi(options: { paged?: boolean; deleted?: boole
       listCalls.push(url.searchParams);
       if (options.paged) {
         return url.searchParams.get("cursor") === "page-2"
-          ? reply(200, { conversations: [OLD_CHAT], nextCursor: null })
-          : reply(200, { conversations: [chat], nextCursor: "page-2" });
+          ? reply(200, { conversations: [OLD_CHAT], nextCursor: null, canManage })
+          : reply(200, { conversations: [chat], nextCursor: "page-2", canManage });
       }
-      return reply(200, { conversations: [chat], nextCursor: null });
+      return reply(200, { conversations: removed ? [] : [chat], nextCursor: null, canManage });
+    }
+    if (url.pathname === "/quick-replies" && method === "GET") return reply(200, { quickReplies: QUICK_REPLIES, canWrite: true });
+    if (url.pathname.startsWith("/quick-replies/") && url.pathname.endsWith("/use")) return reply(204);
+    if (url.pathname === "/conversations/c1" && method === "DELETE") {
+      removed = true;
+      return reply(204);
+    }
+    if (url.pathname.startsWith("/conversations/c1/messages/") && url.pathname.endsWith("/reaction")) {
+      const target = messages.find((message) => url.pathname.includes(`/messages/${message.id}/`));
+      if (!target) return reply(404, { message: "no" });
+      upsert(msg({ direction: "outbound", author: "agent", status: "sent", kind: "reaction", text: String(body["emoji"]), replyTo: { id: target.id, author: target.author, kind: target.kind, text: target.text } }));
+      return reply(204);
     }
     if (url.pathname === "/connections") return reply(200, { connections: [] });
     if (url.pathname === "/labels") return reply(200, { labels: [VIP, PAGO] });
@@ -89,7 +117,21 @@ export function stubConversationsApi(options: { paged?: boolean; deleted?: boole
     }
     if (url.pathname === "/conversations/c1/messages" && method === "GET") return reply(200, { messages, hasMore: false });
     if (url.pathname === "/conversations/c1/messages" && method === "POST") {
-      upsert(msg({ direction: "outbound", author: "agent", status: "sent", text: String(body["text"]) }));
+      const parts = (body["parts"] as AgentMessagePart[] | undefined) ?? [{ kind: "text", text: String(body["text"]) }];
+      const quoted = messages.find((message) => message.id === body["replyToId"]);
+      parts.forEach((part, index) =>
+        upsert(
+          msg({
+            direction: "outbound",
+            author: "agent",
+            status: "sent",
+            kind: part.kind === "text" ? "text" : part.media.type === "file" ? "document" : part.media.type,
+            text: part.kind === "text" ? part.text : (part.caption ?? ""),
+            mediaUrl: part.kind === "media" ? part.media.url : null,
+            replyTo: index === 0 && quoted ? { id: quoted.id, author: quoted.author, kind: quoted.kind, text: quoted.text } : null
+          })
+        )
+      );
       chat = { ...chat, botEnabled: false };
       return reply(200, chat);
     }

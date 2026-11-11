@@ -1,0 +1,23 @@
+/* Zona de riesgo de la info del contacto. */
+.ios-group--danger {
+  margin-top: 8px;
+}
+
+.ios-group__danger {
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px 12px 0 0;
+  background: transparent;
+  color: var(--wa-danger);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ios-group__danger:hover,
+.ios-group__danger:focus-visible {
+  background: color-mix(in srgb, var(--wa-danger) 8%, transparent);
+  outline: none;
+}

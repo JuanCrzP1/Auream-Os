@@ -32,6 +32,7 @@ export function useConversations(query: ConversationListQuery) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [status, setStatus] = useState<InboxStatus>("loading");
   const [filtering, setFiltering] = useState(false);
+  const [canManage, setCanManage] = useState(false);
   const loaded = useRef(false);
   const current = useRef(key);
   const olderLoaded = useRef(false);
@@ -42,6 +43,7 @@ export function useConversations(query: ConversationListQuery) {
       const page = await fetchConversations(JSON.parse(requested) as ConversationListQuery);
       if (current.current !== requested) return;
       setHead([...page.conversations]);
+      setCanManage(page.canManage === true);
       // El cursor de la primera página solo manda mientras no se hayan pedido más.
       if (!olderLoaded.current) setCursor(page.nextCursor);
       loaded.current = true;
@@ -85,8 +87,17 @@ export function useConversations(query: ConversationListQuery) {
     }
   }, [cursor, key, loadingMore]);
 
+  /** Quita un chat de la lista ya (se eliminó): no espera a la próxima consulta. */
+  const forget = useCallback((id: string) => {
+    setHead((previous) => previous.filter((chat) => chat.id !== id));
+    setOlder((previous) => previous.filter((chat) => chat.id !== id));
+  }, []);
+
   return {
     conversations: merge(head, older),
+    /** Quien mira puede eliminar chats. */
+    canManage,
+    forget,
     status,
     /** Cargando otra vez tras cambiar un filtro (la lista anterior sigue visible). */
     filtering,

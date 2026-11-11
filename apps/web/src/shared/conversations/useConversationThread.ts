@@ -6,7 +6,8 @@ import {
   type ConversationMessage,
   type ConversationSummary
 } from "@contracts/ConversationContracts";
-import { fetchLive, fetchMessages, markConversationRead, sendAgentMessage, setConversationBot, setConversationLabels, startFlow } from "./conversationsApi";
+import type { SendAgentMessageRequest } from "@contracts/ConversationContracts";
+import { deleteConversation, fetchLive, fetchMessages, markConversationRead, reactToMessage, sendAgentMessage, setConversationBot, setConversationLabels, startFlow } from "./conversationsApi";
 import { LivePoller } from "./LivePoller";
 import { isRecent, mergeThread } from "./mergeThread";
 
@@ -89,10 +90,21 @@ export function useConversationThread(id: string) {
     setHasMore(page.hasMore);
   }, [id]);
 
-  const send = useCallback(async (text: string) => {
-    setConversation(await sendAgentMessage(id, text));
+  const send = useCallback(async (request: SendAgentMessageRequest) => {
+    refresh();
+    setConversation(await sendAgentMessage(id, request));
     refresh();
   }, [id, refresh]);
+
+  const react = useCallback(async (messageId: string, emoji: string) => {
+    await reactToMessage(id, messageId, emoji);
+    refresh();
+  }, [id, refresh]);
+
+  const remove = useCallback(async () => {
+    poller.current?.stop();
+    await deleteConversation(id);
+  }, [id]);
 
   const setBot = useCallback(async (enabled: boolean) => {
     setConversation(await setConversationBot(id, enabled));
@@ -110,5 +122,5 @@ export function useConversationThread(id: string) {
     setConversation(await setConversationLabels(id, labelIds));
   }, [id]);
 
-  return { conversation, messages, hasMore, status, refresh, loadOlder, send, setBot, launchFlow, setLabels };
+  return { conversation, messages, hasMore, status, refresh, loadOlder, send, react, remove, setBot, launchFlow, setLabels };
 }

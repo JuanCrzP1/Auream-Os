@@ -1,5 +1,5 @@
 import type { ConversationMessage, DeliveryStatus, MessageAuthor } from "../../../contracts/ConversationContracts";
-import type { DeliveryMarkOutcome } from "../../../domains/conversations/application/ConversationRepository";
+import type { DeliveryMarkOutcome, MessageRef } from "../../../domains/conversations/application/ConversationRepository";
 import { previewOf, type StoredMessage } from "../../../domains/conversations/domain/Conversation";
 import type { SqlClient } from "./SqlClient";
 import { isUuid, toIso } from "./sqlValues";
@@ -31,6 +31,10 @@ interface MessageRow {
   error: string | null;
   flow_name: string | null;
   agent_name: string | null;
+  reply_id: string | null;
+  reply_author: MessageAuthor | null;
+  reply_kind: ConversationMessage["kind"] | null;
+  reply_text: string | null;
   created_at: Date | string;
 }
 
@@ -48,14 +52,16 @@ const toMessage = (row: MessageRow): ConversationMessage => ({
   error: row.error,
   flowName: row.flow_name,
   agentName: row.agent_name,
+  replyTo: row.reply_id && row.reply_author && row.reply_kind ? { id: row.reply_id, author: row.reply_author, kind: row.reply_kind, text: (row.reply_text ?? "").slice(0, 200) } : null,
   createdAt: toIso(row.created_at)
 });
 
-/** Columnas de un mensaje del hilo (con el nombre del flujo que lo envió). */
+/** Columnas de un mensaje del hilo (con el nombre del flujo que lo envió y el mensaje que cita). */
 const MESSAGE_COLUMNS = `m.id, m.conversation_id, m.direction, m.author, m.kind, m.text, m.media_url, m.media_type, m.options, m.status, m.error,
-       m.agent_name, m.created_at, a.name as flow_name`;
+       m.agent_name, m.created_at, a.name as flow_name, r.id as reply_id, r.author as reply_author, r.kind as reply_kind, left(r.text, 200) as reply_text`;
 const MESSAGE_FROM = `from conversation_messages m
-  left join automations a on a.tenant_id = m.tenant_id and a.key = m.flow_key`;
+  left join automations a on a.tenant_id = m.tenant_id and a.key = m.flow_key
+  left join conversation_messages r on r.id = m.reply_to_id and r.conversation_id = m.conversation_id`;
 
 /** Solape de «lo que cambió desde…». */
 const LIVE_OVERLAP = "interval '5 seconds'";
@@ -70,12 +76,12 @@ export class SqlConversationThread {
       await tx.query(
         `insert into conversation_messages
            (id, tenant_id, conversation_id, direction, author, kind, text, media_url, media_type, options, status, error,
-            flow_key, agent_id, agent_name, provider_message_id, created_at)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+            flow_key, agent_id, agent_name, provider_message_id, created_at, reply_to_id)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
         [
           message.id, message.tenantId, message.conversationId, message.direction, message.author, message.kind, message.text.slice(0, 8000),
           message.mediaUrl, message.mediaType, [...message.options], message.status, message.error, message.flowKey, message.agentId,
-          message.agentName, message.providerMessageId, message.createdAt
+          message.agentName, message.providerMessageId, message.createdAt, message.replyToId
         ]
       );
       // Las reacciones no cambian el último mensaje del chat.
@@ -122,6 +128,16 @@ export class SqlConversationThread {
       this.liveCursor(tenantId, conversationId)
     ]);
     return { messages: changes.rows.map(toMessage), cursor };
+  }
+
+  public async findMessage(tenantId: string, conversationId: string, messageId: string): Promise<MessageRef | null> {
+    if (!isUuid(tenantId) || !isUuid(conversationId) || !isUuid(messageId)) return null;
+    const result = await this.sql.query<{ id: string; kind: MessageRef["kind"]; provider_message_id: string | null }>(
+      "select id, kind, provider_message_id from conversation_messages where tenant_id = $1 and conversation_id = $2 and id = $3",
+      [tenantId, conversationId, messageId]
+    );
+    const row = result.rows[0];
+    return row ? { id: row.id, kind: row.kind, providerMessageId: row.provider_message_id } : null;
   }
 
   /** La marca actual del chat (la última escritura); `now()` si aún no hay mensajes. */

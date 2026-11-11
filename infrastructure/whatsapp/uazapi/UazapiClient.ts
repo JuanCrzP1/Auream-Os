@@ -76,11 +76,12 @@ export class UazapiClient {
   }
 
   /** `type`: image · video · audio · ptt · document (según la documentación de uazapi). */
-  public async sendMedia(token: string, number: string, media: { readonly type: string; readonly file: string; readonly text?: string; readonly docName?: string }): Promise<string | null> {
+  public async sendMedia(token: string, number: string, media: { readonly type: string; readonly file: string; readonly text?: string; readonly docName?: string; readonly replyId?: string }): Promise<string | null> {
     return sentId(await this.http.request("POST", "/send/media", { token }, {
       number,
       type: media.type,
       file: media.file,
+      ...(media.replyId ? { replyid: media.replyId } : {}),
       ...(media.text ? { text: media.text } : {}),
       ...(media.docName ? { docName: media.docName } : {})
     }));

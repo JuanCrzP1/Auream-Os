@@ -4,7 +4,7 @@ import { requireScope } from "../../../platform/authorization/guards/requireScop
 import { ConversationPermissions } from "../../../platform/authorization/permissions/ConversationPermissions";
 import type {
   ConversationFilter,
-  SendAgentMessageRequest,
+  ReactToMessageRequest,
   SetConversationLabelsRequest,
   StartFlowRequest,
   UpdateConversationRequest
@@ -25,12 +25,16 @@ import { sendJson } from "../http/sendJson";
 //                                             solo lo nuevo o cambiado)
 //   POST   /conversations/:id/read            marcar como leído
 //   PATCH  /conversations/:id                 { botEnabled }
-//   POST   /conversations/:id/messages        responder como asesor (pausa el bot)
+//   POST   /conversations/:id/messages        responder como asesor (pausa el bot):
+//                                             { text } o { parts, replyToId }
+//   POST   /conversations/:id/messages/:mid/reaction  reaccionar { emoji }
+//   DELETE /conversations/:id                 eliminar el chat y su historial
 //   PUT    /conversations/:id/labels          etiquetas del cliente { labelIds }
 //   POST   /conversations/:id/flows           enviar un flujo a mano
 //
-// Ver exige conversations.read; todo lo demás, conversations.write. Marcar
-// como leído es lectura: no cambia nada del cliente.
+// Ver exige conversations.read; eliminar, conversations.manage; todo lo
+// demás, conversations.write. Marcar como leído es lectura: no cambia nada
+// del cliente.
 // ---------------------------------------------------------------------------
 
 const ITEM = /^\/conversations\/([^/]+)$/;
@@ -39,6 +43,7 @@ const READ = /^\/conversations\/([^/]+)\/read$/;
 const FLOWS = /^\/conversations\/([^/]+)\/flows$/;
 const LABELS = /^\/conversations\/([^/]+)\/labels$/;
 const LIVE = /^\/conversations\/([^/]+)\/live$/;
+const REACTION = /^\/conversations\/([^/]+)\/messages\/([^/]+)\/reaction$/;
 
 /** Texto de la URL o nada (un parámetro vacío es como si no estuviera). */
 const textParam = (url: URL, name: string): string | undefined => url.searchParams.get(name)?.trim() || undefined;
@@ -56,7 +61,8 @@ export async function routeConversationsRequest(
   const { tenantId } = context;
   const method = request.method ?? "GET";
   const isRead = method === "GET" || READ.test(path);
-  requireScope(context, isRead ? ConversationPermissions.read : ConversationPermissions.write, tenantId);
+  const isDelete = method === "DELETE" && ITEM.test(path);
+  requireScope(context, isRead ? ConversationPermissions.read : isDelete ? ConversationPermissions.manage : ConversationPermissions.write, tenantId);
   const inbox = services.conversations;
 
   if (path === "/conversations" && method === "GET") {
@@ -71,7 +77,7 @@ export async function routeConversationsRequest(
       cursor: textParam(url, "cursor")
     };
     const defined = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined));
-    sendJson(response, 200, await inbox.list(tenantId, defined));
+    sendJson(response, 200, { ...(await inbox.list(tenantId, defined)), canManage: context.scopes.includes(ConversationPermissions.manage) });
     return true;
   }
 
@@ -87,8 +93,17 @@ export async function routeConversationsRequest(
     return true;
   }
   if (messages && method === "POST") {
-    const body = await parseJsonBody<Partial<SendAgentMessageRequest>>(request);
-    sendJson(response, 200, await inbox.sendAgentMessage(tenantId, messages[1]!, body.text, { id: context.actorId, name: null }));
+    const body = await parseJsonBody<unknown>(request);
+    sendJson(response, 200, await inbox.sendAgentMessage(tenantId, messages[1]!, body, { id: context.actorId, name: null }));
+    return true;
+  }
+
+  const reaction = REACTION.exec(path);
+  if (reaction && method === "POST") {
+    const body = await parseJsonBody<Partial<ReactToMessageRequest>>(request);
+    await inbox.react(tenantId, reaction[1]!, decodeURIComponent(reaction[2]!), body.emoji, { id: context.actorId, name: null });
+    response.statusCode = 204;
+    response.end();
     return true;
   }
 
@@ -117,6 +132,12 @@ export async function routeConversationsRequest(
   const item = ITEM.exec(path);
   if (item && method === "GET") {
     sendJson(response, 200, await inbox.get(tenantId, item[1]!));
+    return true;
+  }
+  if (item && method === "DELETE") {
+    await inbox.remove(tenantId, item[1]!);
+    response.statusCode = 204;
+    response.end();
     return true;
   }
   if (item && method === "PATCH") {

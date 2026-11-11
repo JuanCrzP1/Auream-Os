@@ -35,6 +35,7 @@ import { composeBroadcastServices } from "../composition/composeBroadcastService
 import { composeGroupServices } from "../composition/composeGroupServices";
 import { composeHelpServices } from "../composition/composeHelpServices";
 import { composeNotificationServices } from "../composition/composeNotificationServices";
+import { composeQuickReplyServices } from "../composition/composeQuickReplyServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
@@ -210,6 +211,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     groupServices: groups,
     helpServices: { ...help, docsBase: config.helpDocsBase },
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
+    quickReplyServices: composeQuickReplyServices(tenancy.sqlClient),
     adsServices: ads,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({

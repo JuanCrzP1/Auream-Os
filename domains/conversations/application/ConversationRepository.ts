@@ -21,6 +21,14 @@ export interface InboxQuery {
   readonly limit: number;
 }
 
+/** Lo que hace falta de un mensaje del hilo para citarlo o reaccionarle. */
+export interface MessageRef {
+  readonly id: string;
+  readonly kind: ConversationMessage["kind"];
+  /** Id de WhatsApp: sin él, WhatsApp no sabe a qué mensaje se refiere. */
+  readonly providerMessageId: string | null;
+}
+
 /** Un aviso de entregado/leído: cuántos de sus mensajes había y cuántos avanzaron. */
 export interface DeliveryMarkOutcome {
   readonly matched: number;
@@ -55,6 +63,10 @@ export interface ConversationRepository {
    * Solo avanza. Dice cuántos de esos mensajes encontró y cuántos avanzaron.
    */
   markDelivery(tenantId: string, connectionId: string, providerMessageIds: ReadonlyArray<string>, status: DeliveryStatus): Promise<DeliveryMarkOutcome>;
+  /** Un mensaje de ese chat (para citarlo o reaccionarle); `null` si no es de ese chat. */
+  findMessage(tenantId: string, conversationId: string, messageId: string): Promise<MessageRef | null>;
+  /** Borra el chat y todo su historial (el contacto sigue en Contactos). Dice si existía. */
+  remove(tenantId: string, id: string): Promise<boolean>;
   /** Mensajes del hilo, del más nuevo hacia atrás (`before` = id del más antiguo ya visto). */
   messages(tenantId: string, conversationId: string, options: { readonly before?: string; readonly limit: number }): Promise<{ messages: ConversationMessage[]; hasMore: boolean }>;
 }

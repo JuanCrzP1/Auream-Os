@@ -1,0 +1,243 @@
+/* La barra para responder: herramientas, cuadro de texto, nota de voz y lo que va en espera. */
+.chat-composer {
+  position: relative;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.chat-composer__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.chat-composer__tools {
+  display: flex;
+  gap: 2px;
+}
+
+.chat-tool {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wa-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.chat-tool svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chat-tool:hover:not(:disabled),
+.chat-tool.is-active {
+  background: var(--wa-chip-on-bg);
+  color: var(--wa-accent);
+}
+
+.chat-tool:focus-visible {
+  outline: 2px solid var(--wa-accent);
+  outline-offset: 1px;
+}
+
+.chat-tool--mic {
+  background: var(--wa-accent);
+  color: #ffffff;
+}
+
+.chat-tool--mic:hover:not(:disabled) {
+  background: var(--wa-accent);
+  color: #ffffff;
+  filter: brightness(1.08);
+}
+
+/* Lo que sale antes del texto: la cita y las piezas en espera. */
+.chat-pending {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-pending__reply {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 6px 6px 6px 0;
+  border-radius: 12px;
+  background: var(--wa-input-bg);
+}
+
+.chat-pending__reply .chat-quote {
+  flex: 1;
+  margin: 0;
+}
+
+.chat-pending__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 4px 4px 10px;
+  border: 1px solid var(--wa-input-border);
+  border-radius: 999px;
+  background: var(--wa-input-bg);
+  color: var(--wa-text);
+  font-size: 0.82rem;
+}
+
+.chat-chip.is-uploading {
+  color: var(--wa-secondary);
+}
+
+.chat-chip__label {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-chip__progress {
+  color: var(--wa-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-pending__x {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wa-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.chat-pending__x:hover:not(:disabled) {
+  background: var(--wa-chip-bg);
+  color: var(--wa-text);
+}
+
+/* Grabando una nota de voz. */
+.chat-recording {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+
+.chat-recording__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wa-danger);
+  animation: chat-recording-pulse 1s ease-in-out infinite;
+}
+
+.chat-recording__time {
+  color: var(--wa-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.chat-recording__hint {
+  flex: 1;
+  color: var(--wa-secondary);
+  font-size: 0.86rem;
+}
+
+@keyframes chat-recording-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Ventanas sobre el compositor: respuestas rápidas y emojis. */
+.chat-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 12px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100% - 24px));
+  max-height: min(420px, 60vh);
+  overflow: hidden;
+  border: 1px solid var(--wa-separator);
+  border-radius: 16px;
+  background: var(--wa-group-bg);
+  box-shadow: 0 18px 40px -16px rgba(8, 6, 24, 0.4);
+  animation: chat-popover-in 0.14s ease-out;
+}
+
+@keyframes chat-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.chat-popover__title {
+  margin: 0;
+  color: var(--wa-secondary);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chat-emoji {
+  gap: 10px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.chat-emoji__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  margin-top: 6px;
+}
+
+.chat-emoji__item {
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+
+.chat-emoji__item:hover,
+.chat-emoji__item:focus-visible {
+  background: var(--wa-chip-bg);
+  outline: none;
+}
+
+@media (max-width: 860px) {
+  .chat-popover {
+    left: 8px;
+    width: calc(100% - 16px);
+  }
+}

@@ -1,46 +1,53 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MAX_AGENT_MESSAGE_LENGTH } from "@contracts/ConversationContracts";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ConversationMessage } from "@contracts/ConversationContracts";
 import type { CreateLabelRequest, LabelSummary } from "@contracts/ContactContracts";
 import { useConversationThread } from "@shared/conversations/useConversationThread";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
-import { formatPhone } from "@shared/phone/formatPhone";
-import { Avatar } from "./Avatar";
-import { BackGlyph, BoltGlyph, BotGlyph, InfoGlyph, SendGlyph } from "./ChatGlyphs";
+import type { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
+import { ChatHeader } from "./ChatHeader";
+import { ChatThread } from "./ChatThread";
+import { Composer } from "./composer/Composer";
 import { ContactInfoPanel } from "./ContactInfoPanel";
-import { dayKey, dayLabel } from "./chatTime";
 import { displayName } from "./ConversationList";
-import { MessageBubble } from "./MessageBubble";
 import { SendFlowDialog } from "./SendFlowDialog";
 
 // ---------------------------------------------------------------------------
-// Un chat abierto, al estilo WhatsApp iOS: cabecera translúcida (contacto
-// —tocarlo abre su info—, número o flujo en curso, «Ejecutar flujo» y bot
-// activo/pausado), hilo sobre el fondo de WhatsApp con separadores de día, y
-// la barra para responder. A la derecha, «Info. del contacto».
+// Un chat abierto, al estilo WhatsApp iOS: la cabecera (`ChatHeader`), el
+// hilo (`ChatThread`) y la barra para responder (`Composer`: respuestas
+// rápidas, archivos, emojis, notas de voz y citas). A la derecha, «Info. del
+// contacto». Aquí solo se coordina: avisos, la cita en curso y los diálogos.
 // ---------------------------------------------------------------------------
+
+type Notice = { readonly kind: "error" | "info"; readonly text: string } | null;
 
 export function ChatView({
   conversationId,
   labels,
   labelsStatus,
+  quickReplies,
+  canManage,
   infoOpen,
   onInfo,
   onBack,
+  onDeleted,
   onCreateLabel
 }: {
   readonly conversationId: string;
   readonly labels: ReadonlyArray<LabelSummary>;
   readonly labelsStatus: "loading" | "ready" | "error";
+  readonly quickReplies: ReturnType<typeof useQuickReplies>;
+  /** Quien mira puede eliminar el chat. */
+  readonly canManage: boolean;
   readonly infoOpen: boolean;
   readonly onInfo: (open: boolean) => void;
   readonly onBack: () => void;
+  readonly onDeleted: () => void;
   readonly onCreateLabel: (request: CreateLabelRequest) => Promise<LabelSummary>;
 }) {
   const thread = useConversationThread(conversationId);
-  const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
-  const [notice, setNotice] = useState<{ readonly kind: "error" | "info"; readonly text: string } | null>(null);
+  const [notice, setNotice] = useState<Notice>(null);
   const [flowDialog, setFlowDialog] = useState(false);
+  const [replyTo, setReplyTo] = useState<ConversationMessage | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const lastId = thread.messages.at(-1)?.id;
@@ -52,8 +59,8 @@ export function ChatView({
   }, [lastId, thread.status]);
 
   useEffect(() => {
-    setDraft("");
     setNotice(null);
+    setReplyTo(null);
     stick.current = true;
   }, [conversationId]);
 
@@ -70,21 +77,7 @@ export function ChatView({
   }
 
   const name = displayName(conversation);
-  const send = async () => {
-    const text = draft.trim();
-    if (!text || sending) return;
-    setSending(true);
-    setNotice(null);
-    stick.current = true;
-    try {
-      await thread.send(text);
-      setDraft("");
-    } catch (e) {
-      setNotice({ kind: "error", text: apiErrorMessage(e, "No se pudo enviar el mensaje.") });
-    } finally {
-      setSending(false);
-    }
-  };
+  const live = !conversation.connectionDeleted;
 
   const toggleBot = async () => {
     setNotice(null);
@@ -95,116 +88,73 @@ export function ChatView({
     }
   };
 
+  const react = async (message: ConversationMessage, emoji: string) => {
+    setNotice(null);
+    try {
+      await thread.react(message.id, emoji);
+    } catch (e) {
+      setNotice({ kind: "error", text: apiErrorMessage(e, "No se pudo reaccionar al mensaje.") });
+    }
+  };
+
   return (
     <>
       <section className="ios-chat" aria-label={`Chat con ${name}`}>
-        <header className="ios-chat__header">
-          <button type="button" className="ios-icon-btn ios-chat__back" aria-label="Volver a los chats" onClick={onBack}>
-            <BackGlyph />
-          </button>
-          <button type="button" className="ios-chat__who" aria-label={`Ver info. de ${name}`} onClick={() => onInfo(!infoOpen)}>
-            <Avatar name={conversation.contactName} phone={conversation.phone} photoUrl={conversation.contactAvatarUrl} size={38} />
-            <span className="ios-chat__who-text">
-              <strong>{name}</strong>
-              <span>
-                {conversation.connectionDeleted
-                  ? `Número eliminado · ${conversation.connectionName}`
-                  : conversation.activeFlowName
-                    ? `En el flujo «${conversation.activeFlowName}»`
-                    : `${conversation.contactName ? `${formatPhone(conversation.phone).text} · ` : ""}${conversation.connectionName}`}
-              </span>
-            </span>
-          </button>
-          {conversation.connectionDeleted ? null : (
-            <>
-              <button type="button" className="ios-run-flow" onClick={() => setFlowDialog(true)}>
-                <BoltGlyph />
-                <span>Ejecutar flujo</span>
-              </button>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={conversation.botEnabled}
-                aria-label={conversation.botEnabled ? "Bot activo" : "Bot pausado"}
-                className={`ios-bot-toggle${conversation.botEnabled ? " is-on" : ""}`}
-                title={conversation.botEnabled ? "El bot responde este chat. Tócalo para atenderlo tú." : "Un asesor atiende este chat. Tócalo para que el bot vuelva a responder."}
-                onClick={() => void toggleBot()}
-              >
-                <BotGlyph />
-                <span>{conversation.botEnabled ? "Bot activo" : "Bot pausado"}</span>
-                <span className="ios-bot-toggle__track" aria-hidden="true">
-                  <span className="ios-bot-toggle__thumb" />
-                </span>
-              </button>
-            </>
-          )}
-          <button type="button" className={`ios-icon-btn${infoOpen ? " is-active" : ""}`} aria-label="Info. del contacto" aria-pressed={infoOpen} onClick={() => onInfo(!infoOpen)}>
-            <InfoGlyph />
-          </button>
-        </header>
+        <ChatHeader
+          conversation={conversation}
+          name={name}
+          infoOpen={infoOpen}
+          onBack={onBack}
+          onInfo={onInfo}
+          onRunFlow={() => setFlowDialog(true)}
+          onToggleBot={() => void toggleBot()}
+        />
 
-        <div
-          className="ios-thread"
+        <ChatThread
           ref={scroller}
+          messages={thread.messages}
+          hasMore={thread.hasMore}
+          interactive={live}
           onScroll={(event) => {
             const element = event.currentTarget;
             stick.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
           }}
-        >
-          {thread.hasMore ? (
-            <button type="button" className="ios-older" onClick={() => { stick.current = false; void thread.loadOlder(); }}>
-              Ver mensajes anteriores
-            </button>
-          ) : null}
-          {thread.messages.map((message, index) => {
-            const previous = thread.messages[index - 1];
-            const next = thread.messages[index + 1];
-            const newDay = !previous || dayKey(previous.createdAt) !== dayKey(message.createdAt);
-            // Colita en el último de una tanda: el siguiente es del otro lado o de otro día.
-            const tail = !next || next.direction !== message.direction || dayKey(next.createdAt) !== dayKey(message.createdAt);
-            return (
-              <Fragment key={message.id}>
-                {newDay ? <p className="ios-day"><span>{dayLabel(message.createdAt)}</span></p> : null}
-                <MessageBubble message={message} tail={tail} />
-              </Fragment>
-            );
-          })}
-          {!conversation.botEnabled && !conversation.connectionDeleted ? (
-            <div className="ios-system ios-system--note">
-              <span>Atiendes este chat: el bot no responderá hasta que lo actives.</span>
-              <button type="button" className="ios-link-btn" onClick={() => void toggleBot()}>
-                Activar bot
-              </button>
-            </div>
-          ) : null}
-        </div>
+          onLoadOlder={() => {
+            stick.current = false;
+            void thread.loadOlder();
+          }}
+          onReply={setReplyTo}
+          onReact={(message, emoji) => void react(message, emoji)}
+          footer={
+            !conversation.botEnabled && live ? (
+              <div className="ios-system ios-system--note">
+                <span>Atiendes este chat: el bot no responderá hasta que lo actives.</span>
+                <button type="button" className="ios-link-btn" onClick={() => void toggleBot()}>
+                  Activar bot
+                </button>
+              </div>
+            ) : null
+          }
+        />
 
         {notice ? <p className={`ios-notice ios-notice--${notice.kind}`} role={notice.kind === "error" ? "alert" : "status"}>{notice.text}</p> : null}
 
-        {conversation.connectionDeleted ? (
+        {live ? (
+          <Composer
+            key={conversationId}
+            contactName={conversation.contactName}
+            quickReplies={quickReplies}
+            replyTo={replyTo}
+            onCancelReply={() => setReplyTo(null)}
+            onSend={async (request) => {
+              stick.current = true;
+              await thread.send(request);
+            }}
+            onError={(text) => setNotice(text ? { kind: "error", text } : null)}
+          />
+        ) : (
           <footer className="ios-composer ios-composer--closed" role="note">
             El número «{conversation.connectionName}» fue eliminado. Puedes leer y etiquetar este chat, pero ya no responder desde él.
-          </footer>
-        ) : (
-          <footer className="ios-composer">
-            <textarea
-              className="ios-composer__input"
-              value={draft}
-              rows={1}
-              maxLength={MAX_AGENT_MESSAGE_LENGTH}
-              placeholder="Mensaje"
-              aria-label="Escribe un mensaje"
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  void send();
-                }
-              }}
-            />
-            <button type="button" className="ios-send" aria-label="Enviar" disabled={!draft.trim() || sending} onClick={() => void send()}>
-              <SendGlyph />
-            </button>
           </footer>
         )}
 
@@ -231,6 +181,14 @@ export function ChatView({
           onRunFlow={() => setFlowDialog(true)}
           onSetLabels={thread.setLabels}
           onCreateLabel={onCreateLabel}
+          {...(canManage
+            ? {
+                onDelete: async () => {
+                  await thread.remove();
+                  onDeleted();
+                }
+              }
+            : {})}
         />
       ) : null}
     </>

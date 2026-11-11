@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DELIVERY_RANK, type ConversationLabel, type ConversationMessage, type ConversationSummary, type DeliveryStatus, type MessageAuthor } from "../../../contracts/ConversationContracts";
-import type { ConversationRepository, DeliveryMarkOutcome, InboxQuery } from "../../../domains/conversations/application/ConversationRepository";
+import type { ConversationRepository, DeliveryMarkOutcome, InboxQuery, MessageRef } from "../../../domains/conversations/application/ConversationRepository";
 import { previewOf, type Conversation, type StoredMessage } from "../../../domains/conversations/domain/Conversation";
 
 interface Row extends Conversation {
@@ -98,7 +98,7 @@ export class InMemoryConversationRepository implements ConversationRepository {
     const messages = slice.map((message): ConversationMessage => ({
       id: message.id, conversationId: message.conversationId, direction: message.direction, author: message.author, kind: message.kind,
       text: message.text, mediaUrl: message.mediaUrl, mediaType: message.mediaType, options: message.options, status: message.status,
-      error: message.error, flowName: message.flowKey, agentName: message.agentName, createdAt: message.createdAt
+      error: message.error, flowName: message.flowKey, agentName: message.agentName, replyTo: this.quoteOf(message.replyToId), createdAt: message.createdAt
     }));
     return { messages, hasMore: end - options.limit > 0 };
   }
@@ -129,6 +129,26 @@ export class InMemoryConversationRepository implements ConversationRepository {
       advanced += 1;
     });
     return { matched, advanced };
+  }
+
+  public async findMessage(tenantId: string, conversationId: string, messageId: string): Promise<MessageRef | null> {
+    const message = this.stored.find((item) => item.id === messageId && item.tenantId === tenantId && item.conversationId === conversationId);
+    return message ? { id: message.id, kind: message.kind, providerMessageId: message.providerMessageId } : null;
+  }
+
+  public async remove(tenantId: string, id: string): Promise<boolean> {
+    const row = this.rows.get(id);
+    if (!row || row.tenantId !== tenantId) return false;
+    this.rows.delete(id);
+    for (let index = this.stored.length - 1; index >= 0; index -= 1) {
+      if (this.stored[index]!.conversationId === id) this.stored.splice(index, 1);
+    }
+    return true;
+  }
+
+  private quoteOf(id: string | null) {
+    const quoted = id ? this.stored.find((message) => message.id === id) : undefined;
+    return quoted ? { id: quoted.id, author: quoted.author, kind: quoted.kind, text: quoted.text } : null;
   }
 
   private labelsOf(row: Row): ConversationLabel[] {
