@@ -1,4 +1,4 @@
-/* El botón «?» (abajo a la derecha) y el panel lateral de ayuda. */
+/* El botón «?» (abajo a la derecha) y el panel lateral de ayuda: buscar, lo de esta pantalla y más ayuda. */
 
 .help-fab {
   position: fixed;
@@ -16,6 +16,11 @@
   font-size: 1.25rem;
   font-weight: 800;
   cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.help-fab:hover {
+  transform: translateY(-2px);
 }
 
 .help-panel__backdrop {
@@ -23,6 +28,7 @@
   inset: 0;
   z-index: 60;
   background: rgb(30 21 48 / 28%);
+  animation: help-panel-fade 0.18s ease;
 }
 
 .help-panel {
@@ -31,34 +37,61 @@
   right: 12px;
   bottom: 12px;
   display: flex;
-  width: min(440px, calc(100% - 24px));
+  width: min(420px, calc(100% - 24px));
   flex-direction: column;
   overflow: hidden;
   border-radius: 24px;
   background: var(--surface);
   box-shadow: -20px 0 50px -20px rgb(30 21 48 / 45%);
+  animation: help-panel-in 0.22s ease;
+}
+
+@keyframes help-panel-fade {
+  from { opacity: 0; }
+}
+
+@keyframes help-panel-in {
+  from { opacity: 0; transform: translateX(24px); }
 }
 
 .help-panel__head {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px 20px 14px;
+  gap: 16px;
+  padding: 20px 20px 18px;
   background: linear-gradient(125deg, #1e1530 0%, #33246b 60%, #5b4bd4 100%);
   color: #ffffff;
 }
 
 .help-panel__title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.help-panel__title > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.help-panel__title strong {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+}
+
+.help-panel__title small {
+  color: #d9d2fb;
+  font-size: 0.8rem;
 }
 
 .help-panel__title button {
+  display: inline-flex;
   width: 36px;
   height: 36px;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 10px;
   background: rgb(255 255 255 / 12%);
@@ -66,97 +99,84 @@
   cursor: pointer;
 }
 
-.help-panel__tabs {
+.help-panel__title button:hover {
+  background: rgb(255 255 255 / 22%);
+}
+
+.help-panel__search {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 12px;
-  background: rgb(255 255 255 / 10%);
-}
-
-.help-panel__tabs button {
-  min-height: 36px;
-  flex: 1;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: #ede9fe;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.help-panel__tabs button[aria-selected="true"] {
+  min-height: 46px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-radius: 13px;
   background: #ffffff;
+  color: #6f6582;
+  box-shadow: 0 12px 26px -16px rgb(0 0 0 / 55%);
+}
+
+.help-panel__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
   color: #1e1530;
-  font-weight: 800;
+  font: inherit;
+  font-size: 0.92rem;
 }
 
 .help-panel__body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 10px;
+  gap: 18px;
   overflow: auto;
-  padding: 18px 20px 22px;
+  padding: 18px 16px 22px;
+}
+
+.help-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .help-panel__label {
+  padding: 0 8px 6px;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
-.help-panel__article {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  color: var(--text);
+.help-panel__empty {
+  margin: 0;
+  padding: 8px;
+  color: var(--muted);
   font-size: 0.88rem;
-  font-weight: 700;
-  text-decoration: none;
 }
 
-.help-panel__article:hover {
-  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
-  color: var(--text);
+.help-panel__loading {
+  height: 140px;
+  border-radius: 14px;
+  background: var(--chip-bg);
 }
 
+.help-panel__article,
 .help-panel__video {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
   color: var(--text);
   text-decoration: none;
+  transition: background 0.15s ease;
 }
 
-.help-panel__video small {
-  display: block;
-  color: var(--muted);
-}
-
-.help-panel__thumb {
-  display: inline-flex;
-  width: 76px;
-  height: 46px;
-  flex: 0 0 76px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #1e1530, #5b4bd4) center / cover;
-  color: #ffffff;
-}
-
-.help-panel__all {
-  font-size: 0.85rem;
-  font-weight: 700;
+.help-panel__article:hover,
+.help-panel__video:hover {
+  background: var(--chip-bg);
+  color: var(--text);
 }

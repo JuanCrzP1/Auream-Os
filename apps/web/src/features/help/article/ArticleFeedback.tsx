@@ -1,5 +1,7 @@
+import "./article-feedback.css";
 import { useState } from "react";
 import { helpApi } from "@shared/help/helpApi";
+import { HelpIcon } from "@shared/help/HelpIcons";
 
 /** «¿Te sirvió?»: un toque, y si no sirvió, qué faltó (opcional). */
 export function ArticleFeedback({ slug }: { readonly slug: string }) {
@@ -14,18 +16,21 @@ export function ArticleFeedback({ slug }: { readonly slug: string }) {
     <section className="help-feedback" aria-label="¿Te sirvió?">
       {answer === null ? (
         <>
-          <strong>¿Te sirvió este artículo?</strong>
+          <span className="help-feedback__text">
+            <strong>¿Te sirvió este artículo?</strong>
+            <span>Tu respuesta nos dice qué mejorar.</span>
+          </span>
           <span className="help-feedback__buttons">
-            <button type="button" onClick={() => rate(true)}>👍 Sí</button>
-            <button type="button" onClick={() => rate(false)}>👎 No</button>
+            <button type="button" onClick={() => rate(true)}><HelpIcon name="thumbUp" />Sí</button>
+            <button type="button" onClick={() => rate(false)}><HelpIcon name="thumbDown" />No</button>
           </span>
         </>
       ) : answer || sent ? (
-        <strong>¡Gracias! Nos ayuda a mejorar la ayuda.</strong>
+        <span className="help-feedback__thanks"><span><HelpIcon name="check" /></span>¡Gracias! Así mejoramos la ayuda.</span>
       ) : (
         <div className="help-feedback__more">
-          <strong>Gracias. ¿Qué faltó?</strong>
-          <textarea className="ui-input" rows={2} maxLength={1000} value={comment} aria-label="Qué faltó" placeholder="Cuéntanos qué esperabas encontrar." onChange={(event) => setComment(event.target.value)} />
+          <strong>Gracias. ¿Qué te faltó?</strong>
+          <textarea className="ui-input" rows={3} maxLength={1000} value={comment} aria-label="Qué faltó" placeholder="Cuéntanos qué esperabas encontrar o qué no quedó claro." onChange={(event) => setComment(event.target.value)} />
           <button type="button" className="ui-btn" onClick={() => void helpApi.rate(slug, false, comment.trim() || null).then(() => setSent(true)).catch(() => undefined)}>Enviar</button>
         </div>
       )}

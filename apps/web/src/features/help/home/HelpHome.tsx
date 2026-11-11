@@ -1,3 +1,4 @@
+import "../parts/help-page.css";
 import "./help-home.css";
 import "./help-home-parts.css";
 import "./help-start.css";
@@ -11,7 +12,7 @@ import { SupportBanner } from "./SupportBanner";
 
 type Navigate = (next: Record<string, string>) => void;
 
-/** La portada: buscar, empezar, cada módulo, lo más leído, novedades, tutoriales y soporte. */
+/** La portada: buscar, empezar, cada módulo, lo más leído, novedades, tutoriales y cómo contactar al equipo. */
 export function HelpHome({ onNavigate }: { readonly onNavigate: Navigate }) {
   const [data, setData] = useState<HelpHomeResponse | null>(null);
   const [failed, setFailed] = useState(false);
@@ -20,11 +21,12 @@ export function HelpHome({ onNavigate }: { readonly onNavigate: Navigate }) {
   }, []);
 
   return (
-    <div className="ui-page help-home">
+    <div className="ui-page help-page">
+      <div className="help-page__wrap help-home">
       <HelpSearch onOpen={(slug) => onNavigate({ article: slug })} popular={data?.popular.slice(0, 4) ?? []} />
       {failed ? <p className="ui-error" role="alert">No pudimos cargar la ayuda. Revisa tu conexión.</p> : null}
       {data?.canManage ? (
-        <button type="button" className="help-home__admin" onClick={() => onNavigate({ view: "admin" })}>Administrar ayuda y soporte →</button>
+        <button type="button" className="help-home__admin" onClick={() => onNavigate({ view: "admin" })}>Administrar ayuda →</button>
       ) : null}
       {data ? <StartChecklist steps={data.onboarding} /> : null}
 
@@ -81,7 +83,8 @@ export function HelpHome({ onNavigate }: { readonly onNavigate: Navigate }) {
         </div>
       ) : null}
 
-      {data ? <SupportBanner settings={data.support} onCase={() => onNavigate({ view: "support" })} /> : null}
+      {data ? <SupportBanner settings={data.support} /> : null}
+      </div>
     </div>
   );
 }

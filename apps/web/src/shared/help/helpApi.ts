@@ -1,7 +1,6 @@
 import type {
   ArticleDetail,
   ArticleSummary,
-  CreateSupportCaseRequest,
   HelpHomeResponse,
   SaveTutorialRequest,
   SupportCase,
@@ -10,7 +9,7 @@ import type {
 } from "@contracts/HelpContracts";
 import { builderApiClient } from "@shared/http/builderApiClient";
 
-// Ayuda y soporte (`/help`): lo usan el Centro de ayuda y el panel «?» de cada pantalla.
+// Ayuda (`/help`): lo usan el Centro de ayuda y el panel «?» de cada pantalla.
 
 const id = (value: string) => encodeURIComponent(value);
 
@@ -27,8 +26,5 @@ export const helpApi = {
   removeTutorial: async (tutorialId: string) => (await builderApiClient.delete<{ tutorials: Tutorial[] }>(`/help/tutorials/${id(tutorialId)}`)).tutorials,
   reorder: async (ids: ReadonlyArray<string>) => (await builderApiClient.post<{ tutorials: Tutorial[] }>("/help/tutorials/order", { ids })).tutorials,
   support: () => builderApiClient.get<{ settings: SupportSettings; cases: SupportCase[] }>("/help/support"),
-  openCase: async (request: CreateSupportCaseRequest) => (await builderApiClient.post<{ cases: SupportCase[] }>("/help/support/cases", request)).cases,
-  allCases: async (status: string | null) => (await builderApiClient.get<{ cases: SupportCase[] }>(`/help/support/admin${status ? `?status=${status}` : ""}`)).cases,
-  replyCase: (caseId: string, reply: string, status: SupportCase["status"]) => builderApiClient.post<void>(`/help/support/cases/${id(caseId)}/reply`, { reply, status }),
   saveSettings: (settings: SupportSettings) => builderApiClient.put<SupportSettings>("/help/support/settings", settings)
 };

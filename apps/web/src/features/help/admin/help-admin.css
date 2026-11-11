@@ -31,8 +31,7 @@
 }
 
 .help-admin__list,
-.help-admin__form,
-.help-admin__cases {
+.help-admin__form {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -107,8 +106,7 @@
   cursor: pointer;
 }
 
-.help-admin__pick small,
-.help-admin__case small {
+.help-admin__pick small {
   color: var(--muted);
 }
 
@@ -147,64 +145,4 @@
 .help-admin__remove {
   align-self: flex-start;
   color: var(--rose);
-}
-
-.help-admin__filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.help-admin__filters button {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.help-admin__filters button[aria-pressed="true"] {
-  border-color: transparent;
-  background: var(--gradient-primary);
-  color: var(--on-primary);
-}
-
-.help-admin__case {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px 0;
-  border-top: 1px solid var(--line);
-}
-
-.help-admin__case header {
-  display: flex;
-  flex-direction: column;
-}
-
-.help-admin__case p {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.help-admin__reply {
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--chip-bg);
-}
-
-.help-admin__answer {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.help-admin__answer span {
-  display: flex;
-  gap: 8px;
 }

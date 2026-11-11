@@ -1,0 +1,20 @@
+/* El marco de cada pantalla de la ayuda: aire a los lados para que nada quede pegado al menú. */
+
+.ui-page.help-page {
+  box-sizing: border-box;
+  padding: 28px clamp(16px, 4vw, 56px) 80px;
+}
+
+.help-page .ui-page__header {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.help-page__wrap {
+  display: flex;
+  width: 100%;
+  max-width: 1160px;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0 auto;
+}

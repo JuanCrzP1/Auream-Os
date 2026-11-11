@@ -1,0 +1,85 @@
+/* «¿Te sirvió este artículo?»: una tarjeta con dos respuestas y, si no sirvió, qué faltó. */
+
+.help-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  padding: 20px 22px;
+  border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
+  border-radius: 18px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--primary) 4%, var(--surface)), color-mix(in srgb, var(--primary) 8%, var(--surface)));
+}
+
+.help-feedback__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.help-feedback__text strong {
+  font-size: 1rem;
+}
+
+.help-feedback__text span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.help-feedback__buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.help-feedback__buttons button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.help-feedback__buttons button:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--primary);
+}
+
+.help-feedback__thanks {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.help-feedback__thanks span {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--teal) 18%, var(--surface));
+  color: var(--teal);
+}
+
+.help-feedback__more {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.help-feedback__more textarea {
+  width: 100%;
+  box-sizing: border-box;
+}

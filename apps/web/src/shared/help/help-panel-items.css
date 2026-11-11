@@ -1,0 +1,91 @@
+/* Lo de adentro del panel de ayuda: cada artículo, el video y los enlaces de abajo. */
+
+.help-panel__doc {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.help-panel__text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.help-panel__text strong {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.help-panel__text small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.help-panel__go {
+  display: inline-flex;
+  color: var(--muted);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.help-panel__article:hover .help-panel__go {
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+.help-panel__video {
+  border: 1px solid var(--line);
+}
+
+.help-panel__thumb {
+  display: inline-flex;
+  width: 84px;
+  height: 50px;
+  flex: 0 0 84px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1e1530, #5b4bd4) center / cover;
+  color: #ffffff;
+}
+
+.help-panel__links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.help-panel__links a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.help-panel__links a:hover {
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.help-panel__links .help-icon {
+  color: var(--primary);
+}

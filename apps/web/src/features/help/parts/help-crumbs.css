@@ -1,0 +1,59 @@
+/* La ruta de la ayuda, sin subrayados: texto suave, chevrons y la página actual en negro. */
+
+.help-crumbs ol {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+.help-crumbs li {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.help-crumbs__sep {
+  color: color-mix(in srgb, var(--muted) 60%, transparent);
+}
+
+.help-crumbs__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.help-crumbs__link:hover,
+.help-crumbs__link:focus-visible {
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.help-crumbs li:first-child .help-crumbs__link {
+  margin-left: -8px;
+}
+
+.help-crumbs__current {
+  overflow: hidden;
+  max-width: 42ch;
+  padding: 5px 8px;
+  color: var(--text);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

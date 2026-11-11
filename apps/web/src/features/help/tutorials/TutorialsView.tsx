@@ -1,7 +1,11 @@
+import "../parts/help-page.css";
 import "./tutorials.css";
 import { useEffect, useState } from "react";
 import { HELP_MODULES, type HelpModuleId, type Tutorial } from "@contracts/HelpContracts";
 import { helpApi } from "@shared/help/helpApi";
+import { HelpIcon } from "@shared/help/HelpIcons";
+import { EmptyState } from "@shared/ui/empty-state/EmptyState";
+import { HelpCrumbs } from "../parts/HelpCrumbs";
 import { VideoPlayer } from "./VideoPlayer";
 
 /** Tutoriales en video: el destacado, filtros por módulo y cada video (se abre aquí mismo). */
@@ -19,10 +23,19 @@ export function TutorialsView({ play, onNavigate }: { readonly play: string | nu
   const open = (id: string) => onNavigate({ view: "videos", play: id });
 
   return (
-    <div className="ui-page help-videos">
-      <nav className="help-videos__crumbs" aria-label="Ruta"><button type="button" className="ui-link" onClick={() => onNavigate({})}>Centro de ayuda</button><span>/</span><span>Tutoriales en video</span></nav>
+    <div className="ui-page help-page">
+      <div className="help-page__wrap help-videos">
+      <HelpCrumbs items={[{ label: "Centro de ayuda", onClick: () => onNavigate({}) }, { label: "Tutoriales en video" }]} />
       <header className="ui-page__header"><div><h1 className="ui-page__title">Tutoriales en video</h1><p className="ui-page__subtitle">Aprende cada módulo en pocos minutos, de la mano del equipo de Auream.</p></div></header>
-      {list && list.length === 0 ? <p className="ui-muted">Pronto encontrarás aquí los tutoriales en video.</p> : null}
+      {list && list.length === 0 ? (
+        <EmptyState
+          icon={<HelpIcon name="video" size={22} />}
+          title="Los videos vienen en camino"
+          description="El equipo de Auream está grabando un tutorial corto para cada módulo. Mientras tanto, cada artículo trae el paso a paso."
+          actions={<button type="button" className="ui-btn" onClick={() => onNavigate({})}>Ir a los artículos</button>}
+          steps={["Elige el módulo", "Mira el video de pocos minutos", "Sigue el artículo paso a paso"]}
+        />
+      ) : null}
       {modules.length > 1 ? (
         <div className="help-videos__filters" role="tablist" aria-label="Módulo">
           <button type="button" role="tab" aria-selected={module === "all"} onClick={() => setModule("all")}>Todos</button>
@@ -47,6 +60,7 @@ export function TutorialsView({ play, onNavigate }: { readonly play: string | nu
             <strong>{video.title}</strong>
           </button>
         ))}
+      </div>
       </div>
       {playing ? <VideoPlayer tutorial={playing} onClose={() => onNavigate({ view: "videos" })} /> : null}
     </div>

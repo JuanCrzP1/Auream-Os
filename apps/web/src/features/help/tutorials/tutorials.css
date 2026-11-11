@@ -6,13 +6,6 @@
   gap: 20px;
 }
 
-.help-videos__crumbs {
-  display: flex;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
 .help-videos__filters {
   display: flex;
   flex-wrap: wrap;

@@ -16,7 +16,7 @@ Los centros de ayuda modernos coinciden en cuatro cosas:
 - las categorías siguen el mismo menú del producto;
 - el buscador va primero;
 - la ayuda está dentro de la app, junto a la pantalla donde surge la duda;
-- llegar a una persona de soporte es fácil, con «¿Aún necesitas ayuda?» al final de cada artículo.
+- cada artículo se lee cómodo: índice que sigue la lectura, los demás artículos del módulo y anterior/siguiente.
 
 Hoy la documentación también la leen agentes de IA, así que los mismos artículos se publican para ellos.
 
@@ -53,10 +53,9 @@ En Vercel, `/llms.txt` se reescribe a la API y `content/help/**` viaja con la fu
 
 ## Soporte
 
-- **Banner** en la portada y al final de cada artículo, con WhatsApp, abrir un caso o correo.
-- **Un caso** guarda el tema, el mensaje, la pantalla desde donde escribe, una captura opcional y el artículo que leía.
-- La persona ve sus casos y la respuesta del equipo, en Ayuda y en el panel «?».
-- **El equipo de Auream** ve los casos de todas las cuentas (con la cuenta y el correo de quien escribió), los responde o los cierra, y configura los datos de contacto: WhatsApp, correo, horario y tiempo de respuesta.
+- Ni el artículo ni el panel «?» muestran soporte: son solo ayuda.
+- **Banner** solo en la portada del Centro de ayuda, con WhatsApp y correo, y solo si el equipo de Auream los configuró (WhatsApp, correo, horario y tiempo de respuesta en «Administrar ayuda»).
+- **Casos de soporte:** la web ya no los ofrece. La API y la tabla `support_cases` siguen (`/help/support/cases`), sin pantalla, por si se retoman.
 
 ## «Empieza aquí»
 
@@ -70,10 +69,9 @@ Seis pasos que se marcan solos porque se leen de los datos de la cuenta (`SqlOnb
 
 ## Permisos
 
-- **Toda persona con sesión** lee, busca, ve videos, opina y abre casos.
+- **Toda persona con sesión** lee, busca, ve videos y opina.
 - **El equipo de Auream** administra con `help.manage`, que es solo del rol `platform_admin`. Lo usa para:
   - publicar tutoriales;
-  - responder los casos de todas las cuentas;
   - configurar los datos de contacto.
 - Las páginas públicas (`/llms.txt` y `/api/help/docs/*.md`) no llevan datos de ninguna cuenta.
 

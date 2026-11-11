@@ -1,22 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ArticleSummary } from "@contracts/HelpContracts";
-import { helpApi } from "@shared/help/helpApi";
-
-const WAIT_MS = 250;
+import { useHelpSearch } from "@shared/help/useHelpSearch";
 
 /** El buscador grande de la portada, con resultados mientras se escribe. */
 export function HelpSearch({ onOpen, popular }: { readonly onOpen: (slug: string) => void; readonly popular: ReadonlyArray<ArticleSummary> }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ReadonlyArray<ArticleSummary> | null>(null);
-
-  useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults(null);
-      return;
-    }
-    const timer = window.setTimeout(() => void helpApi.search(query).then(setResults).catch(() => setResults([])), WAIT_MS);
-    return () => window.clearTimeout(timer);
-  }, [query]);
+  const results = useHelpSearch(query);
 
   return (
     <section className="help-search" aria-label="Buscar en la ayuda">
@@ -29,7 +18,7 @@ export function HelpSearch({ onOpen, popular }: { readonly onOpen: (slug: string
         </label>
         {results ? (
           <div className="help-search__results" role="listbox" aria-label="Resultados">
-            {results.length === 0 ? <span className="help-search__empty">No encontramos nada con eso. Prueba otras palabras o escríbenos.</span> : null}
+            {results.length === 0 ? <span className="help-search__empty">No encontramos nada con eso. Prueba con otras palabras.</span> : null}
             {results.map((article) => (
               <button key={article.slug} type="button" role="option" aria-selected="false" onClick={() => onOpen(article.slug)}>
                 <strong>{article.title}</strong><span>{article.summary}</span>

@@ -5,14 +5,12 @@ import { HelpAdmin } from "../admin/HelpAdmin";
 import { ArticleView } from "../article/ArticleView";
 import { ModuleView } from "../article/ModuleView";
 import { HelpHome } from "../home/HelpHome";
-import { SupportView } from "../home/SupportView";
 import { TutorialsView } from "../tutorials/TutorialsView";
 
 /**
  * Centro de ayuda (`/help`): la portada, cada artículo (`?article=`), cada
- * módulo (`?module=`), los tutoriales (`?view=videos[&play=]`), hablar con
- * soporte (`?view=support`) y, para el equipo de Auream, administrar
- * (`?view=admin`).
+ * módulo (`?module=`), los tutoriales (`?view=videos[&play=]`) y, para el
+ * equipo de Auream, administrar (`?view=admin`).
  */
 export function HelpPage() {
   const [params, setParams] = useSearchParams();
@@ -24,7 +22,6 @@ export function HelpPage() {
   if (article) return <ArticleView slug={article} onNavigate={go} />;
   if (module) return <ModuleView moduleId={module} onNavigate={go} />;
   if (view === "videos") return <TutorialsView play={params.get("play")} onNavigate={go} />;
-  if (view === "support") return <SupportView onNavigate={go} />;
   if (view === "admin") return <HelpAdmin onNavigate={go} />;
   return <HelpHome onNavigate={go} />;
 }
