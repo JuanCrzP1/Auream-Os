@@ -8,7 +8,7 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 60,
-      "includeFiles": "{content/help/**,node_modules/tesseract.js/**,node_modules/tesseract.js-core/index.js,node_modules/tesseract.js-core/package.json,node_modules/tesseract.js-core/*lstm*,node_modules/@tesseract.js-data/spa/package.json,node_modules/@tesseract.js-data/spa/4.0.0_best_int/**}"
+      "includeFiles": "{content/help/**,node_modules/tesseract.js/**,node_modules/tesseract.js-core/{index.js,package.json,*lstm*},node_modules/@tesseract.js-data/spa/{package.json,4.0.0_best_int/**}}"
     },
     "api/task-alarm.ts": {
       "maxDuration": 30,
