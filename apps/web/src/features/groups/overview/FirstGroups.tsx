@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { EmptyState } from "@shared/ui/empty-state/EmptyState";
 import { groupsApi } from "../services/groupsApi";
+import { GroupsIllustration } from "./GroupsIllustration";
 
 const ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -44,10 +45,11 @@ export function FirstGroups({ canManage, hasNumbers, onNew, onMine }: { readonly
       label="Tu primera campaña de grupos"
       title="Crea tu primera campaña de grupos"
       description={hasNumbers
-        ? "Un enlace que lleva a tus grupos de WhatsApp, crea el siguiente cuando uno se llena y te muestra cuánto vende cada grupo."
+        ? "Un solo enlace para tus anuncios y tu bio. Lleva al grupo con cupo, crea el siguiente cuando uno se llena y te muestra cuánto vende cada grupo."
         : "Los grupos se crean y se manejan por un número de WhatsApp conectado con QR. Conéctalo primero en Conexiones."}
       actions={actions}
-      steps={["Comparte un enlace", "Los grupos se llenan y se crean solos", "Ves lo que vende cada grupo"]}
+      visual={<GroupsIllustration />}
+      steps={["Comparte el enlace en anuncios, bio e historias", "Los grupos se llenan y se crean solos", "Ves lo que vende cada grupo"]}
     />
   );
 }

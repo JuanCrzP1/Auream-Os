@@ -1,0 +1,60 @@
+.bc-ill {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bc-ill__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bc-ill__head span {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
+  color: var(--teal);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.bc-ill__head small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.bc-ill__funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bc-ill__row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.bc-ill__row i {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--chip-bg);
+}
+
+.bc-ill__row b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a78bfa, var(--primary));
+}
+
+.bc-ill__row .bc-ill__sold {
+  background: var(--teal);
+}

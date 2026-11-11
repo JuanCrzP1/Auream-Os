@@ -1,4 +1,5 @@
 import { EmptyState } from "@shared/ui/empty-state/EmptyState";
+import { BroadcastIllustration } from "./BroadcastIllustration";
 
 const ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -16,6 +17,7 @@ export function FirstBroadcast({ canManage, onNew }: { readonly canManage: boole
       title="Envía tu primera difusión"
       description="Un flujo o un mensaje a los clientes que ya te escribieron, con un ritmo que cuida tu número, y lo que vendió cada envío."
       actions={canManage ? <button type="button" className="ui-btn ui-btn--primary" onClick={onNew}>Crear difusión</button> : <span className="ui-muted">Las difusiones las crean los dueños y administradores.</span>}
+      visual={<BroadcastIllustration />}
       steps={["Elige a quién", "Se envía con ritmo seguro", "Ves quién leyó, respondió y compró"]}
     />
   );
