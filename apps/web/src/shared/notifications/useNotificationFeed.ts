@@ -8,12 +8,15 @@ export const NOTIFICATION_POLL_MS = 60_000;
 /** Los avisos de la campana: al entrar, cada minuto con la pestaña visible y al volver a ella. */
 export function useNotificationFeed() {
   const [feed, setFeed] = useState<NotificationFeed | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
       setFeed(await notificationsApi.feed());
+      setFailed(false);
     } catch {
-      // Sin red o sin servidor: la campana se queda como estaba.
+      // Sin red o sin servidor: la campana conserva lo último que tenía; si nunca cargó, lo dice.
+      setFailed(true);
     }
   }, []);
 
@@ -36,5 +39,5 @@ export function useNotificationFeed() {
     void notificationsApi.markSeen().catch(() => undefined);
   }, []);
 
-  return { feed, refresh, markSeen };
+  return { feed, failed, refresh, markSeen };
 }

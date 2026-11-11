@@ -19,7 +19,7 @@ const TONE: Record<NotificationKind, string> = {
 export function NotificationBell() {
   const button = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const { feed, refresh, markSeen } = useNotificationFeed();
+  const { feed, failed, refresh, markSeen } = useNotificationFeed();
   const unread = feed?.unread ?? 0;
 
   const toggle = () => {
@@ -38,7 +38,14 @@ export function NotificationBell() {
         <SidebarPopover anchor={button} label="Notificaciones" onClose={() => setOpen(false)}>
           <header className="sidebar-popover__head"><span><strong>Notificaciones</strong><small>Lo que pide tu atención ahora</small></span></header>
           <div className="sidebar-popover__body">
-            {feed === null ? <span className="notice-list__loading" aria-label="Cargando" /> : null}
+            {feed === null && !failed ? <span className="notice-list__loading" aria-label="Cargando" /> : null}
+            {feed === null && failed ? (
+              <div className="notice-list__empty">
+                <strong>No pudimos cargar los avisos</strong>
+                <small>Revisa tu conexión.</small>
+                <button type="button" className="ui-btn" onClick={() => void refresh()}>Reintentar</button>
+              </div>
+            ) : null}
             {feed && feed.items.length === 0 ? (
               <div className="notice-list__empty">
                 <span aria-hidden="true">✓</span>

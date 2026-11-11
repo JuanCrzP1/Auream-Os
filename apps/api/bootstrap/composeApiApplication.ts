@@ -72,7 +72,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const authConfig = loadNeonAuthConfig(env);
 
   const logger = new StructuredLogger({ service: "bots-ai-platform-api" });
-  const tenancy = composeTenancyServices(databaseConfig);
+  // Neon cierra conexiones quietas: se anota y el grupo abre otra, sin tumbar la API.
+  const onIdleError = (error: Error) => logger.warn("db.idle_connection_lost", { error: error.message });
+  const tenancy = composeTenancyServices(databaseConfig, onIdleError);
   const integrations = composeIntegrationsServices(tenancy.sqlClient, config.credentialsKeyRing, undefined, { metaGraphVersion: config.metaGraphVersion });
   // Un solo lector de comprobantes por instancia (simulación, «Probar» y flujos reales).
   const documents = new TesseractDocumentReader();
@@ -131,7 +133,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     config,
     sql: tenancy.sqlClient,
     // Pool aparte para los candados por conversación: nunca compite con el trabajo.
-    lockSql: createSqlClient(databaseConfig.connectionString, { max: CONVERSATION_LOCKS_PER_INSTANCE, idleTimeoutMs: databaseConfig.idleTimeoutMs }),
+    lockSql: createSqlClient(databaseConfig.connectionString, { max: CONVERSATION_LOCKS_PER_INSTANCE, idleTimeoutMs: databaseConfig.idleTimeoutMs, onIdleError }),
     workspaces: services.workspaceRepository,
     contacts: contactsServices,
     integrations,

@@ -24,12 +24,90 @@
   }
 }
 
-@media (max-width: 720px) {
-  .sidebar-popover {
-    left: 12px !important;
-    right: 12px;
-    width: auto;
+.sidebar-popover__scrim,
+.sidebar-popover__grip,
+.sidebar-popover__close {
+  display: none;
+}
+
+/* Celular: una hoja que sube desde abajo, a todo el ancho, por encima del menú. */
+@media (max-width: 860px) {
+  .sidebar-popover__scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 95;
+    background: rgba(30, 21, 48, 0.45);
+    animation: sidebar-scrim-in 0.2s ease-out;
   }
+
+  .sidebar-popover {
+    left: 0 !important;
+    right: 0;
+    bottom: 0 !important;
+    z-index: 96;
+    width: auto;
+    max-height: 85dvh;
+    border-width: 1px 0 0;
+    border-radius: 24px 24px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--surface);
+    animation: sidebar-sheet-in 0.24s ease-out;
+  }
+
+  .sidebar-popover__grip {
+    display: block;
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    z-index: 2;
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(124, 114, 142, 0.45);
+    transform: translateX(-50%);
+  }
+
+  .sidebar-popover__close {
+    display: inline-flex;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .sidebar-popover__close svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .sidebar-popover .sidebar-popover__head,
+  .sidebar-popover .support-pop__head {
+    padding-top: 24px;
+    padding-right: 60px;
+  }
+}
+
+@keyframes sidebar-scrim-in {
+  from { opacity: 0; }
+}
+
+@keyframes sidebar-sheet-in {
+  from { transform: translateY(100%); }
 }
 
 .sidebar-popover__head {
@@ -60,7 +138,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sidebar-popover {
+  .sidebar-popover,
+  .sidebar-popover__scrim {
     animation: none;
   }
 }

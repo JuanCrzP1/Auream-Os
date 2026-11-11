@@ -31,6 +31,8 @@ export interface SqlClient extends SqlExecutor {
 export interface SqlPoolOptions {
   readonly max?: number;
   readonly idleTimeoutMs?: number;
+  /** Una conexión inactiva se cayó (p. ej. Neon la cerró): se avisa, no se tumba el proceso. */
+  readonly onIdleError?: (error: Error) => void;
 }
 
 export function createSqlClient(connectionString: string, options: SqlPoolOptions = {}): SqlClient {
@@ -39,6 +41,11 @@ export function createSqlClient(connectionString: string, options: SqlPoolOption
     ...(options.max !== undefined ? { max: options.max } : {}),
     ...(options.idleTimeoutMs !== undefined ? { idleTimeoutMillis: options.idleTimeoutMs } : {})
   });
+
+  // Sin este oyente, cuando el servidor corta una conexión que estaba quieta en
+  // el grupo, `pg` emite «error» y Node tumba el proceso entero. El grupo ya
+  // descarta esa conexión y abre otra en la siguiente consulta: basta con avisar.
+  pool.on("error", (error) => options.onIdleError?.(error));
 
   const runQuery = async <TRow>(
     executor: { query: (sql: string, params?: ReadonlyArray<unknown>) => Promise<{ rows: TRow[]; rowCount: number | null }> },

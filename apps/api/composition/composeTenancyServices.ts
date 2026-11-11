@@ -23,8 +23,8 @@ export interface TenancyServices {
   readonly onboarding: OnboardingPort;
 }
 
-export function composeTenancyServices(config: DatabaseConfig): TenancyServices {
-  const sqlClient = createSqlClient(config.connectionString, { max: config.poolMax, idleTimeoutMs: config.idleTimeoutMs });
+export function composeTenancyServices(config: DatabaseConfig, onIdleError?: (error: Error) => void): TenancyServices {
+  const sqlClient = createSqlClient(config.connectionString, { max: config.poolMax, idleTimeoutMs: config.idleTimeoutMs, onIdleError });
 
   return {
     sqlClient,
