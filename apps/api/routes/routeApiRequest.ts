@@ -14,6 +14,10 @@ import { routeTeamRequest } from "./routeTeamRequest";
 import { routeSalesRequest, type SalesRoutes } from "./routeSalesRequest";
 import { routeCrmRequest, type CrmRoutes } from "./routeCrmRequest";
 import { routeBroadcastsRequest, type BroadcastRoutes } from "./routeBroadcastsRequest";
+import { routeGroupsRequest, type GroupRoutes } from "./routeGroupsRequest";
+import { routeGroupLink } from "./routeGroupLink";
+import type { LinkService } from "../../../domains/groups/application/LinkService";
+import type { GroupActivity } from "../../../domains/groups/application/GroupActivity";
 import { routeAdsRequest } from "./routeAdsRequest";
 import { routeAdsCallback } from "./routeAdsCallback";
 import { routeDashboardRequest } from "./routeDashboardRequest";
@@ -91,6 +95,8 @@ export interface ApiRouterDependencies {
   readonly crmServices?: CrmRoutes;
   /** Difusiones (`/broadcasts`). Ausente: la ruta responde 503. */
   readonly broadcastServices?: BroadcastRoutes;
+  /** Grupos y comunidades (`/groups`) y el enlace público de sus campañas (`/g/<slug>`). */
+  readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
   /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
   readonly adsServices?: AdsModule;
 }
@@ -110,7 +116,7 @@ export async function routeApiRequest(
   }
 
   // Avisos de los proveedores de WhatsApp: los autentica el token de la instancia, no una sesión.
-  if (await routeWhatsAppWebhooks(request, response, url, connectionsServices, dependencies.messagingServices, dependencies.background)) return;
+  if (await routeWhatsAppWebhooks(request, response, url, connectionsServices, dependencies.messagingServices, dependencies.background, dependencies.groupServices?.activity)) return;
 
   // Webhooks de entrada: los autoriza el secreto de su dirección, no una sesión.
   if (await routeInboundWebhook(request, response, url, dependencies.webhookServices, dependencies.background, dependencies.rateLimiter)) return;
@@ -121,6 +127,7 @@ export async function routeApiRequest(
   // OAuth del servidor MCP (descubrimiento, registro y tokens): lo usa el agente, sin sesión.
   if (await routeOAuthPublic(request, response, url, dependencies.mcpServer, dependencies.rateLimiter)) return;
   // La vuelta del inicio de sesión de Meta: sin sesión, la cuenta sale del `state` firmado.
+  if (await routeGroupLink(request, response, url, dependencies.groupServices?.link, dependencies.rateLimiter)) return;
   if (await routeAdsCallback(request, response, url, dependencies.adsServices?.connection, dependencies.adsServices?.appOrigin ?? "", dependencies.rateLimiter)) return;
 
   // Enlace de invitación al equipo: lo autoriza su secreto; quien lo abre puede no tener cuenta.
@@ -182,6 +189,7 @@ export async function routeApiRequest(
   if (await routeSalesRequest(request, response, url, dependencies.salesServices, requestContext)) return;
   if (await routeCrmRequest(request, response, url, dependencies.crmServices, requestContext)) return;
   if (await routeBroadcastsRequest(request, response, url, dependencies.broadcastServices, requestContext)) return;
+  if (await routeGroupsRequest(request, response, url, dependencies.groupServices, requestContext)) return;
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
   if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;

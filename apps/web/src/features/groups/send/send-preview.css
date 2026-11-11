@@ -1,0 +1,92 @@
+/* Enviar a grupos: a cuántos les llega y la burbuja en el grupo. */
+
+.gr-send__aside {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex: 1 1 280px;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gr-send__reach {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 22px;
+  background: linear-gradient(125deg, #1e1530 0%, #33246b 60%, #5b4bd4 100%);
+  color: #ffffff;
+}
+
+.gr-send__reach span {
+  color: #c4b5fd;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gr-send__reach strong {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  line-height: 1.05;
+}
+
+.gr-send__reach small {
+  color: #ede9fe;
+}
+
+.gr-send__phone {
+  display: flex;
+  min-height: 260px;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  border: 8px solid #1e1530;
+  border-radius: 28px;
+  background: #efeae2;
+  color: #111b21;
+}
+
+.gr-send__phone-top {
+  padding: 12px;
+  background: #f0f2f5;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.gr-send__bubble {
+  display: flex;
+  max-width: 85%;
+  flex-direction: column;
+  align-self: flex-end;
+  gap: 6px;
+  margin: 0 12px;
+  padding: 8px 10px;
+  border-radius: 10px 10px 2px 10px;
+  background: #d9fdd3;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.gr-send__bubble img {
+  max-height: 160px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.gr-send__bubble small {
+  align-self: flex-end;
+  color: #667781;
+  font-size: 0.65rem;
+}
+
+.gr-send__file,
+.gr-send__choice {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 60%);
+}

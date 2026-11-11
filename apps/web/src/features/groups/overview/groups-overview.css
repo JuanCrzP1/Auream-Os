@@ -1,0 +1,54 @@
+/* La portada de Grupos. El módulo mide su ancho (container `groups`). */
+
+.gr-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  container: groups / inline-size;
+}
+
+.gr-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gr-page__loading {
+  padding: 24px;
+  text-align: center;
+}
+
+.gr-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.gr-badge {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.gr-badge--live {
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.gr-badge--done {
+  background: color-mix(in srgb, var(--teal) 16%, transparent);
+  color: var(--teal);
+}
+
+.gr-badge--soon {
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  color: var(--amber);
+}
+
+.gr-badge--muted {
+  background: var(--chip-bg);
+  color: var(--muted);
+}

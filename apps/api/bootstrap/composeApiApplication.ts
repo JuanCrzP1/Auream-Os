@@ -32,6 +32,7 @@ import { composeCrmServices } from "../composition/composeCrmServices";
 import { composeAdsServices } from "../composition/composeAdsServices";
 import { CrmEventsRelay } from "../composition/CrmEventsRelay";
 import { composeBroadcastServices } from "../composition/composeBroadcastServices";
+import { composeGroupServices } from "../composition/composeGroupServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
@@ -153,10 +154,19 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     onError: (error, context) => logger.warn("broadcasts.failed", { ...context, error: error instanceof Error ? error.message : String(error) })
   });
   inboundListeners.current.push(broadcasts.optOuts);
+  // Grupos: campañas con enlace único, envíos a grupos y lo que vende cada uno.
+  const groups = composeGroupServices({
+    config,
+    sql: tenancy.sqlClient,
+    scheduler: scheduling.scheduler,
+    connections: connectionsServices,
+    contacts: contactsServices.directory
+  });
   const runner = scheduling.attachHandlers([
     new FlowTimerTaskHandler(messagingServices.timers),
     ...(ads.syncHandler ? [ads.syncHandler] : []),
-    ...broadcasts.handlers
+    ...broadcasts.handlers,
+    ...groups.handlers
   ]);
   // Medios de los bloques; el mismo almacén guarda las fotos de perfil y los logos (Mi perfil, Empresa).
   const mediaServices = composeMediaServices(config, tenancy.sqlClient, rateLimiter);
@@ -190,6 +200,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     salesServices: { products: sales.products, sales: sales.sales, insights: sales.insights },
     crmServices: crm.routes,
     broadcastServices: { broadcasts: broadcasts.broadcasts, audiences: broadcasts.audiences },
+    groupServices: groups,
     adsServices: ads,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({

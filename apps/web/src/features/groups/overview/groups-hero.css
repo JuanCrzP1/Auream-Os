@@ -1,0 +1,83 @@
+/* Franja oscura de Grupos (la piel del Dashboard): la plata primero. */
+
+.gr-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding: 22px 24px;
+  border-radius: 24px;
+  background: linear-gradient(125deg, #1e1530 0%, #33246b 55%, #5b4bd4 100%);
+  box-shadow: 0 18px 40px -18px rgb(59 42 122 / 60%);
+  color: #ffffff;
+}
+
+.gr-hero__lead {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.gr-hero__label,
+.gr-hero__card-label {
+  color: #c4b5fd;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gr-hero__money {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  line-height: 1.05;
+}
+
+.gr-hero__sentence {
+  color: #ede9fe;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.gr-hero__grid {
+  display: grid;
+  flex: 2 1 480px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gr-hero__card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 8%);
+}
+
+.gr-hero__card--accent {
+  border: 1px solid rgb(153 246 228 / 35%);
+  background: rgb(20 184 166 / 18%);
+}
+
+.gr-hero__card--accent .gr-hero__card-label,
+.gr-hero__card--accent .gr-hero__card-hint {
+  color: #99f6e4;
+}
+
+.gr-hero__card-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.gr-hero__card-hint {
+  color: #ddd6fe;
+  font-size: 0.78rem;
+}
+
+@container groups (max-width: 720px) {
+  .gr-hero__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

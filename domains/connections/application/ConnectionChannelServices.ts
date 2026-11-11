@@ -149,6 +149,16 @@ export class ConnectionChannelServices {
     return { sent, failures, results };
   }
 
+  /**
+   * La sesión del proveedor de un número de la cuenta (para Grupos: hablar con
+   * WhatsApp por ese número). `null` si no existe o no tiene sesión.
+   */
+  public async sessionFor(tenantId: string, connectionId: string): Promise<{ readonly connection: WhatsAppConnection; readonly session: ProviderSession } | null> {
+    const connection = await this.repository.findById(tenantId, connectionId);
+    const session = connection ? this.sessionOf(connection) : null;
+    return connection && session ? { connection, session } : null;
+  }
+
   private sessionOf(connection: WhatsAppConnection): ProviderSession | null {
     if (!connection.providerRef || !connection.providerSecret) return null;
     try {

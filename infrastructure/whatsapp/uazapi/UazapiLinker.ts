@@ -19,9 +19,8 @@ import type { UazapiInstanceInfo } from "./uazapiResponses";
 // ---------------------------------------------------------------------------
 
 export const UAZAPI_INSTANCE_PREFIX = "auream-";
-/** Avisos que Auream pide a cada instancia: su conexión y los mensajes que llegan. */
-/** Avisos que pide Auream: conexión, mensajes y recibos de entregado/leído. */
-export const WEBHOOK_EVENTS = ["connection", "messages", "messages_update"] as const;
+/** Avisos que pide Auream: conexión, mensajes, recibos de entregado/leído y entradas y salidas de los grupos. */
+export const WEBHOOK_EVENTS = ["connection", "messages", "messages_update", "groups"] as const;
 /** Nombre del dispositivo que ve el cliente en «Dispositivos vinculados». */
 const DEVICE_NAME = "Auream";
 

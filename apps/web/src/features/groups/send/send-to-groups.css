@@ -1,0 +1,185 @@
+/* Enviar a grupos: el formulario y, al lado, a cuántos y cómo se ve. */
+
+.gr-send {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.gr-send__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.gr-send__back {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.gr-send__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.gr-send__card {
+  display: flex;
+  min-width: 0;
+  flex: 3 1 520px;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+}
+
+.gr-send__block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gr-send__label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gr-send__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gr-send__chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gr-send__chip--on {
+  border-color: transparent;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.gr-send__more summary {
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gr-send__more .gr-send__chips {
+  margin-top: 10px;
+}
+
+.gr-send__kinds {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--chip-bg);
+}
+
+.gr-send__kinds button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gr-send__kinds button[aria-selected="true"] {
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(30 21 48 / 8%);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.gr-send__text {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.gr-send__upload,
+.gr-send__when,
+.gr-send__choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.gr-send__choices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.gr-send__choice-row .ui-input {
+  min-width: 260px;
+}
+
+.gr-send__switch {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.gr-send__switch input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.gr-send__switch strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.gr-send__footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.gr-send__problem {
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}

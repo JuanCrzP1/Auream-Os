@@ -145,7 +145,8 @@ describe("manipulación de la petición", () => {
       "team.read",
       "sales.read",
       "crm.read",
-      "broadcasts.read"
+      "broadcasts.read",
+      "groups.read"
     ]);
   });
 

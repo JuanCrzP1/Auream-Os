@@ -24,4 +24,6 @@ export type Scope =
   | "ads.read"
   | "ads.manage"
   | "broadcasts.read"
-  | "broadcasts.manage";
+  | "broadcasts.manage"
+  | "groups.read"
+  | "groups.manage";

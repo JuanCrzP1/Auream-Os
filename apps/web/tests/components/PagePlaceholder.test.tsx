@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PagePlaceholder } from "../../src/shared/ui/page-placeholder/PagePlaceholder";
 import { AiAgentsPage } from "../../src/features/ai-agents/pages/AiAgentsPage";
-import { GroupsPage } from "../../src/features/groups/pages/GroupsPage";
 import { TemplatesPage } from "../../src/app/router/placeholders/TemplatesPage";
 import { ArchivePage } from "../../src/app/router/placeholders/ArchivePage";
 
@@ -35,7 +34,6 @@ describe("PagePlaceholder", () => {
 describe("pantallas pendientes", () => {
   it.each([
     ["Agentes de IA", <AiAgentsPage key="a" />],
-    ["Grupos y comunidades", <GroupsPage key="g" />],
     ["Plantillas", <TemplatesPage key="t" />],
     ["Archivo", <ArchivePage key="r" />]
   ])("%s se anuncia como pendiente", (title, element) => {

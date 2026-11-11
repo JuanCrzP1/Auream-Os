@@ -1,0 +1,126 @@
+.gr-mine {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gr-mine__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.gr-mine__empty {
+  padding: 24px;
+  text-align: center;
+}
+
+.gr-mine__table {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.gr-mine__row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 18px;
+  font-size: 0.86rem;
+}
+
+.gr-mine__row + .gr-mine__row {
+  border-top: 1px solid var(--line);
+}
+
+.gr-mine__row--head {
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gr-mine__name {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.gr-mine__name img,
+.gr-mine__avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.gr-mine__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  font-weight: 800;
+}
+
+.gr-mine__name > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.gr-mine__name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-mine__name small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.gr-mine__in {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.gr-mine__out {
+  color: var(--rose);
+  font-weight: 700;
+}
+
+.gr-mine__select {
+  min-height: 36px;
+  font-size: 0.8rem;
+}
+
+.gr-mine__right {
+  text-align: right;
+}
+
+.gr-mine__money {
+  color: var(--teal);
+}
+
+@container groups (max-width: 860px) {
+  .gr-mine__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .gr-mine__row > :nth-child(2),
+  .gr-mine__row > :nth-child(3),
+  .gr-mine__row > :nth-child(4),
+  .gr-mine__row > :nth-child(5) {
+    display: none;
+  }
+}

@@ -6,6 +6,8 @@ import type { BackgroundTasks } from "../http/BackgroundTasks";
 import { UAZAPI_INSTANCE_PREFIX } from "../../../infrastructure/whatsapp/uazapi/UazapiLinker";
 import { parseUazapiMessage } from "../../../infrastructure/whatsapp/uazapi/parseUazapiMessage";
 import { parseUazapiReceipt } from "../../../infrastructure/whatsapp/uazapi/parseUazapiReceipt";
+import { parseUazapiGroupEvent } from "../../../infrastructure/whatsapp/uazapi/parseUazapiGroups";
+import type { GroupActivity } from "../../../domains/groups/application/GroupActivity";
 import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
 
@@ -20,6 +22,7 @@ import { sendJson } from "../http/sendJson";
 //                      pide) y el mensaje se procesa después (`BackgroundTasks`)
 //     messages_update  recibos de entregado/leído de lo que mandamos: los
 //                      chulos de la bandeja
+//     groups           entradas y salidas de los grupos (Grupos y comunidades)
 //
 // Cada aviso válido de un número pone al día, de paso, su configuración de
 // avisos en el proveedor (`webhooks.ensureCurrent`): versiones nuevas de
@@ -44,7 +47,8 @@ export async function routeWhatsAppWebhooks(
   url: URL,
   connections: ConnectionsServices,
   messaging?: MessagingServices,
-  background?: BackgroundTasks
+  background?: BackgroundTasks,
+  groups?: Pick<GroupActivity, "handle">
 ): Promise<boolean> {
   if (url.pathname !== UAZAPI_WEBHOOK_PATH) return false;
   if (request.method !== "POST") {
@@ -98,6 +102,17 @@ export async function routeWhatsAppWebhooks(
         const connection = await connections.channel.authenticate(connectionId, receipt.token);
         if (!connection) return;
         await messaging.receipts.applyReceipts(connection.tenantId, connection.id, receipt.providerMessageIds, receipt.status);
+      });
+    }
+  }
+
+  if (eventType === "groups" && groups && background) {
+    const event = parseUazapiGroupEvent(body);
+    const connectionId = event ? connectionIdOf(event.instanceName) : null;
+    if (event && connectionId) {
+      background.run(async () => {
+        const connection = await connections.channel.authenticate(connectionId, event.token);
+        if (connection) await groups.handle(connection.tenantId, connection.id, { jid: event.jid, joins: event.joins, leaves: event.leaves });
       });
     }
   }

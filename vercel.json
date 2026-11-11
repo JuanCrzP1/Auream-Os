@@ -21,6 +21,7 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/.well-known/(oauth-.*)", "destination": "/api" },
+    { "source": "/g/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

@@ -44,7 +44,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "ads.read",
     "ads.manage",
     "broadcasts.read",
-    "broadcasts.manage"
+    "broadcasts.manage",
+    "groups.read",
+    "groups.manage"
   ],
   tenant_owner: [
     "flows.read",
@@ -72,7 +74,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "ads.read",
     "ads.manage",
     "broadcasts.read",
-    "broadcasts.manage"
+    "broadcasts.manage",
+    "groups.read",
+    "groups.manage"
   ],
   tenant_admin: [
     "flows.read",
@@ -99,7 +103,9 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "ads.read",
     "ads.manage",
     "broadcasts.read",
-    "broadcasts.manage"
+    "broadcasts.manage",
+    "groups.read",
+    "groups.manage"
   ],
   operator: [
     "flows.read",
@@ -115,7 +121,8 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "sales.write",
     "crm.read",
     "crm.write",
-    "broadcasts.read"
+    "broadcasts.read",
+    "groups.read"
   ],
   viewer: [
     "flows.read",
@@ -126,7 +133,8 @@ export const ROLE_SCOPES: Readonly<Record<Role, ReadonlyArray<Scope>>> = {
     "team.read",
     "sales.read",
     "crm.read",
-    "broadcasts.read"
+    "broadcasts.read",
+    "groups.read"
   ],
   api_client: [
     "flows.read",

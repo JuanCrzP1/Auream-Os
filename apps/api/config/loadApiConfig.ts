@@ -80,6 +80,8 @@ export interface ApiConfig {
   readonly metaApp: { readonly appId: string; readonly appSecret: string } | null;
   /** Adonde vuelve el inicio de sesión de Meta (`META_OAUTH_REDIRECT_URL`; por defecto `<dominio>/api/ads/meta/callback`). */
   readonly metaOAuthRedirectUrl: string;
+  /** Delante del enlace de cada campaña de grupos (`<base>/<slug>`): el dominio de la app en producción. */
+  readonly groupLinkBase: string;
   /**
    * Proveedor de WhatsApp por código QR (`UAZAPI_BASE_URL` + `UAZAPI_ADMIN_TOKEN`).
    * `null`: las conexiones por QR se crean, pero vincular dice que falta el proveedor.
@@ -206,6 +208,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
       (productionHost ? `https://${productionHost}/api/ads/meta/callback` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/ads/meta/callback`),
     uazapi: uazapiUrl ? { baseUrl: uazapiUrl, adminToken: uazapiToken } : null,
     whatsappWebhookBaseUrl,
+    groupLinkBase: productionHost ? `https://${productionHost}/g` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/g`,
     tasks: loadTasksConfig(env, productionHost)
   };
 }

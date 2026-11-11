@@ -1,0 +1,115 @@
+.gr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: 0 14px 32px -26px color-mix(in srgb, var(--primary) 60%, transparent);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out), transform var(--speed-fast) var(--ease-out);
+}
+
+.gr-card:hover,
+.gr-card:focus-visible {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  transform: translateY(-1px);
+}
+
+.gr-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gr-card__name {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gr-card__name strong {
+  font-size: 1rem;
+}
+
+.gr-card__name span,
+.gr-card__fill-text {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-card__fill {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gr-card__fill-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gr-card__bars {
+  display: flex;
+  gap: 4px;
+}
+
+.gr-card__bar {
+  height: 8px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--chip-bg);
+}
+
+.gr-card__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gradient-primary);
+}
+
+.gr-card__bar .gr-card__bar-full {
+  background: var(--teal);
+}
+
+.gr-card__numbers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.gr-card__numbers > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.gr-card__numbers strong {
+  font-size: 1.05rem;
+}
+
+.gr-card__numbers small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.gr-card__numbers .gr-card__money {
+  align-items: flex-end;
+}
+
+.gr-card__money strong {
+  color: var(--teal);
+  font-family: var(--font-display);
+}

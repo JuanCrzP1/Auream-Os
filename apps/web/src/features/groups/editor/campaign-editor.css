@@ -1,0 +1,187 @@
+/* Crear o editar una campaña: el formulario y, al lado, cómo se verá el grupo. */
+
+.gr-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.gr-editor__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.gr-editor__back {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.gr-editor__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.gr-editor__card {
+  display: flex;
+  min-width: 0;
+  flex: 3 1 520px;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+}
+
+.gr-editor__aside {
+  flex: 1 1 280px;
+}
+
+.gr-editor__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.gr-editor__slug {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.gr-editor__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gr-editor__label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gr-editor__numbers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.gr-editor__number {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gr-editor__number[aria-pressed="true"] {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.gr-editor__number:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.gr-editor__number span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.gr-editor__text {
+  resize: vertical;
+}
+
+.gr-editor__photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.gr-editor__photo img,
+.gr-editor__photo-empty {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.gr-editor__photo-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--chip-bg);
+  font-size: 1.4rem;
+}
+
+.gr-editor__switches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gr-editor__switch {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.gr-editor__switch input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.gr-editor__switch strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.gr-editor__footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.gr-editor__problem {
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .gr-editor__grid,
+  .gr-editor__switches {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
