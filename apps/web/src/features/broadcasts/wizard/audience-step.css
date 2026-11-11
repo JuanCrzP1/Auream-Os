@@ -1,0 +1,14 @@
+/* Paso 2: guardar los filtros con un nombre. */
+
+.bc-save-audience {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.bc-save-audience .ui-input {
+  flex: 1 1 220px;
+}

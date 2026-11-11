@@ -12,6 +12,15 @@ import type { ConversationLock, SessionControl } from "./ports/MessagingPorts";
 // Mismo candado por conversación que los mensajes entrantes.
 // ---------------------------------------------------------------------------
 
+/** Cómo salió el flujo: cuántos mensajes, el id del primero en WhatsApp y el primer motivo de fallo. */
+export interface FlowLaunchOutcome {
+  readonly flowName: string;
+  readonly sent: number;
+  readonly failed: number;
+  readonly firstMessageId: string | null;
+  readonly error: string | null;
+}
+
 export class StartFlowService {
   public constructor(
     private readonly flows: FlowCatalog,
@@ -25,7 +34,7 @@ export class StartFlowService {
     tenantId: string,
     conversation: { readonly id: string; readonly connectionId: string; readonly phone: string },
     automationId: string
-  ): Promise<{ readonly flowName: string; readonly sent: number; readonly failed: number }> {
+  ): Promise<FlowLaunchOutcome> {
     const [flow] = await this.flows.findMany(tenantId, [automationId]);
     if (!flow) throw new NotFoundError("Ese flujo no existe en tu cuenta.");
     if (flow.archived) throw new ValidationError(`«${flow.name}» está archivado: restáuralo para enviarlo.`);
@@ -47,7 +56,9 @@ export class StartFlowService {
           receivedAt: at
         }
       );
-      return { flowName: flow.name, sent: report.sent, failed: report.results.filter((r) => !r.ok).length };
+      const firstMessageId = report.results.find((r) => r.ok && r.providerMessageId)?.providerMessageId ?? null;
+      const error = report.failures[0] ?? null;
+      return { flowName: flow.name, sent: report.sent, failed: report.results.filter((r) => !r.ok).length, firstMessageId, error };
     });
   }
 }

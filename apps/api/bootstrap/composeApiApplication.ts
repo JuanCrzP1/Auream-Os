@@ -31,6 +31,8 @@ import { composeSalesServices } from "../composition/composeSalesServices";
 import { composeCrmServices } from "../composition/composeCrmServices";
 import { composeAdsServices } from "../composition/composeAdsServices";
 import { CrmEventsRelay } from "../composition/CrmEventsRelay";
+import { composeBroadcastServices } from "../composition/composeBroadcastServices";
+import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
 
@@ -120,6 +122,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     // Un despertador que no se pudo armar: lo cubren el tráfico de la app, la próxima ronda y la revisión cada 15 min.
     (error) => logger.warn("tasks.alarm_failed", { error: error instanceof Error ? error.message : String(error) })
   );
+  // Difusiones oye los mensajes entrantes («SALIR»), pero se arma después de Mensajería.
+  const inboundListeners: { current: InboundListener[] } = { current: [] };
   const messagingServices = composeMessagingServices({
     config,
     sql: tenancy.sqlClient,
@@ -132,13 +136,28 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     documents,
     scheduler: scheduling.scheduler,
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
-    sales: sales.ledger
+    sales: sales.ledger,
+    inboundListeners
   });
   // Meta Ads (se sincroniza en la cola de tareas) y el Dashboard.
   const ads = composeAdsServices(config, tenancy.sqlClient, scheduling.scheduler, (error, context) =>
     logger.warn("ads.sync_failed", { ...context, error: error instanceof Error ? error.message : String(error) })
   );
-  const runner = scheduling.attachHandlers([new FlowTimerTaskHandler(messagingServices.timers), ...(ads.syncHandler ? [ads.syncHandler] : [])]);
+  // Difusiones: envía por Mensajería, a su ritmo, en la cola de tareas.
+  const broadcasts = composeBroadcastServices({
+    config,
+    sql: tenancy.sqlClient,
+    scheduler: scheduling.scheduler,
+    outreach: messagingServices.outreach,
+    connections: connectionsServices,
+    onError: (error, context) => logger.warn("broadcasts.failed", { ...context, error: error instanceof Error ? error.message : String(error) })
+  });
+  inboundListeners.current.push(broadcasts.optOuts);
+  const runner = scheduling.attachHandlers([
+    new FlowTimerTaskHandler(messagingServices.timers),
+    ...(ads.syncHandler ? [ads.syncHandler] : []),
+    ...broadcasts.handlers
+  ]);
   // Medios de los bloques; el mismo almacén guarda las fotos de perfil y los logos (Mi perfil, Empresa).
   const mediaServices = composeMediaServices(config, tenancy.sqlClient, rateLimiter);
   const accountServices = composeAccountServices(config, tenancy.sqlClient, mediaServices?.storage ?? null, rateLimiter);
@@ -170,6 +189,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     invitationServices: team.invitations,
     salesServices: { products: sales.products, sales: sales.sales, insights: sales.insights },
     crmServices: crm.routes,
+    broadcastServices: { broadcasts: broadcasts.broadcasts, audiences: broadcasts.audiences },
     adsServices: ads,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({

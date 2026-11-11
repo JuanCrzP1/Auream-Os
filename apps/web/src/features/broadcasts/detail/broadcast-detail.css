@@ -1,0 +1,61 @@
+/* Una difusión por dentro. Mide su ancho (container `broadcasts`). */
+
+.bc-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  container: broadcasts / inline-size;
+}
+
+.bc-detail__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.bc-detail__title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.bc-detail__back {
+  flex: 0 0 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.bc-detail__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.bc-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bc-detail__reason {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.bc-detail__reason--paused {
+  background: color-mix(in srgb, var(--rose) 10%, transparent);
+  color: var(--rose);
+}

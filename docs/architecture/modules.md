@@ -13,7 +13,7 @@ Decisión de producto del 2026-11-10: tomar lo mejor de **Leona** (el bot, los c
 | CRM | `/crm` | `crm/` (`contacts/` · `pipeline/` · `follow-ups/`) | `/contacts` · `/labels` · `/crm/*` | `contacts` · `crm` | — | ✅ Embudo, contactos y seguimientos ([crm.md](crm.md)) |
 | Automatizaciones | `/automations` | `automations/` | `/automations` · `/api/builder/*` | `automations` | — | ✅ Funciona |
 | Agentes de IA | `/ai-agents` | `ai-agents/` | — | `ai-agents` + motor `ai-sales-engine` | `ai` | FASE E |
-| Difusiones | `/broadcasts` | `broadcasts/` | `/broadcasts` | `broadcasts` | `scheduling` · `whatsapp` | Por construir |
+| Difusiones | `/broadcasts` | `broadcasts/` | `/broadcasts` | `broadcasts` | `scheduling` · `messaging` · `connections` | Funcionando ([broadcasts.md](broadcasts.md)) |
 | Grupos y comunidades | `/groups` | `groups/` | `/groups` | `groups` | `whatsapp` | Por construir |
 | Meta Ads | `/meta-ads` | `ads/` (`pixel/`) | `/pixel-connections` · `/ads/*` | `integrations` (píxel) · `ads` | `meta` | ✅ Píxel · Rendimiento · Cuentas ([dashboard.md](dashboard.md)) |
 | Ventas | `/sales` | `sales/` (`orders/` · `products/`) | `/sales` · `/products` | `sales` · `products` | `record-sale` (Registrar venta) | 🟢 Hecho ([`sales.md`](sales.md)) |

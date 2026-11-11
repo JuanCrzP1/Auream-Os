@@ -13,6 +13,7 @@ import { routeCompanyRequest } from "./routeCompanyRequest";
 import { routeTeamRequest } from "./routeTeamRequest";
 import { routeSalesRequest, type SalesRoutes } from "./routeSalesRequest";
 import { routeCrmRequest, type CrmRoutes } from "./routeCrmRequest";
+import { routeBroadcastsRequest, type BroadcastRoutes } from "./routeBroadcastsRequest";
 import { routeAdsRequest } from "./routeAdsRequest";
 import { routeAdsCallback } from "./routeAdsCallback";
 import { routeDashboardRequest } from "./routeDashboardRequest";
@@ -88,6 +89,8 @@ export interface ApiRouterDependencies {
   readonly salesServices?: SalesRoutes;
   /** CRM: embudos, tablero, seguimientos (`/crm`). Ausente: la ruta responde 503. */
   readonly crmServices?: CrmRoutes;
+  /** Difusiones (`/broadcasts`). Ausente: la ruta responde 503. */
+  readonly broadcastServices?: BroadcastRoutes;
   /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
   readonly adsServices?: AdsModule;
 }
@@ -178,6 +181,7 @@ export async function routeApiRequest(
   if (await routeTeamRequest(request, response, url, dependencies.teamServices, requestContext)) return;
   if (await routeSalesRequest(request, response, url, dependencies.salesServices, requestContext)) return;
   if (await routeCrmRequest(request, response, url, dependencies.crmServices, requestContext)) return;
+  if (await routeBroadcastsRequest(request, response, url, dependencies.broadcastServices, requestContext)) return;
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
   if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;

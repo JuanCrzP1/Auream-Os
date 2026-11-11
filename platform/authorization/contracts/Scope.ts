@@ -22,4 +22,6 @@ export type Scope =
   | "crm.write"
   | "crm.manage"
   | "ads.read"
-  | "ads.manage";
+  | "ads.manage"
+  | "broadcasts.read"
+  | "broadcasts.manage";

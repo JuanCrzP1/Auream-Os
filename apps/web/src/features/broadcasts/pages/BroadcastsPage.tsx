@@ -1,15 +1,21 @@
-import { PagePlaceholder } from "@shared/ui/page-placeholder/PagePlaceholder";
+import "@shared/ui/page/page.css";
+import "@shared/ui/controls/controls.css";
+import { useSearchParams } from "react-router-dom";
+import { BroadcastDetail } from "../detail/BroadcastDetail";
+import { BroadcastsList } from "../list/BroadcastsList";
+import { NewBroadcast } from "../wizard/NewBroadcast";
 
 /**
- * BroadcastsPage — la página de Difusiones. Hoy cuenta lo que traerá; cuando el
- * módulo se construya, esta página es su punto de entrada (ver el README del
- * módulo y `docs/architecture/modules.md`).
+ * Difusiones: la lista con lo que vendió cada una, crear una nueva (4 pasos)
+ * y cada difusión por dentro. Dónde está la persona viaja en la dirección:
+ * `?view=new` o `?id=<difusión>`.
  */
 export function BroadcastsPage() {
-  return (
-    <PagePlaceholder
-      title="Difusiones"
-      description="Envía un flujo a muchos contactos a la vez, elegidos por etiquetas, con pausas que cuidan tu número y resultados de entregados, leídos y respondidos."
-    />
-  );
+  const [params, setParams] = useSearchParams();
+  const open = (next: Record<string, string>) => setParams(next);
+  const id = params.get("id");
+
+  if (params.get("view") === "new") return <NewBroadcast onClose={() => open({})} onCreated={(created) => open({ id: created })} />;
+  if (id) return <BroadcastDetail id={id} onBack={() => open({})} onOpen={(next) => open({ id: next })} />;
+  return <BroadcastsList onNew={() => open({ view: "new" })} onOpen={(next) => open({ id: next })} />;
 }

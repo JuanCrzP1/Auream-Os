@@ -1,22 +1,23 @@
 # broadcasts — difusiones (bounded context)
 
-Opción de la barra: **Difusiones** (`/broadcasts`). Web: `apps/web/src/features/broadcasts/`.
+Opción de la barra: **Difusiones** (`/broadcasts`). Web: `apps/web/src/features/broadcasts/`. Diseño completo: [`docs/architecture/broadcasts.md`](../../docs/architecture/broadcasts.md).
 
 ## Responsabilidad
-Enviar **un flujo** a muchos contactos a la vez, como Leona: elegir la audiencia (etiquetas o etapa del CRM), programar cuándo, salir a un **ritmo** que cuida el número (lotes y pausas) y medir el resultado de cada destinatario.
+Escribirle primero a muchos clientes que **ya escribieron**: un flujo o un mensaje, por los números elegidos, ahora o programado, a un ritmo que cuida cada número, y medir del envío a la venta.
 
 ## Le pertenece
-- La difusión: audiencia, flujo a enviar, número que envía, hora, ritmo y estado.
-- Los destinatarios con su estado (pendiente, enviado, falló, respondió).
-- El cupo por plan cuando lleguen los planes (`domains/billing`).
+- La difusión: versiones (1 a 3), audiencia, números, hora, ritmo, prueba A/B, segundo envío y estado (`domain/Broadcast.ts`, `BroadcastDraft.ts`).
+- El ritmo: pausas al azar, horario, tope diario y calentamiento (`domain/Pace.ts`).
+- El nombre de cada persona y el «SALIR» (`domain/Personalize.ts`); las versiones y quién gana la prueba (`domain/Variants.ts`).
+- Los destinatarios, las bajas («no quiero más») y las audiencias guardadas.
 
 ## No le pertenece
-- Ejecutar el flujo: `domains/messaging` (el mismo «turno de flujo» de siempre).
-- Programar en el tiempo: `domains/scheduling` (la cola de tareas en Neon).
-- Quiénes son los contactos: `domains/contacts`.
-
-## Depende de (por puertos)
-`contacts` (resolver la audiencia), `messaging` (iniciar el flujo a cada uno), `scheduling` (lotes y pausas), `connections` (el número que envía).
+- Enviar y que quede en el chat: `domains/messaging` (`OutreachService`).
+- Programar en el tiempo: `domains/scheduling` (la cola de tareas).
+- Quiénes son los contactos y sus etiquetas: `domains/contacts`; las ventas: `domains/sales` (solo se leen).
 
 ## Capas
-`domain/` (Broadcast, Audience, Recipient, Pace) · `application/` · persistencia SQL. API prevista: `/broadcasts`.
+- `domain/`: reglas puras.
+- `application/`: `BroadcastServices` (pantalla), `AudienceServices` (alcance y audiencias), `BroadcastLauncher` (arrancar, decidir la prueba, segundo envío), `BroadcastDispatcher` (cada envío), `OptOutListener` («SALIR»). Puertos en `BroadcastPorts.ts`.
+- Persistencia: `infrastructure/persistence/sql/SqlBroadcast*.ts` (`034_broadcasts.sql`).
+- Composición: `apps/api/composition/composeBroadcastServices.ts` y `broadcastTaskAdapters.ts`.

@@ -1,0 +1,99 @@
+/* El teléfono de la vista previa: el fondo y la burbuja de WhatsApp. */
+
+.bc-phone {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 8px solid #1e1530;
+  border-radius: 28px;
+  background: #efeae2;
+  color: #111b21;
+}
+
+.bc-phone__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f0f2f5;
+}
+
+.bc-phone__top strong,
+.bc-phone__top small {
+  display: block;
+}
+
+.bc-phone__top strong {
+  font-size: 0.85rem;
+}
+
+.bc-phone__top small {
+  color: #667781;
+  font-size: 0.7rem;
+}
+
+.bc-phone__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+}
+
+.bc-phone__chat {
+  display: flex;
+  min-height: 300px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+}
+
+.bc-phone__bubble {
+  display: flex;
+  max-width: 88%;
+  flex-direction: column;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 10px 10px 10px 2px;
+  background: #ffffff;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 8%);
+}
+
+.bc-phone__bubble p {
+  margin: 0;
+  padding: 0 6px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bc-phone__media {
+  max-height: 180px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.bc-phone__bubble .bc-phone__footer {
+  color: #667781;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.bc-phone__time {
+  align-self: flex-end;
+  padding: 0 6px;
+  color: #667781;
+  font-size: 0.65rem;
+}
+
+.bc-phone__note,
+.bc-phone__more {
+  align-self: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 75%);
+  color: #54656f;
+  font-size: 0.75rem;
+  text-align: center;
+}

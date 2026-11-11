@@ -86,8 +86,8 @@ describe("requireTenantAccess (guard)", () => {
 // ---------------------------------------------------------------------------
 
 describe("requireRole (guard)", () => {
-  it("viewer satisfecho cuando tiene flows.read, analytics.read, contacts.read, connections.read, conversations.read, team.read, sales.read y crm.read", () => {
-    const context = makeContext({ scopes: ["flows.read", "analytics.read", "contacts.read", "connections.read", "conversations.read", "team.read", "sales.read", "crm.read"] });
+  it("viewer satisfecho cuando tiene flows.read, analytics.read, contacts.read, connections.read, conversations.read, team.read, sales.read, crm.read y broadcasts.read", () => {
+    const context = makeContext({ scopes: ["flows.read", "analytics.read", "contacts.read", "connections.read", "conversations.read", "team.read", "sales.read", "crm.read", "broadcasts.read"] });
     expect(() => requireRole(context, "viewer")).not.toThrow();
   });
 
@@ -118,7 +118,7 @@ describe("requireRole (guard)", () => {
 
   it("tenant_owner satisfecho con todos los scopes", () => {
     const context = makeContext({
-      scopes: ["flows.read", "flows.write", "flows.publish", "runtime.execute", "analytics.read", "contacts.read", "contacts.write", "credentials.read", "credentials.write", "connections.read", "connections.write", "conversations.read", "conversations.write", "tenant.manage", "team.read", "team.manage", "sales.read", "sales.write", "sales.manage", "crm.read", "crm.write", "crm.manage", "ads.read", "ads.manage"]
+      scopes: ["flows.read", "flows.write", "flows.publish", "runtime.execute", "analytics.read", "contacts.read", "contacts.write", "credentials.read", "credentials.write", "connections.read", "connections.write", "conversations.read", "conversations.write", "tenant.manage", "team.read", "team.manage", "sales.read", "sales.write", "sales.manage", "crm.read", "crm.write", "crm.manage", "ads.read", "ads.manage", "broadcasts.read", "broadcasts.manage"]
     });
     expect(() => requireRole(context, "tenant_owner")).not.toThrow();
   });

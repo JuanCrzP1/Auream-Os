@@ -1,0 +1,136 @@
+/* Nueva difusión: los pasos arriba, el paso a la izquierda y, a la derecha,
+ * a cuántos les llega y cómo lo ve el cliente. */
+
+.bc-new {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  container: broadcasts / inline-size;
+}
+
+.bc-new__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.bc-new__title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bc-new__back {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.bc-new__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  list-style: none;
+}
+
+.bc-new__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px 0 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bc-new__step[aria-current="step"] {
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.bc-new__step:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.bc-new__dot {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--chip-bg);
+  font-size: 0.75rem;
+}
+
+.bc-new__dot--on {
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+}
+
+.bc-new__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.bc-new__card {
+  display: flex;
+  min-width: 0;
+  flex: 3 1 520px;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+}
+
+.bc-new__footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.bc-new__problem {
+  flex: 1;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.bc-new__send {
+  min-height: 46px;
+  padding: 0 22px;
+}
+
+.bc-new__aside {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex: 1 1 300px;
+  flex-direction: column;
+  gap: 14px;
+}

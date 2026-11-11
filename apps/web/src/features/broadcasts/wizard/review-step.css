@@ -1,0 +1,46 @@
+/* Paso 4: el resumen y los extras (prueba A/B, segundo envío). */
+
+.bc-summary {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.bc-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  font-size: 0.88rem;
+}
+
+.bc-summary div + div {
+  border-top: 1px solid var(--line);
+}
+
+.bc-summary dt {
+  color: var(--muted);
+}
+
+.bc-summary dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+
+.bc-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--primary) 3%, var(--surface));
+}
+
+.bc-extra__text {
+  resize: vertical;
+}

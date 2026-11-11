@@ -1,0 +1,50 @@
+/* Paso 3: el panel del envío seguro y el estado de cada número. */
+
+.bc-warm,
+.bc-ok {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.bc-warm {
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+  color: var(--amber);
+}
+
+.bc-ok {
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
+  color: var(--teal);
+}
+
+.bc-safe {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--teal) 30%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--teal) 6%, var(--surface));
+}
+
+.bc-safe__title {
+  color: var(--teal);
+}
+
+.bc-safe__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.bc-safe__eta {
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 700;
+}

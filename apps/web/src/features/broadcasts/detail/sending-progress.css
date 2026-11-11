@@ -1,0 +1,74 @@
+.bc-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--primary) 3%, var(--surface));
+}
+
+.bc-progress__main {
+  display: flex;
+  flex: 3 1 380px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bc-progress__line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.bc-progress__line span {
+  color: var(--muted);
+}
+
+.bc-progress__bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--chip-bg);
+}
+
+.bc-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gradient-primary);
+  transition: width 400ms var(--ease-out);
+}
+
+.bc-progress__fill--paused {
+  background: var(--amber);
+}
+
+.bc-progress__numbers {
+  display: flex;
+  flex: 2 1 260px;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.bc-progress__number {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.bc-progress__number strong {
+  display: block;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.bc-progress__number .bc-progress__good {
+  color: var(--teal);
+}
+
+.bc-progress__number .bc-progress__bad {
+  color: var(--rose);
+}

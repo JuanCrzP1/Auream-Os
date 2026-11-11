@@ -29,6 +29,7 @@ import { ConnectionTriggerRouter, DirectoryInboundContacts, RepositorySessionCon
 import { StartFlowService } from "../../../domains/messaging/application/StartFlowService";
 import type { TurnJournal } from "../../../domains/messaging/application/FlowTurnJournal";
 import { StartFlowForContactService } from "../../../domains/messaging/application/StartFlowForContactService";
+import { OutreachService } from "../../../domains/messaging/application/OutreachService";
 import { FlowTurn } from "../../../domains/messaging/application/FlowTurn";
 import { FlowTimerService } from "../../../domains/messaging/application/FlowTimerService";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
@@ -58,6 +59,13 @@ export interface MessagingServices {
   readonly flows: StartFlowForContactService;
   /** Fotos de perfil de los contactos (se renuevan cuando escriben). */
   readonly avatars: Pick<ContactAvatarService, "refreshIfStale">;
+  /** Escribirle primero a un cliente (Difusiones): un flujo o mensajes, y quedan en su chat. */
+  readonly outreach: OutreachService;
+}
+
+/** Oye cada mensaje entrante ya guardado (p. ej. Difusiones: «SALIR»). Nunca debe lanzar. */
+export interface InboundListener {
+  heard(tenantId: string, message: { readonly phone: string; readonly text: string | null }): Promise<void>;
 }
 
 export interface MessagingDependencies {
@@ -76,6 +84,8 @@ export interface MessagingDependencies {
   readonly journal?: TurnJournal;
   /** Ventas del bloque Registrar venta (se guardan en Ventas). */
   readonly sales: SalesLedger;
+  /** Quién oye los mensajes entrantes (se conecta después: Difusiones depende de Mensajería). */
+  readonly inboundListeners?: { readonly current: ReadonlyArray<InboundListener> };
 }
 
 export function composeMessagingServices(deps: MessagingDependencies): MessagingServices {
@@ -126,6 +136,9 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     inbound: {
       execute: async (tenantId, message) => {
         const result = await inbound.execute(tenantId, message);
+        if (result.outcome !== "duplicate") {
+          for (const listener of deps.inboundListeners?.current ?? []) await listener.heard(tenantId, { phone: message.phone, text: message.text }).catch(() => undefined);
+        }
         await deps.scheduler.nudgeIfDue();
         return result;
       }
@@ -133,6 +146,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     timers: new FlowTimerService(lock, recorder, turn),
     flows: new StartFlowForContactService(recorder, launcher),
     avatars: new ContactAvatarService(new SqlContactAvatarStore(deps.sql)),
+    outreach: new OutreachService(recorder, delivery, launcher),
     receipts: recorder,
     conversations: new ConversationInbox(conversations, recorder, delivery, launcher, {
       // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).

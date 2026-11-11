@@ -1,0 +1,140 @@
+/* Una difusión en la lista. Las insignias de estado (`bc-badge`) las comparte
+ * todo el módulo. */
+
+.bc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) repeat(4, minmax(0, 0.75fr)) minmax(0, 1.1fr);
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--speed-fast) var(--ease-out), box-shadow var(--speed-fast) var(--ease-out);
+}
+
+.bc-row:hover,
+.bc-row:focus-visible {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  box-shadow: 0 12px 28px -20px color-mix(in srgb, var(--primary) 70%, transparent);
+}
+
+.bc-row__name,
+.bc-row__state,
+.bc-row__metric,
+.bc-row__money {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bc-row__name strong {
+  overflow: hidden;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bc-row__what,
+.bc-row__when,
+.bc-row__metric span,
+.bc-row__money span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bc-row__bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--chip-bg);
+}
+
+.bc-row__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gradient-primary);
+}
+
+.bc-row__fill--done {
+  background: var(--teal);
+}
+
+.bc-row__fill--paused {
+  background: var(--rose);
+}
+
+.bc-row__metric strong {
+  font-size: 0.95rem;
+}
+
+.bc-row__money {
+  align-items: flex-end;
+}
+
+.bc-row__money strong {
+  color: var(--teal);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.bc-badge {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.bc-badge--live {
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.bc-badge--soon {
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  color: var(--amber);
+}
+
+.bc-badge--done {
+  background: color-mix(in srgb, var(--teal) 16%, transparent);
+  color: var(--teal);
+}
+
+.bc-badge--paused {
+  background: color-mix(in srgb, var(--rose) 14%, transparent);
+  color: var(--rose);
+}
+
+.bc-badge--read {
+  background: color-mix(in srgb, #0ea5e9 14%, transparent);
+  color: #0284c7;
+}
+
+.bc-badge--muted {
+  background: var(--chip-bg);
+  color: var(--muted);
+}
+
+@container broadcasts (max-width: 900px) {
+  .bc-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .bc-row__state,
+  .bc-row__metric {
+    display: none;
+  }
+}

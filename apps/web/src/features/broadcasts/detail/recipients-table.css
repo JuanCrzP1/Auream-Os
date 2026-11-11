@@ -1,0 +1,104 @@
+.bc-people {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bc-people__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bc-people__bar h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.bc-people__table {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.bc-people__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.3fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 18px;
+  font-size: 0.86rem;
+}
+
+.bc-people__row + .bc-people__row {
+  border-top: 1px solid var(--line);
+}
+
+.bc-people__row--head {
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.bc-people__who {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.bc-people__who strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bc-people__who small {
+  color: var(--muted);
+}
+
+.bc-people__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.bc-people__sale {
+  color: var(--teal);
+}
+
+.bc-people__error {
+  color: var(--rose);
+  font-size: 0.75rem;
+}
+
+.bc-people__empty {
+  padding: 20px;
+  text-align: center;
+}
+
+.bc-people__more {
+  align-self: center;
+}
+
+@container broadcasts (max-width: 760px) {
+  .bc-people__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .bc-people__row > :nth-child(2),
+  .bc-people__row > :nth-child(4) {
+    display: none;
+  }
+
+  .bc-people__row > :nth-child(3) {
+    display: none;
+  }
+}

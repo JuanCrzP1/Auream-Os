@@ -1,0 +1,107 @@
+/* Paso 1: cada versión y la prueba al propio WhatsApp. */
+
+.bc-variant {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bc-variant + .bc-variant {
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.bc-variant__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bc-variant__letter {
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.bc-message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bc-message__text {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.bc-message__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.bc-message__count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.bc-chip--file button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.bc-add-variant {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 45%, transparent);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bc-add-variant span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.bc-test {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--teal) 35%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--teal) 7%, var(--surface));
+}
+
+.bc-test strong {
+  display: block;
+  color: var(--teal);
+}
+
+.bc-test__row {
+  display: flex;
+  gap: 8px;
+}
+
+.bc-test__row .ui-input {
+  flex: 1;
+}
+
+.bc-test__ok {
+  color: var(--teal);
+  font-size: 0.85rem;
+  font-weight: 700;
+}

@@ -1,0 +1,81 @@
+/* Tarjetas de la difusión: versiones y segundo envío. */
+
+.bc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.bc-card--row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bc-card p {
+  margin: 4px 0 0;
+}
+
+.bc-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bc-variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.bc-variants__item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.bc-variants__item--won {
+  border-color: var(--teal);
+  box-shadow: inset 0 0 0 1px var(--teal);
+}
+
+.bc-variants__letter {
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.bc-variants__item--won .bc-variants__letter {
+  color: var(--teal);
+}
+
+.bc-variants__what {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.bc-variants dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.bc-variants dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.bc-variants dd {
+  margin: 0;
+  font-weight: 800;
+}
