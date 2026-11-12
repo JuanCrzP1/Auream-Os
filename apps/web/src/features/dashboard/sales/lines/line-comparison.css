@@ -1,0 +1,165 @@
+/* ===== COMPARAR LÍNEAS =====
+   Una fila por línea (con su color y cuánto pesa en lo vendido) y todo el
+   negocio al final. Angosto: cada línea es una ficha con sus números en dos
+   columnas. */
+
+.line-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.line-comparison__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.line-comparison__header h2 { margin: 0 0 2px; font-size: 0.95rem; font-weight: 800; }
+.line-comparison__header p { margin: 0; }
+
+.line-comparison__currency {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.line-comparison__scroll { overflow-x: auto; }
+
+.line-comparison__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.line-comparison__table thead th {
+  padding: 0 10px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.line-comparison__table thead th:first-child { padding-left: 0; text-align: left; }
+
+.line-comparison__table td,
+.line-comparison__table tbody th,
+.line-comparison__table tfoot th {
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.line-comparison__table th[scope="row"] { padding-left: 0; text-align: left; font-weight: 400; }
+.line-comparison__row--total td,
+.line-comparison__row--total th { border-bottom: 0; font-weight: 700; }
+.line-comparison__row--total th { color: var(--muted); }
+
+.line-comparison__value { display: block; color: var(--text); font-weight: 600; }
+td.is-good .line-comparison__value { color: var(--status-active-text); }
+td.is-bad .line-comparison__value { color: var(--status-danger); }
+td.is-muted .line-comparison__value { color: var(--muted); font-weight: 500; }
+
+.line-comparison__trend { display: block; margin-top: 2px; font-size: 0.7rem; font-weight: 700; }
+.line-comparison__trend.is-good { color: var(--status-active-text); }
+.line-comparison__trend.is-bad { color: var(--status-danger); }
+.line-comparison__trend.is-flat { color: var(--muted); }
+
+.line-comparison__name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 190px;
+  padding: 4px 6px 4px 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.line-comparison__name > span:nth-child(2) { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
+.line-comparison__name strong { overflow: hidden; font-size: 0.86rem; text-overflow: ellipsis; }
+.line-comparison__name:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.line-comparison__dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; }
+.line-comparison__go { color: var(--muted); opacity: 0; transition: opacity 0.15s ease; }
+.line-comparison__row:hover .line-comparison__go,
+.line-comparison__name:focus-visible .line-comparison__go { opacity: 1; color: var(--primary); }
+.line-comparison__row:hover { background: color-mix(in srgb, var(--primary) 4%, transparent); }
+
+.line-comparison__share { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.7rem; }
+
+.line-comparison__bar {
+  overflow: hidden;
+  width: 64px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+}
+
+.line-comparison__bar i { display: block; height: 100%; border-radius: inherit; }
+
+.line-comparison__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+/* Angosto: cada línea, una ficha. */
+@container dashboard (max-width: 700px) {
+  .line-comparison__table thead { display: none; }
+  .line-comparison__table,
+  .line-comparison__table tbody,
+  .line-comparison__table tfoot { display: block; }
+
+  .line-comparison__table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .line-comparison__row--total { border-bottom: 0 !important; }
+  .line-comparison__table tr > th { grid-column: 1 / -1; padding: 0; border: 0; }
+
+  .line-comparison__table td {
+    padding: 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .line-comparison__table td::before {
+    display: block;
+    margin-bottom: 1px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    content: attr(data-label);
+  }
+
+  .line-comparison__go { opacity: 1; }
+}

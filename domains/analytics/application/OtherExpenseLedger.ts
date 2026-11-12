@@ -102,9 +102,13 @@ function monthly(start: string, from: string, end: string): string[] {
   }
 }
 
+/** De qué ventas sale un gasto en %: las mismas para todos o las de cada regla (la de su línea). */
+export type RevenueBase = ReadonlyArray<RevenueDay> | ((rule: ExpenseRule) => ReadonlyArray<RevenueDay>);
+
 /**
  * Cuánto costó cada gasto en [from, to] (sin pasar de `today`), en la moneda
- * del `book`. `revenue`: lo vendido por día en lo que se mira.
+ * del `book`. `revenue`: lo vendido por día en lo que se mira; mirando todo el
+ * negocio, el % de una línea sale de lo vendido por esa línea (`revenueBase`).
  */
 export function chargesOf(
   rules: ReadonlyArray<ExpenseRule>,
@@ -112,11 +116,11 @@ export function chargesOf(
   to: string,
   today: string,
   book: MoneyBook,
-  revenue: ReadonlyArray<RevenueDay>
+  revenue: RevenueBase
 ): ExpenseCharge[] {
   const until = to < today ? to : today;
   if (from > until) return rules.map(({ id, name }) => ({ id, name, amount: 0 }));
-  return rules.map((rule) => ({ id: rule.id, name: rule.name, amount: round(costOf(rule, from, until, book, revenue)) }));
+  return rules.map((rule) => ({ id: rule.id, name: rule.name, amount: round(costOf(rule, from, until, book, typeof revenue === "function" ? revenue(rule) : revenue)) }));
 }
 
 function costOf(rule: ExpenseRule, from: string, until: string, book: MoneyBook, revenue: ReadonlyArray<RevenueDay>): number {
@@ -130,3 +134,15 @@ function costOf(rule: ExpenseRule, from: string, until: string, book: MoneyBook,
 }
 
 export const totalOf = (charges: ReadonlyArray<ExpenseCharge>) => round(charges.reduce((sum, charge) => sum + charge.amount, 0));
+
+/**
+ * Mirando todo el negocio: el % de una línea sale de lo vendido por esa línea
+ * (si se conoce); lo demás, de lo vendido en todo el negocio.
+ */
+export function revenueBase(business: ReadonlyArray<RevenueDay>, byLine: ReadonlyMap<string, ReadonlyArray<RevenueDay>>): RevenueBase {
+  return (rule) => (rule.kind === "percent" && rule.lineId ? byLine.get(rule.lineId) ?? business : business);
+}
+
+/** Las líneas cuyas ventas hacen falta para sus gastos en % (mirando todo el negocio). */
+export const percentLines = (rules: ReadonlyArray<ExpenseRule>): string[] =>
+  [...new Set(rules.filter((rule) => rule.kind === "percent" && rule.lineId).map((rule) => rule.lineId!))];

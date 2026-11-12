@@ -9,7 +9,8 @@ Responder «¿cómo va el negocio?» con lecturas agregadas: ventas, facturació
 - Las vistas del Dashboard:
   - `SalesDashboardService` (Ventas);
   - `AdsDashboardService` (Anuncios);
-  - `AttentionDashboardService` (Atención).
+  - `AttentionDashboardService` (Atención);
+  - `LineComparisonService` (Comparar líneas: cada línea de venta y todo el negocio, con `LineComparisonRows`).
 - El periodo en la hora de la empresa (`DashboardPeriod`).
 - El cambio de moneda con la tasa del día (`CurrencyConverter`, `MoneyBook`).
 - El consejo por campaña (`domain/adAdvice.ts`).
@@ -19,4 +20,4 @@ Responder «¿cómo va el negocio?» con lecturas agregadas: ventas, facturació
 Los datos de origen: ventas (`domains/sales`), chats (`domains/conversations`), gasto (`domains/ads`), recorrido de los flujos (`flow_turn_log`). Solo los lee por puertos; nunca escribe en ellos.
 
 ## Capas
-`application/` (consultas por métrica) · lectura SQL en `infrastructure/persistence/sql`. API: `/dashboard/sales`, `/dashboard/ads`, `/dashboard/attention`. Ficha: [`docs/architecture/dashboard.md`](../../docs/architecture/dashboard.md).
+`application/` (consultas por métrica) · lectura SQL en `infrastructure/persistence/sql`. API: `/dashboard/sales`, `/dashboard/ads`, `/dashboard/attention`, `/dashboard/lines`. Ficha: [`docs/architecture/dashboard.md`](../../docs/architecture/dashboard.md).

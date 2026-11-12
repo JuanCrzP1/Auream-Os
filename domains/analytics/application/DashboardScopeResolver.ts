@@ -51,6 +51,13 @@ export function scopeOf(filters: DashboardFilters): DashboardScope {
 export class DashboardScopeResolver {
   public constructor(private readonly lines: SalesLineLookup | null = null) {}
 
+  /** Lo que junta una línea (sin filtros a mano), o `null` si no existe. */
+  public async lineScope(tenantId: string, lineId: string): Promise<DashboardScope | null> {
+    if (!this.lines || !UUID.test(lineId)) return null;
+    const line = await this.lines.scopeOf(tenantId, lineId);
+    return line ? compact({ connectionIds: valid(line.connectionIds, UUID), productIds: valid(line.productIds, UUID), campaignIds: valid(line.campaignIds, META_ID) }) : null;
+  }
+
   public async resolve(tenantId: string, filters: DashboardFilters): Promise<DashboardScope> {
     const line = filters.lineId && this.lines && UUID.test(filters.lineId) ? await this.lines.scopeOf(tenantId, filters.lineId) : null;
     return compact({

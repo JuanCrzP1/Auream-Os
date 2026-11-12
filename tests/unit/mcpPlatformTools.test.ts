@@ -33,7 +33,7 @@ function services() {
     board: { view: vi.fn(async () => ({}) as never), stageCards: vi.fn(async () => ({}) as never), move: vi.fn(async () => undefined) },
     deals: { update: vi.fn(async () => ({}) as never), contact: vi.fn(async () => ({}) as never) }
   };
-  const dashboard = { sales: { overview: vi.fn(async () => ({}) as never) }, ads: { performance: vi.fn(async () => ({}) as never) }, attention: { overview: vi.fn(async () => ({}) as never) } };
+  const dashboard = { sales: { overview: vi.fn(async () => ({}) as never) }, ads: { performance: vi.fn(async () => ({}) as never) }, attention: { overview: vi.fn(async () => ({}) as never) }, lines: { compare: vi.fn(async () => ({}) as never) } };
   const lines = { list: vi.fn(async () => ({ lines: [], canManage: false })), create: vi.fn(async () => ({}) as never), update: vi.fn(async () => ({}) as never), remove: vi.fn(async () => undefined) };
   const expenses = { list: vi.fn(async () => ({ expenses: [], canManage: false })), create: vi.fn(async () => ({}) as never), update: vi.fn(async () => ({}) as never), remove: vi.fn(async () => undefined) };
   const tools = [...productTools(catalog), ...saleTools(sales, insights), ...triggerTools(triggers), ...crmTools(crm), ...analyticsTools(dashboard), ...salesLineTools(lines), ...otherExpenseTools(expenses)];
@@ -96,6 +96,8 @@ describe("disparadores, CRM y Dashboard", () => {
     const s = services();
     await find(s.tools, "dashboard_sales").run({ line_id: "l1", currency: "VES", campaign_ids: ["111"] }, ctx);
     expect(s.dashboard.sales.overview).toHaveBeenCalledWith({ tenantId: T, canSeeAds: true }, { lineId: "l1", currency: "VES", campaignIds: ["111"] });
+    await find(s.tools, "dashboard_compare_lines").run({ from: "2026-10-01", to: "2026-10-31", currency: "USD" }, ctx);
+    expect(s.dashboard.lines.compare).toHaveBeenCalledWith({ tenantId: T, canSeeAds: true }, { from: "2026-10-01", to: "2026-10-31", currency: "USD" });
     await find(s.tools, "create_sales_line").run({ name: "Venezuela", product_ids: ["p1"], campaign_ids: ["111"] }, ctx);
     expect(s.lines.create).toHaveBeenCalledWith(T, { name: "Venezuela", productIds: ["p1"], campaignIds: ["111"] });
   });
@@ -124,7 +126,7 @@ describe("cada herramienta, solo con el permiso de su área", () => {
       "create_other_expense", "create_product", "create_sales_line", "delete_other_expense", "delete_sales_line", "list_products", "list_sales", "record_sale",
       "sales_summary", "update_other_expense", "update_product", "update_sale", "update_sales_line"
     ]);
-    expect(await listed({ analytics: "read" })).toEqual(["dashboard_ads", "dashboard_attention", "dashboard_sales", "list_other_expenses", "list_sales_lines"]);
+    expect(await listed({ analytics: "read" })).toEqual(["dashboard_ads", "dashboard_attention", "dashboard_compare_lines", "dashboard_sales", "list_other_expenses", "list_sales_lines"]);
     expect(await listed({ connections: "read" })).toEqual(["list_triggers"]);
     expect(await listed({ crm: "read" })).toEqual(["get_contact_crm", "get_pipeline_board", "list_pipelines"]);
   });

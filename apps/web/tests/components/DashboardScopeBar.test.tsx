@@ -23,6 +23,7 @@ const LINE = { id: "33333333-3333-4333-8333-333333333333", name: "Venezuela", co
 let calls: Array<{ method: string; path: string; body?: unknown }> = [];
 beforeEach(() => {
   calls = [];
+  window.localStorage.clear();
   vi.restoreAllMocks();
   vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
     const url = new URL(String(input), "http://api.test");
@@ -72,6 +73,25 @@ describe("línea, filtros y moneda del Dashboard", () => {
     await userEvent.click(within(menu).getByRole("menuitemradio", { name: /USD · Dólar estadounidense/ }));
     await waitFor(() => expect(lastSales()).toContain("currency=USD"));
     expect(screen.getByRole("button", { name: /USD/ })).toHaveTextContent("🇺🇸");
+  });
+
+  it("la moneda elegida se recuerda al volver al Dashboard; elegir la del negocio la olvida", async () => {
+    const first = page();
+    await userEvent.click(await screen.findByRole("button", { name: /COP/ }));
+    await userEvent.click(within(screen.getByRole("menu", { name: "Moneda" })).getByRole("menuitemradio", { name: /USD · Dólar estadounidense/ }));
+    await waitFor(() => expect(lastSales()).toContain("currency=USD"));
+    first.unmount();
+
+    // Vuelve desde el menú (sin `currency` en la dirección): sigue en dólares.
+    calls = [];
+    page();
+    await waitFor(() => expect(lastSales()).toContain("currency=USD"));
+    await userEvent.click(screen.getByRole("button", { name: /USD/ }));
+    const menu = screen.getByRole("menu", { name: "Moneda" });
+    expect(within(menu).getByRole("menuitemradio", { name: /COP · Peso colombiano.*La de tu negocio/ })).toBeInTheDocument();
+    await userEvent.click(within(menu).getByRole("menuitemradio", { name: /COP · Peso colombiano/ }));
+    await waitFor(() => expect(lastSales()).not.toContain("currency="));
+    expect(window.localStorage.getItem("auream.dashboard.currency.default")).toBeNull();
   });
 
   it("crear una línea: la guarda con sus productos y campañas y queda elegida", async () => {

@@ -163,7 +163,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     (error, context) => logger.warn("ads.sync_failed", { ...context, error: error instanceof Error ? error.message : String(error) }),
     salesLines.lookup,
     (info) => logger.warn("fx.stale", { lastDay: info.lastDay, errors: info.errors }),
-    otherExpenses.reader
+    otherExpenses.reader,
+    salesLines.directory
   );
   // Difusiones: envía por Mensajería, a su ritmo, en la cola de tareas.
   const broadcasts = composeBroadcastServices({

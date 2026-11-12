@@ -12,7 +12,8 @@ import { AttentionTab } from "../attention/AttentionTab";
 import { DashboardFilters } from "../components/DashboardFilters";
 import { periodParams, periodWords, readPeriod } from "../period/periodModel";
 import { SalesTab } from "../sales/SalesTab";
-import { readSelection, selectionFilters, selectionParams } from "../scope/dashboardScope";
+import { rememberAutomatic, rememberCurrency, rememberedAutomatic, rememberedCurrency } from "../scope/currencyMemory";
+import { chooseLine, readSelection, selectionFilters, selectionParams, type ScopeSelection } from "../scope/dashboardScope";
 import { ScopeBar } from "../scope/ScopeBar";
 
 type Tab = "sales" | "ads" | "attention";
@@ -31,18 +32,22 @@ export function DashboardPage() {
   const { connections } = useConnections();
   const catalog = useProductCatalog();
   // La moneda que usa el informe sin elegir ninguna (la dice la API en cada respuesta).
-  const [automaticCurrency, setAutomaticCurrency] = useState("COP");
+  const [automaticCurrency, setAutomaticCurrency] = useState(() => rememberedAutomatic() ?? "COP");
   // Hasta saber si puede ver el gasto no se pide nada de anuncios.
   const canSeeAds = ads.status === "ready";
   const adsPending = ads.status === "loading";
   const requested = params.get("tab");
   const tab: Tab = isTab(requested) && (requested !== "ads" || canSeeAds || adsPending) ? requested : "sales";
   const period = readPeriod(params);
-  const selection = readSelection(params);
+  // La moneda: la del enlace o, si no trae, la última elegida en esta cuenta.
+  const fromLink = readSelection(params);
+  const selection: ScopeSelection = params.has("currency") ? fromLink : { ...fromLink, currency: rememberedCurrency() };
   const range = { from: period.from, to: period.to };
   const filters = { ...range, ...selectionFilters(selection) };
   const onReportCurrency = (code: string) => {
-    if (!selection.currency) setAutomaticCurrency(code);
+    if (selection.currency) return;
+    setAutomaticCurrency(code);
+    rememberAutomatic(code);
   };
 
   const set = (changes: Record<string, string | null>) =>
@@ -71,7 +76,10 @@ export function DashboardPage() {
           />
           <ScopeBar
             selection={selection}
-            onChange={(next) => set(selectionParams(next))}
+            onChange={(next) => {
+              if (next.currency !== selection.currency) rememberCurrency(next.currency);
+              set(selectionParams(next));
+            }}
             connections={connections}
             products={catalog.products}
             canSeeAds={canSeeAds}
@@ -80,7 +88,19 @@ export function DashboardPage() {
           />
         </div>
         <div role="tabpanel" aria-label={tab === "ads" ? "Anuncios" : tab === "attention" ? "Atención" : "Ventas"}>
-          {tab === "sales" ? <SalesTab filters={filters} periodWords={periodWords(period)} onSeeAds={() => set({ tab: "ads" })} onReportCurrency={onReportCurrency} /> : null}
+          {tab === "sales" ? (
+            <SalesTab
+              filters={filters}
+              periodWords={periodWords(period)}
+              onSeeAds={() => set({ tab: "ads" })}
+              onReportCurrency={onReportCurrency}
+              onSelectLine={(lineId) => {
+                set(selectionParams(chooseLine(selection, lineId)));
+                // Arriba, para ver la línea desde su franja de anuncios.
+                document.querySelector(".dashboard-page")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+              }}
+            />
+          ) : null}
           {tab === "ads" ? (canSeeAds ? <AdsTab filters={filters} /> : <div className="dashboard-page__wait" aria-busy="true" aria-label="Cargando" />) : null}
           {tab === "attention" ? <AttentionTab filters={filters} /> : null}
         </div>

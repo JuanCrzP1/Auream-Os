@@ -6,6 +6,7 @@ import { AdsDashboardService } from "../../../domains/analytics/application/AdsD
 import { AttentionDashboardService } from "../../../domains/analytics/application/AttentionDashboardService";
 import { SalesDashboardService } from "../../../domains/analytics/application/SalesDashboardService";
 import { DashboardScopeResolver, type SalesLineLookup } from "../../../domains/analytics/application/DashboardScopeResolver";
+import { LineComparisonService, type SalesLineDirectory } from "../../../domains/analytics/application/LineComparisonService";
 import type { OtherExpensesReader } from "../../../domains/analytics/application/OtherExpenseLedger";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { MetaMarketingClient } from "../../../infrastructure/meta/MetaMarketingClient";
@@ -33,6 +34,8 @@ export interface DashboardModule {
   readonly sales: SalesDashboardService;
   readonly ads: AdsDashboardService;
   readonly attention: AttentionDashboardService;
+  /** Comparar líneas (sin módulo de líneas, no hay). */
+  readonly lines?: LineComparisonService;
 }
 
 export interface AdsModule {
@@ -54,18 +57,22 @@ export function composeAdsServices(
   /** Pasó más de un día sin tasas de cambio nuevas. */
   onFxStale: (info: { readonly lastDay: string | null; readonly errors: ReadonlyArray<string> }) => void = () => undefined,
   /** Los gastos fuera de Meta, para restarlos de la ganancia. */
-  expenses: OtherExpensesReader | null = null
+  expenses: OtherExpensesReader | null = null,
+  /** Todas las líneas, para compararlas. */
+  directory: SalesLineDirectory | null = null
 ): AdsModule {
   const tenants = new SqlTenantResolver(sql, config.defaultTimezone);
   const timezoneOf = async (tenantId: string) => (await tenants.resolve(tenantId)).timezone;
   const fx = new SqlFxRates(sql, undefined, undefined, { onStale: onFxStale });
   const adsReader = new SqlDashboardAds(sql);
+  const salesReader = new SqlDashboardSales(sql);
   const scopes = new DashboardScopeResolver(lines);
   const dashboard: DashboardModule = {
     fx,
-    sales: new SalesDashboardService(new SqlDashboardSales(sql), adsReader, fx, timezoneOf, undefined, scopes, expenses),
+    sales: new SalesDashboardService(salesReader, adsReader, fx, timezoneOf, undefined, scopes, expenses),
     ads: new AdsDashboardService(adsReader, fx, timezoneOf, undefined, scopes),
-    attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf, undefined, scopes)
+    attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf, undefined, scopes),
+    ...(directory ? { lines: new LineComparisonService(salesReader, adsReader, fx, timezoneOf, directory, expenses) } : {})
   };
   if (!config.credentialsKeyRing) return { connection: null, syncHandler: null, dashboard, appOrigin: config.publicAppOrigin };
 

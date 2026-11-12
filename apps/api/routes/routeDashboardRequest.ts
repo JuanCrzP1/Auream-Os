@@ -14,6 +14,7 @@ import { sendJson } from "../http/sendJson";
 //   GET /dashboard/ads?…&level    Anuncios    (ads.read)
 //   GET /dashboard/attention?…    Atención    (analytics.read)
 //   GET /dashboard/fx             Las tasas de cambio oficiales más recientes (analytics.read)
+//   GET /dashboard/lines?from&to&currency  Comparar líneas (analytics.read; gasto y ganancia, con ads.read)
 //
 // `…`: from, to, line, connectionIds, productIds, campaignIds, currency (ver `filtersOf`).
 // ---------------------------------------------------------------------------
@@ -77,6 +78,12 @@ export async function routeDashboardRequest(
   if (path === "/dashboard/ads") {
     requireScope(context, AdsPermissions.read, tenantId);
     sendJson(response, 200, await module.ads.performance(tenantId, filtersOf(url), url.searchParams.get("level") ?? undefined));
+    return true;
+  }
+  if (path === "/dashboard/lines" && module.lines) {
+    requireScope(context, ANALYTICS_READ, tenantId);
+    const { from, to, currency } = filtersOf(url);
+    sendJson(response, 200, await module.lines.compare({ tenantId, canSeeAds: context.scopes.includes(AdsPermissions.read) }, { from, to, currency }));
     return true;
   }
   if (path === "/dashboard/attention") {

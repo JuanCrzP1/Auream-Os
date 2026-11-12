@@ -1,6 +1,7 @@
 import { AD_LEVELS, type DashboardFilters } from "../../../../contracts/DashboardContracts";
 import type { AdsDashboardService } from "../../../../domains/analytics/application/AdsDashboardService";
 import type { AttentionDashboardService } from "../../../../domains/analytics/application/AttentionDashboardService";
+import type { LineComparisonService } from "../../../../domains/analytics/application/LineComparisonService";
 import type { SalesDashboardService } from "../../../../domains/analytics/application/SalesDashboardService";
 import type { McpInputSchema, McpTool } from "../McpTool";
 import { defined, stringListArg, textArg, type ToolArgs } from "./toolArgs";
@@ -16,6 +17,7 @@ export interface DashboardToolServices {
   readonly sales: Pick<SalesDashboardService, "overview">;
   readonly ads: Pick<AdsDashboardService, "performance">;
   readonly attention: Pick<AttentionDashboardService, "overview">;
+  readonly lines?: Pick<LineComparisonService, "compare">;
 }
 
 const PERIOD = "Fecha `YYYY-MM-DD` en la zona horaria de la empresa. Sin fechas: los últimos 30 días (hasta un año).";
@@ -72,6 +74,20 @@ export function analyticsTools(dashboard: DashboardToolServices): McpTool[] {
       readOnly: true,
       inputSchema: { type: "object", properties: filterProperties },
       run: async (args, { tenantId }) => dashboard.attention.overview(tenantId, filtersOf(args))
-    }
+    },
+    ...(dashboard.lines ? [compareLinesTool(dashboard.lines)] : [])
   ];
+}
+
+function compareLinesTool(lines: Pick<LineComparisonService, "compare">): McpTool {
+  return {
+    name: "dashboard_compare_lines",
+    title: "Dashboard: comparar líneas de venta",
+    description:
+      "Cada línea de venta (de list_sales_lines) en el mismo periodo y moneda: facturación y su cambio, ventas, compra promedio, qué parte del negocio es, gasto en Meta de sus campañas, ROAS real, otros gastos, ganancia y margen, de la que más gana a la que menos; al final, todo el negocio. Una línea sin campañas no tiene gasto conocido (`spend: null`). `overlapping: true` = las líneas se pisan (un producto o campaña en dos) y su suma pasa del total.",
+    scope: "ads.read",
+    readOnly: true,
+    inputSchema: { type: "object", properties: { from: filterProperties.from!, to: filterProperties.to!, currency: filterProperties.currency! } },
+    run: async (args, { tenantId }) => lines.compare({ tenantId, canSeeAds: true }, defined({ from: textArg(args, "from"), to: textArg(args, "to"), currency: textArg(args, "currency") }))
+  };
 }

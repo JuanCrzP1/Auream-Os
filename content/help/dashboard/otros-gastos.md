@@ -37,6 +37,7 @@ Para cambiar o borrar un gasto, tócalo en la lista.
 - Nada se cobra antes de su fecha: un gasto de la otra semana todavía no resta.
 - Cada cobro se convierte con la tasa oficial **de su día**.
 - Al elegir una **línea**, solo cuentan los gastos de esa línea.
+- Un gasto en **%** de una línea se calcula siempre sobre lo que vende **esa línea**, también cuando miras todo el negocio.
 
 ## La tarjeta Inversión
 

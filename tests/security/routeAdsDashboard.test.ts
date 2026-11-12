@@ -34,7 +34,7 @@ const ads = () => ({
   disconnect: vi.fn(async () => {}),
   completeOAuth: vi.fn(async () => "tenant-a")
 });
-const dashboard = () => ({ sales: { overview: vi.fn(async () => ({})) }, ads: { performance: vi.fn(async () => ({})) }, attention: { overview: vi.fn(async () => ({})) } });
+const dashboard = () => ({ sales: { overview: vi.fn(async () => ({})) }, ads: { performance: vi.fn(async () => ({})) }, attention: { overview: vi.fn(async () => ({})) }, lines: { compare: vi.fn(async () => ({})) } });
 const ctx = (role: keyof typeof ROLE_SCOPES) => makeContext({ scopes: [...ROLE_SCOPES[role]], tenantId: "tenant-a", actorId: "user-a" });
 
 async function runAds(m: ReturnType<typeof ads>, method: string, path: string, role: keyof typeof ROLE_SCOPES, body?: unknown) {
@@ -89,5 +89,13 @@ describe("Dashboard", () => {
     expect(await runDashboard(m, "/dashboard/ads?level=ad", "tenant_admin")).toBe(200);
     expect(m.ads.performance).toHaveBeenCalledWith("tenant-a", expect.anything(), "ad");
     await expect(runDashboard(m, "/dashboard/ads", "operator")).rejects.toBeInstanceOf(AccessError);
+  });
+
+  it("Comparar líneas: lo ve todo el equipo; el gasto y la ganancia, solo con ads.read; solo pasa periodo y moneda", async () => {
+    const m = dashboard();
+    expect(await runDashboard(m, "/dashboard/lines?from=2026-10-01&to=2026-10-31&currency=USD&line=x&productIds=p", "operator")).toBe(200);
+    expect(m.lines.compare).toHaveBeenLastCalledWith({ tenantId: "tenant-a", canSeeAds: false }, { from: "2026-10-01", to: "2026-10-31", currency: "USD" });
+    expect(await runDashboard(m, "/dashboard/lines", "tenant_owner")).toBe(200);
+    expect(m.lines.compare).toHaveBeenLastCalledWith({ tenantId: "tenant-a", canSeeAds: true }, { from: undefined, to: undefined, currency: undefined });
   });
 });

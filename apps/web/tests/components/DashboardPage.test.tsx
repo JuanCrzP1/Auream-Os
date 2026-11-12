@@ -58,7 +58,10 @@ function stub(owner: boolean) {
 
 const page = (path = "/dashboard") => render(<MemoryRouter initialEntries={[path]}><DashboardPage /></MemoryRouter>);
 
-beforeEach(() => vi.restoreAllMocks());
+beforeEach(() => {
+  window.localStorage.clear();
+  vi.restoreAllMocks();
+});
 
 describe("Dashboard", () => {
   it("Ventas: el ROAS real frente a Meta, la ganancia, del anuncio a la venta y qué hacer con cada campaña", async () => {

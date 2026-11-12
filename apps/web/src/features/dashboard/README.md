@@ -7,10 +7,10 @@ features/dashboard/
 ├── pages/        DashboardPage: periodo y filtros (en la dirección) y las pestañas
 ├── components/   DashboardFilters (cápsulas del periodo y «Fechas»)
 ├── period/       periodModel (atajos, fechas a mano, textos), RangePanel, MonthCalendar
-├── sales/        AdsHero, summary/ (resumen del periodo), RevenueChart, AdFunnel, CampaignAdvice, Breakdowns, RecentSales
+├── sales/        AdsHero, summary/ (resumen del periodo), lines/ (Comparar líneas), RevenueChart, AdFunnel, CampaignAdvice, Breakdowns, RecentSales
 ├── ads/          AdsTab (usa la tabla compartida de `shared/ads`)
 ├── attention/    AttentionTab, Heatmap, AgentsTable
-├── services/     dashboardApi (`/dashboard/sales`, `/dashboard/attention`)
+├── services/     dashboardApi (`/dashboard/sales`, `/dashboard/lines`, `/dashboard/attention`)
 └── dashboardFormat.ts · useDashboardData.ts
 ```
 - Quien no tiene `ads.read` (Asesor, Solo lectura) no ve la franja de anuncios ni la pestaña Anuncios, y la página no los pide.

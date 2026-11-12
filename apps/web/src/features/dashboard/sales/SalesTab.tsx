@@ -12,21 +12,29 @@ import { OtherExpensesDialog } from "./expenses/OtherExpensesDialog";
 import { ConnectMetaInvite } from "./ConnectMetaInvite";
 import { RecentSales } from "./RecentSales";
 import { chartUnit } from "./chartBuckets";
+import { LineComparison } from "./lines/LineComparison";
 import { RevenueChart } from "./RevenueChart";
 import { SalesSummary } from "./summary/SalesSummary";
+
+/** Se mira todo el negocio: sin línea ni filtros a mano («*» = todos, a propósito). */
+const wholeBusiness = (filters: DashboardFilters) =>
+  !filters.lineId && [filters.connectionIds, filters.productIds, filters.campaignIds].every((list) => !list || (list.length === 1 && list[0] === "*"));
 
 /**
  * Dashboard › Ventas: primero la plata de los anuncios (ROAS real, gasto,
  * ganancia), luego el resumen del periodo (ocho números con su cambio, y
- * desde la inversión, los otros gastos),
+ * desde la inversión, los otros gastos), mirando todo el negocio cómo va
+ * cada línea de venta,
  * facturación y gasto por día, del anuncio a
  * la venta, qué hacer con cada campaña, por hora, número, producto y país, y
  * las últimas ventas con su anuncio.
  */
-export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency }: {
+export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency, onSelectLine }: {
   readonly filters: DashboardFilters;
   readonly periodWords: string;
   readonly onSeeAds: () => void;
+  /** Elegir una línea en todo el Dashboard (desde Comparar líneas). */
+  readonly onSelectLine?: (lineId: string) => void;
   /** La moneda en que llegó el informe (para el botón de moneda). */
   readonly onReportCurrency?: (code: string) => void;
 }) {
@@ -63,6 +71,9 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency }: {
           onChanged={reload}
           onClose={() => setExpensesOpen(false)}
         />
+      ) : null}
+      {onSelectLine && wholeBusiness(filters) ? (
+        <LineComparison range={{ from: filters.from, to: filters.to }} currency={filters.currency} periodWords={periodWords} version={version} onSelectLine={onSelectLine} />
       ) : null}
       <section className="sales-tab__card" aria-labelledby="sales-chart-title">
         <header className="sales-tab__card-header">

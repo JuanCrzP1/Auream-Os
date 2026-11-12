@@ -1,10 +1,10 @@
 import type { DashboardFilters, SalesDashboardResponse } from "../../../contracts/DashboardContracts";
 import { CurrencyConverter, type FxRates } from "./CurrencyConverter";
-import { change, periodOf, previousPeriod, todayIn } from "./DashboardPeriod";
+import { change, periodOf, previousPeriod, todayIn, type Period } from "./DashboardPeriod";
 import type { AdsReader, SalesReader } from "./DashboardReaders";
 import { DashboardScopeResolver } from "./DashboardScopeResolver";
 import { MoneyBook, mostUsedCurrency, round } from "./MoneyBook";
-import { chargesOf, rulesFor, totalOf, type OtherExpensesReader } from "./OtherExpenseLedger";
+import { chargesOf, percentLines, revenueBase, rulesFor, totalOf, type ExpenseRule, type OtherExpensesReader, type RevenueDay } from "./OtherExpenseLedger";
 import { adsSummary, conversionOf, dailySeries, group, signedTrend } from "./SalesDashboardParts";
 
 // ---------------------------------------------------------------------------
@@ -84,11 +84,13 @@ export class SalesDashboardService {
     const prevSpend = book.sum(prevSpendDays, (d) => money(d, d.spend));
     const ads = hasAds ? adsSummary(book, days, prevDays, spendDays, prevSpendDays, status!.activeCampaigns) : null;
 
-    // Otros gastos: los fijos con la tasa del día de cada cobro; los % sobre lo vendido en lo que se mira.
+    // Otros gastos: los fijos con la tasa del día de cada cobro; los % sobre lo vendido en lo que se mira
+    // (mirando todo el negocio, el % de una línea sale de lo vendido por esa línea).
     const today = todayIn(this.now(), timezone);
-    const charges = chargesOf(rules, period.fromDay, period.toDay, today, book, days);
+    const lineSales = filters.lineId ? null : await this.lineSales(tenantId, rules, period, before, timezone);
+    const charges = chargesOf(rules, period.fromDay, period.toDay, today, book, lineSales ? revenueBase(days, lineSales.now) : days);
     const other = totalOf(charges);
-    const prevOther = totalOf(chargesOf(rules, before.fromDay, before.toDay, today, book, prevDays));
+    const prevOther = totalOf(chargesOf(rules, before.fromDay, before.toDay, today, book, lineSales ? revenueBase(prevDays, lineSales.before) : prevDays));
 
     const [byConnection, byProduct, byCountry] = await Promise.all(
       (["connection", "product", "country"] as const).map((by) => this.sales.breakdown(tenantId, period, scope, timezone, by).then((rows) => group(book, rows)))
@@ -124,5 +126,19 @@ export class SalesDashboardService {
       recentSales: recent,
       canSeeAds: actor.canSeeAds
     };
+  }
+
+  /** Lo vendido por cada línea que tiene gastos en % (para cobrarlos sobre lo suyo). */
+  private async lineSales(tenantId: string, rules: ReadonlyArray<ExpenseRule>, period: Period, before: Period, timezone: string) {
+    const now = new Map<string, ReadonlyArray<RevenueDay>>();
+    const earlier = new Map<string, ReadonlyArray<RevenueDay>>();
+    await Promise.all(percentLines(rules).map(async (lineId) => {
+      const scope = await this.scopes.lineScope(tenantId, lineId);
+      if (!scope) return;
+      const [days, prevDays] = await Promise.all([this.sales.days(tenantId, period, scope, timezone), this.sales.days(tenantId, before, scope, timezone)]);
+      now.set(lineId, days);
+      earlier.set(lineId, prevDays);
+    }));
+    return { now, before: earlier };
   }
 }

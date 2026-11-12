@@ -129,12 +129,29 @@ A la derecha de las pestañas hay tres botones (`apps/web/src/features/dashboard
 - Lo elegido a mano gana sobre la línea; lo que no se eligió sale de la línea. La web y el MCP mandan la línea (`line`) y lo elegido.
 - `*` en una lista = «todos, a propósito»: le gana a la línea sin recortar nada.
 - Ids inválidos o líneas de otra cuenta se ignoran.
+- La moneda elegida se recuerda en el navegador, aparte para cada cuenta (`scope/currencyMemory`): al volver sin `currency` en la dirección se usa la última. Elegir la del negocio la olvida; un enlace con `currency` manda.
 
 **Ejemplo:** la línea «Venezuela» = productos Mega Pack + campaña «Venezuela · USD». El Dashboard muestra solo sus ventas, el gasto de esa campaña, su ROAS y su ganancia, y en bolívares si se elige VES.
 
 **Cómo está armado:**
 
-- Analytics recibe las líneas por un puerto (`SalesLineLookup`) que arma `composeSalesLineServices`. Ningún dominio importa al otro.
+- Analytics recibe las líneas por puertos (`SalesLineLookup` para una, `SalesLineDirectory` para todas) que arma `composeSalesLineServices`. Ningún dominio importa al otro.
+
+### Comparar líneas
+
+Mirando **todo el negocio** (sin línea ni filtros a mano) y con al menos una línea, Ventas muestra **Comparar líneas** debajo del resumen (`sales/lines/`). `GET /dashboard/lines?from&to&currency` (`LineComparisonService`) da una fila por línea con lo mismo que el Dashboard al elegirla, y al final todo el negocio con los mismos números que la pantalla sin línea.
+
+| Columna | Cómo sale |
+|---|---|
+| Facturación, ventas, compra promedio | Las ventas aprobadas de sus productos y números, con su cambio frente al periodo anterior |
+| Del negocio | Facturación de la línea ÷ la de todo el negocio |
+| Gasto en Meta, ROAS real | Solo de **sus campañas**. Una línea sin campañas no tiene gasto conocido (`spend: null`, «Sin campañas»): nunca se le carga el de todo el negocio |
+| Otros gastos | Los de la línea |
+| Ganancia, margen | Facturación − gasto − otros gastos − costo (si todas las ventas lo tienen), igual que el Dashboard |
+
+- Orden: de la que más gana a la que menos. Sin `ads.read` solo se ven facturación, ventas, compra promedio y «Del negocio», ordenadas por facturación.
+- `overlapping`: las líneas suman más que el negocio (un producto o campaña en dos líneas); la pantalla lo avisa.
+- Tocar una línea la elige en todo el Dashboard. MCP: `dashboard_compare_lines` (área Dashboard, con `ads.read`).
 - Todo viaja en la dirección de la web: `line`, `numbers`, `products`, `campaigns`, `currency`. Así se puede compartir una vista.
 
 ## La ganancia real
@@ -171,6 +188,7 @@ Lo que el negocio paga **fuera de Meta**: herramientas, sueldos, la comisión de
 - Cada cobro fijo se convierte con la tasa de **su día**. Una moneda sin tasa no se suma y se avisa (`missingRates`), como las ventas.
 - Un gasto es de **todo el negocio** o de **una línea**. Sin línea elegida cuentan todos; con una línea, solo los suyos. Si se borra la línea, el gasto pasa a todo el negocio.
 - Los filtros a mano (números, productos, campañas) no recortan los gastos fijos; los % sí, porque van sobre lo vendido en lo que se mira.
+- Mirando **todo el negocio**, el % de una línea sale de lo vendido **por esa línea**, no de todo lo vendido (`revenueBase`, `percentLines`). Así el total cuadra con la suma de las líneas en Comparar líneas.
 
 **En la respuesta** de `/dashboard/sales`:
 
