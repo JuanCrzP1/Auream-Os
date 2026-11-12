@@ -14,7 +14,7 @@ const reply = (status: number, body?: unknown) => ({ ok: status < 400, status, j
 const trend = (value: number) => ({ value, previous: 0, change: null });
 const SALES = {
   currency: "COP", missingRates: [], revenue: trend(100), sales: trend(1), averageTicket: 100, leads: trend(1), leadsFromAds: 0, conversion: 1, conversionPrevious: null, convertedLeads: 1,
-  reviewCount: 0, ads: null, realProfit: null, profit: trend(100), costsKnown: false, daily: [], funnel: null, byHour: Array(24).fill(0), byConnection: [], byProduct: [], byCountry: [], recentSales: [], canSeeAds: true
+  reviewCount: 0, ads: null, realProfit: null, profit: trend(100), otherSpend: null, otherExpenses: [], costsKnown: false, daily: [], funnel: null, byHour: Array(24).fill(0), byConnection: [], byProduct: [], byCountry: [], recentSales: [], canSeeAds: true
 };
 const P1 = "11111111-1111-4111-8111-111111111111";
 const P2 = "22222222-2222-4222-8222-222222222222";

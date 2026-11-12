@@ -50,12 +50,14 @@ Cada herramienta aparece solo si la credencial tiene permiso en su área.
 | Ver el CRM o mover clientes de etapa | `list_pipelines`, `get_pipeline_board`, `get_contact_crm`, `move_contact_stage`, `update_deal` | CRM |
 | Ver ROAS real, gasto, anuncios y atención (de todo el negocio o de una línea, en la moneda que pidan) | `dashboard_sales`, `dashboard_ads`, `dashboard_attention` | Dashboard y anuncios |
 | Ver o armar líneas de venta («Venezuela», «Colombia») | `list_sales_lines`, `create_sales_line`, `update_sales_line`, `delete_sales_line` | Dashboard (ver) · Ventas y productos (editar) |
+| Ver o anotar otros gastos (nómina, pasarela, herramientas) | `list_other_expenses`, `create_other_expense`, `update_other_expense`, `delete_other_expense` | Dashboard (ver) · Ventas y productos (editar) |
 
 ## Tareas completas
 
 - **Que un flujo registre sus ventas:** `list_products` (si no existe, pide nombre y precio y usa `create_product`) → `get_flow` → `add_block` de tipo `record-sale` con `after_block_id` = el bloque tras el pago confirmado (la salida «válido» del Comprobante o la etiqueta de pagado; se inserta en medio y conserva lo que seguía), con el producto, `amountMode: variable`, el monto `{comprobante.valor}`, la moneda `{comprobante.moneda}` y la referencia `{comprobante.referencia}` → `get_flow` para revisar.
 - **Que un flujo arranque en un número:** `list_connections` → `list_flows` → `list_triggers` (para no chocar con uno igual) → confirma con la persona → `create_trigger`.
 - **¿Cómo va una parte del negocio?:** `list_sales_lines` → `dashboard_sales` con su `line_id` (y `currency`, p. ej. `VES`). Si no existe la línea, propón crearla con `create_sales_line` (productos de `list_products`, campañas de `dashboard_ads`).
+- **¿Cuánto gano de verdad?:** `dashboard_sales` → `profit` ya resta Meta y los otros gastos (`otherSpend`, y cada uno en `otherExpenses`). Si la persona menciona un gasto que no está (la pasarela, un sueldo), pídele el monto, la moneda, cada cuánto y desde cuándo, y anótalo con `create_other_expense` (`kind: percent` para un % de las ventas). Nunca inventes montos.
 - **¿Cómo voy?:** `dashboard_sales` (ROAS real, ventas, gasto y qué hacer con cada campaña) y `sales_summary` (lo vendido por producto y por día).
 - **Corregir ventas «Por revisar»:** `list_sales` con `status: review` → completa producto, monto y moneda con `update_sale` → apruébala (`status: approved`) solo si la persona lo confirma.
 

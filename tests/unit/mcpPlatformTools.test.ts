@@ -7,6 +7,7 @@ import { triggerTools } from "../../apps/api/mcp/tools/triggerTools.js";
 import { crmTools } from "../../apps/api/mcp/tools/crmTools.js";
 import { analyticsTools } from "../../apps/api/mcp/tools/analyticsTools.js";
 import { salesLineTools } from "../../apps/api/mcp/tools/salesLineTools.js";
+import { otherExpenseTools } from "../../apps/api/mcp/tools/otherExpenseTools.js";
 import { requirePermissions, scopesOf } from "../../domains/mcp/domain/McpCredential.js";
 
 // ---------------------------------------------------------------------------
@@ -34,8 +35,9 @@ function services() {
   };
   const dashboard = { sales: { overview: vi.fn(async () => ({}) as never) }, ads: { performance: vi.fn(async () => ({}) as never) }, attention: { overview: vi.fn(async () => ({}) as never) } };
   const lines = { list: vi.fn(async () => ({ lines: [], canManage: false })), create: vi.fn(async () => ({}) as never), update: vi.fn(async () => ({}) as never), remove: vi.fn(async () => undefined) };
-  const tools = [...productTools(catalog), ...saleTools(sales, insights), ...triggerTools(triggers), ...crmTools(crm), ...analyticsTools(dashboard), ...salesLineTools(lines)];
-  return { catalog, sales, insights, triggers, crm, dashboard, lines, tools };
+  const expenses = { list: vi.fn(async () => ({ expenses: [], canManage: false })), create: vi.fn(async () => ({}) as never), update: vi.fn(async () => ({}) as never), remove: vi.fn(async () => undefined) };
+  const tools = [...productTools(catalog), ...saleTools(sales, insights), ...triggerTools(triggers), ...crmTools(crm), ...analyticsTools(dashboard), ...salesLineTools(lines), ...otherExpenseTools(expenses)];
+  return { catalog, sales, insights, triggers, crm, dashboard, lines, expenses, tools };
 }
 
 describe("productos", () => {
@@ -99,6 +101,16 @@ describe("disparadores, CRM y Dashboard", () => {
   });
 });
 
+describe("otros gastos", () => {
+  it("anotar pasa el monto tal cual (el servicio lo lee) y editar no pisa lo que no se pidió; un texto vacío quita la fecha final", async () => {
+    const s = services();
+    await find(s.tools, "create_other_expense").run({ name: "Nómina", kind: "fixed", amount: "1.200.000", currency: "COP", frequency: "monthly", starts_on: "2026-11-01" }, ctx);
+    expect(s.expenses.create).toHaveBeenCalledWith(T, { name: "Nómina", kind: "fixed", amount: "1.200.000", currency: "COP", frequency: "monthly", startsOn: "2026-11-01" });
+    await find(s.tools, "update_other_expense").run({ expense_id: "e1", ends_on: "" }, ctx);
+    expect(s.expenses.update).toHaveBeenCalledWith(T, "e1", { endsOn: null });
+  });
+});
+
 describe("cada herramienta, solo con el permiso de su área", () => {
   const listed = async (permissions: Parameters<typeof requirePermissions>[0]) => {
     const access = { tenantId: T, credentialId: "c", credentialName: "x", scopes: scopesOf(requirePermissions(permissions)) };
@@ -108,8 +120,11 @@ describe("cada herramienta, solo con el permiso de su área", () => {
 
   it("ver ventas no deja anotar ni editar; editar ventas sí; Dashboard solo lee", async () => {
     expect(await listed({ sales: "read" })).toEqual(["list_products", "list_sales", "sales_summary"]);
-    expect(await listed({ sales: "write" })).toEqual(["create_product", "create_sales_line", "delete_sales_line", "list_products", "list_sales", "record_sale", "sales_summary", "update_product", "update_sale", "update_sales_line"]);
-    expect(await listed({ analytics: "read" })).toEqual(["dashboard_ads", "dashboard_attention", "dashboard_sales", "list_sales_lines"]);
+    expect(await listed({ sales: "write" })).toEqual([
+      "create_other_expense", "create_product", "create_sales_line", "delete_other_expense", "delete_sales_line", "list_products", "list_sales", "record_sale",
+      "sales_summary", "update_other_expense", "update_product", "update_sale", "update_sales_line"
+    ]);
+    expect(await listed({ analytics: "read" })).toEqual(["dashboard_ads", "dashboard_attention", "dashboard_sales", "list_other_expenses", "list_sales_lines"]);
     expect(await listed({ connections: "read" })).toEqual(["list_triggers"]);
     expect(await listed({ crm: "read" })).toEqual(["get_contact_crm", "get_pipeline_board", "list_pipelines"]);
   });

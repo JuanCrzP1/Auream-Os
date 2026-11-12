@@ -31,6 +31,8 @@ import { saleTools } from "./tools/saleTools";
 import { crmTools, type CrmToolServices } from "./tools/crmTools";
 import { analyticsTools, type DashboardToolServices } from "./tools/analyticsTools";
 import { salesLineTools } from "./tools/salesLineTools";
+import { otherExpenseTools } from "./tools/otherExpenseTools";
+import type { OtherExpenseServices } from "../../../domains/expenses/application/OtherExpenseServices";
 import type { SalesLineServices } from "../../../domains/sales-lines/application/SalesLineServices";
 import type { SaleServices } from "../../../domains/sales/application/SaleServices";
 import type { SalesInsights } from "../../../domains/sales/application/SalesInsights";
@@ -78,6 +80,8 @@ export interface McpDependencies {
   readonly dashboard?: DashboardToolServices;
   /** Líneas de venta: verlas (Dashboard) y organizarlas (Ventas y productos). */
   readonly salesLines?: Pick<SalesLineServices, "list" | "create" | "update" | "remove">;
+  /** Otros gastos: verlos (quien ve el gasto) y anotarlos (Ventas y productos). */
+  readonly otherExpenses?: Pick<OtherExpenseServices, "list" | "create" | "update" | "remove">;
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "createLabel" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list" | "triggers">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
@@ -115,6 +119,7 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     ...(deps.crm ? crmTools(deps.crm) : []),
     ...(deps.dashboard ? analyticsTools(deps.dashboard) : []),
     ...(deps.salesLines ? salesLineTools(deps.salesLines) : []),
+    ...(deps.otherExpenses ? otherExpenseTools(deps.otherExpenses) : []),
     ...(deps.help ? helpTools(deps.help) : [])
   ];
   return {

@@ -42,6 +42,13 @@ export interface Trend {
   readonly change: number | null;
 }
 
+/** Un gasto fuera de Meta y cuánto costó en el periodo (en la moneda de reporte). */
+export interface OtherExpenseCharge {
+  readonly id: string;
+  readonly name: string;
+  readonly amount: number;
+}
+
 export interface AdsMoneySummary {
   readonly spend: Trend;
   /** Ventas atribuidas a anuncios (las que llegaron con el anuncio del chat). */
@@ -106,14 +113,22 @@ export interface SalesDashboardResponse {
   readonly reviewCount: number;
   /** `null`: sin Meta conectado o sin permiso para ver el gasto. */
   readonly ads: AdsMoneySummary | null;
-  /** Ganancia real (ventas − anuncios − costo de productos); `null` si no hay costos. */
+  /** Ganancia real (ventas − anuncios − otros gastos − costo de productos); `null` si no hay costos. */
   readonly realProfit: number | null;
   /**
-   * Ganancia del periodo: facturación − inversión en Meta (− costo de
+   * Ganancia del periodo: facturación − inversión en Meta − otros gastos (− costo de
    * productos si el catálogo lo tiene), frente al periodo anterior. `null`
    * para quien no puede ver el gasto (se deduciría de la resta).
    */
   readonly profit: Trend | null;
+  /**
+   * Otros gastos (los que no son Meta: nómina, pasarela, herramientas…) en
+   * el periodo y el anterior. `null` sin gastos para lo que se mira o sin
+   * permiso para ver el gasto. Ya están restados de `profit` y `realProfit`.
+   */
+  readonly otherSpend: Trend | null;
+  /** Cuánto costó cada uno en el periodo (vacío si `otherSpend` es `null`). */
+  readonly otherExpenses: ReadonlyArray<OtherExpenseCharge>;
   readonly costsKnown: boolean;
   readonly daily: ReadonlyArray<DayPoint>;
   /** Del anuncio a la venta; `null` sin Meta. */

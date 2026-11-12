@@ -1,7 +1,11 @@
 import type { SalesDashboardResponse, Trend } from "@contracts/DashboardContracts";
 import { formatRoas } from "@shared/ads/adsFormat";
 import { money } from "../../dashboardFormat";
+import { investmentCard, profitNote, type InvestmentMode } from "./investmentCard";
+import { count, divide, pointsTrend, relativeTrend, type SummaryTrend } from "./summaryTrends";
 import type { SummaryIconName } from "./SummaryIcon";
+
+export { pointsTrend, relativeTrend, type SummaryTrend, type TrendTone } from "./summaryTrends";
 
 // ---------------------------------------------------------------------------
 // El resumen del periodo: ocho números con su cambio frente al periodo
@@ -10,14 +14,6 @@ import type { SummaryIconName } from "./SummaryIcon";
 // cambio, y lo que la persona no puede ver (el gasto) no aparece.
 // ---------------------------------------------------------------------------
 
-/** good: mejoró · bad: empeoró · flat: igual, o un número que no es bueno ni malo por sí solo (el gasto). */
-export type TrendTone = "good" | "bad" | "flat";
-
-export interface SummaryTrend {
-  readonly text: string;
-  readonly tone: TrendTone;
-}
-
 export interface SummaryCard {
   readonly id: string;
   readonly icon: SummaryIconName;
@@ -25,31 +21,16 @@ export interface SummaryCard {
   readonly value: string;
   readonly note: string;
   readonly trend: SummaryTrend | null;
-}
-
-const count = (value: number) => value.toLocaleString("es-CO");
-const divide = (a: number, b: number) => (b !== 0 ? a / b : null);
-
-/** El cambio relativo de un número: «▲ 18 %». `neutral` lo pinta gris (subir no es bueno ni malo). */
-export function relativeTrend(current: number | null, previous: number | null, sense: "up" | "neutral" = "up"): SummaryTrend | null {
-  if (current === null || previous === null || previous === 0) return null;
-  const pct = Math.round(((current - previous) / Math.abs(previous)) * 100);
-  if (pct === 0) return { text: "= igual", tone: "flat" };
-  const up = pct > 0;
-  return { text: `${up ? "▲" : "▼"} ${count(Math.abs(pct))} %`, tone: sense === "neutral" ? "flat" : up ? "good" : "bad" };
-}
-
-/** El cambio de una tasa, en puntos: de 10 % a 15 % es «▲ 5 pts» (no «▲ 50 %»). */
-export function pointsTrend(current: number | null, previous: number | null): SummaryTrend | null {
-  if (current === null || previous === null) return null;
-  const points = Math.round((current - previous) * 100);
-  if (points === 0) return { text: "= igual", tone: "flat" };
-  return { text: `${points > 0 ? "▲" : "▼"} ${Math.abs(points)} pts`, tone: points > 0 ? "good" : "bad" };
+  /** Qué se puede elegir ver en la tarjeta (la inversión: Meta · Otros · Todo). */
+  readonly modes?: { readonly current: InvestmentMode; readonly options: ReadonlyArray<readonly [InvestmentMode, string]> };
+  /** Un enlace dentro de la tarjeta (la inversión: «Otros gastos»). */
+  readonly action?: { readonly id: "expenses"; readonly label: string };
 }
 
 const fromTrend = (trend: Trend, sense: "up" | "neutral" = "up") => relativeTrend(trend.value, trend.previous, sense);
 
-export function summaryCards(view: SalesDashboardResponse): SummaryCard[] {
+/** `investment`: qué muestra la tarjeta de inversión cuando hay otros gastos. */
+export function summaryCards(view: SalesDashboardResponse, investment: InvestmentMode = "all"): SummaryCard[] {
   const c = view.currency;
   const ads = view.ads;
   const noAds = "Conecta Meta Ads para verlo";
@@ -86,7 +67,7 @@ export function summaryCards(view: SalesDashboardResponse): SummaryCard[] {
           icon: "profit",
           label: "Ganancia",
           value: money(view.profit.value, c),
-          note: view.costsKnown ? "Facturación − Meta − costo de productos" : ads ? "Facturación − inversión en Meta" : "Pon el costo de tus productos en Ventas › Productos",
+          note: profitNote(view),
           trend: fromTrend(view.profit)
         }
       : null,
@@ -116,16 +97,7 @@ export function summaryCards(view: SalesDashboardResponse): SummaryCard[] {
           trend: ads ? relativeTrend(ads.roas, divide(ads.revenue.previous, ads.spend.previous)) : null
         }
       : null,
-    view.canSeeAds
-      ? {
-          id: "spend",
-          icon: "spend",
-          label: "Inversión en Meta",
-          value: ads ? money(ads.spend.value, c) : "—",
-          note: ads ? `${count(ads.activeCampaigns)} ${ads.activeCampaigns === 1 ? "campaña activa" : "campañas activas"}` : noAds,
-          trend: ads ? fromTrend(ads.spend, "neutral") : null
-        }
-      : null
+    investmentCard(view, investment)
   ];
   return cards.filter((card): card is SummaryCard => card !== null);
 }

@@ -1,0 +1,168 @@
+/* ===== OTROS GASTOS (Dashboard › Ventas) =====
+   La ventana con la lista de gastos (punto del color de su línea, nombre,
+   cómo se cobra y cuánto costó en el periodo), el total y el formulario con
+   controles segmentados y la frase que confirma lo que se va a restar. */
+
+.other-expenses {
+  display: grid;
+  gap: 14px;
+  width: min(640px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.other-expenses__intro {
+  margin: -6px 0 0;
+}
+
+.other-expenses__loading {
+  height: 120px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+}
+
+.other-expenses__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.other-expenses__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.other-expenses__item:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+}
+
+.other-expenses__item:disabled {
+  cursor: default;
+}
+
+.other-expenses__dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.other-expenses__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.other-expenses__text strong {
+  overflow: hidden;
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.other-expenses__text small,
+.other-expenses__amount small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.other-expenses__amount {
+  display: grid;
+  margin-left: auto;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.other-expenses__total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+  font-size: 0.86rem;
+}
+
+.other-expense-form {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.other-expense-form__title {
+  font-size: 0.9rem;
+}
+
+.other-expense-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.other-expense-form__seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--chip-bg);
+}
+
+.other-expense-form__seg button {
+  flex: 1;
+  padding: 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.other-expense-form__seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.other-expense-form__summary {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.other-expense-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.other-expense-form__delete {
+  margin-right: auto;
+  color: var(--status-danger);
+}

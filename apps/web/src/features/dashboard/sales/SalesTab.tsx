@@ -1,5 +1,5 @@
 import "./sales-tab.css";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { AdsDashboardResponse, DashboardFilters, SalesDashboardResponse } from "@contracts/DashboardContracts";
 import { adsApi } from "@shared/ads/adsApi";
 import { dashboardApi } from "../services/dashboardApi";
@@ -8,6 +8,7 @@ import { AdFunnel } from "./AdFunnel";
 import { AdsHero } from "./AdsHero";
 import { Breakdowns } from "./Breakdowns";
 import { CampaignAdvice } from "./CampaignAdvice";
+import { OtherExpensesDialog } from "./expenses/OtherExpensesDialog";
 import { ConnectMetaInvite } from "./ConnectMetaInvite";
 import { RecentSales } from "./RecentSales";
 import { RevenueChart } from "./RevenueChart";
@@ -15,7 +16,8 @@ import { SalesSummary } from "./summary/SalesSummary";
 
 /**
  * Dashboard › Ventas: primero la plata de los anuncios (ROAS real, gasto,
- * ganancia), luego el resumen del periodo (ocho números con su cambio),
+ * ganancia), luego el resumen del periodo (ocho números con su cambio, y
+ * desde la inversión, los otros gastos),
  * facturación y gasto por día, del anuncio a
  * la venta, qué hacer con cada campaña, por hora, número, producto y país, y
  * las últimas ventas con su anuncio.
@@ -27,7 +29,11 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency }: {
   /** La moneda en que llegó el informe (para el botón de moneda). */
   readonly onReportCurrency?: (code: string) => void;
 }) {
-  const key = JSON.stringify(filters);
+  // Al guardar o borrar un gasto, el informe se vuelve a pedir (cambia la ganancia).
+  const [version, setVersion] = useState(0);
+  const [expensesOpen, setExpensesOpen] = useState(false);
+  const reload = useCallback(() => setVersion((n) => n + 1), []);
+  const key = `${JSON.stringify(filters)}#${version}`;
   const sales = useDashboardData<SalesDashboardResponse>(() => dashboardApi.sales(filters), key);
   const view = sales.data;
   const reported = view?.currency;
@@ -45,7 +51,18 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency }: {
   return (
     <div className="sales-tab">
       {view.ads ? <AdsHero view={view} periodWords={periodWords} /> : view.canSeeAds ? <ConnectMetaInvite /> : null}
-      <SalesSummary view={view} />
+      <SalesSummary view={view} onOpenExpenses={() => setExpensesOpen(true)} />
+      {expensesOpen ? (
+        <OtherExpensesDialog
+          charges={view.otherExpenses}
+          total={view.otherSpend?.value ?? 0}
+          currency={view.currency}
+          periodWords={periodWords}
+          lineId={filters.lineId ?? null}
+          onChanged={reload}
+          onClose={() => setExpensesOpen(false)}
+        />
+      ) : null}
       <section className="sales-tab__card" aria-labelledby="sales-chart-title">
         <header className="sales-tab__card-header">
           <h2 id="sales-chart-title">{view.ads ? "Facturación y gasto por día" : "Facturación por día"}</h2>

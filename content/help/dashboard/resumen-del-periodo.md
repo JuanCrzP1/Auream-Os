@@ -15,11 +15,11 @@ En **Dashboard › Ventas**, debajo del bloque de anuncios, ves ocho números de
 - **Facturación:** todo lo vendido (ventas aprobadas), en la moneda de tu reporte.
 - **Ventas:** cuántas ventas aprobadas hubo y cuántas están «Por revisar».
 - **Compra promedio:** lo que deja en promedio cada venta (facturación ÷ ventas).
-- **Ganancia:** facturación − inversión en Meta. Si pones el costo de tus productos, también lo resta.
+- **Ganancia:** facturación − inversión en Meta − [otros gastos](otros-gastos). Si pones el costo de tus productos, también lo resta.
 - **Leads nuevos:** personas que escribieron por primera vez, separadas en las que llegaron por anuncio y las orgánicas.
 - **Conversión:** de los leads nuevos del periodo, cuántos compraron. Nunca pasa de 100 %.
 - **ROAS real:** por cada $ 1 en anuncios, cuánto vuelve en ventas reales, junto al ROAS que dice Meta.
-- **Inversión en Meta:** lo gastado en anuncios y cuántas campañas están activas.
+- **Inversión en Meta:** lo gastado en anuncios y cuántas campañas están activas. Si anotas [otros gastos](otros-gastos), se llama **Inversión** y deja ver Meta, Otros o Todo.
 
 ## El cambio frente al periodo anterior
 

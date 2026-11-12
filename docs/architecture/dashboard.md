@@ -134,15 +134,49 @@ A la derecha de las pestañas hay tres botones (`apps/web/src/features/dashboard
 
 El catálogo tiene ahora un **costo por país** junto a cada precio (`product_prices.cost`, opcional).
 
-Ganancia real = ventas − costo de lo vendido − gasto en anuncios.
+Ganancia real = ventas − costo de lo vendido − gasto en anuncios − otros gastos.
 
 Solo se muestra si **todas** las ventas del periodo tienen costo. Si falta alguno, la pantalla invita a completarlo.
 
 La tarjeta **Ganancia** del resumen (`profit`) siempre tiene valor para quien ve el gasto:
 
-- Es facturación − inversión en Meta, y además − costo de productos si se conocen todos.
+- Es facturación − inversión en Meta − otros gastos, y además − costo de productos si se conocen todos.
 - Va con su periodo anterior.
 - Para quien no ve el gasto es `null`: con la facturación a la vista, la resta delataría el gasto.
+
+## Otros gastos
+
+Lo que el negocio paga **fuera de Meta**: herramientas, sueldos, la comisión de la pasarela… (`domains/expenses`, tabla `other_expenses`, `045_other_expenses.sql`). Se restan de la **ganancia**; el **ROAS sigue siendo solo contra Meta**.
+
+**Tipos de gasto:**
+
+| Tipo | Cuándo se cobra |
+|---|---|
+| Monto fijo, una vez | El día que empieza (si cae en el periodo) |
+| Monto fijo, cada día | Cada día vigente |
+| Monto fijo, cada semana | Cada 7 días desde que empieza |
+| Monto fijo, cada mes | El día del mes en que empieza (el 31 cae el último día de los meses cortos) |
+| % de las ventas | Ese % de lo vendido en los días vigentes de lo que se mira |
+
+**Reglas del cálculo** (`OtherExpenseLedger`, puro, en Analytics):
+
+- Nada se cobra después de hoy: un gasto futuro aún no se pagó.
+- Cada cobro fijo se convierte con la tasa de **su día**. Una moneda sin tasa no se suma y se avisa (`missingRates`), como las ventas.
+- Un gasto es de **todo el negocio** o de **una línea**. Sin línea elegida cuentan todos; con una línea, solo los suyos. Si se borra la línea, el gasto pasa a todo el negocio.
+- Los filtros a mano (números, productos, campañas) no recortan los gastos fijos; los % sí, porque van sobre lo vendido en lo que se mira.
+
+**En la respuesta** de `/dashboard/sales`:
+
+- `otherSpend`: total del periodo y del anterior. `null` sin gastos para lo que se mira o sin `ads.read` (con la ganancia se deducirían).
+- `otherExpenses`: cuánto costó cada uno en el periodo.
+- `profit` y `realProfit` ya los restan.
+
+**En pantalla:**
+
+- La tarjeta de inversión se llama **Inversión** y deja elegir **Meta · Otros · Todo** (sin gastos sigue siendo «Inversión en Meta», como antes).
+- Su enlace **Otros gastos** abre la ventana con la lista, cuánto costó cada uno, el total y el formulario con la frase que confirma lo que se va a restar.
+
+**Cómo está armado:** Analytics recibe los gastos por el puerto `OtherExpensesReader`, que arma `composeOtherExpenseServices`. Ningún dominio importa al otro.
 
 ## La conversión
 
@@ -157,7 +191,8 @@ La tarjeta **Ganancia** del resumen (`profit`) siempre tiene valor para quien ve
 | | Dueño | Administrador | Asesor | Solo lectura |
 |---|---|---|---|---|
 | Dashboard › Ventas y Atención (`analytics.read`) | ✓ | ✓ | ✓, sin nada de anuncios | ✓, sin nada de anuncios |
-| Gasto, ROAS, ganancia y Anuncios (`ads.read`) | ✓ | ✓ | — | — |
+| Gasto, ROAS, ganancia, otros gastos y Anuncios (`ads.read`) | ✓ | ✓ | — | — |
+| Crear, editar y borrar otros gastos (`sales.manage`) | ✓ | ✓ | — | — |
 | Conectar Meta, elegir cuentas, sincronizar (`ads.manage`) | ✓ | ✓ | — | — |
 
 ## Arquitectura
@@ -185,6 +220,8 @@ SalesDashboardService · AdsDashboardService · AttentionDashboardService (domai
 - `fx_rates`
 - `product_prices.cost`
 
+`043_sales_lines.sql` crea `sales_lines`; `044_fx_rates_source.sql` agrega la fuente de cada tasa; `045_other_expenses.sql` crea `other_expenses` (con sus reglas también en la base: % de 0 a 100, un fijo siempre con moneda y frecuencia).
+
 ## API
 
 | Ruta | Permiso | Para qué |
@@ -197,6 +234,7 @@ SalesDashboardService · AdsDashboardService · AttentionDashboardService (domai
 | `GET /dashboard/ads?from&to&level&line&campaignIds&productIds&connectionIds&currency` | `ads.read` | Anuncios |
 | `GET /dashboard/attention?from&to&line&connectionIds` | `analytics.read` | Atención |
 | `GET /sales-lines` · `POST /sales-lines` · `PATCH`/`DELETE /sales-lines/:id` | `analytics.read` · `sales.manage` | Líneas de venta |
+| `GET /other-expenses` · `POST /other-expenses` · `PATCH`/`DELETE /other-expenses/:id` | `ads.read` · `sales.manage` | Otros gastos |
 
 Las listas van separadas por comas. Se siguen aceptando `connectionId` y `productId` de uno solo.
 
@@ -208,11 +246,13 @@ Las listas van separadas por comas. Se siguen aceptando `connectionId` y `produc
 - `dashboardServices.test.ts`
 - `tests/security/routeAdsDashboard.test.ts`
 - `tests/integration/dashboardPersistence.test.ts` (PostgreSQL real)
+- Otros gastos: `tests/unit/otherExpenses.test.ts`, `dashboardOtherExpenses.test.ts`, `tests/security/routeOtherExpenses.test.ts`, `tests/integration/otherExpensesPersistence.test.ts`
 
 **Web:**
 - `DashboardPage.test.tsx`
 - `MetaAdsPage.test.tsx`
 - `MetaAdsAccounts.test.tsx`
+- Otros gastos: `dashboardSummaryCards.test.ts`, `otherExpenseWords.test.ts`, `DashboardOtherExpenses.test.tsx`
 
 ## Después
 

@@ -30,6 +30,8 @@ import { routeAdsRequest } from "./routeAdsRequest";
 import { routeAdsCallback } from "./routeAdsCallback";
 import { routeDashboardRequest } from "./routeDashboardRequest";
 import { routeSalesLinesRequest } from "./routeSalesLinesRequest";
+import { routeOtherExpensesRequest } from "./routeOtherExpensesRequest";
+import type { OtherExpenseServices } from "../../../domains/expenses/application/OtherExpenseServices";
 import type { SalesLineServices } from "../../../domains/sales-lines/application/SalesLineServices";
 import type { AdsModule } from "../composition/composeAdsServices";
 import { recordLastSeen } from "../middleware/recordLastSeen";
@@ -120,6 +122,8 @@ export interface ApiRouterDependencies {
   readonly adsServices?: AdsModule;
   /** Líneas de venta (`/sales-lines`). Ausente: responde 503. */
   readonly salesLineServices?: SalesLineServices;
+  /** Otros gastos (`/other-expenses`). Ausente: responde 503. */
+  readonly otherExpenseServices?: OtherExpenseServices;
   /** WhatsApp simulado (solo desarrollo): «Adelantar el tiempo». Ausente: la ruta no existe. */
   readonly simulatorTools?: SimulatorTools;
 }
@@ -223,6 +227,7 @@ export async function routeApiRequest(
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
   if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
   if (await routeSalesLinesRequest(request, response, url, dependencies.salesLineServices, requestContext)) return;
+  if (await routeOtherExpensesRequest(request, response, url, dependencies.otherExpenseServices, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;

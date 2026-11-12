@@ -6,6 +6,7 @@ import { AdsDashboardService } from "../../../domains/analytics/application/AdsD
 import { AttentionDashboardService } from "../../../domains/analytics/application/AttentionDashboardService";
 import { SalesDashboardService } from "../../../domains/analytics/application/SalesDashboardService";
 import { DashboardScopeResolver, type SalesLineLookup } from "../../../domains/analytics/application/DashboardScopeResolver";
+import type { OtherExpensesReader } from "../../../domains/analytics/application/OtherExpenseLedger";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { MetaMarketingClient } from "../../../infrastructure/meta/MetaMarketingClient";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
@@ -51,7 +52,9 @@ export function composeAdsServices(
   /** Las líneas de venta, para filtrar el Dashboard por línea. */
   lines: SalesLineLookup | null = null,
   /** Pasó más de un día sin tasas de cambio nuevas. */
-  onFxStale: (info: { readonly lastDay: string | null; readonly errors: ReadonlyArray<string> }) => void = () => undefined
+  onFxStale: (info: { readonly lastDay: string | null; readonly errors: ReadonlyArray<string> }) => void = () => undefined,
+  /** Los gastos fuera de Meta, para restarlos de la ganancia. */
+  expenses: OtherExpensesReader | null = null
 ): AdsModule {
   const tenants = new SqlTenantResolver(sql, config.defaultTimezone);
   const timezoneOf = async (tenantId: string) => (await tenants.resolve(tenantId)).timezone;
@@ -60,7 +63,7 @@ export function composeAdsServices(
   const scopes = new DashboardScopeResolver(lines);
   const dashboard: DashboardModule = {
     fx,
-    sales: new SalesDashboardService(new SqlDashboardSales(sql), adsReader, fx, timezoneOf, undefined, scopes),
+    sales: new SalesDashboardService(new SqlDashboardSales(sql), adsReader, fx, timezoneOf, undefined, scopes, expenses),
     ads: new AdsDashboardService(adsReader, fx, timezoneOf, undefined, scopes),
     attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf, undefined, scopes)
   };

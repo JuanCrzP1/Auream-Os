@@ -1,15 +1,18 @@
-import type { AdsMoneySummary, Breakdown, DashboardFilters, SalesDashboardResponse } from "../../../contracts/DashboardContracts";
+import type { DashboardFilters, SalesDashboardResponse } from "../../../contracts/DashboardContracts";
 import { CurrencyConverter, type FxRates } from "./CurrencyConverter";
-import { change, periodOf, previousPeriod, type Period } from "./DashboardPeriod";
-import type { AdsReader, BreakdownRow, LeadCounts, SalesReader, SpendDay } from "./DashboardReaders";
+import { change, periodOf, previousPeriod, todayIn } from "./DashboardPeriod";
+import type { AdsReader, SalesReader } from "./DashboardReaders";
 import { DashboardScopeResolver } from "./DashboardScopeResolver";
-import { MoneyBook, mostUsedCurrency, ratio, round } from "./MoneyBook";
+import { MoneyBook, mostUsedCurrency, round } from "./MoneyBook";
+import { chargesOf, rulesFor, totalOf, type OtherExpensesReader } from "./OtherExpenseLedger";
+import { adsSummary, conversionOf, dailySeries, group, signedTrend } from "./SalesDashboardParts";
 
 // ---------------------------------------------------------------------------
 // Dashboard › Ventas: lo vendido, los leads, la conversión y, para quien ve
-// el gasto, la plata de los anuncios (ROAS real frente al de Meta, ganancia,
-// costo por venta y por chat). Todo en una moneda de reporte, con la tasa del
-// día. Solo lee: Ventas, Meta Ads y Conversaciones son las fuentes.
+// el gasto, la plata de los anuncios (ROAS real frente al de Meta), los
+// otros gastos y la ganancia. Todo en una moneda de reporte, con la tasa del
+// día. Solo lee: Ventas, Meta Ads, Conversaciones y Otros gastos son las
+// fuentes.
 // ---------------------------------------------------------------------------
 
 export interface DashboardActor {
@@ -34,7 +37,9 @@ export class SalesDashboardService {
     private readonly timezoneOf: (tenantId: string) => Promise<string>,
     private readonly now: () => Date = () => new Date(),
     /** Resuelve la línea de venta y los filtros (sin líneas, solo lo pedido a mano). */
-    private readonly scopes: DashboardScopeResolver = new DashboardScopeResolver()
+    private readonly scopes: DashboardScopeResolver = new DashboardScopeResolver(),
+    /** Los gastos fuera de Meta (sin módulo de gastos, no hay). */
+    private readonly expenses: OtherExpensesReader | null = null
   ) {}
 
   public async overview(actor: DashboardActor, filters: DashboardFilters): Promise<SalesDashboardResponse> {
@@ -44,7 +49,7 @@ export class SalesDashboardService {
     const before = previousPeriod(period, timezone);
     const scope = await this.scopes.resolve(tenantId, filters);
     await this.fx.refresh();
-    const [rates, days, prevDays, leads, prevLeads, byHour, review, recent, status] = await Promise.all([
+    const [rates, days, prevDays, leads, prevLeads, byHour, review, recent, status, rules] = await Promise.all([
       this.fx.table(before.fromDay, period.toDay),
       this.sales.days(tenantId, period, scope, timezone),
       this.sales.days(tenantId, before, scope, timezone),
@@ -53,7 +58,8 @@ export class SalesDashboardService {
       this.sales.byHour(tenantId, period, scope, timezone),
       this.sales.reviewCount(tenantId),
       this.sales.recent(tenantId, scope, 8),
-      actor.canSeeAds ? this.ads.status(tenantId, scope) : Promise.resolve(null)
+      actor.canSeeAds ? this.ads.status(tenantId, scope) : Promise.resolve(null),
+      actor.canSeeAds && this.expenses ? this.expenses.list(tenantId).then((all) => rulesFor(all, filters.lineId)) : Promise.resolve([])
     ]);
     const converter = new CurrencyConverter(rates);
     // La moneda de reporte: la que pidió la persona o, si no, la de la cuenta de anuncios con más gasto o la más vendida que se pueda convertir.
@@ -69,14 +75,21 @@ export class SalesDashboardService {
     const count = days.reduce((sum, d) => sum + d.count, 0);
     const prevCount = prevDays.reduce((sum, d) => sum + d.count, 0);
     const cost = book.sum(days, (d) => money(d, d.cost));
+    const prevCost = book.sum(prevDays, (d) => money(d, d.cost));
     const costsKnown = count > 0 && days.every((d) => d.withoutCost === 0);
 
     const hasAds = status !== null && status.accounts > 0;
     const [spendDays, prevSpendDays] = hasAds ? await Promise.all([this.ads.spend(tenantId, period, scope), this.ads.spend(tenantId, before, scope)]) : [[], []];
     const spend = book.sum(spendDays, (d) => money(d, d.spend));
     const prevSpend = book.sum(prevSpendDays, (d) => money(d, d.spend));
-    const prevCost = book.sum(prevDays, (d) => money(d, d.cost));
-    const ads = hasAds ? this.adsSummary(book, days, prevDays, spendDays, prevSpendDays, status!.activeCampaigns) : null;
+    const ads = hasAds ? adsSummary(book, days, prevDays, spendDays, prevSpendDays, status!.activeCampaigns) : null;
+
+    // Otros gastos: los fijos con la tasa del día de cada cobro; los % sobre lo vendido en lo que se mira.
+    const today = todayIn(this.now(), timezone);
+    const charges = chargesOf(rules, period.fromDay, period.toDay, today, book, days);
+    const other = totalOf(charges);
+    const prevOther = totalOf(chargesOf(rules, before.fromDay, before.toDay, today, book, prevDays));
+
     const [byConnection, byProduct, byCountry] = await Promise.all(
       (["connection", "product", "country"] as const).map((by) => this.sales.breakdown(tenantId, period, scope, timezone, by).then((rows) => group(book, rows)))
     );
@@ -94,9 +107,13 @@ export class SalesDashboardService {
       convertedLeads: leads.converted,
       reviewCount: review,
       ads: ads ? { ...ads, realProfit: costsKnown ? round(ads.revenue.value - spend - cost) : null } : null,
-      realProfit: costsKnown ? round(revenue - cost - spend) : null,
+      realProfit: costsKnown ? round(revenue - cost - spend - other) : null,
       // Sin permiso para ver el gasto, la ganancia lo delataría (facturación − ganancia).
-      profit: actor.canSeeAds ? profitTrend(round(revenue - spend - (costsKnown ? cost : 0)), round(prevRevenue - prevSpend - (costsKnown ? prevCost : 0))) : null,
+      profit: actor.canSeeAds
+        ? signedTrend(round(revenue - spend - other - (costsKnown ? cost : 0)), round(prevRevenue - prevSpend - prevOther - (costsKnown ? prevCost : 0)))
+        : null,
+      otherSpend: rules.length > 0 ? { value: other, previous: prevOther, change: change(other, prevOther) } : null,
+      otherExpenses: charges,
       costsKnown,
       daily: dailySeries(period, book, days, spendDays),
       funnel: ads ? { impressions: ads.impressions, clicks: ads.clicks, chats: ads.chats, sales: ads.attributedSales } : null,
@@ -108,69 +125,4 @@ export class SalesDashboardService {
       canSeeAds: actor.canSeeAds
     };
   }
-
-  private adsSummary(book: MoneyBook, days: SalesReaderDays, prevDays: SalesReaderDays, spendDays: ReadonlyArray<SpendDay>, prevSpendDays: ReadonlyArray<SpendDay>, activeCampaigns: number): Omit<AdsMoneySummary, "realProfit"> {
-    const pick = (amount: (d: SpendDay) => number) => (d: SpendDay) => ({ amount: amount(d), currency: d.currency, day: d.day });
-    const spend = book.sum(spendDays, pick((d) => d.spend));
-    const prevSpend = book.sum(prevSpendDays, pick((d) => d.spend));
-    const metaRevenue = book.sum(spendDays, pick((d) => d.metaRevenue));
-    const adRevenue = book.sum(days, (d) => ({ amount: d.adAmount, currency: d.currency, day: d.day }));
-    const prevAdRevenue = book.sum(prevDays, (d) => ({ amount: d.adAmount, currency: d.currency, day: d.day }));
-    const adSales = days.reduce((sum, d) => sum + d.adCount, 0);
-    const chats = spendDays.reduce((sum, d) => sum + d.conversations, 0);
-    const profit = round(adRevenue - spend);
-    const prevProfit = round(prevAdRevenue - prevSpend);
-    return {
-      spend: { value: spend, previous: prevSpend, change: change(spend, prevSpend) },
-      revenue: { value: adRevenue, previous: prevAdRevenue, change: change(adRevenue, prevAdRevenue) },
-      profit: { value: profit, previous: prevProfit, change: prevProfit !== 0 ? (profit - prevProfit) / Math.abs(prevProfit) : null },
-      roas: ratio(adRevenue, spend),
-      roasMeta: ratio(metaRevenue, spend),
-      costPerSale: adSales > 0 ? round(spend / adSales) : null,
-      costPerChat: chats > 0 ? round(spend / chats) : null,
-      revenuePerChat: chats > 0 ? round(adRevenue / chats) : null,
-      chats,
-      attributedSales: adSales,
-      impressions: spendDays.reduce((sum, d) => sum + d.impressions, 0),
-      clicks: spendDays.reduce((sum, d) => sum + d.clicks, 0),
-      activeCampaigns
-    };
-  }
-}
-
-type SalesReaderDays = Awaited<ReturnType<SalesReader["days"]>>;
-
-/** De los leads nuevos, la parte que compró (0 a 1, con tres decimales). */
-function conversionOf(leads: LeadCounts): number | null {
-  return leads.total > 0 ? Math.round((Math.min(leads.converted, leads.total) / leads.total) * 1000) / 1000 : null;
-}
-
-/** Una ganancia puede ser negativa: el cambio se mide contra su valor absoluto. */
-function profitTrend(value: number, previous: number) {
-  return { value, previous, change: previous !== 0 ? (value - previous) / Math.abs(previous) : null };
-}
-
-/** Una fila por día del periodo (aunque no haya ventas), con lo vendido y lo gastado. */
-function dailySeries(period: Period, book: MoneyBook, days: SalesReaderDays, spend: ReadonlyArray<SpendDay>) {
-  const series: Array<{ day: string; revenue: number; spend: number }> = [];
-  for (let i = 0; i < period.days; i += 1) {
-    const day = new Date(Date.UTC(+period.fromDay.slice(0, 4), +period.fromDay.slice(5, 7) - 1, +period.fromDay.slice(8, 10) + i)).toISOString().slice(0, 10);
-    series.push({
-      day,
-      revenue: book.sum(days.filter((d) => d.day === day), (d) => ({ amount: d.amount, currency: d.currency, day })),
-      spend: book.sum(spend.filter((d) => d.day === day), (d) => ({ amount: d.spend, currency: d.currency, day }))
-    });
-  }
-  return series;
-}
-
-function group(book: MoneyBook, rows: ReadonlyArray<BreakdownRow>): Breakdown[] {
-  const map = new Map<string, { key: string; label: string; revenue: number; sales: number }>();
-  for (const row of rows) {
-    const entry = map.get(row.key) ?? { key: row.key, label: row.label, revenue: 0, sales: 0 };
-    entry.revenue += book.convert(row.amount, row.currency, row.day);
-    entry.sales += row.count;
-    map.set(row.key, entry);
-  }
-  return [...map.values()].map((entry) => ({ ...entry, revenue: round(entry.revenue) })).sort((a, b) => b.revenue - a.revenue).slice(0, 8);
 }

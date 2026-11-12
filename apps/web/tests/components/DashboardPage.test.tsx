@@ -20,7 +20,7 @@ const metrics = { spend: 100000, impressions: 20000, clicks: 600, chats: 40, sal
 const SALES = (withAds: boolean): SalesDashboardResponse => ({
   currency: "COP", missingRates: [], revenue: trend(600000, 300000), sales: trend(12, 6), averageTicket: 50000, leads: trend(60, 50), leadsFromAds: 40, conversion: 0.15, conversionPrevious: 0.1, convertedLeads: 9, reviewCount: 2,
   ads: withAds ? { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: 360000, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, activeCampaigns: 3 } : null,
-  realProfit: 360000, profit: withAds ? trend(360000, 160000) : null, costsKnown: true,
+  realProfit: 360000, profit: withAds ? trend(360000, 160000) : null, otherSpend: null, otherExpenses: [], costsKnown: true,
   daily: [{ day: "2026-11-01", revenue: 100000, spend: 20000 }, { day: "2026-11-02", revenue: 500000, spend: 80000 }],
   funnel: withAds ? { impressions: 20000, clicks: 600, chats: 40, sales: 10 } : null,
   byHour: Array.from({ length: 24 }, (_, h) => (h === 20 ? 5 : 1)),

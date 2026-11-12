@@ -20,9 +20,9 @@ El transporte, las credenciales y OAuth están en [integrations.md](integrations
 | Contactos y etiquetas (`contacts`) | `list_contacts`, `get_contact`, `list_labels` | `create_contact`, `update_contact`, `tag_contact`, `create_label` | `contacts.read` / `+contacts.write` |
 | Conversaciones (`conversations`) | `list_conversations`, `get_conversation_messages` | `send_message`, `start_flow` | `conversations.read` / `+conversations.write` |
 | Números de WhatsApp (`connections`) | `list_connections`, `list_triggers` | `create_trigger`, `update_trigger`, `delete_trigger` | `connections.read` / `+connections.write` |
-| Ventas y productos (`sales`) | `list_products`, `list_sales`, `sales_summary` | `create_product`, `update_product`, `record_sale`, `update_sale`, `create_sales_line`, `update_sales_line`, `delete_sales_line` | `sales.read` / `+sales.write`, `sales.manage` |
+| Ventas y productos (`sales`) | `list_products`, `list_sales`, `sales_summary` | `create_product`, `update_product`, `record_sale`, `update_sale`, `create_sales_line`, `update_sales_line`, `delete_sales_line`, `create_other_expense`, `update_other_expense`, `delete_other_expense` | `sales.read` / `+sales.write`, `sales.manage` |
 | CRM (`crm`) | `list_pipelines`, `get_pipeline_board`, `get_contact_crm` | `move_contact_stage`, `update_deal` | `crm.read` / `+crm.write` |
-| Dashboard y anuncios (`analytics`) | `dashboard_sales`, `dashboard_ads`, `dashboard_attention` (con `line_id`, listas de números, productos y campañas, y `currency`), `list_sales_lines` | — (solo ver) | `analytics.read`, `ads.read` |
+| Dashboard y anuncios (`analytics`) | `dashboard_sales`, `dashboard_ads`, `dashboard_attention` (con `line_id`, listas de números, productos y campañas, y `currency`), `list_sales_lines`, `list_other_expenses` | — (solo ver) | `analytics.read`, `ads.read` |
 | (sin área) | `read_platform_guide`, `search_help`, `read_help_article` | — | ninguno |
 
 Detalles que importan:
