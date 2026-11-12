@@ -104,7 +104,7 @@ describe("preview del nodo Mensaje cerrado", () => {
       medio("c", "image", "", "Tercero")
     ]);
 
-    expect(textos(container)).toEqual(["Audio", "Segundo", "Imagen"]);
+    expect(textos(container)).toEqual(["voz.mp3", "Segundo", "Imagen"]);
   });
 
   it("un texto largo se recorta por CSS, no cortando el dato", () => {
@@ -165,19 +165,30 @@ describe("cada tipo de bloque en el preview", () => {
   it("Audio es icono y nombre: ni reproductor, ni onda, ni controles", () => {
     const { container } = montar([medio("a", "audio", "https://cdn.test/saludo.mp3")]);
 
-    expect(textos(container)).toEqual(["Audio"]);
+    expect(textos(container)).toEqual(["saludo.mp3"]);
     expect(container.querySelector("audio")).toBeNull();
     expect(container.querySelector(".media-audio")).toBeNull();
     expect(container.querySelector(".media-audio__wave")).toBeNull();
   });
 
-  it("Archivo se rotula por su tipo", () => {
-    const { container } = montar([medio("a", "file", "https://cdn.test/docs/condiciones.pdf")]);
+  it("un documento muestra su nombre (el que se guardó al subirlo o el del enlace), tal como se escribió", () => {
+    const { container } = montar([
+      { ...medio("a", "file", "https://cdn.test/media/x9k2"), fileName: "Mega Pack Reconstruye.pdf" },
+      medio("b", "file", "https://cdn.test/docs/condiciones%20de%20pago.pdf")
+    ]);
 
-    expect(textos(container)).toEqual(["Archivo"]);
+    expect(textos(container)).toEqual(["Mega Pack Reconstruye.pdf", "condiciones de pago.pdf"]);
+    expect(container.querySelector(".flow-node__block-text--name")).not.toBeNull();
   });
 
-  it("ni la descripción ni el nombre del archivo desplazan al tipo", () => {
+  it("sin nombre conocido (un enlace sin nombre de archivo), un documento se rotula por su tipo", () => {
+    const { container } = montar([medio("a", "file", "https://leona-production.b-cdn.net/au1dweuyw13rfh45")]);
+
+    expect(textos(container)).toEqual(["Archivo"]);
+    expect(container.querySelector(".flow-node__block-text--name")).toBeNull();
+  });
+
+  it("en una imagen, ni la descripción ni el nombre del archivo desplazan al tipo (la miniatura ya dice qué es)", () => {
     // En 230px un nombre real se recortaba a mitad —«Grabación de pantalla
     // 20…»— y no identificaba nada. El tipo cabe entero y responde a la
     // pregunta que se le hace al nodo cerrado.
@@ -217,7 +228,7 @@ describe("cada tipo de bloque en el preview", () => {
       texto("d", "Último")
     ]);
 
-    expect(textos(container)).toEqual(["Primero", "Audio", "Imagen", "Último"]);
+    expect(textos(container)).toEqual(["Primero", "voz.mp3", "Imagen", "Último"]);
   });
 
   it("un mensaje hecho solo de pausas no tiene contenido que enseñar", () => {
@@ -344,8 +355,8 @@ describe("los enseña TODOS: sin tope ni recuento", () => {
       "Bienvenida",
       "Imagen",
       "Video",
-      "Audio",
-      "Archivo"
+      "voz.mp3",
+      "doc.pdf"
     ]);
 
     // Imagen trae miniatura; los otros cuatro, el SVG de `getItemIcon`.
@@ -887,14 +898,13 @@ describe("las dos fuentes de un medio, en el preview", () => {
     for (const kind of MEDIOS) releaseFile(kind);
   });
 
-  it.each(MEDIOS)("%s con ARCHIVO se rotula por su tipo, no como bloque vacío", (kind) => {
+  it.each(MEDIOS)("%s con ARCHIVO nunca queda como bloque vacío: un audio o documento dicen su nombre; imagen y video, su tipo", (kind) => {
     const { container } = montar([conArchivo(kind)]);
 
     expect(filas(container)).toHaveLength(1);
-    expect(textos(container)).toEqual([MESSAGE_ITEM_LABELS[kind]]);
-    // Nunca queda mudo, y el nombre del archivo no invade la fila.
+    const named = kind === "audio" || kind === "file";
+    expect(textos(container)).toEqual([named ? `elegido-${kind}.bin` : MESSAGE_ITEM_LABELS[kind]]);
     expect(textos(container)[0]).not.toBe("");
-    expect(container.textContent).not.toContain(`elegido-${kind}.bin`);
   });
 
   it("IMAGEN con archivo en sesión muestra la MINIATURA REAL, no el icono", () => {
@@ -950,7 +960,7 @@ describe("las dos fuentes de un medio, en el preview", () => {
       conArchivo("file")
     ]);
 
-    expect(textos(container)).toEqual(["Hola", "Imagen", "Video", "Audio", "Archivo"]);
+    expect(textos(container)).toEqual(["Hola", "Imagen", "Video", "elegido-audio.bin", "elegido-file.bin"]);
     // Una sola miniatura —la imagen— y el resto con icono. La pausa no está.
     expect(container.querySelectorAll(".flow-node__block-thumb")).toHaveLength(1);
     expect(container.querySelector(".flow-node__block--interval")).toBeNull();
@@ -1111,7 +1121,7 @@ describe("miniatura de video", () => {
 // video, el icono oficial para audio y archivo.
 // ---------------------------------------------------------------------------
 
-describe("el rótulo de un medio es su tipo", () => {
+describe("el rótulo de un medio sin nombre es su tipo", () => {
   const TIPOS = [
     ["image", "Imagen"],
     ["video", "Video"],
@@ -1120,19 +1130,20 @@ describe("el rótulo de un medio es su tipo", () => {
   ] as const;
 
   it.each(TIPOS)("%s se rotula «%s»", (kind, etiqueta) => {
-    const { container } = montar([medio("a", kind, `https://cdn.test/nombre-larguisimo.${kind}`)]);
+    // Un enlace sin nombre de archivo (sin extensión): queda el tipo.
+    const { container } = montar([medio("a", kind, "https://cdn.test/medio-sin-nombre")]);
 
     expect(textos(container)).toEqual([etiqueta]);
   });
 
-  it("el nombre del archivo no aparece por ninguna vía", () => {
+  it("un video no muestra su nombre (lo dice su tipo); un audio sí, porque no tiene miniatura", () => {
     const { container } = montar([
       medio("a", "video", "https://cdn.test/Grabacion-de-pantalla-2026-09-05.mov"),
       { ...medio("b", "audio"), fileName: "voz-del-cliente-final-v3.mp3" }
     ]);
 
-    expect(container.textContent).not.toMatch(/Grabacion|\.mov|voz-del-cliente|\.mp3/);
-    expect(textos(container)).toEqual(["Video", "Audio"]);
+    expect(container.textContent).not.toMatch(/Grabacion|\.mov/);
+    expect(textos(container)).toEqual(["Video", "voz-del-cliente-final-v3.mp3"]);
   });
 
   it("el rótulo sale del registro de la herramienta, no de una copia escrita aquí", () => {

@@ -353,6 +353,13 @@
   letter-spacing: 0.06em;
 }
 
+/* Un documento o un audio muestran su NOMBRE («catalogo.pdf»): es contenido,
+ * se deja tal como se escribió. */
+.flow-node__block:not(.flow-node__block--text) .flow-node__block-text.flow-node__block-text--name {
+  text-transform: none;
+  letter-spacing: 0.002em;
+}
+
 /* ===== ADN AUREAM DEL NODO MENSAJE =====
  *
  * El azul de la herramienta llega como un hex plano en línea —lo pone
