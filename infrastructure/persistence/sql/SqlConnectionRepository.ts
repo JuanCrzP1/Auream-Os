@@ -88,6 +88,23 @@ export class SqlConnectionRepository implements ConnectionRepository {
     }
   }
 
+  /** Una sola sentencia: solo actualiza si la sesión guardada sigue siendo `expectedRef`. */
+  public async saveIfSession(connection: WhatsAppConnection, expectedRef: string | null): Promise<boolean> {
+    if (!isUuid(connection.tenantId) || !isUuid(connection.id)) return false;
+    const result = await this.sql.query<{ id: string }>(
+      `update whatsapp_connections
+          set status = $3, phone_number = $4, profile_name = $5, profile_picture_url = $6, provider_ref = $7, provider_secret = $8,
+              last_connected_at = $9, updated_at = $10
+        where tenant_id = $1 and id = $2 and deleted_at is null and provider_ref is not distinct from $11
+       returning id`,
+      [
+        connection.tenantId, connection.id, connection.status, connection.phoneNumber, connection.profileName, connection.profilePictureUrl,
+        connection.providerRef, connection.providerSecret, connection.lastConnectedAt, connection.updatedAt, expectedRef
+      ]
+    );
+    return result.rows.length > 0;
+  }
+
   /**
    * La marca como eliminada en una sola sentencia: desconectada, sin
    * credencial y sin disparadores. La fila queda para el historial de chats.

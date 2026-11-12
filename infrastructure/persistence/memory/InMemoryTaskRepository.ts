@@ -49,6 +49,17 @@ export class InMemoryTaskRepository implements TaskRepository {
     });
   }
 
+  public async advanceGroup(tenantId: string, groupKey: string, to: Date): Promise<Date[]> {
+    const advanced: Date[] = [];
+    for (const task of this.tasks.values()) {
+      if (task.tenantId === tenantId && task.groupKey === groupKey && task.status === "pending" && task.dueAt > to.toISOString()) {
+        advanced.push(new Date(task.dueAt));
+        this.tasks.set(task.id, { ...task, dueAt: to.toISOString() });
+      }
+    }
+    return advanced;
+  }
+
   public async complete(id: string, now: Date): Promise<void> {
     this.update(id, { status: "done", finishedAt: now.toISOString(), lockedUntil: null, lastError: null });
   }

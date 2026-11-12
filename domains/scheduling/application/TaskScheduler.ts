@@ -113,6 +113,16 @@ export class TaskScheduler {
   }
 
   /**
+   * Adelantar el tiempo (solo desarrollo): lo pendiente del grupo vence ya y
+   * el trabajador lo corre enseguida. Devuelve cuándo iba a vencer.
+   */
+  public async advanceGroup(tenantId: string, groupKey: string): Promise<Date[]> {
+    const advanced = await this.repository.advanceGroup(tenantId, groupKey, this.clock.now());
+    if (advanced.length > 0) this.kicker.kick();
+    return advanced;
+  }
+
+  /**
    * Red de seguridad (mensajes entrantes, tráfico de la app): si algo ya venció
    * o vence dentro de `kickHorizonMs`, despierta al trabajador, que espera la
    * hora exacta. Así lo que vence sigue a su hora aunque su despertador se

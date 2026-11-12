@@ -15,6 +15,11 @@ export interface TaskRepository {
    * reservadas `leaseMs`.
    */
   claimDue(now: Date, limit: number, leaseMs: number): Promise<ScheduledTask[]>;
+  /**
+   * Las pendientes de un grupo que vencen después de `to` pasan a vencer en
+   * `to` (adelantar el tiempo, solo desarrollo). Devuelve cuándo vencían.
+   */
+  advanceGroup(tenantId: string, groupKey: string, to: Date): Promise<Date[]>;
   complete(id: string, now: Date): Promise<void>;
   /** Vuelve a `pending` para otro intento a `nextDueAt`. */
   retry(id: string, error: string, nextDueAt: Date): Promise<void>;

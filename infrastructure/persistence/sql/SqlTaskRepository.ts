@@ -74,6 +74,21 @@ export class SqlTaskRepository implements TaskRepository {
     return result.rowCount;
   }
 
+  public async advanceGroup(tenantId: string, groupKey: string, to: Date): Promise<Date[]> {
+    if (!isUuid(tenantId)) return [];
+    const result = await this.sql.query<{ was: Date | string }>(
+      `with target as (
+         select id, due_at as was from scheduled_tasks
+          where tenant_id = $1 and group_key = $2 and status = 'pending' and due_at > $3
+          for update
+       )
+       update scheduled_tasks t set due_at = $3, updated_at = now() from target where t.id = target.id
+       returning target.was`,
+      [tenantId, groupKey, to.toISOString()]
+    );
+    return result.rows.map((row) => new Date(row.was));
+  }
+
   public async claimDue(now: Date, limit: number, leaseMs: number): Promise<ScheduledTask[]> {
     const result = await this.sql.query<Row>(
       `update scheduled_tasks t

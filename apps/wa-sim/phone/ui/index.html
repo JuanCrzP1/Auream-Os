@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teléfono de prueba · WhatsApp simulado</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!--
+      El teléfono de prueba de Auream: aquí se escribe COMO CLIENTE a los números
+      de prueba y se ve lo que responden el bot y los asesores. Solo desarrollo.
+      La lógica está en app.js (estado y sondeo), render.js (pantalla) y api.js.
+    -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__dot" aria-hidden="true"></span>
+        <strong>WhatsApp simulado</strong>
+        <span class="brand__tag">Solo pruebas · nada sale a WhatsApp</span>
+      </div>
+      <div class="topbar__actions">
+        <button type="button" id="toggle-log" class="ghost">Ver lo que pasó</button>
+        <button type="button" id="reset" class="ghost danger">Empezar de cero</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="side" aria-label="Números y chats">
+        <section class="panel" aria-labelledby="numbers-title">
+          <h2 id="numbers-title">Números de la cuenta</h2>
+          <p class="hint" id="numbers-empty">Aún no hay números. En Auream, ve a <b>Conexiones</b> y conecta uno por QR: aparecerá aquí para «escanearlo».</p>
+          <ul id="instances" class="list"></ul>
+        </section>
+
+        <section class="panel" aria-labelledby="clients-title">
+          <div class="panel__head">
+            <h2 id="clients-title">Clientes de prueba</h2>
+          </div>
+          <form id="new-contact" class="new-contact">
+            <input id="contact-name" placeholder="Nombre (Laura Gómez)" maxlength="60" />
+            <input id="contact-phone" placeholder="Número con país (573001112233)" inputmode="tel" required />
+            <label class="check"><input type="checkbox" id="contact-ad" /> Llega desde un anuncio</label>
+            <button type="submit">Agregar cliente</button>
+          </form>
+          <ul id="chats" class="list"></ul>
+        </section>
+      </aside>
+
+      <section class="chat" id="chat" aria-label="Chat">
+        <div class="chat__empty" id="chat-empty">
+          <strong>Elige un cliente y un número</strong>
+          <span>Escribe como si fueras el cliente: el bot y los asesores de Auream te responden aquí.</span>
+        </div>
+        <div class="chat__view" id="chat-view" hidden>
+          <header class="chat__head">
+            <div>
+              <strong id="chat-name"></strong>
+              <span id="chat-meta"></span>
+            </div>
+            <div class="chat__tools">
+              <button type="button" class="ghost small" id="advance" title="Lo que el flujo de este chat está esperando (Programador, «Tiempo agotado», pausas) corre ya">⏩ Adelantar el tiempo</button>
+              <select id="chat-instance" aria-label="Número al que escribe"></select>
+            </div>
+          </header>
+          <p class="notice" id="notice" hidden></p>
+          <div class="thread" id="thread" aria-live="polite"></div>
+          <form class="composer" id="composer">
+            <label class="attach" title="Enviar foto, audio o documento">
+              📎<input type="file" id="file" accept="image/*,audio/*,video/mp4,application/pdf" hidden />
+            </label>
+            <label class="check small"><input type="checkbox" id="as-voice" /> nota de voz</label>
+            <input id="text" placeholder="Escribe como cliente…" autocomplete="off" />
+            <button type="submit">Enviar</button>
+          </form>
+        </div>
+      </section>
+
+      <aside class="log" id="log" hidden aria-label="Lo que pasó">
+        <h2>Lo que pasó</h2>
+        <p class="hint">«→ Auream»: avisos que el simulador le mandó. El resto: lo que Auream le pidió.</p>
+        <ol id="log-list"></ol>
+      </aside>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

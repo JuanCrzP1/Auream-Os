@@ -39,6 +39,7 @@ import { composeQuickReplyServices } from "../composition/composeQuickReplyServi
 import { composeContactNoteServices } from "../composition/composeContactNoteServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
+import { composeSimulatorTools } from "../composition/composeSimulatorTools";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
 
 // ---------------------------------------------------------------------------
@@ -217,6 +218,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     quickReplyServices: composeQuickReplyServices(tenancy.sqlClient),
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
+    simulatorTools: composeSimulatorTools(config, connectionsServices.channel, scheduling.scheduler),
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,

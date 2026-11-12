@@ -38,6 +38,7 @@ import type { CompanyServices } from "../../../domains/company/application/Compa
 import { routeConnectionsRequest } from "./routeConnectionsRequest";
 import { routeWhatsAppWebhooks } from "./routeWhatsAppWebhooks";
 import { routeInternalTasks, type InternalTasksDependencies } from "./routeInternalTasks";
+import { routeSimulatorTools, type SimulatorTools } from "./routeSimulatorTools";
 import { routeInboundWebhook } from "./routeInboundWebhook";
 import { routeWebhooksRequest } from "./routeWebhooksRequest";
 import { routeMcp } from "./routeMcp";
@@ -115,6 +116,8 @@ export interface ApiRouterDependencies {
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
   /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
   readonly adsServices?: AdsModule;
+  /** WhatsApp simulado (solo desarrollo): «Adelantar el tiempo». Ausente: la ruta no existe. */
+  readonly simulatorTools?: SimulatorTools;
 }
 
 export async function routeApiRequest(
@@ -152,6 +155,8 @@ export async function routeApiRequest(
 
   // Trabajador de la cola: lo autoriza `CRON_SECRET`, no una sesión.
   if (await routeInternalTasks(request, response, url, dependencies.tasks)) return;
+  // WhatsApp simulado (solo desarrollo): lo autoriza el token del número.
+  if (await routeSimulatorTools(request, response, url, dependencies.simulatorTools)) return;
 
   // Almacén local de medios (solo desarrollo): autoriza el permiso firmado, no la sesión.
   if (await routeLocalMediaRequest(request, response, url, mediaServices)) return;

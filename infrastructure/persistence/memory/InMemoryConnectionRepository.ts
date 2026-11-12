@@ -30,6 +30,13 @@ export class InMemoryConnectionRepository implements ConnectionRepository {
     else this.items.push(connection);
   }
 
+  public async saveIfSession(connection: WhatsAppConnection, expectedRef: string | null): Promise<boolean> {
+    const current = this.items.find((item) => item.id === connection.id && item.tenantId === connection.tenantId);
+    if (!current || current.providerRef !== expectedRef) return false;
+    await this.save(connection);
+    return true;
+  }
+
   public async delete(tenantId: string, id: string): Promise<boolean> {
     const found = this.items.find((item) => item.tenantId === tenantId && item.id === id);
     if (!found) return false;

@@ -1,4 +1,5 @@
 import { ApiConfigError } from "./ApiConfigError";
+import { loadWhatsAppSimulator } from "./loadWhatsAppSimulator";
 import { loadTasksConfig, productionHostOf, type TasksConfig } from "./loadTasksConfig";
 import { join } from "node:path";
 import { readSecretKeyRing, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
@@ -89,6 +90,8 @@ export interface ApiConfig {
    * `null`: las conexiones por QR se crean, pero vincular dice que falta el proveedor.
    */
   readonly uazapi: { readonly baseUrl: string; readonly adminToken: string } | null;
+  /** WhatsApp simulado en vez de uazapi (`WHATSAPP_SIMULATOR_URL`, solo desarrollo). */
+  readonly whatsappSimulator: boolean;
   /**
    * Dirección pública de la API donde el proveedor avisa los cambios de
    * conexión (`WHATSAPP_WEBHOOK_BASE_URL`; en Vercel producción, la oficial).
@@ -179,12 +182,15 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (uazapiUrl && !/^https:\/\/[^\s/]+$/.test(uazapiUrl)) {
     throw new ApiConfigError(`UAZAPI_BASE_URL debe ser la dirección https de tu servidor de uazapi, p. ej. https://tunegocio.uazapi.com (llegó "${uazapiUrl}").`);
   }
-  if (uazapiUrl && !credentialsKeyRing) {
+  if ((uazapiUrl || env["WHATSAPP_SIMULATOR_URL"]?.trim()) && !credentialsKeyRing) {
     throw new ApiConfigError("Conectar WhatsApp por QR necesita CREDENTIALS_ENCRYPTION_KEY: el token de cada número se guarda cifrado.");
   }
   const productionHost = productionHostOf(env);
+  const simulator = loadWhatsAppSimulator(env, isProduction);
+  const localApiBaseUrl = env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`;
+  // Con el simulador, los avisos vuelven a esta API local.
   const whatsappWebhookBaseUrl =
-    env["WHATSAPP_WEBHOOK_BASE_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}/api` : null);
+    env["WHATSAPP_WEBHOOK_BASE_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}/api` : simulator ? localApiBaseUrl : null);
   if (isProduction && store !== "sql") {
     throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
   }
@@ -208,7 +214,8 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     metaOAuthRedirectUrl:
       env["META_OAUTH_REDIRECT_URL"]?.trim() ||
       (productionHost ? `https://${productionHost}/api/ads/meta/callback` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/ads/meta/callback`),
-    uazapi: uazapiUrl ? { baseUrl: uazapiUrl, adminToken: uazapiToken } : null,
+    uazapi: simulator ?? (uazapiUrl ? { baseUrl: uazapiUrl, adminToken: uazapiToken } : null),
+    whatsappSimulator: simulator !== null,
     whatsappWebhookBaseUrl,
     groupLinkBase: productionHost ? `https://${productionHost}/g` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/g`,
     helpDocsBase: productionHost ? `https://${productionHost}/api/help/docs` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/help/docs`,

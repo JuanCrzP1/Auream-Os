@@ -90,4 +90,18 @@ describe("SqlTaskRepository", () => {
     const left = await sql.query<{ dedupe_key: string }>("select dedupe_key from scheduled_tasks where tenant_id = $1", [tenant]);
     expect(left.rows.map((r) => r.dedupe_key.split(":")[1])).toEqual(["retry"]);
   });
+
+  it("adelantar el tiempo: lo pendiente de un grupo vence ya y dice cuándo iba a vencer", async () => {
+    const tenant = await insertTenant("tasks-c");
+    const repo = new SqlTaskRepository(sql);
+    const now = new Date();
+    const later = new Date(now.getTime() + 30 * 60_000);
+    const enqueue = (key: string, group: string, dueAt: Date) => repo.enqueue(randomUUID(), { tenantId: tenant, kind: "flow.timer", groupKey: group, dedupeKey: `${tenant}:${key}`, payload: {}, dueAt });
+    await enqueue("chat-a", "conversation:a", later);
+    await enqueue("chat-b", "conversation:b", later);
+
+    expect((await repo.advanceGroup(tenant, "conversation:a", now)).map((date) => date.getTime())).toEqual([later.getTime()]);
+    expect(await repo.advanceGroup(tenant, "conversation:a", now)).toEqual([]);
+    expect((await repo.claimDue(now, 10, 60_000)).map((t) => t.dedupeKey.split(":")[1])).toEqual(["chat-a"]);
+  });
 });

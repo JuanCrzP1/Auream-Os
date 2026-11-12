@@ -58,4 +58,16 @@ describe("SqlConnectionRepository", () => {
     await expect(repository.save({ ...stored, providerSecret: "token en claro" })).rejects.toThrow();
     await expect(repository.save({ ...stored, phoneNumber: "abc" })).rejects.toThrow();
   });
+
+  it("guardar una sesión nueva solo si nadie guardó otra antes (dos QR a la vez)", async () => {
+    const a = await insertTenant("wa-d");
+    const repository = new SqlConnectionRepository(sql);
+    const created = await new CreateConnectionService(repository).execute(a, { name: "Ventas", method: "qr" });
+    const stored = (await repository.findById(a, created.id))!;
+    const secret = "v1.aXY.dGFn.Y3Q";
+    expect(await repository.saveIfSession({ ...stored, status: "connecting", providerRef: "s1", providerSecret: secret }, null)).toBe(true);
+    expect(await repository.saveIfSession({ ...stored, status: "connecting", providerRef: "s2", providerSecret: secret }, null)).toBe(false);
+    expect((await repository.findById(a, created.id))?.providerRef).toBe("s1");
+    expect(await repository.saveIfSession({ ...stored, status: "connecting", providerRef: "s3", providerSecret: secret }, "s1")).toBe(true);
+  });
 });

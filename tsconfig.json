@@ -19,6 +19,7 @@
     "api/**/*.ts",
     "apps/api/**/*.ts",
     "apps/worker/**/*.ts",
+    "apps/wa-sim/**/*.ts",
     "domains/**/*.ts",
     "flow-engine/**/*.ts",
     "platform/**/*.ts",
