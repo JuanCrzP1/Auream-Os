@@ -1,9 +1,10 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
+import type { ClientImport } from "../../../domains/crm/application/ClientImport";
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
 import type { Scope } from "../../../platform/authorization/contracts/Scope";
 import { CrmPermissions } from "../../../platform/authorization/permissions/CrmPermissions";
-import type { BoardFilters, MoveDealRequest, SavePipelineRequest, UpdateDealRequest } from "../../../contracts/CrmContracts";
+import type { BoardFilters, ImportClientsRequest, MoveDealRequest, SavePipelineRequest, UpdateDealRequest } from "../../../contracts/CrmContracts";
 import type { CrmActor } from "../../../domains/crm/application/crmViews";
 import type { BoardServices } from "../../../domains/crm/application/BoardServices";
 import type { DealServices } from "../../../domains/crm/application/DealServices";
@@ -21,6 +22,8 @@ import { routeCrmActivity } from "./routeCrmActivity";
 //   POST   /crm/pipelines/starter                          el embudo de ejemplo      (crm.manage)
 //   PATCH  /crm/pipelines/:id                              configurar                (crm.manage)
 //   DELETE /crm/pipelines/:id                              quitar (las etiquetas quedan) (crm.manage)
+//   GET    /crm/pipelines/:id/import?days                  cuántos clientes entrarían (crm.manage)
+//   POST   /crm/pipelines/:id/import { days }              traer a los que ya tienes  (crm.manage)
 //   GET    /crm/pipelines/:id/board?owner&search           tablero y números         (crm.read)
 //   GET    /crm/pipelines/:id/stages/:stage/cards?offset   más de una etapa (lista)  (crm.read)
 //   PUT    /crm/pipelines/:id/deals/:contact/stage         mover de etapa            (crm.write)
@@ -36,12 +39,14 @@ export interface CrmRoutes {
   readonly board: BoardServices;
   readonly deals: DealServices;
   readonly followUps: FollowUpServices;
+  readonly imports: ClientImport;
 }
 
 const ID = "([0-9a-f-]{36})";
 const PIPELINE = new RegExp(`^/crm/pipelines/${ID}$`, "i");
 const BOARD = new RegExp(`^/crm/pipelines/${ID}/board$`, "i");
 const CARDS = new RegExp(`^/crm/pipelines/${ID}/stages/${ID}/cards$`, "i");
+const IMPORT = new RegExp(`^/crm/pipelines/${ID}/import$`, "i");
 const DEAL = new RegExp(`^/crm/pipelines/${ID}/deals/${ID}$`, "i");
 const DEAL_STAGE = new RegExp(`^/crm/pipelines/${ID}/deals/${ID}/stage$`, "i");
 
@@ -79,6 +84,17 @@ export async function routeCrmRequest(
   const actor: CrmActor = { tenantId, userId: context.actorId, canWrite: can(CrmPermissions.write), canManage: can(CrmPermissions.manage) };
 
   if (await routeCrmActivity(request, response, url, module, context, actor)) return true;
+
+  const importing = IMPORT.exec(path);
+  if (importing) {
+    requireScope(context, CrmPermissions.manage, tenantId);
+    if (method === "GET") {
+      const days = url.searchParams.get("days");
+      return reply(response, 200, await module.imports.preview(actor, importing[1]!, days ? Number(days) : null));
+    }
+    if (method === "POST") return reply(response, 200, await module.imports.run(actor, importing[1]!, (await parseJsonBody<Partial<ImportClientsRequest>>(request)).days ?? null));
+    return reply(response, 405, { message: "Method not allowed" });
+  }
 
   if (method === "GET") {
     requireScope(context, CrmPermissions.read, tenantId);

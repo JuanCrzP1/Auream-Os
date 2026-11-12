@@ -107,3 +107,27 @@ describe("mover y editar desde el tablero", () => {
     expect(view.deals).toEqual([expect.objectContaining({ pipelineId: pipeline.id, stageId: stage("Pagó").id, value: null, enteredAt: null })]);
   });
 });
+
+describe("Entrada automática (quien escribe y aún no está en el embudo)", () => {
+  it("un cliente de antes que escribe entra a la etapa de entrada; quien ya está no se mueve", async () => {
+    const { world, stage } = await setup();
+    world.addContact("viejo");
+    world.addContact("avanzado", "573001112233", [stage("Pagó").labelId]);
+    await world.tracker.contactWrote(T, "viejo");
+    await world.tracker.contactWrote(T, "avanzado");
+    expect(world.labelsOf("viejo")).toEqual([stage("Nuevo").labelId]);
+    expect(world.labelsOf("avanzado")).toEqual([stage("Pagó").labelId]);
+  });
+
+  it("con «solo los de anuncios», entran solo quienes llegaron por un anuncio", async () => {
+    const world = crmWorld();
+    const created = await world.pipelineServices.create(OWNER, { ...STARTER_PIPELINE, entrySource: "ads" });
+    const nuevo = created.stages.find((candidate) => candidate.name === "Nuevo")!;
+    world.addContact("organico");
+    world.addContact("anuncio", "573001112233", [], true);
+    await world.tracker.contactCreated(T, "organico");
+    await world.tracker.contactWrote(T, "anuncio");
+    expect(world.labelsOf("organico")).toEqual([]);
+    expect(world.labelsOf("anuncio")).toEqual([nuevo.labelId]);
+  });
+});

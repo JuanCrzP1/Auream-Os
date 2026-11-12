@@ -145,7 +145,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
     sales: sales.ledger,
     inboundListeners,
-    dealOwners: crm.ownerClaims
+    dealOwners: crm.ownerClaims,
+    onContactWrote: (tenantId, contactId) => crm.tracker.contactWrote(tenantId, contactId)
   });
   // Meta Ads (se sincroniza en la cola de tareas) y el Dashboard.
   const ads = composeAdsServices(config, tenancy.sqlClient, scheduling.scheduler, (error, context) =>

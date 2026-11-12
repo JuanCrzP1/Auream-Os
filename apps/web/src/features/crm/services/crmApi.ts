@@ -2,6 +2,7 @@ import { builderApiClient } from "@shared/http/builderApiClient";
 import type {
   BoardFilters,
   BoardResponse,
+  ImportClientsResponse,
   MoveDealRequest,
   PipelineListResponse,
   PipelineSummary,
@@ -36,6 +37,10 @@ export const crmApi = {
   createPipeline: (request: SavePipelineRequest) => builderApiClient.post<PipelineSummary>("/crm/pipelines", request),
   updatePipeline: (pipelineId: string, request: SavePipelineRequest) => builderApiClient.patch<PipelineSummary>(`/crm/pipelines/${id(pipelineId)}`, request),
   removePipeline: (pipelineId: string) => builderApiClient.delete(`/crm/pipelines/${id(pipelineId)}`),
+  /** Cuántos clientes con chat entrarían (los de los últimos `days` días; `null`: todos). */
+  importPreview: (pipelineId: string, days: number | null) =>
+    builderApiClient.get<ImportClientsResponse>(`/crm/pipelines/${id(pipelineId)}/import${query({ days: days ?? undefined })}`),
+  importClients: (pipelineId: string, days: number | null) => builderApiClient.post<ImportClientsResponse>(`/crm/pipelines/${id(pipelineId)}/import`, { days }),
 
   board: (pipelineId: string, filters: BoardFilters) => builderApiClient.get<BoardResponse>(`/crm/pipelines/${id(pipelineId)}/board${query({ ...filters })}`),
   stageCards: (pipelineId: string, stageId: string, filters: BoardFilters, offset: number) =>

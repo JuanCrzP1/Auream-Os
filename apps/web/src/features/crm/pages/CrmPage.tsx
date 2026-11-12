@@ -73,6 +73,7 @@ export function CrmPage() {
             onConfigure={() => setDialog({ kind: "settings", pipeline })}
             onNewPipeline={() => setDialog({ kind: "settings", pipeline: null })}
             onAddClient={() => setDialog({ kind: "add", pipeline })}
+            onImport={() => setDialog({ kind: "import", pipeline })}
           />
         ) : null}
       </header>
@@ -102,7 +103,15 @@ export function CrmPage() {
           ) : pipeline ? (
             <PipelineTab key={pipeline.id} pipeline={pipeline} canWrite={pipes.canWrite} refreshKey={refreshKey} onOpen={setOpenContact} onChanged={refresh} />
           ) : (
-            <PipelineEmpty canManage={pipes.canManage} onCreate={pipes.createStarter} />
+            <PipelineEmpty
+              canManage={pipes.canManage}
+              onCreate={async () => {
+                const created = await pipes.createStarter();
+                // Recién creado: se ofrece traer a los clientes que ya escribieron.
+                setDialog({ kind: "import", pipeline: created, justCreated: true });
+                return created;
+              }}
+            />
           )}
         </div>
       </div>

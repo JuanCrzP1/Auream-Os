@@ -1,4 +1,4 @@
-import type { BoardFilters, DealCard, Money, StageOutcome } from "../../../contracts/CrmContracts";
+import type { BoardFilters, DealCard, EntrySource, Money, StageOutcome } from "../../../contracts/CrmContracts";
 import type { CrmSource, FollowUpBucket } from "../../../contracts/CrmActivityContracts";
 import type { Deal } from "../domain/Deal";
 import type { FollowUp } from "../domain/FollowUp";
@@ -24,6 +24,7 @@ export interface PipelineRecord {
   readonly saleStageId: string | null;
   readonly defaultProductId: string | null;
   readonly autoAssign: boolean;
+  readonly entrySource: EntrySource;
 }
 
 export interface PipelineRepository {

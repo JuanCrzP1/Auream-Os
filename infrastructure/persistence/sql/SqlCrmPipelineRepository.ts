@@ -16,6 +16,7 @@ interface Row {
   readonly sale_stage_id: string | null;
   readonly default_product_id: string | null;
   readonly auto_assign: boolean;
+  readonly entry_source: "all" | "ads";
   readonly stage_id: string | null;
   readonly label_id: string | null;
   readonly outcome: string | null;
@@ -24,7 +25,7 @@ interface Row {
   readonly label_color: string | null;
 }
 
-const SELECT = `select p.id, p.tenant_id, p.name, p.entry_stage_id, p.sale_stage_id, p.default_product_id, p.auto_assign,
+const SELECT = `select p.id, p.tenant_id, p.name, p.entry_stage_id, p.sale_stage_id, p.default_product_id, p.auto_assign, p.entry_source,
                        s.id as stage_id, s.label_id, s.outcome, s.position, l.name as label_name, l.color as label_color
                   from crm_pipelines p
                   left join crm_stages s on s.tenant_id = p.tenant_id and s.pipeline_id = p.id
@@ -41,7 +42,8 @@ function toPipelines(rows: ReadonlyArray<Row>): Pipeline[] {
         entryStageId: row.entry_stage_id,
         saleStageId: row.sale_stage_id,
         defaultProductId: row.default_product_id,
-        autoAssign: row.auto_assign
+        autoAssign: row.auto_assign,
+        entrySource: row.entry_source
       },
       stages: []
     };
@@ -77,12 +79,12 @@ export class SqlCrmPipelineRepository implements PipelineRepository {
   public async save(tenantId: string, pipeline: PipelineRecord): Promise<void> {
     await this.sql.transaction(async (tx) => {
       await tx.query(
-        `insert into crm_pipelines (id, tenant_id, name, position, default_product_id, auto_assign)
-         values ($1, $2, $3, (select coalesce(max(position) + 1, 0) from crm_pipelines where tenant_id = $2), $4, $5)
+        `insert into crm_pipelines (id, tenant_id, name, position, default_product_id, auto_assign, entry_source)
+         values ($1, $2, $3, (select coalesce(max(position) + 1, 0) from crm_pipelines where tenant_id = $2), $4, $5, $6)
          on conflict (id) do update set name = excluded.name, default_product_id = excluded.default_product_id,
-                                        auto_assign = excluded.auto_assign, updated_at = now()
+                                        auto_assign = excluded.auto_assign, entry_source = excluded.entry_source, updated_at = now()
           where crm_pipelines.tenant_id = excluded.tenant_id`,
-        [pipeline.id, tenantId, pipeline.name, pipeline.defaultProductId, pipeline.autoAssign]
+        [pipeline.id, tenantId, pipeline.name, pipeline.defaultProductId, pipeline.autoAssign, pipeline.entrySource]
       );
       const ids = pipeline.stages.map((stage) => stage.id);
       await tx.query(`delete from crm_stages where tenant_id = $1 and pipeline_id = $2 and not (id = any($3::uuid[]))`, [tenantId, pipeline.id, ids]);

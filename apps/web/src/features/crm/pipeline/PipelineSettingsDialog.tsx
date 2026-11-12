@@ -2,7 +2,7 @@ import "@shared/ui/controls/controls.css";
 import "./crm-dialogs.css";
 import "./pipeline-settings.css";
 import { useId, useState } from "react";
-import type { PipelineSummary, SavePipelineRequest } from "@contracts/CrmContracts";
+import type { EntrySource, PipelineSummary, SavePipelineRequest } from "@contracts/CrmContracts";
 import type { ProductSummary } from "@contracts/SalesContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { StageRowsEditor, type StageRow } from "./StageRowsEditor";
@@ -16,8 +16,8 @@ const rowsOf = (pipeline: PipelineSummary | null): StageRow[] =>
       ];
 
 /**
- * Configurar un embudo (o crear uno): sus etapas, en cuál entra todo contacto
- * nuevo, a cuál pasa quien compra, el producto que da el valor por defecto y
+ * Configurar un embudo (o crear uno): sus etapas, en cuál entra quien escribe
+ * y aún no está en él (todos o solo los de anuncios), a cuál pasa quien compra, el producto que da el valor por defecto y
  * si se reparte entre el equipo. Cada etapa es una etiqueta.
  */
 export function PipelineSettingsDialog({
@@ -41,6 +41,7 @@ export function PipelineSettingsDialog({
   const [sale, setSale] = useState(pipeline ? keyOf(pipeline.saleStageId) : "b");
   const [productId, setProductId] = useState(pipeline?.defaultProductId ?? "");
   const [autoAssign, setAutoAssign] = useState(pipeline?.autoAssign ?? false);
+  const [entrySource, setEntrySource] = useState<EntrySource>(pipeline?.entrySource ?? "all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +61,8 @@ export function PipelineSettingsDialog({
         entryStage: rows.find((row) => row.key === entry)?.outcome === "open" ? indexOf(entry) : null,
         saleStage: rows.find((row) => row.key === sale)?.outcome === "won" ? indexOf(sale) : null,
         defaultProductId: productId || null,
-        autoAssign
+        autoAssign,
+        entrySource
       });
       onClose();
     } catch (e) {
@@ -86,12 +88,21 @@ export function PipelineSettingsDialog({
         <fieldset className="pipeline-settings__auto">
           <legend>Movimientos automáticos</legend>
           <label className="ui-field">
-            <span>Todo contacto nuevo entra en</span>
+            <span>Quien te escribe y aún no está en el embudo entra en</span>
             <select className="ui-input" value={entry} onChange={(event) => setEntry(event.target.value)}>
-              <option value="">Nadie entra solo</option>
+              <option value="">Nadie entra solo (los agrego yo)</option>
               {named("open").map((row) => <option key={row.key} value={row.key}>{row.name}</option>)}
             </select>
           </label>
+          {entry ? (
+            <label className="ui-field">
+              <span>Entran solos</span>
+              <select className="ui-input" value={entrySource} onChange={(event) => setEntrySource(event.target.value as EntrySource)}>
+                <option value="all">Todos los que escriben (nuevos y de antes)</option>
+                <option value="ads">Solo los que llegan de un anuncio</option>
+              </select>
+            </label>
+          ) : null}
           <label className="ui-field">
             <span>Cuando se aprueba una venta, pasa a</span>
             <select className="ui-input" value={sale} onChange={(event) => setSale(event.target.value)}>

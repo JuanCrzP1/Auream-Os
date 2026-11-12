@@ -26,12 +26,22 @@ export interface StageSummary {
   readonly position: number;
 }
 
+/**
+ * Quiénes entran solos a la etapa de entrada:
+ *   all  todo el que escribe y aún no está en el embudo (nuevo o de antes)
+ *   ads  solo los que llegaron por un anuncio (Click to WhatsApp)
+ */
+export type EntrySource = "all" | "ads";
+export const ENTRY_SOURCES: ReadonlyArray<EntrySource> = ["all", "ads"];
+
 export interface PipelineSummary {
   readonly id: string;
   readonly name: string;
   readonly stages: ReadonlyArray<StageSummary>;
-  /** Todo contacto nuevo entra aquí (o `null`: nadie entra solo). */
+  /** Quien escribe y aún no está en el embudo entra aquí (o `null`: nadie entra solo). */
   readonly entryStageId: string | null;
+  /** Quiénes entran solos: todos los que escriben, o solo los que llegaron por un anuncio. */
+  readonly entrySource: EntrySource;
   /** Al aprobarse una venta del cliente, pasa aquí (o `null`). */
   readonly saleStageId: string | null;
   /** Su precio en el país del cliente es el valor de quien entra sin valor. */
@@ -74,7 +84,23 @@ export interface SavePipelineRequest {
   readonly saleStage?: number | null;
   readonly defaultProductId?: string | null;
   readonly autoAssign?: boolean;
+  readonly entrySource?: EntrySource;
 }
+
+/** Traer al embudo a los clientes que ya tienes: los que escribieron en los últimos `days` días (`null`: todos). */
+export interface ImportClientsRequest {
+  readonly days: number | null;
+}
+
+/** Cuántos entrarían (vista previa) o cuántos entraron. */
+export interface ImportClientsResponse {
+  readonly count: number;
+  /** Solo al traerlos: los que faltan por pasar (más de los que caben en una vez). */
+  readonly remaining?: number;
+}
+
+/** Cuántos se traen como máximo en una vez (el resto, volviendo a tocar). */
+export const MAX_IMPORT_PER_RUN = 500;
 
 export interface Money {
   readonly amount: number;

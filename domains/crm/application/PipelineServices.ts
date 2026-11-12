@@ -99,7 +99,8 @@ export class PipelineServices {
       entryStageId: idAt(draft.entryStage),
       saleStageId: idAt(draft.saleStage),
       defaultProductId: draft.defaultProductId,
-      autoAssign: draft.autoAssign
+      autoAssign: draft.autoAssign,
+      entrySource: draft.entrySource
     });
     return toPipelineSummary(await this.require(tenantId, pipelineId));
   }

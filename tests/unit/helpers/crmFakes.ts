@@ -18,7 +18,7 @@ export const OWNER: CrmActor = { tenantId: T, userId: "u-owner", canWrite: true,
 
 export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   const labels = new Map<string, { id: string; name: string; color: string }>();
-  const contacts = new Map<string, { phone: string | null; labels: Set<string> }>();
+  const contacts = new Map<string, { phone: string | null; labels: Set<string>; fromAd?: boolean }>();
   const pipelines = new Map<string, PipelineRecord & { position: number }>();
   const deals = new Map<string, Deal>();
   const events: Array<CrmEventInput & { at: number }> = [];
@@ -32,6 +32,7 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
     saleStageId: record.saleStageId,
     defaultProductId: record.defaultProductId,
     autoAssign: record.autoAssign,
+    entrySource: record.entrySource,
     stages: record.stages.map((stage, position) => ({ id: stage.id, pipelineId: record.id, labelId: stage.labelId, outcome: stage.outcome, position, name: labels.get(stage.labelId)!.name, color: labels.get(stage.labelId)!.color }))
   });
 
@@ -84,7 +85,7 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   const rules = new StageLabelRules(pipelineRepository);
   let tracker: StageTracker | null = null;
   const labeler: ContactLabeler = {
-    snapshot: async (_t, c) => (contacts.has(c) ? { phone: contacts.get(c)!.phone, labelIds: [...contacts.get(c)!.labels] } : null),
+    snapshot: async (_t, c) => (contacts.has(c) ? { phone: contacts.get(c)!.phone, labelIds: [...contacts.get(c)!.labels], fromAd: contacts.get(c)!.fromAd ?? false } : null),
     change: async (_t, c, change, origin: LabelOrigin) => {
       const held = contacts.get(c)!.labels;
       const before = new Set(held);
@@ -128,7 +129,7 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   return {
     labels, contacts, deals, events, errors, labeler, catalog, team, tracker, rules,
     pipelineRepository, dealRepository, eventLog, pipelineServices,
-    addContact: (id: string, phone: string | null = "573001112233", held: string[] = []) => void contacts.set(id, { phone, labels: new Set(held) }),
+    addContact: (id: string, phone: string | null = "573001112233", held: string[] = [], fromAd = false) => void contacts.set(id, { phone, labels: new Set(held), fromAd }),
     labelsOf: (id: string) => [...contacts.get(id)!.labels]
   };
 }

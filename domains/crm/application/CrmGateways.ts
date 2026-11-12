@@ -19,6 +19,8 @@ export interface LabelOrigin {
 export interface ContactSnapshot {
   readonly phone: string | null;
   readonly labelIds: ReadonlyArray<string>;
+  /** Llegó por un anuncio (Click to WhatsApp). */
+  readonly fromAd: boolean;
 }
 
 /** Contactos: poner y quitar etiquetas (así se mueve un cliente de etapa). */

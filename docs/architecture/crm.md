@@ -34,8 +34,16 @@ Quitar una etapa o un embudo **no borra la etiqueta ni a nadie**: solo deja de s
 |---|---|
 | Le ponen la etiqueta de una etapa | Anota la etapa y desde cuándo, y el historial. Si es nuevo en el embudo, le pone el **precio del producto en su país** (por su número) y un **responsable por turnos** (si el embudo lo pide; nunca alguien de solo lectura) |
 | Le quitan la etiqueta | Sale del embudo (queda en el historial) |
-| Llega un contacto nuevo | Entra a la etapa de entrada de cada embudo |
+| Llega un contacto nuevo | Entra a la etapa de entrada de cada embudo (`contactCreated`) |
+| Escribe un cliente que **ya existía** y no está en el embudo | También entra a la etapa de entrada (`contactWrote`). Corre **antes** del flujo, así no pisa la etapa que el flujo ponga. Quien ya está en el embudo, en cualquier etapa, no se mueve |
 | Se aprueba una venta suya (bloque Registrar venta o Ventas) | Pasa a la etapa de compra con el **valor real**. Si ya va más adelante («Entregado»), no se devuelve |
+
+**Quiénes entran solos** (`crm_pipelines.entry_source`, `041_crm_entry_source.sql`) se elige al configurar el embudo:
+- **todos los que escriben** (por defecto);
+- **solo los que llegaron por un anuncio** (el contacto tiene origen de anuncio);
+- o **nadie**, cuando el embudo no tiene etapa de entrada.
+
+**Traer clientes existentes** (`ClientImport`, `SqlCrmImportCandidates`): los contactos con chat en los últimos 7, 30 o 90 días (o todos) que aún no tienen ninguna etapa del embudo entran a la etapa de entrada. Antes de traerlos se ve cuántos son. Se trae en tandas de 500 (`MAX_IMPORT_PER_RUN`). Se ofrece solo al crear un embudo, y luego queda en el botón «Traer clientes».
 
 Nunca lanza: un fallo del CRM no rompe un flujo, el chat ni una venta (`crm.event_failed` en el registro). Contactos y Ventas avisan por sus puertos (`ContactEvents`, `SaleEvents`). Como el CRM usa los servicios de Contactos, se compone después, y los avisos le llegan por `CrmEventsRelay`.
 
@@ -76,6 +84,7 @@ CRM ──puertos ContactLabeler · StageLabels · CrmProductCatalog · CrmTeamD
 | `GET /crm/pipelines` | `crm.read` | Embudos, quién puede ser responsable y qué puede quien pregunta |
 | `POST /crm/pipelines` · `POST /crm/pipelines/starter` | `crm.manage` | Crear uno, o el de ejemplo (Nuevo → Interesado → Pidió precio → Pagó → Entregado, y Perdido) |
 | `PATCH` · `DELETE /crm/pipelines/:id` | `crm.manage` | Configurar (reemplaza la lista de etapas) · quitar |
+| `GET` · `POST /crm/pipelines/:id/import` | `crm.manage` | Cuántos clientes existentes entrarían (`?days`) · traerlos (`{ days }`, `null`: todos) |
 | `GET /crm/pipelines/:id/board?owner&search` | `crm.read` | Columnas (25 por etapa) y números. `owner`: `me`, `none` o un miembro |
 | `GET /crm/pipelines/:id/stages/:stage/cards?offset` | `crm.read` | Más de una etapa (la vista Lista) |
 | `PUT /crm/pipelines/:id/deals/:contact/stage` | `crm.write` | Mover (con `reason` al pasar a «no compró») |
@@ -114,6 +123,6 @@ CRM ──puertos ContactLabeler · StageLabels · CrmProductCatalog · CrmTeamD
 ## Después
 
 - Avisos de seguimientos por WhatsApp o notificación cuando lleguen. Hoy se ven en la app, con la insignia de vencidos.
-- Asignar chats por responsable en Conversaciones.
+- **Varios negocios por cliente (recompras)**: hoy hay un registro por cliente y embudo, así que una segunda compra no queda como negocio aparte.
 - Difusiones por etapa (D5).
 - El Dashboard (G1) con los números del embudo por asesor.

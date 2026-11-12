@@ -2,6 +2,7 @@ import {
   CRM_STAGES_MAX,
   CRM_STAGES_MIN,
   STAGE_OUTCOMES,
+  type EntrySource,
   type SavePipelineRequest,
   type StageOutcome
 } from "../../../contracts/CrmContracts";
@@ -32,6 +33,7 @@ export interface Pipeline {
   readonly saleStageId: string | null;
   readonly defaultProductId: string | null;
   readonly autoAssign: boolean;
+  readonly entrySource: EntrySource;
 }
 
 export const PIPELINE_NAME_MAX = 60;
@@ -53,6 +55,7 @@ export interface PipelineDraft {
   readonly saleStage: number | null;
   readonly defaultProductId: string | null;
   readonly autoAssign: boolean;
+  readonly entrySource: EntrySource;
 }
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -105,7 +108,8 @@ export function requirePipelineDraft(input: Partial<SavePipelineRequest>): Pipel
     entryStage: positionOf(input.entryStage, stages, "open", "entrada"),
     saleStage: positionOf(input.saleStage, stages, "won", "compra"),
     defaultProductId: typeof input.defaultProductId === "string" && input.defaultProductId ? input.defaultProductId : null,
-    autoAssign: input.autoAssign === true
+    autoAssign: input.autoAssign === true,
+    entrySource: input.entrySource === "ads" ? "ads" : "all"
   };
 }
 
@@ -130,5 +134,6 @@ export const STARTER_PIPELINE: SavePipelineRequest = {
   ],
   entryStage: 0,
   saleStage: 3,
-  autoAssign: false
+  autoAssign: false,
+  entrySource: "all"
 };

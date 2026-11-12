@@ -1,0 +1,48 @@
+/* Traer clientes existentes al embudo. */
+.import-clients {
+  width: min(480px, calc(100vw - 24px));
+}
+
+.import-clients__periods {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+}
+
+.import-clients__periods > span {
+  width: 100%;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.import-clients__period {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.import-clients__period[aria-checked="true"] {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  background: var(--primary-soft, color-mix(in srgb, var(--primary) 12%, transparent));
+  color: var(--primary-hover);
+}
+
+.import-clients__count {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--surface-alt, var(--surface));
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.import-clients__count strong {
+  font-size: 1.25rem;
+}

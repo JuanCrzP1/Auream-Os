@@ -25,7 +25,8 @@ export function toPipelineSummary(pipeline: Pipeline): PipelineSummary {
     entryStageId: pipeline.entryStageId,
     saleStageId: pipeline.saleStageId,
     defaultProductId: pipeline.defaultProductId,
-    autoAssign: pipeline.autoAssign
+    autoAssign: pipeline.autoAssign,
+    entrySource: pipeline.entrySource
   };
 }
 

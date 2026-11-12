@@ -11,7 +11,11 @@ import type { CrmEventLog, DealRepository, PipelineRepository } from "./CrmRepos
 //                   el chat, la ficha o el tablero): anota en qué etapa está,
 //                   desde cuándo, el historial y, si es nuevo en el embudo, su
 //                   valor por defecto y su responsable por turnos.
-//   contactCreated  un contacto nuevo entra a la etapa de entrada de cada embudo.
+//   contactCreated  un contacto nuevo entra a la etapa de entrada de cada embudo
+//   contactWrote    y también quien escribe y aún no está en el embudo (un
+//                   cliente de antes, o que salió de él). Respeta «quiénes
+//                   entran solos» (todos o solo los de anuncios). Quien ya
+//                   está en el embudo, en cualquier etapa, no se mueve.
 //   saleApproved    quien compra pasa a la etapa de compra, con el valor real.
 //
 // Nunca lanza: un fallo del CRM no puede romper un flujo ni el chat (se avisa
@@ -55,12 +59,29 @@ export class StageTracker {
   }
 
   public async contactCreated(tenantId: string, contactId: string): Promise<void> {
+    await this.enterWhereMissing(tenantId, contactId, "crm.contact_created");
+  }
+
+  /** Escribió (por WhatsApp). Va ANTES de que corra el flujo: así no pisa una etapa que el flujo ponga. */
+  public async contactWrote(tenantId: string, contactId: string): Promise<void> {
+    await this.enterWhereMissing(tenantId, contactId, "crm.contact_wrote");
+  }
+
+  /** A la etapa de entrada de cada embudo donde aún no está (y que lo deja entrar solo). */
+  private async enterWhereMissing(tenantId: string, contactId: string, step: string): Promise<void> {
     try {
-      const pipelines = await this.pipelines.list(tenantId);
-      const labels = pipelines.map((pipeline) => pipeline.stages.find((stage) => stage.id === pipeline.entryStageId)?.labelId).filter((id): id is string => Boolean(id));
+      const pipelines = (await this.pipelines.list(tenantId)).filter((pipeline) => pipeline.entryStageId);
+      if (pipelines.length === 0) return;
+      const contact = await this.labeler.snapshot(tenantId, contactId);
+      if (!contact) return;
+      const labels = pipelines
+        .filter((pipeline) => pipeline.entrySource === "all" || contact.fromAd)
+        .filter((pipeline) => !pipeline.stages.some((stage) => contact.labelIds.includes(stage.labelId)))
+        .map((pipeline) => pipeline.stages.find((stage) => stage.id === pipeline.entryStageId)?.labelId)
+        .filter((id): id is string => Boolean(id));
       if (labels.length > 0) await this.labeler.change(tenantId, contactId, { add: labels, remove: [] }, { kind: "auto" });
     } catch (error) {
-      this.onError(error, { step: "crm.contact_created", tenantId, contactId });
+      this.onError(error, { step, tenantId, contactId });
     }
   }
 

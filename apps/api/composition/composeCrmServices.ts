@@ -2,6 +2,8 @@ import type { ApiConfig } from "../config/loadApiConfig";
 import { BoardServices } from "../../../domains/crm/application/BoardServices";
 import type { ContactLabeler, CrmProductCatalog, CrmTeamDirectory, StageLabels } from "../../../domains/crm/application/CrmGateways";
 import { DealOwnerClaims } from "../../../domains/crm/application/DealOwnerClaims";
+import { ClientImport } from "../../../domains/crm/application/ClientImport";
+import { SqlCrmImportCandidates } from "../../../infrastructure/persistence/sql/SqlCrmImportCandidates";
 import { DealServices } from "../../../domains/crm/application/DealServices";
 import { FollowUpServices } from "../../../domains/crm/application/FollowUpServices";
 import { PipelineServices } from "../../../domains/crm/application/PipelineServices";
@@ -61,7 +63,8 @@ export function composeCrmServices(deps: CrmDependencies): CrmModule {
       pipelines,
       board: new BoardServices(pipelines, new SqlCrmBoard(sql), labeler),
       deals: new DealServices(pipelines, pipelineRepository, deals, events, followUpRepository, labeler, deps.products, team),
-      followUps: new FollowUpServices(followUpRepository, labeler, team, timezoneOf)
+      followUps: new FollowUpServices(followUpRepository, labeler, team, timezoneOf),
+      imports: new ClientImport(pipelines, new SqlCrmImportCandidates(sql), labeler)
     },
     ownerClaims: new DealOwnerClaims(deals, events, team),
     tracker: new StageTracker(pipelineRepository, deals, events, labeler, deps.products, team, new SqlRoundRobinCounter(sql), deps.onError)
@@ -72,7 +75,7 @@ function contactLabeler(contacts: ContactRepository): ContactLabeler {
   return {
     snapshot: async (tenantId, contactId) => {
       const found = await contacts.findById(tenantId, contactId);
-      return found ? { phone: found.contact.phone, labelIds: found.labels.map((label) => label.id) } : null;
+      return found ? { phone: found.contact.phone, labelIds: found.labels.map((label) => label.id), fromAd: Boolean(found.contact.adOrigin) } : null;
     },
     change: (tenantId, contactId, change, origin) => contacts.changeLabels(tenantId, contactId, change, origin)
   };

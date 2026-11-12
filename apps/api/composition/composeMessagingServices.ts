@@ -38,6 +38,7 @@ import { ConversationInbox, ConversationRecorder } from "../../../domains/conver
 import { ChatAttention } from "../../../domains/conversations/application/ChatAttention";
 import { NewChatService } from "../../../domains/conversations/application/NewChatService";
 import type { DealOwners } from "../../../domains/conversations/application/ports/ConversationPorts";
+import type { InboundContacts } from "../../../domains/messaging/application/ports/MessagingPorts";
 import { SqlTeamRepository } from "../../../infrastructure/persistence/sql/SqlTeamRepository";
 import { SqlConversationRepository } from "../../../infrastructure/persistence/sql/SqlConversationRepository";
 
@@ -96,6 +97,11 @@ export interface MessagingDependencies {
   readonly inboundListeners?: { readonly current: ReadonlyArray<InboundListener> };
   /** CRM: el responsable del chat es el mismo del embudo. */
   readonly dealOwners: DealOwners;
+  /**
+   * CRM: un cliente que ya existía escribió (los nuevos entran al crearse).
+   * Corre antes del flujo para no pisar la etapa que el flujo ponga. Nunca lanza.
+   */
+  readonly onContactWrote?: (tenantId: string, contactId: string) => Promise<void>;
 }
 
 export function composeMessagingServices(deps: MessagingDependencies): MessagingServices {
@@ -134,7 +140,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
   const inbound = new HandleInboundMessageService(
       new SqlInboundMessageLog(deps.sql),
       lock,
-      new DirectoryInboundContacts(deps.contacts.directory),
+      inboundContacts(new DirectoryInboundContacts(deps.contacts.directory), deps.onContactWrote),
       new SessionLiveSessions(sessionRepository, deps.connections.flows),
       new ConnectionTriggerRouter(deps.connections.triggers),
       turn,
@@ -191,5 +197,17 @@ function chatTeam(team: SqlTeamRepository) {
       (await team.listMembers(tenantId))
         .filter((member) => member.role !== "viewer" && member.role !== "api_client" && member.role !== "worker")
         .map((member) => ({ userId: member.userId, name: member.displayName ?? member.email ?? "Sin nombre", photoUrl: member.photoUrl }))
+  };
+}
+
+/** Identifica al cliente de cada mensaje y, si ya existía, avisa al CRM que escribió. */
+function inboundContacts(directory: InboundContacts, onWrote?: (tenantId: string, contactId: string) => Promise<void>): InboundContacts {
+  if (!onWrote) return directory;
+  return {
+    identify: async (tenantId, phone, displayName, ad) => {
+      const contact = await directory.identify(tenantId, phone, displayName, ad);
+      if (!contact.isNew) await onWrote(tenantId, contact.contactId);
+      return contact;
+    }
   };
 }
