@@ -11,6 +11,7 @@ import { CampaignAdvice } from "./CampaignAdvice";
 import { OtherExpensesDialog } from "./expenses/OtherExpensesDialog";
 import { ConnectMetaInvite } from "./ConnectMetaInvite";
 import { RecentSales } from "./RecentSales";
+import { chartUnit } from "./chartBuckets";
 import { RevenueChart } from "./RevenueChart";
 import { SalesSummary } from "./summary/SalesSummary";
 
@@ -65,7 +66,7 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency }: {
       ) : null}
       <section className="sales-tab__card" aria-labelledby="sales-chart-title">
         <header className="sales-tab__card-header">
-          <h2 id="sales-chart-title">{view.ads ? "Facturación y gasto por día" : "Facturación por día"}</h2>
+          <h2 id="sales-chart-title">{view.ads ? "Facturación y gasto" : "Facturación"} por {chartUnit(view.daily.length) === "week" ? "semana" : "día"}</h2>
           <span className="sales-tab__legend">
             <span><i className="sales-tab__key sales-tab__key--line" />Facturación ({view.currency})</span>
             {view.ads ? <span><i className="sales-tab__key sales-tab__key--bar" />Gasto en Meta</span> : null}

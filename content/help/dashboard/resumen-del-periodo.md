@@ -5,10 +5,10 @@ summary: Qué mide cada una de las ocho tarjetas y cómo leer su cambio frente a
 order: 5
 updated: 2026-11-12
 keywords: resumen, tarjetas, facturación, ventas, compra promedio, ganancia, leads, conversión, roas, inversión
-related: roas-real, registrar-venta, conectar-meta-ads
+related: roas-real, registrar-venta, conectar-meta-ads, elegir-fechas
 ---
 
-En **Dashboard › Ventas**, debajo del bloque de anuncios, ves ocho números del periodo que elegiste (hoy, 7 días, 30 días o este mes).
+En **Dashboard › Ventas**, debajo del bloque de anuncios, ves ocho números del periodo que elegiste (hoy, 7 días, 30 días, este mes u [otras fechas](elegir-fechas)).
 
 ## Las tarjetas
 

@@ -23,6 +23,10 @@ describe("la lista", () => {
     expect(totalLabel("últimos 30 días")).toBe("Total en los últimos 30 días");
     expect(totalLabel("hoy")).toBe("Total de hoy");
     expect(totalLabel("este mes")).toBe("Total de este mes");
+    expect(totalLabel("ayer")).toBe("Total de ayer");
+    expect(totalLabel("el mes pasado")).toBe("Total del mes pasado");
+    expect(totalLabel("del 3 al 18 oct")).toBe("Total del 3 al 18 oct");
+    expect(totalLabel("el 7 oct")).toBe("Total del 7 oct");
   });
 });
 

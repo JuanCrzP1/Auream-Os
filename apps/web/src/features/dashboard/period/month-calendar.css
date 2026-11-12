@@ -1,0 +1,74 @@
+/* ===== UN MES PARA ELEGIR FECHAS =====
+   Semana de lunes a domingo; el rango elegido en lila con sus dos puntas
+   llenas. */
+
+.month-calendar { min-width: 0; }
+
+.month-calendar__title {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.month-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 2px;
+}
+
+.month-calendar__weekday {
+  padding: 4px 0 6px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.month-calendar__day {
+  position: relative;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.month-calendar__day:hover:not(:disabled, .is-edge) { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); }
+.month-calendar__day:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.month-calendar__day:disabled { color: color-mix(in srgb, var(--muted) 45%, transparent); cursor: default; }
+
+.month-calendar__day.is-today::after {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.month-calendar__day.is-inside {
+  border-radius: 0;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--primary);
+}
+
+.month-calendar__day.is-edge {
+  background: var(--primary);
+  color: var(--on-primary, #fff);
+  font-weight: 700;
+}
+
+.month-calendar__day.is-edge.is-today::after { background: var(--on-primary, #fff); }
+.month-calendar__day.is-start { border-radius: 9px 0 0 9px; }
+.month-calendar__day.is-end { border-radius: 0 9px 9px 0; }

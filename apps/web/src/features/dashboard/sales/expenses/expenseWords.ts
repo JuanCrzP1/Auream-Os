@@ -69,8 +69,10 @@ export function draftSentence(draft: ExpenseDraftWords): string | null {
   return `Se restan ${money} ${FREQUENCY_WORDS[draft.frequency]}${when(draft.frequency, draft.startsOn)} de la ganancia ${whose}, desde el ${longDay(draft.startsOn)}${until}.`;
 }
 
-/** «Total en los últimos 30 días», «Total de hoy», «Total de este mes». */
+/** «Total en los últimos 30 días», «Total de hoy», «Total del mes pasado», «Total del 3 al 18 oct», «Total del 7 oct». */
 export function totalLabel(periodWords: string): string {
-  if (periodWords === "hoy" || periodWords === "este mes") return `Total de ${periodWords}`;
-  return periodWords.startsWith("últimos") ? `Total en los ${periodWords}` : `Total en ${periodWords}`;
+  if (periodWords.startsWith("del ")) return `Total ${periodWords}`;
+  if (periodWords.startsWith("el ")) return `Total del ${periodWords.slice(3)}`;
+  if (periodWords.startsWith("últimos")) return `Total en los ${periodWords}`;
+  return `Total de ${periodWords}`;
 }

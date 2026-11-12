@@ -34,3 +34,45 @@
   color: var(--primary);
   font-weight: 700;
 }
+
+/* «Fechas»: los demás atajos y el calendario (period/RangePanel). */
+
+.dashboard-filters__dates {
+  position: relative;
+  z-index: 40;
+}
+
+.dashboard-filters__dates-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dashboard-filters__dates-btn:hover { border-color: color-mix(in srgb, var(--primary) 35%, var(--line)); }
+
+.dashboard-filters__dates-btn[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.dashboard-filters__caret { font-size: 0.7rem; }
+
+/* Angosto: el panel se ancla a todo el selector para no salirse por la izquierda. */
+@media (max-width: 640px) {
+  .dashboard-filters { position: relative; z-index: 40; }
+  .dashboard-filters__dates { position: static; }
+  .dashboard-filters .range-panel { right: auto; left: 0; }
+}

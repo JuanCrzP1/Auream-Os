@@ -5,7 +5,8 @@ import { MemoryRouter } from "react-router-dom";
 import type { AdsDashboardResponse, SalesDashboardResponse } from "@contracts/DashboardContracts";
 import type { AttentionDashboardResponse } from "@contracts/AttentionContracts";
 import { DashboardPage } from "../../src/features/dashboard/pages/DashboardPage";
-import { rangeOf, trendText } from "../../src/features/dashboard/dashboardFormat";
+import { trendText } from "../../src/features/dashboard/dashboardFormat";
+import { presetRange } from "../../src/features/dashboard/period/periodModel";
 
 // ---------------------------------------------------------------------------
 // Dashboard: primero la plata de los anuncios (ROAS real frente a Meta,
@@ -89,11 +90,40 @@ describe("Dashboard", () => {
     stub(true);
     page("/dashboard?period=7d");
     await screen.findByRole("region", { name: "La plata de tus anuncios" });
-    const { from, to } = rangeOf("7d");
+    const { from, to } = presetRange("7d");
     expect(paths).toContain(`/dashboard/sales?from=${from}&to=${to}`);
     await userEvent.click(screen.getByRole("tab", { name: "Anuncios" }));
     expect(await screen.findByRole("table")).toHaveTextContent("Video Colombia");
     expect(screen.getByText(/ventas que Meta no vio/)).toBeInTheDocument();
+  });
+
+  it("Fechas: un atajo se aplica al tocarlo y unas fechas a mano viajan a la API con su comparación", async () => {
+    stub(true);
+    page();
+    await screen.findByRole("region", { name: "La plata de tus anuncios" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Elegir fechas" }));
+    await userEvent.click(within(screen.getByRole("dialog", { name: "Elegir fechas" })).getByRole("button", { name: "Mes pasado" }));
+    const last = presetRange("lastMonth");
+    await waitFor(() => expect(paths).toContain(`/dashboard/sales?from=${last.from}&to=${last.to}`));
+    expect(screen.queryByRole("dialog", { name: "Elegir fechas" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Fechas: Mes pasado" })).toHaveAttribute("aria-pressed", "true");
+
+    // A mano: del 3 al 18 del mes pasado (se ve a la izquierda).
+    await userEvent.click(screen.getByRole("button", { name: "Fechas: Mes pasado" }));
+    const panel = screen.getByRole("dialog", { name: "Elegir fechas" });
+    const month = last.from.slice(0, 8);
+    const full = (day: string) => new Intl.DateTimeFormat("es", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(`${day}T12:00:00`));
+    await userEvent.click(within(panel).getByRole("button", { name: full(`${month}18`) }));
+    await userEvent.click(within(panel).getByRole("button", { name: full(`${month}03`) }));
+    expect(panel).toHaveTextContent("16 días");
+    expect(panel).toHaveTextContent("Se compara con");
+    await userEvent.click(within(panel).getByRole("button", { name: "Aplicar" }));
+    await waitFor(() => expect(paths).toContain(`/dashboard/sales?from=${month}03&to=${month}18`));
+
+    // Volver a una cápsula deja el botón como «Fechas».
+    await userEvent.click(screen.getByRole("button", { name: "7 días" }));
+    expect(screen.getByRole("button", { name: "Elegir fechas" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("Atención: chats, en cuánto responden, quién espera, el pico y cada asesor con lo que vende", async () => {
@@ -123,6 +153,6 @@ describe("palabras del Dashboard", () => {
     expect(trendText({ change: 0.18 })).toEqual({ text: "▲ 18 %", tone: "good" });
     expect(trendText({ change: 0.1 }, "down")).toEqual({ text: "▲ 10 %", tone: "bad" });
     expect(trendText({ change: null })).toBeNull();
-    expect(rangeOf("month", new Date(2026, 10, 10))).toEqual({ from: "2026-11-01", to: "2026-11-10" });
+    expect(presetRange("month", new Date(2026, 10, 10))).toEqual({ from: "2026-11-01", to: "2026-11-10" });
   });
 });

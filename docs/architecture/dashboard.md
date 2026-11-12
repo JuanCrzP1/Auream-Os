@@ -57,6 +57,13 @@ En los dos casos el token se guarda **cifrado** (`AesGcmSecretCipher`, contexto 
 
 ## El Dashboard
 
+### El periodo
+
+Arriba a la derecha: las cápsulas Hoy · 7 días · 30 días · Este mes y **Fechas** (`features/dashboard/period/`), con más atajos (Ayer, Últimos 90 días, Mes pasado, Este año) y un calendario para elegir desde y hasta.
+- Va en la dirección: `period=lastMonth` (un atajo, que se mueve con los días) o `from=…&to=…` (fechas a mano). Sin nada, los últimos 30 días. Unas fechas que coinciden con un atajo se guardan como el atajo.
+- Hasta 366 días y nunca días futuros, igual que la API (`DashboardPeriod`). El panel avisa con qué periodo se compara (el anterior del mismo largo).
+- Con más de 92 días, el gráfico de facturación suma por semana (`sales/chartBuckets`).
+
 ### Ventas
 
 1. **La franja oscura**: ROAS real frente al de Meta («por cada $ 1 te vuelven $ 8,30»). Al lado, facturación por anuncios, gasto, ganancia (o la **ganancia real**), costo por venta, costo por chat y cuánto deja cada chat.

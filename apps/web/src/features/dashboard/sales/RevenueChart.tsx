@@ -1,11 +1,11 @@
 import "./revenue-chart.css";
 import type { DayPoint } from "@contracts/DashboardContracts";
 import { compact, money } from "../dashboardFormat";
+import { dayLabel as label } from "../period/periodModel";
+import { chartPoints } from "./chartBuckets";
 
 const W = 900;
 const H = 220;
-const DATE = new Intl.DateTimeFormat("es", { day: "numeric", month: "short" });
-const label = (day: string) => DATE.format(new Date(`${day}T12:00:00`)).replace(" de", "").replace(".", "");
 
 /**
  * Una curva suave que NUNCA se pasa de los puntos (cúbica monótona,
@@ -51,10 +51,14 @@ export function smooth(points: ReadonlyArray<readonly [number, number]>): string
 }
 
 /**
- * Facturación (curva) y gasto en Meta (barras) por día, en la moneda de
- * reporte; con gasto, la ganancia del día (punteada). Marca el mejor día.
+ * Facturación (curva) y gasto en Meta (barras) por día —o por semana en
+ * periodos largos—, en la moneda de reporte; con gasto, la ganancia
+ * (punteada). Marca el mejor día o semana.
  */
-export function RevenueChart({ points, currency, withSpend }: { readonly points: ReadonlyArray<DayPoint>; readonly currency: string; readonly withSpend: boolean }) {
+export function RevenueChart({ points: days, currency, withSpend }: { readonly points: ReadonlyArray<DayPoint>; readonly currency: string; readonly withSpend: boolean }) {
+  const { unit, points } = chartPoints(days);
+  const withYear = (days[0]?.day.slice(0, 4) ?? "") !== (days[days.length - 1]?.day.slice(0, 4) ?? "");
+  const bestWord = unit === "week" ? "Mejor semana: la del" : "Mejor día:";
   const max = Math.max(1, ...points.map((p) => Math.max(p.revenue, withSpend ? p.spend : 0)));
   const step = points.length > 1 ? W / (points.length - 1) : W;
   const x = (i: number) => (points.length > 1 ? i * step : W / 2);
@@ -69,7 +73,7 @@ export function RevenueChart({ points, currency, withSpend }: { readonly points:
 
   return (
     <figure className="revenue-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="revenue-chart__svg" role="img" aria-label={`Facturación${withSpend ? " y gasto" : ""} por día; el mejor día facturó ${money(bestPoint?.revenue ?? 0, currency)}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="revenue-chart__svg" role="img" aria-label={`Facturación${withSpend ? " y gasto" : ""} por ${unit === "week" ? "semana" : "día"}; ${unit === "week" ? "la mejor semana" : "el mejor día"} facturó ${money(bestPoint?.revenue ?? 0, currency)}`}>
         <defs>
           <linearGradient id="revenue-area" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#6c5ce7" stopOpacity="0.24" />
@@ -84,13 +88,13 @@ export function RevenueChart({ points, currency, withSpend }: { readonly points:
         {bestPoint && bestPoint.revenue > 0 ? <circle cx={x(best)} cy={y(bestPoint.revenue)} r="6" className="revenue-chart__best" /> : null}
       </svg>
       <figcaption className="revenue-chart__axis">
-        <span>{points[0] ? label(points[0].day) : ""}</span>
+        <span>{days[0] ? label(days[0].day, withYear) : ""}</span>
         {bestPoint && bestPoint.revenue > 0 ? (
           <span className="revenue-chart__best-label">
-            Mejor día: {label(bestPoint.day)} · facturó $ {compact(bestPoint.revenue)}{withSpend ? ` con $ ${compact(bestPoint.spend)} de gasto` : ""}
+            {bestWord} {label(bestPoint.day)} · facturó $ {compact(bestPoint.revenue)}{withSpend ? ` con $ ${compact(bestPoint.spend)} de gasto` : ""}
           </span>
         ) : null}
-        <span>{points.length > 0 ? label(points[points.length - 1]!.day) : ""}</span>
+        <span>{days.length > 0 ? label(days[days.length - 1]!.day, withYear) : ""}</span>
       </figcaption>
     </figure>
   );

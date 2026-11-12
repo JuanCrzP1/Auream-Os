@@ -5,7 +5,8 @@ Cómo va el negocio, en tres pestañas: **Ventas** (primero la plata de los anun
 ```
 features/dashboard/
 ├── pages/        DashboardPage: periodo y filtros (en la dirección) y las pestañas
-├── components/   DashboardFilters
+├── components/   DashboardFilters (cápsulas del periodo y «Fechas»)
+├── period/       periodModel (atajos, fechas a mano, textos), RangePanel, MonthCalendar
 ├── sales/        AdsHero, summary/ (resumen del periodo), RevenueChart, AdFunnel, CampaignAdvice, Breakdowns, RecentSales
 ├── ads/          AdsTab (usa la tabla compartida de `shared/ads`)
 ├── attention/    AttentionTab, Heatmap, AgentsTable
