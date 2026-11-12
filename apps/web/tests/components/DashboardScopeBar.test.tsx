@@ -31,6 +31,7 @@ beforeEach(() => {
     if (url.pathname === "/ads/accounts") return reply(200, { connection: { connected: true }, accounts: [], canManage: true, oauthAvailable: false });
     if (url.pathname === "/dashboard/sales") return reply(200, SALES);
     if (url.pathname === "/dashboard/ads") return reply(200, { currency: "COP", level: "campaign", connected: true, unseenSales: 0, lateShare: null, lastSyncedAt: null, totals: {}, rows: [{ id: "111", name: "Venezuela · USD", spend: 329200 }, { id: "222", name: "Colombia", spend: 413200 }] });
+    if (url.pathname === "/dashboard/fx") return reply(200, { day: "2026-11-12", updatedAt: "2026-11-12T20:02:00.000Z", rates: [{ currency: "VES", perUsd: 904.4485, source: "bcv" }] });
     if (url.pathname === "/connections") return reply(200, { connections: [] });
     if (url.pathname === "/products") return reply(200, { products: [{ id: P1, name: "Mega Pack", status: "active", prices: [] }, { id: P2, name: "Video", status: "active", prices: [] }], canManage: true });
     if (url.pathname === "/sales-lines" && method === "GET") return reply(200, { lines: [LINE], canManage: true });
@@ -65,7 +66,10 @@ describe("línea, filtros y moneda del Dashboard", () => {
   it("la moneda con su bandera: elegir dólares los pide a la API", async () => {
     page();
     await userEvent.click(await screen.findByRole("button", { name: /COP/ }));
-    await userEvent.click(within(screen.getByRole("menu", { name: "Moneda" })).getByRole("menuitemradio", { name: /USD · Dólar estadounidense/ }));
+    const menu = screen.getByRole("menu", { name: "Moneda" });
+    expect(await within(menu).findByRole("menuitemradio", { name: /VES · Bolívar venezolano.*1 USD = 904,45/ })).toBeInTheDocument();
+    expect(menu).toHaveTextContent("El bolívar es la tasa oficial del BCV.");
+    await userEvent.click(within(menu).getByRole("menuitemradio", { name: /USD · Dólar estadounidense/ }));
     await waitFor(() => expect(lastSales()).toContain("currency=USD"));
     expect(screen.getByRole("button", { name: /USD/ })).toHaveTextContent("🇺🇸");
   });

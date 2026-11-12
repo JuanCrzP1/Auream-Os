@@ -158,7 +158,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     tenancy.sqlClient,
     scheduling.scheduler,
     (error, context) => logger.warn("ads.sync_failed", { ...context, error: error instanceof Error ? error.message : String(error) }),
-    salesLines.lookup
+    salesLines.lookup,
+    (info) => logger.warn("fx.stale", { lastDay: info.lastDay, errors: info.errors })
   );
   // Difusiones: envía por Mensajería, a su ritmo, en la cola de tareas.
   const broadcasts = composeBroadcastServices({
@@ -206,6 +207,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       background,
       chain: { horizonMs: config.tasks.chainHorizonMs, continueIfSoon: (horizonMs) => scheduling.scheduler.continueIfSoon(horizonMs) },
       armNext: () => scheduling.scheduler.armNext(),
+      // Las tasas de cambio oficiales del día, aunque nadie abra el Dashboard.
+      maintenance: () => ads.dashboard.fx.refresh(),
       onReport: (report) => {
         if (report.claimed > 0) logger.info("tasks.round", { ...report });
         // Más de un minuto tarde: algo no la despertó a su hora (revisar los despertadores).

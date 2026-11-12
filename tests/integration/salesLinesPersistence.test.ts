@@ -52,11 +52,16 @@ async function seed() {
 beforeAll(() => {
   sql = createTestSqlClient();
 });
+// La tasa de prueba (1 USD = 4.000 COP) no es de ninguna cuenta: se borra a mano.
+const dropTestRate = () => sql.query("delete from fx_rates where day = '2026-11-01' and currency = 'COP' and per_usd = 4000");
+
 beforeEach(async () => {
   await cleanupTestData(sql);
+  await dropTestRate();
 });
 afterAll(async () => {
   await cleanupTestData(sql);
+  await dropTestRate();
   await sql.close();
 });
 

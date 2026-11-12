@@ -1,3 +1,5 @@
+import type { FxRatesResponse } from "../../../contracts/DashboardContracts";
+
 // ---------------------------------------------------------------------------
 // CurrencyConverter — pasa montos de una moneda a otra con la tasa de ESE día
 // (unidades por 1 USD). Si ese día no hay tasa, usa la más cercana anterior y,
@@ -12,8 +14,10 @@ export type RateTable = ReadonlyMap<string, ReadonlyMap<string, number>>;
 export interface FxRates {
   /** Las tasas entre esas fechas (y, para cubrir huecos, la última anterior). */
   table(from: string, to: string): Promise<RateTable>;
-  /** Trae las de hoy si aún no están. Nunca lanza. */
+  /** Trae las de hoy si aún no están completas. Nunca lanza. */
   refresh(): Promise<void>;
+  /** Las más recientes, con su fuente y cuándo llegaron (para mostrarlas). */
+  latest(): Promise<FxRatesResponse>;
 }
 
 export class CurrencyConverter {

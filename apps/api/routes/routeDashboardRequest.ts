@@ -10,9 +10,12 @@ import { sendJson } from "../http/sendJson";
 // ---------------------------------------------------------------------------
 // Dashboard de la cuenta activa (solo lectura).
 //
-//   GET /dashboard/sales?from&to&connectionId&productId   Ventas      (analytics.read; el gasto, con ads.read)
-//   GET /dashboard/ads?from&to&level                      Anuncios    (ads.read)
-//   GET /dashboard/attention?from&to&connectionId         Atención    (analytics.read)
+//   GET /dashboard/sales?…        Ventas      (analytics.read; el gasto, con ads.read)
+//   GET /dashboard/ads?…&level    Anuncios    (ads.read)
+//   GET /dashboard/attention?…    Atención    (analytics.read)
+//   GET /dashboard/fx             Las tasas de cambio oficiales más recientes (analytics.read)
+//
+// `…`: from, to, line, connectionIds, productIds, campaignIds, currency (ver `filtersOf`).
 // ---------------------------------------------------------------------------
 
 const ANALYTICS_READ: Scope = "analytics.read";
@@ -60,6 +63,12 @@ export async function routeDashboardRequest(
     return true;
   }
   const { tenantId } = context;
+  // Las tasas de cambio oficiales más recientes (para el menú de moneda).
+  if (path === "/dashboard/fx") {
+    requireScope(context, ANALYTICS_READ, tenantId);
+    sendJson(response, 200, await module.fx.latest());
+    return true;
+  }
   if (path === "/dashboard/sales") {
     requireScope(context, ANALYTICS_READ, tenantId);
     sendJson(response, 200, await module.sales.overview({ tenantId, canSeeAds: context.scopes.includes(AdsPermissions.read) }, filtersOf(url)));

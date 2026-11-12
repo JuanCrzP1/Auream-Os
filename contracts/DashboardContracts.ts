@@ -25,6 +25,16 @@ export interface DashboardFilters {
   readonly currency?: string;
 }
 
+/** Las tasas de cambio oficiales más recientes (`GET /dashboard/fx`). */
+export interface FxRatesResponse {
+  /** Día de las tasas (`YYYY-MM-DD`); `null` si aún no hay ninguna. */
+  readonly day: string | null;
+  /** Cuándo llegaron. */
+  readonly updatedAt: string | null;
+  /** Unidades de cada moneda por 1 USD y de qué fuente oficial vino («bcv», «open-er-api»). */
+  readonly rates: ReadonlyArray<{ readonly currency: string; readonly perUsd: number; readonly source: string | null }>;
+}
+
 /** Un número del periodo, el del periodo anterior del mismo largo y su cambio (0.18 = +18 %). */
 export interface Trend {
   readonly value: number;

@@ -29,6 +29,8 @@ export interface InternalTasksDependencies {
   readonly chain?: { readonly horizonMs: number; continueIfSoon(horizonMs: number): Promise<boolean> };
   /** Tras cada ronda: el despertador (o el aviso) de la próxima pendiente. */
   readonly armNext?: () => Promise<void>;
+  /** Tras cada ronda: trabajo liviano que debe pasar aunque nadie use la app (las tasas de cambio del día). Nunca lanza. */
+  readonly maintenance?: () => Promise<void>;
   readonly onReport?: (report: RunReport) => void;
 }
 
@@ -65,6 +67,7 @@ export async function routeInternalTasks(
     tasks.onReport?.(report);
     if (chain) await chain.continueIfSoon(chain.horizonMs);
     await tasks.armNext?.();
+    await tasks.maintenance?.().catch(() => undefined);
   });
   sendJson(response, 202, { started: true });
   return true;

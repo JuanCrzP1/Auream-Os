@@ -3,6 +3,7 @@ import type { SalesLineSummary } from "@contracts/SalesLineContracts";
 import { activeFilters, chooseLine, effectiveIds, readSelection, selectionFilters, selectionParams, toggleId } from "../../src/features/dashboard/scope/dashboardScope";
 import { lineSentence } from "../../src/features/dashboard/scope/lineSentence";
 import { currencyOption, searchCurrencies } from "../../src/features/dashboard/scope/currencyOptions";
+import { rateHint, ratesNote } from "../../src/features/dashboard/scope/fxRates";
 
 // ---------------------------------------------------------------------------
 // La parte del negocio que mira el Dashboard: la línea, lo elegido a mano
@@ -52,5 +53,12 @@ describe("las monedas", () => {
     expect(currencyOption("VES")).toEqual({ code: "VES", name: "Bolívar venezolano", flag: "🇻🇪" });
     expect(currencyOption("USD").flag).toBe("🇺🇸");
     expect(searchCurrencies("venezuela").map((option) => option.code)).toEqual(["VES"]);
+  });
+
+  it("la tasa oficial de cada una y de cuándo son (el bolívar, del BCV)", () => {
+    const fx = { day: "2026-11-12", updatedAt: "2026-11-12T20:02:00.000Z", rates: [{ currency: "VES", perUsd: 904.4485, source: "bcv" }, { currency: "EUR", perUsd: 0.8612, source: "open-er-api" }] };
+    expect([rateHint(fx, "VES"), rateHint(fx, "EUR"), rateHint(fx, "USD"), rateHint(fx, "COP")]).toEqual(["1 USD = 904,45", "1 USD = 0,8612", null, null]);
+    expect(ratesNote(fx)).toMatch(/^Tasas oficiales del 12 de nov\.? \(actualizadas [^)]+\)\. Cada venta se convierte con la tasa de su día\. El bolívar es la tasa oficial del BCV\.$/);
+    expect(ratesNote(null)).toBe("Lo vendido en otras monedas se convierte con la tasa oficial de cada día.");
   });
 });

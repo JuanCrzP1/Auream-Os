@@ -90,7 +90,15 @@ El resumen, la tabla con Campañas · Conjuntos · Anuncios, «¿Por qué Meta d
 ## Dinero en una sola moneda
 
 - Todo se muestra en la **moneda de reporte**: la que la persona eligió con el botón de moneda (`currency`) o, si no eligió, la de la cuenta publicitaria con más gasto o la más vendida que se pueda convertir.
-- Lo de otras monedas se convierte con la tasa **del día de cada monto** (`fx_rates`, unidades por 1 USD). La tasa se trae una vez al día de open.er-api.com, que incluye COP, VES y MXN.
+- Lo de otras monedas se convierte con la tasa **del día de cada monto** (`fx_rates`, unidades por 1 USD, con su `source` y `fetched_at`).
+- **Fuentes oficiales** (`infrastructure/fx/FxSources.ts`). Para cada moneda gana la primera que la traiga:
+  - **el bolívar**, la tasa oficial del **BCV** por DolarApi (`ve.dolarapi.com`, fuente «oficial»). No se acepta el paralelo ni una tasa de más de 5 días. La página del BCV tiene un certificado inválido, así que no se lee directo.
+  - **las demás**, de open.er-api.com. Su VES coincide con el del BCV y sirve de respaldo.
+- **Se actualizan solas** (`SqlFxRates.refresh`), aunque nadie entre:
+  - las trae la revisión de cada 15 minutos (Vercel Schedules → `/internal/tasks/run` → `maintenance`) y también el Dashboard al abrirse;
+  - hay un intento por hora y por instancia, y se repite mientras falten monedas que el día anterior sí tenía.
+- **Si las fuentes fallan** más de un día, queda el aviso `fx.stale` en el registro y se sigue convirtiendo con la última tasa guardada.
+- **En pantalla:** el menú de moneda muestra la tasa de cada una («1 USD = 904,45») y de cuándo son (`GET /dashboard/fx`).
 - Si falta una tasa, ese monto no se suma y la pantalla lo dice. Nunca se inventa un número.
 
 ## Líneas de venta, filtros y moneda

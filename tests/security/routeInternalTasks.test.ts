@@ -23,13 +23,14 @@ function setup(cronSecret: string | null) {
   const jobs: Array<() => Promise<unknown>> = [];
   const continueIfSoon = vi.fn(async () => true);
   const armNext = vi.fn(async () => undefined);
-  const deps = { runner, cronSecret, budgetMs: 50_000, background: { run: (job: () => Promise<unknown>) => void jobs.push(job) }, chain: { horizonMs: 900_000, continueIfSoon }, armNext };
+  const maintenance = vi.fn(async () => undefined);
+  const deps = { runner, cronSecret, budgetMs: 50_000, background: { run: (job: () => Promise<unknown>) => void jobs.push(job) }, chain: { horizonMs: 900_000, continueIfSoon }, armNext, maintenance };
   const call = async (method: string, authorization?: string, path = "/internal/tasks/run") => {
     const response = recorder();
     const handled = await routeInternalTasks(req(method, authorization), response as never, new URL(`http://x${path}`), deps);
     return { handled, status: response.statusCode };
   };
-  return { runner, jobs, call, continueIfSoon, armNext };
+  return { runner, jobs, call, continueIfSoon, armNext, maintenance };
 }
 
 describe("routeInternalTasks", () => {
@@ -39,6 +40,16 @@ describe("routeInternalTasks", () => {
     await Promise.all(s.jobs.map((job) => job()));
     expect(s.runner.run).toHaveBeenCalledWith({ budgetMs: 50_000, holdWithinMs: 900_000 });
     expect(s.continueIfSoon).toHaveBeenCalledWith(900_000);
+    expect(s.armNext).toHaveBeenCalledTimes(1);
+    // Y lo liviano que debe pasar aunque nadie use la app (las tasas de cambio del día).
+    expect(s.maintenance).toHaveBeenCalledTimes(1);
+  });
+
+  it("si el mantenimiento falla (p. ej. sin red para las tasas), la ronda igual termina", async () => {
+    const s = setup(SECRET);
+    s.maintenance.mockRejectedValueOnce(new Error("sin red"));
+    await s.call("GET", `Bearer ${SECRET}`);
+    await expect(Promise.all(s.jobs.map((job) => job()))).resolves.toBeDefined();
     expect(s.armNext).toHaveBeenCalledTimes(1);
   });
 

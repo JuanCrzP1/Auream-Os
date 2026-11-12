@@ -14,6 +14,7 @@ import { SqlDashboardAds } from "../../../infrastructure/persistence/sql/SqlDash
 import { SqlDashboardAttention } from "../../../infrastructure/persistence/sql/SqlDashboardAttention";
 import { SqlDashboardSales } from "../../../infrastructure/persistence/sql/SqlDashboardSales";
 import { SqlFxRates } from "../../../infrastructure/persistence/sql/SqlFxRates";
+import type { FxRates } from "../../../domains/analytics/application/CurrencyConverter";
 import { SqlTenantResolver } from "../../../infrastructure/persistence/sql/SqlTenantResolver";
 import { AesGcmSecretCipher } from "../../../platform/security/secrets/AesGcmSecretCipher";
 import { AdsSyncTaskHandler, SchedulerAdsSync } from "./adsSyncAdapters";
@@ -26,6 +27,8 @@ import { AdsSyncTaskHandler, SchedulerAdsSync } from "./adsSyncAdapters";
 // ---------------------------------------------------------------------------
 
 export interface DashboardModule {
+  /** Las tasas de cambio oficiales (se actualizan solas: ver `SqlFxRates`). */
+  readonly fx: FxRates;
   readonly sales: SalesDashboardService;
   readonly ads: AdsDashboardService;
   readonly attention: AttentionDashboardService;
@@ -46,14 +49,17 @@ export function composeAdsServices(
   scheduler: TaskScheduler,
   onError: (error: unknown, context: Record<string, unknown>) => void,
   /** Las líneas de venta, para filtrar el Dashboard por línea. */
-  lines: SalesLineLookup | null = null
+  lines: SalesLineLookup | null = null,
+  /** Pasó más de un día sin tasas de cambio nuevas. */
+  onFxStale: (info: { readonly lastDay: string | null; readonly errors: ReadonlyArray<string> }) => void = () => undefined
 ): AdsModule {
   const tenants = new SqlTenantResolver(sql, config.defaultTimezone);
   const timezoneOf = async (tenantId: string) => (await tenants.resolve(tenantId)).timezone;
-  const fx = new SqlFxRates(sql);
+  const fx = new SqlFxRates(sql, undefined, undefined, { onStale: onFxStale });
   const adsReader = new SqlDashboardAds(sql);
   const scopes = new DashboardScopeResolver(lines);
   const dashboard: DashboardModule = {
+    fx,
     sales: new SalesDashboardService(new SqlDashboardSales(sql), adsReader, fx, timezoneOf, undefined, scopes),
     ads: new AdsDashboardService(adsReader, fx, timezoneOf, undefined, scopes),
     attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf, undefined, scopes)

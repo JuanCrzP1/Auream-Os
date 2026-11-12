@@ -38,6 +38,8 @@ Para cambiarla o borrarla, toca el lápiz al lado de su nombre en el menú. Borr
 
 ## Moneda
 
-El botón con la bandera (por ejemplo 🇨🇴 **COP**) cambia la moneda en que ves los montos: pesos, dólares, bolívares y más. Lo vendido en otras monedas se convierte con la tasa de cada día.
+El botón con la bandera (por ejemplo 🇨🇴 **COP**) cambia la moneda en que ves los montos: pesos, dólares, bolívares y más. Al lado de cada moneda verás su tasa de hoy («1 USD = 904,45»).
+
+Las tasas son **oficiales** y se actualizan solas cada día; el bolívar usa la tasa oficial del **BCV**. Cada venta se convierte con la tasa del día en que se hizo, no con la de hoy.
 
 > **Consejo:** para que una línea tenga ROAS, ponle sus campañas. Sin campañas verás sus ventas, pero no cuánto te costaron.
