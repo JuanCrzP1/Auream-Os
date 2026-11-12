@@ -7,6 +7,7 @@ import { FlowSaleRecorder } from "../../domains/sales/application/FlowSaleRecord
 import { SaleServices } from "../../domains/sales/application/SaleServices.js";
 import { SalesInsights } from "../../domains/sales/application/SalesInsights.js";
 import { SqlSalesInsights } from "../../infrastructure/persistence/sql/SqlSalesInsights.js";
+import { SqlChatSaleLinks } from "../../infrastructure/persistence/sql/SqlChatSaleLinks.js";
 import { cleanupTestData, createTestSqlClient, TEST_KEY_PREFIX } from "./setup/testDatabase.js";
 
 // ---------------------------------------------------------------------------
@@ -125,5 +126,21 @@ describe("Ventas y Productos en PostgreSQL", () => {
     await expect(
       sql.query("insert into sales (tenant_id, status, source, amount, currency) values ($1, 'approved', 'manual', 10, 'COP')", [tenantId])
     ).rejects.toThrow(/sales_approved_complete_check/);
+  });
+
+  it("anotar desde un chat: la venta queda con el cliente, el número y el anuncio del chat; nunca de otra cuenta", async () => {
+    const tenantId = await insertTenant("ventas-chat");
+    const other = await insertTenant("ventas-chat-otra");
+    const one = async (text: string, params: unknown[]) => (await sql.query<{ id: string }>(text, params)).rows[0]!.id;
+    const connection = await one("insert into whatsapp_connections (id, tenant_id, name, method, status) values (gen_random_uuid(), $1, 'Ventas', 'qr', 'connected') returning id", [tenantId]);
+    const contact = await one(`insert into contacts (tenant_id, channel, external_key, name, phone, ad_origin) values ($1, 'whatsapp', '584121234567', 'Laura', '584121234567', '{"sourceId":"ad-9"}') returning id`, [tenantId]);
+    const chat = await one("insert into conversations (id, tenant_id, connection_id, contact_id, phone) values (gen_random_uuid(), $1, $2, $3, '584121234567') returning id", [tenantId, connection, contact]);
+    const products = new ProductServices(new SqlProductRepository(sql));
+    const video = await products.create(tenantId, { name: "Video", kind: "main", prices: [{ country: "VE", currency: "USD", amount: 12 }] });
+    const sales = new SaleServices(new SqlSaleRepository(sql), products, async () => "America/Bogota", undefined, new SqlChatSaleLinks(sql));
+
+    const sale = await sales.record({ tenantId, userId: "00000000-0000-4000-8000-0000000000aa", canRecord: true, canManage: false }, { conversationId: chat, productId: video.id, amount: 12, currency: "USD" });
+    expect(sale).toMatchObject({ status: "approved", contactId: contact, adSourceId: "ad-9", customerName: "Laura", customerPhone: "584121234567", country: "VE", connectionName: "Ventas" });
+    await expect(sales.record({ tenantId: other, userId: "00000000-0000-4000-8000-0000000000aa", canRecord: true, canManage: false }, { conversationId: chat })).rejects.toThrow("Ese chat no existe.");
   });
 });

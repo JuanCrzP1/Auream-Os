@@ -27,6 +27,14 @@ export const BoltGlyph = () => (
   </svg>
 );
 
+/** Registrar venta: una etiqueta de precio. */
+export const SaleGlyph = () => (
+  <svg {...svg}>
+    <path d="M3.5 12.2V5a1.5 1.5 0 0 1 1.5-1.5h7.2a1.5 1.5 0 0 1 1 .44l7.3 7.3a1.5 1.5 0 0 1 0 2.12l-7.2 7.2a1.5 1.5 0 0 1-2.12 0l-7.3-7.3a1.5 1.5 0 0 1-.38-1.06Z" />
+    <circle cx="8.2" cy="8.2" r="1.4" />
+  </svg>
+);
+
 export const BotGlyph = () => (
   <svg {...svg}>
     <rect x="4" y="8" width="16" height="11" rx="3" />

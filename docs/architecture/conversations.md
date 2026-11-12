@@ -99,3 +99,11 @@ Web:
 - La cabecera: `header/ChatHeader` con `header/HeaderLabels` (las etiquetas que caben y «+N») y `header/AttentionControls` (el estado abre «Pasar a…», «Dejar sin asignar», el bot y «Resolver»; al lado, «Tomar chat» o «Resolver»).
 - La info del contacto: `info/LabelsSection` e `info/NotesSection`.
 - Las acciones del chat abierto: `chatActions.ts`. Los menús usan `FloatingMenu`.
+
+## Fase 3
+
+### Registrar venta desde el chat
+
+- Botón con etiqueta de precio en el encabezado (junto a Ejecutar flujo) y en Info. del contacto, si `GET /products` dice `canRecordSales`.
+- `components/dialogs/ChatDialogs` junta los diálogos del chat (ejecutar flujo y registrar venta) con un solo estado; usa `RecordSaleDialog` de `shared/sales` con el chat (`conversationId`). No pide teléfono y propone el país por el indicativo (y con él, el precio).
+- La venta se amarra al cliente y a su anuncio en el servidor (ver [`sales.md`](sales.md)). El chat avisa cómo quedó (aprobada, por revisar, si cuenta para un anuncio).

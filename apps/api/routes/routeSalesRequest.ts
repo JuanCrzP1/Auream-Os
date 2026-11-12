@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
 import type { Scope } from "../../../platform/authorization/contracts/Scope";
+import { ConversationPermissions } from "../../../platform/authorization/permissions/ConversationPermissions";
 import { SalesPermissions } from "../../../platform/authorization/permissions/SalesPermissions";
 import type { RecordSaleRequest, SaleFilters, SaleSource, SaleStatus, SaveProductRequest, UpdateSaleRequest } from "../../../contracts/SalesContracts";
 import type { ProductServices } from "../../../domains/products/application/ProductServices";
@@ -19,7 +20,7 @@ import { sendJson } from "../http/sendJson";
 //   GET    /sales             ventas con filtros, totales y página (sales.read)
 //   GET    /sales/insights    portada: tendencia, curva, lo que más vende (sales.read)
 //   GET    /sales/product-stats  ventas de cada producto por semana  (sales.read)
-//   POST   /sales             anotar una venta a mano             (sales.write)
+//   POST   /sales             anotar una venta a mano             (sales.write; desde un chat, también conversations.read)
 //   PATCH  /sales/:id         corregir, aprobar o anular          (sales.manage)
 //
 // Las ventas de los flujos entran por el bloque Registrar venta, no por aquí.
@@ -71,7 +72,7 @@ export async function routeSalesRequest(
 
   if (path === "/products" && method === "GET") {
     requireScope(context, SalesPermissions.read, tenantId);
-    sendJson(response, 200, await module.products.list(tenantId, actor.canManage));
+    sendJson(response, 200, await module.products.list(tenantId, actor.canManage, actor.canRecord));
     return true;
   }
   if (path === "/sales" && method === "GET") {
@@ -92,7 +93,10 @@ export async function routeSalesRequest(
   }
   if (path === "/sales" && method === "POST") {
     requireScope(context, SalesPermissions.write, tenantId);
-    sendJson(response, 201, await module.sales.record(actor, await parseJsonBody<Partial<RecordSaleRequest>>(request)));
+    const body = await parseJsonBody<Partial<RecordSaleRequest>>(request);
+    // Desde un chat se leen su cliente y su anuncio: hace falta poder ver los chats.
+    if (body.conversationId !== undefined) requireScope(context, ConversationPermissions.read, tenantId);
+    sendJson(response, 201, await module.sales.record(actor, body));
     return true;
   }
 

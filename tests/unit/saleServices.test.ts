@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ProductServices } from "../../domains/products/application/ProductServices.js";
 import { SaleServices, type SaleActor } from "../../domains/sales/application/SaleServices.js";
+import type { ChatSaleLinks } from "../../domains/sales/application/ChatSaleLinks.js";
+import type { ApprovedSaleEvent } from "../../domains/sales/application/SaleEvents.js";
 import { InMemoryProductRepository, InMemorySaleRepository, InMemorySalesStore } from "../../infrastructure/persistence/memory/InMemorySalesRepositories.js";
 
 // ---------------------------------------------------------------------------
@@ -95,5 +97,45 @@ describe("SaleServices", () => {
     const second = await sales.list(ADMIN, { cursor: first.nextCursor! });
     expect(second.sales).toHaveLength(2);
     expect(second.nextCursor).toBeNull();
+  });
+
+  describe("desde un chat", () => {
+    const CHAT = "c0c0c0c0-0000-4000-8000-000000000001";
+    const CONTACT = "c0c0c0c0-0000-4000-8000-0000000000aa";
+    const CONNECTION = "c0c0c0c0-0000-4000-8000-0000000000bb";
+    const chats: ChatSaleLinks = {
+      find: async (tenantId, id) => (tenantId === "tenant-a" && id === CHAT
+        ? { contactId: CONTACT, connectionId: CONNECTION, customerName: "Laura", customerPhone: "584121234567", adSourceId: "ad-9" }
+        : null)
+    };
+    async function chatSetup() {
+      const store = new InMemorySalesStore();
+      const products = new ProductServices(new InMemoryProductRepository(store));
+      const approved: ApprovedSaleEvent[] = [];
+      const sales = new SaleServices(new InMemorySaleRepository(store), products, async () => "America/Bogota", { saleApproved: async (_t, sale) => void approved.push(sale) }, chats);
+      const video = await products.create("tenant-a", { name: "Video", kind: "main", prices: [{ country: "VE", currency: "USD", amount: 12 }] });
+      return { sales, video, approved };
+    }
+
+    it("queda amarrada al cliente, al número y al anuncio por el que llegó (cuenta para su ROAS y mueve el CRM)", async () => {
+      const { sales, video, approved } = await chatSetup();
+      const sale = await sales.record(ADMIN, { conversationId: CHAT, productId: video.id, amount: "12", currency: "USD" });
+      expect(sale).toMatchObject({ status: "approved", source: "manual", contactId: CONTACT, adSourceId: "ad-9", customerName: "Laura", customerPhone: "584121234567", country: "VE" });
+      expect(approved).toEqual([expect.objectContaining({ id: sale.id, contactId: CONTACT, amount: 12 })]);
+    });
+
+    it("lo escrito a mano gana al nombre y al teléfono del chat; el anuncio siempre sale del chat", async () => {
+      const { sales, video } = await chatSetup();
+      const sale = await sales.record(ADMIN, { conversationId: CHAT, productId: video.id, amount: 12, currency: "USD", customerName: "Laura Pérez", customerPhone: "+57 300 123 4567", adSourceId: "otro" } as never);
+      expect(sale).toMatchObject({ customerName: "Laura Pérez", customerPhone: "573001234567", country: "CO", adSourceId: "ad-9" });
+    });
+
+    it("un chat de otra cuenta, inexistente o mal escrito no se puede usar", async () => {
+      const { sales } = await chatSetup();
+      await expect(sales.record({ ...ADMIN, tenantId: "tenant-b" }, { conversationId: CHAT })).rejects.toThrow("Ese chat no existe.");
+      await expect(sales.record(ADMIN, { conversationId: "no-es-uuid" })).rejects.toThrow("Ese chat no existe.");
+      const without = new SaleServices(new InMemorySaleRepository(new InMemorySalesStore()), new ProductServices(new InMemoryProductRepository(new InMemorySalesStore())), async () => "America/Bogota");
+      await expect(without.record(ADMIN, { conversationId: CHAT })).rejects.toThrow("Ese chat no existe.");
+    });
   });
 });

@@ -16,9 +16,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export class ProductServices {
   public constructor(private readonly repository: ProductRepository) {}
 
-  public async list(tenantId: string, canManage: boolean): Promise<ProductListResponse> {
+  public async list(tenantId: string, canManage: boolean, canRecordSales = false): Promise<ProductListResponse> {
     const products = await this.repository.list(tenantId);
-    return { products: products.map(toSummary), canManage };
+    return { products: products.map(toSummary), canManage, canRecordSales };
   }
 
   /** Un producto activo de la cuenta, o `null` (no existe, es de otra cuenta o está archivado). */

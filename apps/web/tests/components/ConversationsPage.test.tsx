@@ -56,6 +56,34 @@ describe("ConversationsPage", () => {
     expect(await within(chat).findByRole("button", { name: "Atención: Con bot. Cambiar" })).toBeInTheDocument();
   });
 
+  it("«Registrar venta» desde el chat: con su cliente (sin pedir teléfono), el país por el indicativo y el precio solo; cuenta para su anuncio", async () => {
+    const api = stubApi({ canRecordSales: true });
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
+    const chat = await openChat();
+    await userEvent.click(await within(chat).findByRole("button", { name: "Registrar venta" }));
+    const dialog = await screen.findByRole("dialog", { name: "Registrar venta" });
+    expect(within(dialog).getByLabelText("Cliente del chat")).toHaveTextContent("Laura Gómez");
+    expect(within(dialog).queryByLabelText("WhatsApp del cliente")).not.toBeInTheDocument();
+    expect(within(dialog).getByLabelText("País del cliente")).toHaveValue("CO");
+    await userEvent.selectOptions(within(dialog).getByLabelText("Producto"), "p1");
+    expect(within(dialog).getByLabelText("Monto")).toHaveValue("49900");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Registrar venta" }));
+
+    expect(await within(chat).findByText(/Venta registrada: Video · \$ 49\.900 COP\. Cuenta para el anuncio por el que llegó\./)).toBeInTheDocument();
+    const [, init] = api.fetchMock.mock.calls.find(([u, i]) => String(u).endsWith("/sales") && i?.method === "POST")!;
+    const sent = JSON.parse(String(init!.body)) as Record<string, unknown>;
+    expect(sent).toMatchObject({ conversationId: "c1", productId: "p1", amount: "49900", currency: "COP", country: "CO", customerName: "Laura Gómez" });
+    expect(sent).not.toHaveProperty("customerPhone");
+  });
+
+  it("sin permiso para anotar ventas no aparece «Registrar venta»", async () => {
+    stubApi();
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
+    const chat = await openChat();
+    await within(chat).findByRole("button", { name: "Ejecutar flujo" });
+    expect(within(chat).queryByRole("button", { name: "Registrar venta" })).not.toBeInTheDocument();
+  });
+
   it("«Ejecutar flujo»: solo flujos no archivados, y confirma lo ejecutado", async () => {
     const api = stubApi();
     render(<MemoryRouter><ConversationsPage /></MemoryRouter>);

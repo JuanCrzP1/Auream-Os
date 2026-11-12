@@ -2,14 +2,14 @@ import "./chat-header.css";
 import type { ChatAgent, ConversationSummary } from "@contracts/ConversationContracts";
 import { formatPhone } from "@shared/phone/formatPhone";
 import { Avatar } from "../Avatar";
-import { BackGlyph, BoltGlyph, InfoGlyph } from "../ChatGlyphs";
+import { BackGlyph, BoltGlyph, InfoGlyph, SaleGlyph } from "../ChatGlyphs";
 import { AttentionControls } from "./AttentionControls";
 import { HeaderLabels } from "./HeaderLabels";
 
 /**
  * La cabecera del chat: volver, el contacto (tocarlo abre su info) con su
  * número o flujo en curso y sus etiquetas; la atención (estado, «Tomar chat»
- * o «Resolver»), «Ejecutar flujo» y la info.
+ * o «Resolver»), «Registrar venta» (si puede), «Ejecutar flujo» y la info.
  */
 export function ChatHeader({
   conversation,
@@ -21,6 +21,7 @@ export function ChatHeader({
   onBack,
   onInfo,
   onRunFlow,
+  onRecordSale,
   onToggleBot,
   onTake,
   onAssign,
@@ -36,6 +37,8 @@ export function ChatHeader({
   readonly onBack: () => void;
   readonly onInfo: (open: boolean) => void;
   readonly onRunFlow: () => void;
+  /** Registrar una venta de este chat (solo si quien mira puede anotar ventas). */
+  readonly onRecordSale?: () => void;
   readonly onToggleBot: () => void;
   readonly onTake: () => void;
   readonly onAssign: (assigneeId: string | null) => void;
@@ -74,6 +77,11 @@ export function ChatHeader({
             onResolve={onResolve}
             onToggleBot={onToggleBot}
           />
+          {onRecordSale ? (
+            <button type="button" className="ios-icon-btn chat-run-flow" aria-label="Registrar venta" title="Registrar venta" onClick={onRecordSale}>
+              <SaleGlyph />
+            </button>
+          ) : null}
           <button type="button" className="ios-icon-btn chat-run-flow" aria-label="Ejecutar flujo" title="Ejecutar flujo" onClick={onRunFlow}>
             <BoltGlyph />
           </button>

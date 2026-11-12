@@ -1,10 +1,10 @@
 import "@shared/ui/controls/controls.css";
-import "./sale-dialog.css";
+import "@shared/sales/sale-dialog.css";
 import { useId, useState } from "react";
 import type { ProductSummary, SaleSummary, UpdateSaleRequest } from "@contracts/SalesContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { SALE_SOURCE_LABEL, formatSoldAt } from "../salesFormat";
-import { SaleFields, type SaleFormValue } from "./SaleFields";
+import { SaleFields, type SaleFormValue } from "@shared/sales/SaleFields";
 import { SaleStatusChip } from "./SaleStatusChip";
 
 const formOf = (sale: SaleSummary): SaleFormValue => ({

@@ -9,6 +9,7 @@ import { startConversation } from "@shared/conversations/conversationsApi";
 import { useConversations } from "@shared/conversations/useConversations";
 import { useConnections } from "@shared/connections/useConnections";
 import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
+import { useProductCatalog } from "@shared/products/useProductCatalog";
 import { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
 import { StateCard, RetryButton } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
@@ -51,6 +52,8 @@ export function ConversationsPage() {
   const { connections } = useConnections();
   const catalog = useLabelCatalog();
   const quickReplies = useQuickReplies();
+  // El catálogo para registrar ventas desde un chat (solo si quien mira puede anotar ventas).
+  const productCatalog = useProductCatalog();
   const team = useChatAgents();
   const [newChat, setNewChat] = useState(false);
 
@@ -129,6 +132,7 @@ export function ConversationsPage() {
             labels={catalog.labels}
             labelsStatus={catalog.status}
             quickReplies={quickReplies}
+            saleProducts={productCatalog.canRecordSales ? productCatalog.products : null}
             canManage={inbox.canManage}
             canWrite={inbox.canWrite}
             agents={team.agents}

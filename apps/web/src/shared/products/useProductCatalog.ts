@@ -10,6 +10,7 @@ export type ProductCatalogStatus = "loading" | "ready" | "forbidden" | "unavaila
 export function useProductCatalog() {
   const [products, setProducts] = useState<ReadonlyArray<ProductSummary>>([]);
   const [canManage, setCanManage] = useState(false);
+  const [canRecordSales, setCanRecordSales] = useState(false);
   const [status, setStatus] = useState<ProductCatalogStatus>("loading");
 
   /** `true` si cargó (o el servidor dijo que no se puede); `false` si fue un fallo pasajero. */
@@ -18,6 +19,7 @@ export function useProductCatalog() {
       const response = await fetchProducts();
       setProducts(response.products);
       setCanManage(response.canManage);
+      setCanRecordSales(response.canRecordSales === true);
       setStatus("ready");
       return true;
     } catch (error) {
@@ -60,7 +62,7 @@ export function useProductCatalog() {
     [refresh]
   );
 
-  return { products, canManage, status, refresh, create, update };
+  return { products, canManage, canRecordSales, status, refresh, create, update };
 }
 
 export type ProductCatalog = ReturnType<typeof useProductCatalog>;

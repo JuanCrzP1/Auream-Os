@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ChatAgent, ConversationMessage } from "@contracts/ConversationContracts";
 import type { CreateLabelRequest, LabelSummary } from "@contracts/ContactContracts";
+import type { ProductSummary } from "@contracts/SalesContracts";
 import { useConversationThread } from "@shared/conversations/useConversationThread";
 import type { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
 import { ChatHeader } from "./header/ChatHeader";
@@ -8,8 +9,8 @@ import { chatActions } from "./chatActions";
 import { ChatThread } from "./ChatThread";
 import { Composer } from "./composer/Composer";
 import { ContactInfoPanel } from "./ContactInfoPanel";
+import { ChatDialogs, type ChatDialog } from "./dialogs/ChatDialogs";
 import { displayName } from "./displayName";
-import { SendFlowDialog } from "./SendFlowDialog";
 
 // ---------------------------------------------------------------------------
 // Un chat abierto, al estilo WhatsApp iOS: la cabecera (`ChatHeader`), el
@@ -33,7 +34,8 @@ export function ChatView({
   onInfo,
   onBack,
   onDeleted,
-  onCreateLabel
+  onCreateLabel,
+  saleProducts
 }: {
   readonly conversationId: string;
   readonly labels: ReadonlyArray<LabelSummary>;
@@ -50,10 +52,12 @@ export function ChatView({
   readonly onBack: () => void;
   readonly onDeleted: () => void;
   readonly onCreateLabel: (request: CreateLabelRequest) => Promise<LabelSummary>;
+  /** El catálogo para registrar ventas; `null` si quien mira no puede. */
+  readonly saleProducts: ReadonlyArray<ProductSummary> | null;
 }) {
   const thread = useConversationThread(conversationId);
   const [notice, setNotice] = useState<Notice>(null);
-  const [flowDialog, setFlowDialog] = useState(false);
+  const [dialog, setDialog] = useState<ChatDialog>(null);
   const [replyTo, setReplyTo] = useState<ConversationMessage | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -100,7 +104,8 @@ export function ChatView({
           canWrite={canWrite}
           onBack={onBack}
           onInfo={onInfo}
-          onRunFlow={() => setFlowDialog(true)}
+          onRunFlow={() => setDialog("flow")}
+          {...(saleProducts ? { onRecordSale: () => setDialog("sale") } : {})}
           onToggleBot={toggleBot}
           {...attention}
         />
@@ -153,18 +158,18 @@ export function ChatView({
           </footer>
         )}
 
-        {flowDialog ? (
-          <SendFlowDialog
-            contactName={name}
-            onClose={() => setFlowDialog(false)}
-            onSend={async (automationId) => {
-              const result = await thread.launchFlow(automationId);
-              stick.current = true;
-              setNotice({ kind: "info", text: result.failed ? `Se ejecutó «${result.flowName}», pero ${result.failed} mensaje(s) no salieron.` : `Se ejecutó «${result.flowName}».` });
-              return result;
-            }}
-          />
-        ) : null}
+        <ChatDialogs
+          dialog={dialog}
+          conversation={conversation}
+          name={name}
+          products={saleProducts ?? []}
+          onLaunchFlow={(automationId) => {
+            stick.current = true;
+            return thread.launchFlow(automationId);
+          }}
+          onNotice={(text) => setNotice({ kind: "info", text })}
+          onClose={() => setDialog(null)}
+        />
       </section>
       {infoOpen ? (
         <ContactInfoPanel
@@ -173,7 +178,8 @@ export function ChatView({
           labelsStatus={labelsStatus}
           onClose={() => onInfo(false)}
           onToggleBot={toggleBot}
-          onRunFlow={() => setFlowDialog(true)}
+          onRunFlow={() => setDialog("flow")}
+          {...(saleProducts && canWrite ? { onRecordSale: () => setDialog("sale") } : {})}
           onSetLabels={thread.setLabels}
           onCreateLabel={onCreateLabel}
           {...(canManage

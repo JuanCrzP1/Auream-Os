@@ -2,7 +2,7 @@ import type { ConversationStatus, ConversationSummary } from "@contracts/Convers
 import type { CreateLabelRequest, LabelSummary } from "@contracts/ContactContracts";
 import { formatPhone } from "@shared/phone/formatPhone";
 import { Avatar } from "./Avatar";
-import { BoltGlyph, BotGlyph, CloseGlyph } from "./ChatGlyphs";
+import { BoltGlyph, BotGlyph, CloseGlyph, SaleGlyph } from "./ChatGlyphs";
 import { displayName } from "./displayName";
 import { DeleteChatSection } from "./DeleteChatSection";
 import { LabelsSection } from "./info/LabelsSection";
@@ -11,7 +11,7 @@ import { NotesSection } from "./info/NotesSection";
 // ---------------------------------------------------------------------------
 // «Info. del contacto» (como al tocar el nombre en WhatsApp iOS): quién es,
 // por qué número escribe, quién lo atiende y el flujo en curso, ejecutar un
-// flujo, sus etiquetas (`LabelsSection`), las notas internas del equipo
+// flujo, registrar una venta (con su anuncio de origen), sus etiquetas (`LabelsSection`), las notas internas del equipo
 // (`NotesSection`) y, para dueños y administradores, eliminar el chat.
 // ---------------------------------------------------------------------------
 
@@ -27,6 +27,7 @@ export function ContactInfoPanel({
   onClose,
   onToggleBot,
   onRunFlow,
+  onRecordSale,
   onSetLabels,
   onCreateLabel,
   onDelete
@@ -37,6 +38,8 @@ export function ContactInfoPanel({
   readonly onClose: () => void;
   readonly onToggleBot: () => void;
   readonly onRunFlow: () => void;
+  /** Registrar una venta de este chat (solo si quien mira puede). */
+  readonly onRecordSale?: () => void;
   readonly onSetLabels: (labelIds: ReadonlyArray<string>) => Promise<void>;
   readonly onCreateLabel: (request: CreateLabelRequest) => Promise<LabelSummary>;
   /** Eliminar el chat (solo si quien mira puede). */
@@ -68,6 +71,12 @@ export function ContactInfoPanel({
               <BoltGlyph />
               Ejecutar flujo
             </button>
+            {onRecordSale ? (
+              <button type="button" className="ios-action" onClick={onRecordSale}>
+                <SaleGlyph />
+                Registrar venta
+              </button>
+            ) : null}
             <button type="button" className={`ios-action${conversation.botEnabled ? " is-on" : ""}`} aria-pressed={conversation.botEnabled} onClick={onToggleBot}>
               <BotGlyph />
               {conversation.botEnabled ? "Bot activo" : "Bot pausado"}

@@ -994,7 +994,7 @@
 
 .ios-info__actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
   gap: 8px;
 }
 

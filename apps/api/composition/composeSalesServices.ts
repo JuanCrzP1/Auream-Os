@@ -11,6 +11,7 @@ import { SqlSalesInsights } from "../../../infrastructure/persistence/sql/SqlSal
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlProductRepository } from "../../../infrastructure/persistence/sql/SqlProductRepository";
 import { SqlSaleRepository } from "../../../infrastructure/persistence/sql/SqlSaleRepository";
+import { SqlChatSaleLinks } from "../../../infrastructure/persistence/sql/SqlChatSaleLinks";
 import { SqlTenantResolver } from "../../../infrastructure/persistence/sql/SqlTenantResolver";
 import { DomainSalesLedger } from "./DomainSalesLedger";
 
@@ -46,7 +47,8 @@ export function composeSalesServices(config: ApiConfig, sql: SqlClient, events: 
   const recorder = new FlowSaleRecorder(saleRepository, products, events);
   return {
     products,
-    sales: new SaleServices(saleRepository, products, timezoneOf, events),
+    // Anotar desde un chat toma su cliente, número y anuncio de la base (sin base, no hay chats).
+    sales: new SaleServices(saleRepository, products, timezoneOf, events, useSql ? new SqlChatSaleLinks(sql) : null),
     insights: new SalesInsights(saleRepository, useSql ? new SqlSalesInsights(sql) : new InMemorySalesInsights(store), timezoneOf),
     ledger: new DomainSalesLedger(recorder, "record"),
     preview: new DomainSalesLedger(recorder, "preview")

@@ -43,6 +43,8 @@ export interface ProductListResponse {
   readonly products: ReadonlyArray<ProductSummary>;
   /** Quien mira puede crear, editar y archivar (`sales.manage`). */
   readonly canManage: boolean;
+  /** Quien mira puede anotar ventas con este catálogo (`sales.write`), p. ej. desde un chat. */
+  readonly canRecordSales: boolean;
 }
 
 /** Un precio como lo manda el editor: el monto puede venir como lo escribe la persona («49.900»). */
@@ -147,6 +149,11 @@ export interface RecordSaleRequest {
   readonly customerPhone?: string | null;
   readonly soldAt?: string;
   readonly note?: string;
+  /**
+   * Anotada desde un chat: el servidor toma de ese chat el cliente, el número
+   * y el anuncio por el que llegó (cuenta para su ROAS). Exige ver los chats.
+   */
+  readonly conversationId?: string;
 }
 
 /** Corregir una venta (completar la que está «Por revisar») o anularla. */

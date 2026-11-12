@@ -15,7 +15,10 @@ Leona, en cambio, guarda un «precio de reserva» cuando el monto leído no cuad
 | Origen | Cómo | Quién |
 |---|---|---|
 | **Flujo** | El bloque **Registrar venta**, después de la salida «válido» del Comprobante, de una Integración de pago o de la confirmación de un asesor | El motor |
-| **Asesor** | «Anotar venta» en Ventas (una venta cerrada por chat) | `sales.write` (también el Asesor) |
+| **Chat** | «Registrar venta» en el chat del cliente (encabezado o Info. del contacto) | `sales.write` + `conversations.read` |
+| **Asesor** | «Anotar venta» en Ventas (sin chat: un pago en efectivo) | `sales.write` (también el Asesor) |
+
+**Desde un chat** la web manda solo `conversationId`. `SaleServices.record` pide al puerto `ChatSaleLinks` (`SqlChatSaleLinks`, filtrado por cuenta) el cliente, el número y el anuncio de origen (`contacts.ad_origin.sourceId`), y la venta queda con `contactId`, `connectionId` y `adSourceId`. Así cuenta para el ROAS real de ese anuncio y mueve al cliente en el CRM. El anuncio **nunca** viene de la web, así que nadie puede inventar una atribución. Un chat de otra cuenta responde «Ese chat no existe». Lo escrito a mano (nombre, teléfono) gana sobre lo del chat. Ventas no conoce Conversaciones: solo el puerto. El diálogo y el envío (`RecordSaleDialog`, `SaleFields`, `recordSaleApi`) están en `shared/sales` porque los usan Ventas y Chats.
 | Webhook | Previsto (`source = 'webhook'`) | — |
 
 ### El bloque Registrar venta
@@ -70,12 +73,12 @@ API /products ──> ProductServices ──> ProductRepository
 
 | Ruta | Permiso | Para qué |
 |---|---|---|
-| `GET /products` | `sales.read` | El catálogo (y `canManage`) |
+| `GET /products` | `sales.read` | El catálogo (y `canManage`; `canRecordSales` dice si puede anotar ventas) |
 | `POST /products` · `PATCH /products/:id` | `sales.manage` | Crear · editar o archivar |
 | `GET /sales?status&productId&currency&source&from&to&search&cursor` | `sales.read` | Ventas (50 por página, la más reciente primero), totales por moneda de las aprobadas y cuántas hay por revisar. Las fechas van en la zona horaria de la empresa |
 | `GET /sales/insights?from&to&productId` | `sales.read` | La portada: por moneda con su cambio frente al periodo anterior, curvas por día (hasta 3 monedas), mejor día y lo que más vende |
 | `GET /sales/product-stats` | `sales.read` | Ventas aprobadas de cada producto por semana (8) y el cambio de las 4 últimas |
-| `POST /sales` | `sales.write` | Anotar una venta |
+| `POST /sales` | `sales.write` (con `conversationId`, también `conversations.read`) | Anotar una venta; con `conversationId`, desde ese chat |
 | `PATCH /sales/:id` | `sales.manage` | Corregir; `status: approved` (solo completa) o `void` (con `voidReason`) |
 
 Para agentes (MCP): `list_flow_resources` trae los productos activos con su precio por país, y la guía del bloque `record-sale` explica sus campos.

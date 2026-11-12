@@ -11,7 +11,7 @@ features/sales/
 ├── insights/     la portada: SalesHero (total, tendencia y curva), SalesChart (curva monótona),
 │                 CurrencyCard (otras monedas), TopProducts, TrendChip
 ├── orders/       OrdersTab, PeriodPills, SalesListPanel, SalesFilters, SalesTable (iniciales, país y origen),
-│                 ReviewEmpty («Todo al día»), SaleDialog (ver, corregir, aprobar, anular), RecordSaleDialog, SaleFields
+│                 ReviewEmpty («Todo al día»), SaleDialog (ver, corregir, aprobar, anular); RecordSaleDialog y SaleFields están en `shared/sales` (también los usa Chats)
 ├── products/     ProductsTab, ProductCard (8 semanas en barras), CatalogEmpty (3 pasos), ProductDialog, PriceRows
 ├── hooks/        useSales (filtros, «Ver más», corregir) · useSalesInsights (la portada; reintenta sola)
 ├── services/     salesApi (/sales, /sales/insights, /sales/product-stats)

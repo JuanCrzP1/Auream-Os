@@ -14,6 +14,7 @@ import { parseCurrency, parseMoney } from "../domain/Money";
 import { requireAmount, requireCountry, requireCurrency, soldAtOf } from "../domain/SaleInput";
 import { cleanPhone, cleanText, initialStatus, missingForApproval } from "../domain/Sale";
 import { salePeriod } from "../domain/SalePeriod";
+import type { ChatSaleLink, ChatSaleLinks } from "./ChatSaleLinks";
 import type { ProductCatalog } from "./ProductCatalog";
 import { decodeCursor, encodeCursor, toSummary } from "./saleViews";
 import type { SaleQuery, SaleRepository } from "./SaleRepository";
@@ -42,7 +43,9 @@ export class SaleServices {
     private readonly catalog: ProductCatalog,
     /** Zona horaria de la empresa (los filtros por fecha van en su hora). */
     private readonly timezoneOf: (tenantId: string) => Promise<string>,
-    private readonly events: SaleEvents = NO_SALE_EVENTS
+    private readonly events: SaleEvents = NO_SALE_EVENTS,
+    /** Los chats, para anotar una venta desde uno (sin ellos, no se puede). */
+    private readonly chats: ChatSaleLinks | null = null
   ) {}
 
   public async list(actor: SaleActor, filters: SaleFilters): Promise<SaleListResponse> {
@@ -60,10 +63,16 @@ export class SaleServices {
     };
   }
 
-  /** Venta anotada a mano. Completa: aprobada. Si falta algo: «Por revisar». */
+  /**
+   * Venta anotada a mano. Completa: aprobada. Si falta algo: «Por revisar».
+   * Desde un chat (`conversationId`) queda amarrada a su cliente, su número y
+   * el anuncio por el que llegó; el nombre y el teléfono, si no se escriben,
+   * salen del chat.
+   */
   public async record(actor: SaleActor, input: Partial<RecordSaleRequest>): Promise<SaleSummary> {
+    const chat = input.conversationId ? await this.requireChat(actor.tenantId, input.conversationId) : null;
     const product = input.productId ? await this.requireProduct(actor.tenantId, input.productId) : null;
-    const phone = cleanPhone(input.customerPhone);
+    const phone = cleanPhone(input.customerPhone) ?? chat?.customerPhone ?? null;
     const amount = input.amount === null || input.amount === undefined || input.amount === "" ? null : parseMoney(input.amount);
     if (input.amount && amount === null) throw new ValidationError("El monto no es un número válido.");
     const draft = {
@@ -79,12 +88,12 @@ export class SaleServices {
         ...draft,
         productName: product?.name ?? null,
         country: input.country ? requireCountry(input.country) : countryOfPhone(phone),
-        contactId: null,
-        customerName: cleanText(input.customerName, 120),
+        contactId: chat?.contactId ?? null,
+        customerName: cleanText(input.customerName, 120) ?? chat?.customerName ?? null,
         customerPhone: phone,
-        connectionId: null,
+        connectionId: chat?.connectionId ?? null,
         flowKey: null,
-        adSourceId: null,
+        adSourceId: chat?.adSourceId ?? null,
         receiptReference: null,
         note: cleanText(input.note, 500) ?? "",
         recordedBy: actor.userId,
@@ -127,6 +136,12 @@ export class SaleServices {
     if (!saved) throw new NotFoundError("Esa venta no existe.");
     if (saved.status === "approved" && current.status !== "approved") await this.events.saleApproved(actor.tenantId, approvedEventOf(saved));
     return toSummary(saved);
+  }
+
+  private async requireChat(tenantId: string, conversationId: string): Promise<ChatSaleLink> {
+    const chat = this.chats && UUID.test(conversationId) ? await this.chats.find(tenantId, conversationId) : null;
+    if (!chat) throw new NotFoundError("Ese chat no existe.");
+    return chat;
   }
 
   private async requireProduct(tenantId: string, productId: string) {

@@ -41,7 +41,7 @@ describe("routeSalesRequest", () => {
       expect.objectContaining({ status: "review", from: "2026-11-01", search: "ana" })
     );
     expect((await run(m, "GET", "/products", ["sales.read"])).status).toBe(200);
-    expect(m.products.list).toHaveBeenCalledWith("tenant-a", false);
+    expect(m.products.list).toHaveBeenCalledWith("tenant-a", false, false);
     await expect(run(m, "GET", "/sales", ["flows.read"])).rejects.toBeInstanceOf(AccessError);
   });
 
@@ -58,6 +58,10 @@ describe("routeSalesRequest", () => {
     const m = module();
     expect((await run(m, "POST", "/sales", ["sales.read", "sales.write"], { amount: 1 })).status).toBe(201);
     await expect(run(m, "POST", "/sales", ["sales.read"], { amount: 1 })).rejects.toBeInstanceOf(AccessError);
+    // Desde un chat se leen su cliente y su anuncio: además hay que poder ver los chats.
+    const chat = { amount: 1, conversationId: "c0c0c0c0-0000-4000-8000-000000000001" };
+    await expect(run(m, "POST", "/sales", ["sales.read", "sales.write"], chat)).rejects.toBeInstanceOf(AccessError);
+    expect((await run(m, "POST", "/sales", ["sales.read", "sales.write", "conversations.read"], chat)).status).toBe(201);
   });
 
   it("revisar o anular una venta y tocar el catálogo exigen sales.manage", async () => {

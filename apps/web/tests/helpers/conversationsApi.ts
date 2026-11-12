@@ -48,7 +48,7 @@ export const QUICK_REPLIES: QuickReply[] = [
 ];
 
 export function stubConversationsApi(
-  options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[]; chat?: Partial<ConversationSummary>; connections?: unknown[] } = {}
+  options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[]; chat?: Partial<ConversationSummary>; connections?: unknown[]; canRecordSales?: boolean } = {}
 ) {
   let chat: ConversationSummary = { ...CHAT, connectionDeleted: options.deleted ?? false, ...options.chat };
   const listCalls: URLSearchParams[] = [];
@@ -126,6 +126,9 @@ export function stubConversationsApi(
       upsert(msg({ direction: "outbound", author: "agent", status: "sent", kind: "reaction", text: String(body["emoji"]), replyTo: { id: target.id, author: target.author, kind: target.kind, text: target.text } }));
       return reply(204);
     }
+    // Ventas: el catálogo (con o sin permiso para anotar) y anotar desde el chat.
+    if (url.pathname === "/products") return reply(200, { products: [{ id: "p1", name: "Video", kind: "main", status: "active", prices: [{ country: "CO", currency: "COP", amount: 49900 }] }], canManage: false, canRecordSales: options.canRecordSales ?? false });
+    if (url.pathname === "/sales" && method === "POST") return reply(201, { ...body, id: "s1", status: "approved", productName: "Video", amount: 49900, currency: "COP", adSourceId: "ad-9", reviewReason: null });
     if (url.pathname === "/connections") return reply(200, { connections: options.connections ?? [] });
     if (url.pathname === "/labels") return reply(200, { labels: [VIP, PAGO] });
     if (url.pathname === "/automations") return reply(200, { flows: [{ id: "f1", key: "f1", name: "Ventas", status: "active" }, { id: "f2", key: "f2", name: "Viejo", status: "archived" }], folders: [] });

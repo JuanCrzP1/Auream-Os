@@ -75,3 +75,17 @@
 .sale-dialog__fact {
   display: contents;
 }
+
+/* Desde un chat: el cliente, en vez de pedir su teléfono. */
+.sale-dialog__chat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+
+.sale-dialog__chat strong { color: var(--text); font-size: 0.9rem; }
+.sale-dialog__chat span { color: var(--muted); font-size: 0.78rem; }
