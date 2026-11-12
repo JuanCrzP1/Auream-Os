@@ -77,7 +77,7 @@ Un agente se conecta a `POST /api/mcp` con `Authorization: Bearer <token>` y usa
 | `apps/api/mcp/oauthMetadata.ts` | Descubrimiento: metadatos del recurso (RFC 9728) y del servidor de autorización (RFC 8414) con las direcciones públicas | — |
 | `routeOAuthPublic` / `routeOAuthConsentRequest` | Sin sesión (lo usa el agente): `/.well-known/oauth-*`, `POST /oauth/register`, `POST /oauth/token`. Con sesión y `credentials.write` (la pantalla `/oauth/authorize` de la web): qué agente pide acceso y la decisión | las reglas de OAuth |
 | `apps/api/mcp/McpProtocol.ts` | El protocolo (JSON-RPC 2.0, sin estado): `initialize` (negocia la versión), `ping`, `tools/list` (solo lo permitido), `tools/call` (vuelve a comprobar el permiso y valida los argumentos) | qué hace cada herramienta |
-| `apps/api/mcp/tools/*` | Las herramientas, como adaptadores sobre los MISMOS servicios de la app (flujos, contactos y etiquetas, conversaciones, números) | el protocolo |
+| `apps/api/mcp/tools/*` | Las herramientas, como adaptadores sobre los MISMOS servicios de la app (flujos, contactos y etiquetas, conversaciones, números y disparadores, ventas y productos, CRM, Dashboard). Áreas, permisos y catálogo completo: [mcp.md](mcp.md) | el protocolo |
 | `routeMcp` | Transporte HTTP («Streamable», sin flujo de eventos): token, límite, JSON-RPC simple o en lote | — |
 
 Reglas:

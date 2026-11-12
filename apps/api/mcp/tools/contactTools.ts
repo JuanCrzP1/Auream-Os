@@ -4,9 +4,9 @@ import { NotFoundError } from "../../../../platform/observability/errors/NotFoun
 import type { McpTool } from "../McpTool";
 
 // Contactos y etiquetas: ver (`contacts.read`) y crear, editar y etiquetar
-// (`contacts.write`). Mismos servicios y validaciones que la pantalla Contactos.
+// (`contacts.write`), y crear etiquetas. Mismos servicios y validaciones que la pantalla Contactos.
 
-type ContactServices = Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "directory">;
+type ContactServices = Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "createLabel" | "directory">;
 
 const strings = (value: unknown): string[] => (Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : []);
 
@@ -55,6 +55,23 @@ export function contactTools(services: ContactServices): McpTool[] {
       readOnly: true,
       inputSchema: { type: "object", properties: {} },
       run: async (_args, { tenantId }) => ({ labels: (await services.listLabels.execute(tenantId)).map(toLabelSummary) })
+    },
+    {
+      name: "create_label",
+      title: "Crear una etiqueta",
+      description: "Crea una etiqueta en la cuenta (para ponerla con tag_contact o con el bloque Etiquetas). Busca antes con list_labels: no se repiten nombres. Las etapas del CRM ya tienen su etiqueta: no las crees a mano.",
+      scope: "contacts.write",
+      readOnly: false,
+      inputSchema: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Nombre de la etiqueta." },
+          color: { type: "string", description: "Color #rrggbb (opcional)." }
+        },
+        required: ["name"]
+      },
+      run: async (args, { tenantId }) =>
+        toLabelSummary(await services.createLabel.execute(tenantId, { name: args["name"], ...(typeof args["color"] === "string" ? { color: args["color"] } : {}) }))
     },
     {
       name: "create_contact",

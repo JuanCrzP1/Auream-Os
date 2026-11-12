@@ -3,7 +3,7 @@ title: Guía de Auream para agentes de IA
 module: agentes
 summary: Qué es cada módulo, cómo se relacionan, las reglas que no se pueden romper y qué herramienta usar.
 order: 1
-updated: 2026-11-11
+updated: 2026-11-12
 keywords: agente, mcp, guía, reglas, herramientas
 ---
 
@@ -29,15 +29,33 @@ Auream es una plataforma para **vender por WhatsApp**. Una cuenta (la empresa) c
 4. **Respeta el envío seguro.** No intentes saltarte el tope diario, el horario ni las pausas de las difusiones: protegen el número de un bloqueo.
 5. **Quien pidió no recibir más** («SALIR») no vuelve a recibir difusiones. No lo agregues por otra vía.
 6. **Editar un flujo cambia lo que reciben los clientes de inmediato** (no hay borrador publicado aparte). Revisa el flujo (`review_flow` si existe) y avisa qué vas a cambiar.
-7. **Permisos:** si una herramienta no aparece, la credencial no tiene ese permiso. No intentes rodearlo.
+7. **Permisos:** si una herramienta no aparece, la credencial no tiene ese permiso. No intentes rodearlo: dile a la persona qué área debe darte («Ventas y productos: ver y editar», por ejemplo).
+8. **Anular una venta, quitar un disparador o cambiar qué flujo arranca** cambia números y lo que reciben los clientes: confírmalo antes y di qué cambió.
+9. **Una venta solo cuenta si se registra.** Mover a un cliente a la etapa de venta del CRM no crea una venta: usa `record_sale` o el bloque Registrar venta.
 
 ## Qué herramienta usar
 
-- ¿Qué números hay y si están conectados? → `list_connections`.
-- ¿Qué flujos hay y qué hacen? → herramientas de flujos (`list_flows`, leer un flujo) antes de editar.
-- ¿Quién es este cliente y qué etiquetas tiene? → herramientas de contactos.
-- ¿Qué productos y precios hay? → la herramienta de productos.
-- ¿Cómo funciona una parte? → `search_help` y `read_help_article`.
+Cada herramienta aparece solo si la credencial tiene permiso en su área.
+
+| Quieres… | Herramienta | Área |
+|---|---|---|
+| Entender cómo funciona algo | `read_platform_guide`, `search_help`, `read_help_article` | (siempre) |
+| Ver números y si están conectados | `list_connections` | Números de WhatsApp |
+| Ver o cambiar qué flujo arranca en un número | `list_triggers`, `create_trigger`, `update_trigger`, `delete_trigger` | Números de WhatsApp |
+| Ver o editar flujos | `list_flows`, `get_flow`, `list_block_types`, `get_block_type`, `list_flow_resources`, `add_block`, `update_block`, `connect_blocks`… | Flujos |
+| Buscar clientes, etiquetarlos o crear etiquetas | `list_contacts`, `get_contact`, `list_labels`, `tag_contact`, `create_label` | Contactos y etiquetas |
+| Leer o responder chats | `list_conversations`, `get_conversation_messages`, `send_message`, `start_flow` | Conversaciones |
+| Ver o crear productos y precios | `list_products`, `create_product`, `update_product` | Ventas y productos |
+| Ver, anotar, corregir o anular ventas | `list_sales`, `sales_summary`, `record_sale`, `update_sale` | Ventas y productos |
+| Ver el CRM o mover clientes de etapa | `list_pipelines`, `get_pipeline_board`, `get_contact_crm`, `move_contact_stage`, `update_deal` | CRM |
+| Ver ROAS real, gasto, anuncios y atención | `dashboard_sales`, `dashboard_ads`, `dashboard_attention` | Dashboard y anuncios |
+
+## Tareas completas
+
+- **Que un flujo registre sus ventas:** `list_products` (si no existe, pide nombre y precio y usa `create_product`) → `get_flow` → `add_block` de tipo `record-sale` con `after_block_id` = el bloque tras el pago confirmado (la salida «válido» del Comprobante o la etiqueta de pagado; se inserta en medio y conserva lo que seguía), con el producto, `amountMode: variable`, el monto `{comprobante.valor}`, la moneda `{comprobante.moneda}` y la referencia `{comprobante.referencia}` → `get_flow` para revisar.
+- **Que un flujo arranque en un número:** `list_connections` → `list_flows` → `list_triggers` (para no chocar con uno igual) → confirma con la persona → `create_trigger`.
+- **¿Cómo voy?:** `dashboard_sales` (ROAS real, ventas, gasto y qué hacer con cada campaña) y `sales_summary` (lo vendido por producto y por día).
+- **Corregir ventas «Por revisar»:** `list_sales` con `status: review` → completa producto, monto y moneda con `update_sale` → apruébala (`status: approved`) solo si la persona lo confirma.
 
 ## Cómo responder a la persona
 

@@ -25,12 +25,20 @@ import type { IntegrationsServices } from "../composition/composeIntegrationsSer
 import { contactTools } from "./tools/contactTools";
 import { conversationTools } from "./tools/conversationTools";
 import { connectionTools } from "./tools/connectionTools";
+import { triggerTools } from "./tools/triggerTools";
+import { productTools } from "./tools/productTools";
+import { saleTools } from "./tools/saleTools";
+import { crmTools, type CrmToolServices } from "./tools/crmTools";
+import { analyticsTools, type DashboardToolServices } from "./tools/analyticsTools";
+import type { SaleServices } from "../../../domains/sales/application/SaleServices";
+import type { SalesInsights } from "../../../domains/sales/application/SalesInsights";
 
 // ---------------------------------------------------------------------------
 // composeMcpServer — el servidor MCP de Auream: las credenciales (dominio
 // `mcp`), OAuth (para Claude web y escritorio), las herramientas (adaptadores
 // sobre los MISMOS servicios de la aplicación) y el protocolo. Agregar
-// herramientas = un archivo en `tools/`.
+// herramientas = un archivo en `tools/` y su área de permisos en
+// `contracts/McpContracts.ts` (ver docs/architecture/mcp.md).
 // ---------------------------------------------------------------------------
 
 export const MCP_PATH = "/mcp";
@@ -56,8 +64,18 @@ export interface McpDependencies {
   readonly integrations?: Pick<IntegrationsServices, "aiCredentials" | "pixelConnections">;
   /** Catálogo de productos (para configurar Registrar venta). */
   readonly products?: Pick<ProductServices, "list">;
-  readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "directory">;
-  readonly connections: Pick<ConnectionsServices, "list">;
+  /** Ventas y catálogo (área «Ventas y productos»). */
+  readonly sales?: {
+    readonly products: Pick<ProductServices, "list" | "find" | "create" | "update">;
+    readonly sales: Pick<SaleServices, "list" | "record" | "update">;
+    readonly insights: Pick<SalesInsights, "overview">;
+  };
+  /** CRM: embudos, tablero y negocios (área «CRM»). */
+  readonly crm?: CrmToolServices;
+  /** Dashboard: ventas y ROAS, anuncios y atención (área «Dashboard y anuncios»). */
+  readonly dashboard?: DashboardToolServices;
+  readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "createLabel" | "directory">;
+  readonly connections: Pick<ConnectionsServices, "list" | "triggers">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
   /** La documentación de Auream (guía para agentes, buscar y leer artículos). */
   readonly help?: Pick<HelpServices, "documents" | "search">;
@@ -88,6 +106,10 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     ...contactTools(deps.contacts),
     ...(deps.messaging ? conversationTools(deps.messaging.conversations) : []),
     ...connectionTools(deps.connections),
+    ...triggerTools(deps.connections.triggers),
+    ...(deps.sales ? [...productTools(deps.sales.products), ...saleTools(deps.sales.sales, deps.sales.insights)] : []),
+    ...(deps.crm ? crmTools(deps.crm) : []),
+    ...(deps.dashboard ? analyticsTools(deps.dashboard) : []),
     ...(deps.help ? helpTools(deps.help) : [])
   ];
   return {

@@ -229,6 +229,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       connections: connectionsServices,
       messaging: messagingServices,
       products: sales.products,
+      sales: { products: sales.products, sales: sales.sales, insights: sales.insights },
+      crm: crm.routes,
+      dashboard: ads.dashboard,
       help: help.help,
       // Cada acción de un agente queda en el registro (sin sus datos).
       onToolCall: (access, report) => logger.info("mcp.tool_call", { tenantId: access.tenantId, credentialId: access.credentialId, ...report })

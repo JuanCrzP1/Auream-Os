@@ -6,6 +6,12 @@ export type PermissionDraft = Partial<Record<McpAreaId, McpAccessLevel>>;
 /** Lo que se marca por defecto: ver flujos y contactos (lo mínimo útil; el resto lo abre quien autoriza). */
 export const DEFAULT_PERMISSIONS: PermissionDraft = { flows: "read", contacts: "read" };
 
+/** Atajos: ver todas las áreas, o acceso completo (editar donde se puede). */
+export const READ_EVERYTHING: PermissionDraft = Object.fromEntries(MCP_AREAS.map((area) => [area.id, "read"]));
+export const FULL_ACCESS: PermissionDraft = Object.fromEntries(MCP_AREAS.map((area) => [area.id, area.write ? "write" : "read"]));
+
+const same = (a: PermissionDraft, b: PermissionDraft) => MCP_AREAS.every((area) => (a[area.id] ?? "none") === (b[area.id] ?? "none"));
+
 export const hasAnyAccess = (permissions: PermissionDraft) => Object.values(permissions).some((level) => level && level !== "none");
 
 /**
@@ -17,6 +23,15 @@ export function PermissionMatrix({ value, onChange, legend = "Permisos" }: { rea
   return (
     <fieldset className="mcp-permissions">
       <legend>{legend}</legend>
+      <div className="mcp-permissions__presets" role="group" aria-label="Atajos de permisos">
+        <span className="ui-muted">Atajos:</span>
+        <button type="button" className="mcp-segmented__option" aria-pressed={same(value, READ_EVERYTHING)} onClick={() => onChange(READ_EVERYTHING)}>
+          Ver todo
+        </button>
+        <button type="button" className="mcp-segmented__option" aria-pressed={same(value, FULL_ACCESS)} onClick={() => onChange(FULL_ACCESS)}>
+          Acceso completo
+        </button>
+      </div>
       {MCP_AREAS.map((area) => {
         const level = value[area.id] ?? "none";
         const options: Array<{ value: McpAccessLevel; label: string }> = [{ value: "none", label: "Sin acceso" }, { value: "read", label: "Ver" }, ...(area.write ? [{ value: "write" as const, label: "Ver y editar" }] : [])];

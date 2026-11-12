@@ -49,7 +49,7 @@ describe("routeMcp", () => {
     expect((await s.post({ jsonrpc: "2.0", method: "notifications/initialized" }, token)).status).toBe(202);
 
     const tools = (await s.post(rpc(2, "tools/list"), token)).json.result.tools.map((tool: { name: string }) => tool.name);
-    expect(tools).toEqual(["list_contacts", "get_contact", "list_labels", "create_contact", "update_contact", "tag_contact"]);
+    expect(tools).toEqual(["list_contacts", "get_contact", "list_labels", "create_label", "create_contact", "update_contact", "tag_contact"]);
 
     const created = toolResult(await s.post(rpc(3, "tools/call", { name: "create_contact", arguments: { phone: "573001234567", name: "Laura" } }), token)) as { id: string };
     await s.post(rpc(4, "tools/call", { name: "tag_contact", arguments: { contact_id: created.id, add: ["VIP"] } }), token);

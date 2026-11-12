@@ -18,6 +18,23 @@
   font-weight: 700;
 }
 
+.mcp-permissions__presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+.mcp-permissions__presets .mcp-segmented__option {
+  background: var(--chip-bg);
+}
+
+.mcp-permissions__presets .mcp-segmented__option[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
 .mcp-permissions__row {
   display: flex;
   align-items: center;

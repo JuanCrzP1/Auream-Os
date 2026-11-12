@@ -10,7 +10,7 @@
 /** Qué puede una credencial en un área. */
 export type McpAccessLevel = "none" | "read" | "write";
 
-export type McpAreaId = "flows" | "contacts" | "conversations" | "connections";
+export type McpAreaId = "flows" | "contacts" | "conversations" | "connections" | "sales" | "crm" | "analytics";
 
 export interface McpAreaDefinition {
   readonly id: McpAreaId;
@@ -28,9 +28,27 @@ export const MCP_AREAS: ReadonlyArray<McpAreaDefinition> = [
     read: "Ver tus flujos y sus bloques.",
     write: "Crear flujos y agregar, configurar, conectar o borrar sus bloques. Los cambios quedan activos al instante."
   },
-  { id: "contacts", label: "Contactos y etiquetas", read: "Ver contactos, sus datos y etiquetas.", write: "Crear y editar contactos y ponerles o quitarles etiquetas." },
+  {
+    id: "contacts",
+    label: "Contactos y etiquetas",
+    read: "Ver contactos, sus datos y etiquetas.",
+    write: "Crear y editar contactos, crear etiquetas y ponerlas o quitarlas."
+  },
   { id: "conversations", label: "Conversaciones", read: "Ver los chats y sus mensajes.", write: "Responder como asesor y enviar flujos a un chat." },
-  { id: "connections", label: "Números de WhatsApp", read: "Ver tus números y si están conectados." }
+  {
+    id: "connections",
+    label: "Números de WhatsApp",
+    read: "Ver tus números, si están conectados y sus disparadores.",
+    write: "Crear, editar y quitar disparadores: qué flujo arranca con cada mensaje. No conecta ni desconecta números."
+  },
+  {
+    id: "sales",
+    label: "Ventas y productos",
+    read: "Ver ventas, sus totales y el catálogo de productos con sus precios.",
+    write: "Anotar ventas, corregirlas, aprobarlas o anularlas (con motivo), y crear, editar o archivar productos."
+  },
+  { id: "crm", label: "CRM", read: "Ver embudos, etapas y en qué etapa va cada cliente.", write: "Mover clientes de etapa y editar sus negocios." },
+  { id: "analytics", label: "Dashboard y anuncios", read: "Ver el Dashboard: ventas, ROAS real, gasto en Meta, anuncios y atención." }
 ];
 
 export type McpPermissions = Readonly<Partial<Record<McpAreaId, McpAccessLevel>>>;

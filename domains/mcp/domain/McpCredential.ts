@@ -42,7 +42,10 @@ const SCOPES: Readonly<Record<McpAreaId, { readonly read: ReadonlyArray<Scope>; 
   flows: { read: ["flows.read"], write: ["flows.read", "flows.write"] },
   contacts: { read: ["contacts.read"], write: ["contacts.read", "contacts.write"] },
   conversations: { read: ["conversations.read"], write: ["conversations.read", "conversations.write"] },
-  connections: { read: ["connections.read"], write: ["connections.read"] }
+  connections: { read: ["connections.read"], write: ["connections.read", "connections.write"] },
+  sales: { read: ["sales.read"], write: ["sales.read", "sales.write", "sales.manage"] },
+  crm: { read: ["crm.read"], write: ["crm.read", "crm.write"] },
+  analytics: { read: ["analytics.read", "ads.read"], write: ["analytics.read", "ads.read"] }
 };
 
 export function requireCredentialName(value: unknown): string {

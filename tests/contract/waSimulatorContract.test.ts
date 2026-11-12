@@ -36,6 +36,8 @@ let app: SimulatorApp;
 let base: string;
 const phoneApi = async (path: string, body: unknown) =>
   (await fetch(`${base}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json() as Promise<Json>;
+/** El último aviso de un tipo (los recibos de «entregado» llegan solos unos ms después y no deben confundirse). */
+const lastOf = (type: string) => events.filter((event) => event["EventType"] === type).at(-1);
 const waitFor = async (predicate: () => Json | undefined) => {
   for (let tries = 0; tries < 50; tries += 1) {
     const found = predicate();
@@ -81,14 +83,14 @@ describe("WhatsApp simulado ↔ cliente y parsers reales de uazapi", () => {
     const instance = [...app.store.instances.values()][0]!;
     await phoneApi("/_sim/contacts", { phone: "573005556677", name: "Laura Gómez", fromAd: true });
     await phoneApi(`/_sim/chats/${instance.id}/573005556677/send`, { text: "hola" });
-    const hello = parseUazapiMessage(events.at(-1));
+    const hello = parseUazapiMessage(lastOf("messages"));
     expect(hello).toMatchObject({ ok: true, event: { instanceName: "auream-conexion-1", message: { phone: "573005556677", kind: "text", text: "hola", senderName: "Laura Gómez" } } });
     expect(hello.ok && hello.event.message.fromAd).toBe(true);
 
     const menu = await client().sendMenu(instance.token, "573005556677", { type: "button", text: "¿Qué buscas?", choices: ["Ver precios|precios", "Asesor|asesor"] });
     expect(app.store.message(menu!)?.menu?.options.map((option) => option.title)).toEqual(["Ver precios", "Asesor"]);
     await phoneApi(`/_sim/chats/${instance.id}/573005556677/send`, { kind: "button_reply", text: "Ver precios", choiceId: "precios" });
-    expect(parseUazapiMessage(events.at(-1))).toMatchObject({ ok: true, event: { message: { kind: "button_reply", text: "Ver precios", replyId: "precios" } } });
+    expect(parseUazapiMessage(lastOf("messages"))).toMatchObject({ ok: true, event: { message: { kind: "button_reply", text: "Ver precios", replyId: "precios" } } });
   });
 
   it("archivos, notas de voz y reacciones", async () => {
@@ -100,7 +102,7 @@ describe("WhatsApp simulado ↔ cliente y parsers reales de uazapi", () => {
 
     await phoneApi(`/_sim/chats/${instance.id}/573005556677/send`, { kind: "image", mediaUrl: `${base}/_sim/files/x.jpg`, mimeType: "image/jpeg", text: "comprobante" });
     // Enlace local (no https): Auream pide el archivo a uazapi, como con uno real sin enlace en el aviso.
-    const photo = parseUazapiMessage(events.at(-1));
+    const photo = parseUazapiMessage(lastOf("messages"));
     expect(photo).toMatchObject({ ok: true, event: { needsMediaDownload: true, message: { kind: "image", text: "comprobante" } } });
     const file = await client().downloadMedia(instance.token, photo.ok ? photo.event.message.providerMessageId : "");
     expect(file).toEqual({ url: `${base}/_sim/files/x.jpg`, mimeType: "image/jpeg" });
@@ -113,7 +115,7 @@ describe("WhatsApp simulado ↔ cliente y parsers reales de uazapi", () => {
     const listed = (await groups.list(instance.token)).map((group) => toProviderGroup(group, instance.phone));
     expect(listed[0]).toMatchObject({ jid, name: "Clientes VIP", isAdmin: true });
     await phoneApi(`/_sim/groups/${encodeURIComponent(jid)}/members`, { join: ["573001231234"] });
-    expect(parseUazapiGroupEvent(events.at(-1)!)).toMatchObject({ jid, joins: [{ phone: "573001231234" }] });
+    expect(parseUazapiGroupEvent(lastOf("groups")!)).toMatchObject({ jid, joins: [{ phone: "573001231234" }] });
   });
 
   it("adelantar el tiempo: le pide a Auream, con el token del número, que corra ya lo que el chat esperaba", async () => {

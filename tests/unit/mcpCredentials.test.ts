@@ -25,9 +25,18 @@ describe("permisos de una credencial", () => {
     expect([...scopesOf(requirePermissions({ flows: "read", contacts: "write", conversations: "read" }))].sort()).toEqual(["contacts.read", "contacts.write", "conversations.read", "flows.read"]);
   });
 
+  it("las áreas de toda la plataforma: números con disparadores, ventas y productos, CRM y Dashboard", () => {
+    const scopes = (permissions: Parameters<typeof requirePermissions>[0]) => [...scopesOf(requirePermissions(permissions))].sort();
+    expect(scopes({ connections: "write" })).toEqual(["connections.read", "connections.write"]);
+    expect(scopes({ sales: "read" })).toEqual(["sales.read"]);
+    expect(scopes({ sales: "write" })).toEqual(["sales.manage", "sales.read", "sales.write"]);
+    expect(scopes({ crm: "write" })).toEqual(["crm.read", "crm.write"]);
+    expect(scopes({ analytics: "read" })).toEqual(["ads.read", "analytics.read"]);
+  });
+
   it("rechaza áreas sin acceso, «editar» donde solo se puede ver y niveles inventados", () => {
     expect(() => requirePermissions({ flows: "none" })).toThrow(/al menos a un área/);
-    expect(() => requirePermissions({ connections: "write" })).toThrow(/solo se puede ver/);
+    expect(() => requirePermissions({ analytics: "write" })).toThrow(/solo se puede ver/);
     expect(() => requirePermissions({ contacts: "admin" })).toThrow(/no válido/);
   });
 });

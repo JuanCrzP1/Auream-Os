@@ -72,7 +72,7 @@ describe("agentes de IA (MCP)", () => {
     await userEvent.type(within(dialog).getByLabelText("Nombre"), "Claude de ventas");
     await userEvent.click(within(within(dialog).getByRole("radiogroup", { name: "Contactos y etiquetas" })).getByRole("radio", { name: "Ver y editar" }));
     await userEvent.click(within(within(dialog).getByRole("radiogroup", { name: "Flujos" })).getByRole("radio", { name: "Sin acceso" }));
-    expect(within(within(dialog).getByRole("radiogroup", { name: "Números de WhatsApp" })).queryByRole("radio", { name: "Ver y editar" })).not.toBeInTheDocument();
+    expect(within(within(dialog).getByRole("radiogroup", { name: "Dashboard y anuncios" })).queryByRole("radio", { name: "Ver y editar" })).not.toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Crear credencial" }));
 
     expect(api.posts[0]).toEqual({ name: "Claude de ventas", permissions: { flows: "none", contacts: "write" }, expiresInDays: 90 });
@@ -85,6 +85,20 @@ describe("agentes de IA (MCP)", () => {
     const card = screen.getByRole("article", { name: "Claude de ventas" });
     expect(within(card).getByText("Contactos y etiquetas: ver y editar")).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("aur_mcp_secreto9xyz");
+  });
+
+  it("los atajos dan acceso completo a toda la plataforma (editar donde se puede; el Dashboard solo se ve)", async () => {
+    const api = stubApi();
+    renderPanel();
+    await userEvent.click(await screen.findByRole("button", { name: "Nueva credencial" }));
+    const dialog = screen.getByRole("dialog", { name: "Nueva credencial" });
+    await userEvent.type(within(dialog).getByLabelText("Nombre"), "Claude total");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Acceso completo" }));
+    expect(within(dialog).getByRole("button", { name: "Acceso completo" })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Crear credencial" }));
+    expect(api.posts[0]).toMatchObject({
+      permissions: { flows: "write", contacts: "write", conversations: "write", connections: "write", sales: "write", crm: "write", analytics: "read" }
+    });
   });
 
   it("revocar pide confirmación y la quita", async () => {
