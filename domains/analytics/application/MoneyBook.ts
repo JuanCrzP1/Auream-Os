@@ -12,12 +12,14 @@ export class MoneyBook {
   public constructor(private readonly converter: CurrencyConverter, public readonly currency: string) {}
 
   public convert(amount: number, currency: string, day: string): number {
+    return this.tryConvert(amount, currency, day) ?? 0;
+  }
+
+  /** Como `convert`, pero `null` si no hay tasa (también queda anotada en `missing`). */
+  public tryConvert(amount: number, currency: string, day: string): number | null {
     if (amount === 0) return 0;
     const value = this.converter.convert(amount, currency, this.currency, day);
-    if (value === null) {
-      this.missingCurrencies.add(currency);
-      return 0;
-    }
+    if (value === null) this.missingCurrencies.add(currency);
     return value;
   }
 

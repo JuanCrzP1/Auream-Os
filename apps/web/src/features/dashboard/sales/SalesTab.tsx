@@ -12,6 +12,7 @@ import { OtherExpensesDialog } from "./expenses/OtherExpensesDialog";
 import { ConnectMetaInvite } from "./ConnectMetaInvite";
 import { RecentSales } from "./RecentSales";
 import { chartUnit } from "./chartBuckets";
+import { DownloadSalesButton } from "./export/DownloadSalesButton";
 import { LineComparison } from "./lines/LineComparison";
 import { RevenueChart } from "./RevenueChart";
 import { SalesSummary } from "./summary/SalesSummary";
@@ -89,7 +90,7 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency, onS
       {view.funnel ? <AdFunnel view={view} /> : null}
       {campaigns.data ? <CampaignAdvice data={campaigns.data} onSeeAll={onSeeAds} /> : null}
       <Breakdowns view={view} />
-      <RecentSales sales={view.recentSales} />
+      <RecentSales sales={view.recentSales} download={view.canExport ? <DownloadSalesButton filters={filters} sales={view.sales.value} /> : null} />
     </div>
   );
 }

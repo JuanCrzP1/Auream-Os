@@ -19,6 +19,8 @@ export interface DashboardActor {
   readonly tenantId: string;
   /** Puede ver el gasto en anuncios (`ads.read`). */
   readonly canSeeAds: boolean;
+  /** Puede descargar las ventas (`sales.manage`). */
+  readonly canExport?: boolean;
 }
 
 export { scopeOf } from "./DashboardScopeResolver";
@@ -124,7 +126,8 @@ export class SalesDashboardService {
       byProduct,
       byCountry,
       recentSales: recent,
-      canSeeAds: actor.canSeeAds
+      canSeeAds: actor.canSeeAds,
+      canExport: actor.canExport === true
     };
   }
 

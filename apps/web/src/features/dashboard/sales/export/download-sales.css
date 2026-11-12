@@ -1,0 +1,31 @@
+/* «Descargar ventas»: botón con ícono lila y, al lado, cómo salió. */
+
+.download-sales {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.download-sales__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.download-sales__btn:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 12%, var(--surface)); }
+.download-sales__btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.download-sales__btn:disabled { opacity: 0.55; cursor: default; }
+.download-sales__status { color: var(--muted); font-size: 0.75rem; }
+.download-sales__status:empty { display: none; }

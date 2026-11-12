@@ -23,6 +23,13 @@
   font-weight: 800;
 }
 
+.recent-sales__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
 .recent-sales__header a {
   font-size: 0.84rem;
   font-weight: 700;

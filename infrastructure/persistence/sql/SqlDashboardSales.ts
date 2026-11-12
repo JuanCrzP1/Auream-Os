@@ -10,13 +10,13 @@ import type { SqlExecutor } from "./SqlClient";
 // ---------------------------------------------------------------------------
 
 /** `$1` cuenta · `$2` desde · `$3` hasta (excluido), y los filtros que pidan. */
-function where(period: Period, scope: DashboardScope, params: unknown[]): string {
+export function where(period: Period, scope: DashboardScope, params: unknown[]): string {
   params.push(period.from.toISOString(), period.until.toISOString());
   return ["s.tenant_id = $1", "s.status = 'approved'", "s.sold_at >= $2", "s.sold_at < $3", ...saleFilters(scope, params)].join(" and ");
 }
 
 /** Números y productos recortan las ventas (cada lista vacía = todos). */
-function saleFilters(scope: DashboardScope, params: unknown[]): string[] {
+export function saleFilters(scope: DashboardScope, params: unknown[]): string[] {
   const clauses: string[] = [];
   if (scope.connectionIds?.length) {
     params.push([...scope.connectionIds]);
@@ -30,13 +30,13 @@ function saleFilters(scope: DashboardScope, params: unknown[]): string[] {
 }
 
 /** «Por anuncio»: un anuncio de las cuentas conectadas y, si se filtran campañas, de una de ellas. */
-function adCondition(scope: DashboardScope, params: unknown[]): string {
+export function adCondition(scope: DashboardScope, params: unknown[]): string {
   if (!scope.campaignIds?.length) return "";
   params.push([...scope.campaignIds]);
   return `and e.campaign_id = any($${params.length}::text[])`;
 }
 
-const tzParam = (params: unknown[], timezone: string) => {
+export const tzParam = (params: unknown[], timezone: string) => {
   params.push(timezone);
   return `$${params.length}`;
 };

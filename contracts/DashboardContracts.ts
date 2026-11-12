@@ -140,7 +140,12 @@ export interface SalesDashboardResponse {
   readonly byCountry: ReadonlyArray<Breakdown>;
   readonly recentSales: ReadonlyArray<RecentSale>;
   readonly canSeeAds: boolean;
+  /** Puede descargar las ventas (`GET /dashboard/sales/export`, con `sales.manage`): traen los teléfonos de los clientes. */
+  readonly canExport: boolean;
 }
+
+/** Tope de filas de «Descargar ventas» (que la descarga nunca se caiga). */
+export const SALES_EXPORT_MAX_ROWS = 20_000;
 
 export const AD_LEVELS = ["campaign", "adset", "ad"] as const;
 export type AdLevel = (typeof AD_LEVELS)[number];

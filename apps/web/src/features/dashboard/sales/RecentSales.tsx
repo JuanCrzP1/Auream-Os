@@ -1,15 +1,22 @@
 import "./recent-sales.css";
+import type { ReactNode } from "react";
 import type { RecentSale } from "@contracts/DashboardContracts";
 import { formatMoney } from "@shared/format/formatMoney";
 import { timeAgo } from "@shared/format/timeAgo";
 
-/** Las últimas ventas con el anuncio que las trajo (como el historial de Leona). */
-export function RecentSales({ sales }: { readonly sales: ReadonlyArray<RecentSale> }) {
+/**
+ * Las últimas ventas con el anuncio que las trajo; arriba, descargar todas las
+ * del periodo (`download`, solo para quien puede).
+ */
+export function RecentSales({ sales, download }: { readonly sales: ReadonlyArray<RecentSale>; readonly download?: ReactNode }) {
   return (
     <section className="recent-sales" aria-labelledby="recent-sales-title">
       <header className="recent-sales__header">
         <h2 id="recent-sales-title">Últimas ventas con su anuncio</h2>
-        <a href="/sales" className="ui-link">Ver todas en Ventas →</a>
+        <div className="recent-sales__actions">
+          {download}
+          <a href="/sales" className="ui-link">Ver todas en Ventas →</a>
+        </div>
       </header>
       {sales.length === 0 ? <p className="ui-muted recent-sales__empty">Aún no hay ventas aprobadas.</p> : (
         <div className="recent-sales__scroll">

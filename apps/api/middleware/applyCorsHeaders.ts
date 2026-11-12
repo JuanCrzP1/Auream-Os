@@ -17,6 +17,8 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 // desde que se añadió la cabecera.
 const ALLOWED_HEADERS = "Content-Type, Authorization, X-Api-Key, X-Tenant-Id";
 const ALLOWED_METHODS = "GET,PUT,POST,PATCH,DELETE,OPTIONS";
+// Lo que la web puede leer de una descarga (el nombre del archivo y cuántas filas trae).
+const EXPOSED_HEADERS = "Content-Disposition, X-Export-Rows, X-Export-Truncated";
 
 export function applyCorsHeaders(
   request: IncomingMessage,
@@ -33,5 +35,6 @@ export function applyCorsHeaders(
     response.setHeader("Access-Control-Allow-Origin", origin);
     response.setHeader("Access-Control-Allow-Headers", ALLOWED_HEADERS);
     response.setHeader("Access-Control-Allow-Methods", ALLOWED_METHODS);
+    response.setHeader("Access-Control-Expose-Headers", EXPOSED_HEADERS);
   }
 }

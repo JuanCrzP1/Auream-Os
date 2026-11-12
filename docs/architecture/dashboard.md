@@ -137,6 +137,23 @@ A la derecha de las pestañas hay tres botones (`apps/web/src/features/dashboard
 
 - Analytics recibe las líneas por puertos (`SalesLineLookup` para una, `SalesLineDirectory` para todas) que arma `composeSalesLineServices`. Ningún dominio importa al otro.
 
+### Descargar ventas
+
+En la tarjeta Últimas ventas (`sales/export/`), para quien tiene `sales.manage` (`canExport` en `/dashboard/sales`): trae teléfonos de clientes, así que el Asesor y Solo lectura no la tienen.
+
+| Capa | Pieza |
+|---|---|
+| Dominio (Analytics) | `SalesExportService` arma una **tabla** (columnas y valores) con los mismos filtros, moneda de reporte y tasa del día que el Dashboard; `SalesExportTable` define las columnas. No sabe de CSV |
+| Lectura | `SqlSalesExport`: una consulta con los filtros de `SqlDashboardSales` (`where`, `adCondition`), el anuncio, su campaña y la hora local |
+| API | `GET /dashboard/sales/export?…` (`analytics.read` + `sales.manage`) → `sendCsvFile` + `http/csv.ts` |
+| Web | `HttpClient.download` (misma sesión y errores), `shared/files/saveFile`, `DownloadSalesButton` |
+
+- **CSV para Excel en español**: UTF-8 con BOM, `;`, decimales con coma, CRLF, comillas RFC 4180.
+- **Inyección de fórmulas**: un texto que empieza con `= + - @` (o tab/retorno) va con `'` delante. Teléfonos como «57 301 381 5302» (texto, sin `+` ni notación científica).
+- Tope de `SALES_EXPORT_MAX_ROWS` (20.000, en el contrato) para no pasar el límite de respuesta de Vercel. Se piden 20.001 para saber si se cortó: `X-Export-Truncated`. `X-Export-Rows` dice cuántas. CORS las expone, con `Content-Disposition`.
+- `Cache-Control: no-store`. Cada descarga queda en el registro de peticiones (`http.request.received`: cuenta, persona y ruta).
+- Para otro formato (por ejemplo .xlsx) basta otro adaptador en la API: el dominio entrega la tabla.
+
 ### Comparar líneas
 
 Mirando **todo el negocio** (sin línea ni filtros a mano) y con al menos una línea, Ventas muestra **Comparar líneas** debajo del resumen (`sales/lines/`). `GET /dashboard/lines?from&to&currency` (`LineComparisonService`) da una fila por línea con lo mismo que el Dashboard al elegirla, y al final todo el negocio con los mismos números que la pantalla sin línea.

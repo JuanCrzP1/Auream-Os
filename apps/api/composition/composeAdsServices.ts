@@ -7,6 +7,8 @@ import { AttentionDashboardService } from "../../../domains/analytics/applicatio
 import { SalesDashboardService } from "../../../domains/analytics/application/SalesDashboardService";
 import { DashboardScopeResolver, type SalesLineLookup } from "../../../domains/analytics/application/DashboardScopeResolver";
 import { LineComparisonService, type SalesLineDirectory } from "../../../domains/analytics/application/LineComparisonService";
+import { SalesExportService } from "../../../domains/analytics/application/SalesExportService";
+import { SqlSalesExport } from "../../../infrastructure/persistence/sql/SqlSalesExport";
 import type { OtherExpensesReader } from "../../../domains/analytics/application/OtherExpenseLedger";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { MetaMarketingClient } from "../../../infrastructure/meta/MetaMarketingClient";
@@ -36,6 +38,8 @@ export interface DashboardModule {
   readonly attention: AttentionDashboardService;
   /** Comparar líneas (sin módulo de líneas, no hay). */
   readonly lines?: LineComparisonService;
+  /** Descargar ventas. */
+  readonly export?: SalesExportService;
 }
 
 export interface AdsModule {
@@ -72,6 +76,7 @@ export function composeAdsServices(
     sales: new SalesDashboardService(salesReader, adsReader, fx, timezoneOf, undefined, scopes, expenses),
     ads: new AdsDashboardService(adsReader, fx, timezoneOf, undefined, scopes),
     attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf, undefined, scopes),
+    export: new SalesExportService(new SqlSalesExport(sql), adsReader, fx, timezoneOf, scopes),
     ...(directory ? { lines: new LineComparisonService(salesReader, adsReader, fx, timezoneOf, directory, expenses) } : {})
   };
   if (!config.credentialsKeyRing) return { connection: null, syncHandler: null, dashboard, appOrigin: config.publicAppOrigin };

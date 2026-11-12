@@ -1,6 +1,19 @@
 import { RequestError } from "./RequestError";
 import { HttpHeader, MimeType, type HttpHeadersInit } from "./HttpHeaders";
 
+/** Un archivo bajado de la API: su contenido, el nombre que propone el servidor y sus cabeceras. */
+export interface DownloadedFile {
+  readonly blob: Blob;
+  readonly filename: string | null;
+  readonly headers: Headers;
+}
+
+/** El nombre de `Content-Disposition: attachment; filename="x.csv"` (o `null`). */
+export function filenameOf(disposition: string | null): string | null {
+  const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+  return match ? decodeURIComponent(match[1]!) : null;
+}
+
 export interface HttpClientConfig {
   /**
    * URL base aplicada a todas las rutas (sin slash final).
@@ -43,6 +56,12 @@ export class HttpClient {
     return this.request<T>(path, { method: "GET", signal });
   }
 
+  /** Baja un archivo (CSV, PDF…) con la misma sesión y los mismos errores tipados. */
+  public async download(path: string, signal?: AbortSignal): Promise<DownloadedFile> {
+    const response = await this.send(path, { method: "GET", signal });
+    return { blob: await response.blob(), filename: filenameOf(response.headers.get("Content-Disposition")), headers: response.headers };
+  }
+
   public async post<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
     return this.request<T>(path, {
       method: "POST",
@@ -72,6 +91,18 @@ export class HttpClient {
   }
 
   private async request<T>(path: string, init: RequestInit): Promise<T> {
+    const response = await this.send(path, init);
+
+    // 204 No Content — retornar void/undefined sin intentar parsear JSON vacío
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  /** Arma la petición (sesión y JSON) y convierte un no-2xx en `RequestError`. */
+  private async send(path: string, init: RequestInit): Promise<Response> {
     const headers: HttpHeadersInit = { ...(await this.config.defaultHeaders()) };
 
     if (init.body !== undefined) {
@@ -87,12 +118,6 @@ export class HttpClient {
       const body = await response.text();
       throw new RequestError(response.status, body);
     }
-
-    // 204 No Content — retornar void/undefined sin intentar parsear JSON vacío
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    return response.json() as Promise<T>;
+    return response;
   }
 }

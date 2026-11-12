@@ -34,7 +34,8 @@ const ads = () => ({
   disconnect: vi.fn(async () => {}),
   completeOAuth: vi.fn(async () => "tenant-a")
 });
-const dashboard = () => ({ sales: { overview: vi.fn(async () => ({})) }, ads: { performance: vi.fn(async () => ({})) }, attention: { overview: vi.fn(async () => ({})) }, lines: { compare: vi.fn(async () => ({})) } });
+const dashboard = () => ({ sales: { overview: vi.fn(async () => ({})) }, ads: { performance: vi.fn(async () => ({})) }, attention: { overview: vi.fn(async () => ({})) }, lines: { compare: vi.fn(async () => ({})) },
+  export: { export: vi.fn(async () => ({ name: "ventas_2026-10-01_a_2026-10-31", columns: ["Cliente", "Monto"], rows: [["=cmd", 1.5]], truncated: false, currency: "COP", missingRates: [] })) } });
 const ctx = (role: keyof typeof ROLE_SCOPES) => makeContext({ scopes: [...ROLE_SCOPES[role]], tenantId: "tenant-a", actorId: "user-a" });
 
 async function runAds(m: ReturnType<typeof ads>, method: string, path: string, role: keyof typeof ROLE_SCOPES, body?: unknown) {
@@ -44,9 +45,13 @@ async function runAds(m: ReturnType<typeof ads>, method: string, path: string, r
 }
 
 async function runDashboard(m: ReturnType<typeof dashboard>, path: string, role: keyof typeof ROLE_SCOPES) {
+  return (await runDashboardFull(m, path, role)).statusCode;
+}
+
+async function runDashboardFull(m: ReturnType<typeof dashboard>, path: string, role: keyof typeof ROLE_SCOPES) {
   const r = res();
   await routeDashboardRequest(req("GET", path), r as never, new URL(`http://x${path}`), m as unknown as DashboardModule, ctx(role));
-  return r.statusCode;
+  return r;
 }
 
 describe("Meta Ads", () => {
@@ -82,13 +87,25 @@ describe("Dashboard", () => {
   it("Ventas y Atención para todo el equipo; el gasto solo si tiene ads.read", async () => {
     const m = dashboard();
     expect(await runDashboard(m, "/dashboard/sales?from=2026-11-01&to=2026-11-10", "operator")).toBe(200);
-    expect(m.sales.overview).toHaveBeenLastCalledWith({ tenantId: "tenant-a", canSeeAds: false }, { from: "2026-11-01", to: "2026-11-10", connectionId: undefined, productId: undefined });
+    expect(m.sales.overview).toHaveBeenLastCalledWith({ tenantId: "tenant-a", canSeeAds: false, canExport: false }, { from: "2026-11-01", to: "2026-11-10", connectionId: undefined, productId: undefined });
     expect(await runDashboard(m, "/dashboard/sales", "tenant_owner")).toBe(200);
-    expect(m.sales.overview).toHaveBeenLastCalledWith({ tenantId: "tenant-a", canSeeAds: true }, expect.anything());
+    expect(m.sales.overview).toHaveBeenLastCalledWith({ tenantId: "tenant-a", canSeeAds: true, canExport: true }, expect.anything());
     expect(await runDashboard(m, "/dashboard/attention", "viewer")).toBe(200);
     expect(await runDashboard(m, "/dashboard/ads?level=ad", "tenant_admin")).toBe(200);
     expect(m.ads.performance).toHaveBeenCalledWith("tenant-a", expect.anything(), "ad");
     await expect(runDashboard(m, "/dashboard/ads", "operator")).rejects.toBeInstanceOf(AccessError);
+  });
+
+  it("Descargar ventas: trae teléfonos, así que solo dueños y administradores; CSV sin caché y sin fórmulas", async () => {
+    const m = dashboard();
+    await expect(runDashboard(m, "/dashboard/sales/export", "operator")).rejects.toBeInstanceOf(AccessError);
+    await expect(runDashboard(m, "/dashboard/sales/export", "viewer")).rejects.toBeInstanceOf(AccessError);
+    expect(m.export.export).not.toHaveBeenCalled();
+    const r = await runDashboardFull(m, "/dashboard/sales/export?from=2026-10-01&to=2026-10-31&line=l1", "tenant_admin");
+    expect(r.statusCode).toBe(200);
+    expect(m.export.export).toHaveBeenCalledWith("tenant-a", expect.objectContaining({ from: "2026-10-01", to: "2026-10-31", lineId: "l1" }));
+    expect(r.headers).toMatchObject({ "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="ventas_2026-10-01_a_2026-10-31.csv"', "Cache-Control": "no-store", "X-Export-Rows": "1", "X-Export-Truncated": "false" });
+    expect(r.body).toBe("\uFEFFCliente;Monto\r\n'=cmd;1,5\r\n");
   });
 
   it("Comparar líneas: lo ve todo el equipo; el gasto y la ganancia, solo con ads.read; solo pasa periodo y moneda", async () => {

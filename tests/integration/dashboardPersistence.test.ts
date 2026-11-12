@@ -8,6 +8,8 @@ import { SqlFxRates } from "../../infrastructure/persistence/sql/SqlFxRates.js";
 import { AdsDashboardService } from "../../domains/analytics/application/AdsDashboardService.js";
 import { AttentionDashboardService } from "../../domains/analytics/application/AttentionDashboardService.js";
 import { SalesDashboardService } from "../../domains/analytics/application/SalesDashboardService.js";
+import { SalesExportService } from "../../domains/analytics/application/SalesExportService.js";
+import { SqlSalesExport } from "../../infrastructure/persistence/sql/SqlSalesExport.js";
 import { cleanupTestData, createTestSqlClient, TEST_KEY_PREFIX } from "./setup/testDatabase.js";
 
 // ---------------------------------------------------------------------------
@@ -102,6 +104,18 @@ describe("Dashboard en PostgreSQL", () => {
     expect(attention.heatmap[0]![4]).toBe(1);
     expect(attention.agents).toEqual([expect.objectContaining({ userId: AGENT, name: "Sofía", attended: 1, responseMinutes: 6, sales: 2, revenue: 98000 })]);
     expect(attention.connections).toEqual([expect.objectContaining({ name: "Ventas 1", connected: true, leads: 1, attended: 1, unanswered: 1 })]);
+  });
+
+  it("Descargar ventas: cada venta con su número, anuncio, campaña, hora local y el monto convertido", async () => {
+    const tenant = await seed();
+    const fx = new SqlFxRates(sql, async () => { throw new Error("sin red en la prueba"); });
+    const table = await new SalesExportService(new SqlSalesExport(sql), new SqlDashboardAds(sql), fx, TZ, undefined, NOW).export(tenant, { from: "2026-11-01", to: "2026-11-10" });
+    expect(table).toMatchObject({ name: "ventas_2026-11-01_a_2026-11-10", currency: "COP", truncated: false, missingRates: [] });
+    const at = (column: string) => table.columns.indexOf(column);
+    // De la más nueva a la más vieja; 16:00 UTC son las 11:00 en Bogotá.
+    const [usd, cop] = table.rows;
+    expect([usd![at("Fecha")], usd![at("Hora")], usd![at("Monto")], usd![at("Moneda")], usd![at("Monto en COP")], usd![at("Origen")]]).toEqual(["2026-11-05", "11:00", 12, "USD", 48000, "Orgánica"]);
+    expect([cop![at("Número de WhatsApp")], cop![at("Origen")], cop![at("Campaña")], cop![at("Anuncio")], cop![at("Cómo se registró")]]).toEqual(["Ventas 1", "Anuncio", "Video Colombia", "Tu canción", "Comprobante en el chat"]);
   });
 
   it("conversión: de los leads nuevos, cuántos compraron (por contacto o, a mano, por teléfono) dentro del periodo", async () => {

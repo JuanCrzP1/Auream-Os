@@ -6,11 +6,14 @@ import type { Scope } from "../../../platform/authorization/contracts/Scope";
 import type { DashboardFilters } from "../../../contracts/DashboardContracts";
 import type { DashboardModule } from "../composition/composeAdsServices";
 import { sendJson } from "../http/sendJson";
+import { sendCsvFile } from "../http/sendCsvFile";
+import { SalesPermissions } from "../../../platform/authorization/permissions/SalesPermissions";
 
 // ---------------------------------------------------------------------------
 // Dashboard de la cuenta activa (solo lectura).
 //
 //   GET /dashboard/sales?…        Ventas      (analytics.read; el gasto, con ads.read)
+//   GET /dashboard/sales/export?… Descargar ventas en CSV (analytics.read + sales.manage: trae teléfonos)
 //   GET /dashboard/ads?…&level    Anuncios    (ads.read)
 //   GET /dashboard/attention?…    Atención    (analytics.read)
 //   GET /dashboard/fx             Las tasas de cambio oficiales más recientes (analytics.read)
@@ -72,12 +75,19 @@ export async function routeDashboardRequest(
   }
   if (path === "/dashboard/sales") {
     requireScope(context, ANALYTICS_READ, tenantId);
-    sendJson(response, 200, await module.sales.overview({ tenantId, canSeeAds: context.scopes.includes(AdsPermissions.read) }, filtersOf(url)));
+    sendJson(response, 200, await module.sales.overview({ tenantId, canSeeAds: context.scopes.includes(AdsPermissions.read), canExport: context.scopes.includes(SalesPermissions.manage) }, filtersOf(url)));
     return true;
   }
   if (path === "/dashboard/ads") {
     requireScope(context, AdsPermissions.read, tenantId);
     sendJson(response, 200, await module.ads.performance(tenantId, filtersOf(url), url.searchParams.get("level") ?? undefined));
+    return true;
+  }
+  if (path === "/dashboard/sales/export" && module.export) {
+    // Trae los teléfonos de los clientes: solo quien administra Ventas (dueños y administradores).
+    requireScope(context, ANALYTICS_READ, tenantId);
+    requireScope(context, SalesPermissions.manage, tenantId);
+    sendCsvFile(response, await module.export.export(tenantId, filtersOf(url)));
     return true;
   }
   if (path === "/dashboard/lines" && module.lines) {
