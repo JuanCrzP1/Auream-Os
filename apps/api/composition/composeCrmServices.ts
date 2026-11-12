@@ -75,7 +75,7 @@ function contactLabeler(contacts: ContactRepository): ContactLabeler {
   return {
     snapshot: async (tenantId, contactId) => {
       const found = await contacts.findById(tenantId, contactId);
-      return found ? { phone: found.contact.phone, labelIds: found.labels.map((label) => label.id), fromAd: Boolean(found.contact.adOrigin) } : null;
+      return found ? { phone: found.contact.phone, labelIds: found.labels.map((label) => label.id), fromAd: Boolean(found.contact.adOrigin), adSourceId: found.contact.adOrigin?.sourceId ?? null } : null;
     },
     change: (tenantId, contactId, change, origin) => contacts.changeLabels(tenantId, contactId, change, origin)
   };

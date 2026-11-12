@@ -1,0 +1,98 @@
+/* Las compras del cliente en su ficha: totales y una fila por compra (la abierta, punteada). */
+.deal-purchases__totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.deal-purchases__totals > div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--surface-alt, var(--chip-bg));
+}
+
+.deal-purchases__totals span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.deal-purchases__totals strong {
+  font-size: 0.98rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.deal-purchases__totals small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.deal-purchases__list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deal-purchases__item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.deal-purchases__item.is-open {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
+.deal-purchases__number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--status-success, #0d9488) 14%, transparent);
+  color: var(--status-success, #0d9488);
+  font-weight: 800;
+}
+
+.deal-purchases__item.is-open .deal-purchases__number {
+  background: var(--primary-soft, color-mix(in srgb, var(--primary) 12%, transparent));
+  color: var(--primary-hover);
+}
+
+.deal-purchases__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.deal-purchases__text strong {
+  font-size: 0.88rem;
+}
+
+.deal-purchases__text small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.deal-purchases__amount {
+  font-size: 0.88rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .deal-purchases__totals {
+    grid-template-columns: 1fr 1fr;
+  }
+}

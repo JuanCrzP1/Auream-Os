@@ -78,11 +78,11 @@ export function BoardView({
               {receiving ? <div className="board-view__drop">Suelta aquí para pasarlo a {stage.name}</div> : null}
               {cards.map((card) => (
                 <DealCard
-                  key={card.contactId}
+                  key={card.dealId ?? card.contactId}
                   card={card}
                   stages={ordered}
                   canWrite={canWrite}
-                  dragging={dragged?.contactId === card.contactId}
+                  dragging={dragged !== null && (dragged.dealId ?? dragged.contactId) === (card.dealId ?? card.contactId)}
                   onOpen={onOpen}
                   onMove={onMove}
                   onDragStart={setDragged}

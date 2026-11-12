@@ -6,6 +6,8 @@
 // ---------------------------------------------------------------------------
 
 export interface ApprovedSaleEvent {
+  /** La venta (el CRM la une a la compra que cerró y no la cuenta dos veces). */
+  readonly id: string;
   readonly contactId: string | null;
   readonly amount: number | null;
   readonly currency: string | null;
@@ -21,5 +23,5 @@ export const NO_SALE_EVENTS: SaleEvents = { saleApproved: async () => {} };
 
 /** Lo que se cuenta de una venta aprobada. */
 export function approvedEventOf(sale: ApprovedSaleEvent): ApprovedSaleEvent {
-  return { contactId: sale.contactId, amount: sale.amount, currency: sale.currency, productId: sale.productId, productName: sale.productName };
+  return { id: sale.id, contactId: sale.contactId, amount: sale.amount, currency: sale.currency, productId: sale.productId, productName: sale.productName };
 }

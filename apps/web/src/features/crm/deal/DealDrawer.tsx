@@ -13,6 +13,7 @@ import { LostReasonDialog } from "../pipeline/LostReasonDialog";
 import { crmApi } from "../services/crmApi";
 import { DealFollowUps } from "./DealFollowUps";
 import { DealHistory } from "./DealHistory";
+import { DealPurchases } from "./DealPurchases";
 import { DealStageSection } from "./DealStageSection";
 import { useContactCrm } from "./useContactCrm";
 
@@ -105,6 +106,7 @@ export function DealDrawer({ contactId, pipelines, members, products, canWrite, 
                 />
               ) : null;
             })}
+            <DealPurchases purchases={crm.data?.purchases ?? []} pipelines={pipelines} />
             {crm.data && canWrite && outside.length > 0 ? (
               <div className="deal-drawer__outside">
                 {deals.length === 0 ? <p className="ui-muted">No está en ningún embudo.</p> : null}

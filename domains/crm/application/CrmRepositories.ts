@@ -50,6 +50,8 @@ export interface DealEntry {
   readonly productName: string | null;
   /** Responsable si el cliente aún no tiene. */
   readonly ownerId: string | null;
+  /** Anuncio por el que llegó (al abrir la compra). */
+  readonly adSourceId?: string | null;
 }
 
 export interface DealChanges {
@@ -60,10 +62,16 @@ export interface DealChanges {
 }
 
 export interface DealRepository {
+  /** La compra actual del cliente en el embudo. */
   find(tenantId: string, pipelineId: string, contactId: string): Promise<Deal | null>;
-  forContact(tenantId: string, contactId: string): Promise<ReadonlyArray<Deal & { readonly ownerName: string | null }>>;
-  /** Entró a una etapa: la anota (y crea el registro si es la primera vez). */
+  /** Todas sus compras (actuales y anteriores), de cada embudo, con el nombre del responsable y del anuncio. */
+  forContact(tenantId: string, contactId: string): Promise<ReadonlyArray<Deal & { readonly ownerName: string | null; readonly adName: string | null }>>;
+  /** La compra actual entró a una etapa: la anota (y la crea si es la primera). */
   enter(tenantId: string, pipelineId: string, contactId: string, entry: DealEntry): Promise<Deal>;
+  /** Abre otra compra (la n.º siguiente): la actual queda como anterior, tal como estaba. */
+  reopen(tenantId: string, pipelineId: string, contactId: string, entry: DealEntry & { readonly saleId?: string | null }): Promise<Deal>;
+  /** La venta aprobada que cerró la compra actual. */
+  attachSale(tenantId: string, pipelineId: string, contactId: string, saleId: string): Promise<void>;
   /** Salió del embudo (le quitaron la etiqueta). */
   leave(tenantId: string, pipelineId: string, contactId: string): Promise<void>;
   update(tenantId: string, pipelineId: string, contactId: string, changes: DealChanges): Promise<Deal>;
@@ -136,4 +144,9 @@ export interface BoardReader {
   cards(tenantId: string, pipeline: Pipeline, stageIds: ReadonlyArray<string>, query: BoardQuery, offset: number, limit: number): Promise<ReadonlyArray<DealCard>>;
   /** Lo vendido desde `since` y los días promedio hasta comprar (de quienes compraron desde `closedSince`). */
   won(tenantId: string, pipelineId: string, since: Date, closedSince: Date): Promise<{ totals: ReadonlyArray<Money>; count: number; avgDays: number | null }>;
+  /**
+   * Recompra: de los que compraron desde `since`, cuántos han comprado más de
+   * una vez (0 a 1), y lo que compra cada cliente en promedio (moneda principal).
+   */
+  loyalty(tenantId: string, pipelineId: string, since: Date): Promise<{ repeatRate: number | null; valuePerBuyer: Money | null }>;
 }

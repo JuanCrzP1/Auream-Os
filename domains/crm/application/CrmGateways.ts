@@ -21,6 +21,8 @@ export interface ContactSnapshot {
   readonly labelIds: ReadonlyArray<string>;
   /** Llegó por un anuncio (Click to WhatsApp). */
   readonly fromAd: boolean;
+  /** El último anuncio por el que llegó (id del anuncio en Meta). */
+  readonly adSourceId?: string | null;
 }
 
 /** Contactos: poner y quitar etiquetas (así se mueve un cliente de etapa). */
@@ -60,4 +62,15 @@ export interface CrmTeamDirectory {
 /** Turnos del reparto automático (el mismo contador del bloque Distribuidor). */
 export interface TurnCounter {
   next(tenantId: string, key: string): Promise<number>;
+}
+
+/** Ventas: una venta aprobada de un cliente (pasa a la etapa de compra con su valor real). */
+export interface ApprovedSale {
+  /** La venta (para unirla a su compra y no contarla dos veces). */
+  readonly id?: string;
+  readonly contactId: string | null;
+  readonly amount: number | null;
+  readonly currency: string | null;
+  readonly productId: string | null;
+  readonly productName: string | null;
 }

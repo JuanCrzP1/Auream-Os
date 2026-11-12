@@ -16,7 +16,8 @@ export class DealOwnerClaims {
   ) {}
 
   public async claimUnowned(tenantId: string, contactId: string, ownerId: string, actorId: string): Promise<void> {
-    const unowned = (await this.deals.forContact(tenantId, contactId)).filter((deal) => deal.ownerId === null);
+    // Solo la compra actual de cada embudo: las anteriores quedan como estaban.
+    const unowned = (await this.deals.forContact(tenantId, contactId)).filter((deal) => deal.current && deal.ownerId === null);
     if (unowned.length === 0) return;
     const owner = (await this.team.members(tenantId)).find((member) => member.userId === ownerId && member.canSell);
     if (!owner) return;

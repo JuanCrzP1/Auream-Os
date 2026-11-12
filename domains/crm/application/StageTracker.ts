@@ -1,34 +1,31 @@
 import { countryOfPhone } from "../../../contracts/Countries";
 import type { Money } from "../../../contracts/CrmContracts";
+import { opensNewPurchase, readyToReopen } from "../domain/Deal";
 import type { Pipeline, Stage } from "../domain/Pipeline";
-import type { ContactLabeler, CrmProductCatalog, CrmTeamDirectory, LabelOrigin, TurnCounter } from "./CrmGateways";
+import type { ApprovedSale, ContactLabeler, CrmProductCatalog, CrmTeamDirectory, LabelOrigin, TurnCounter } from "./CrmGateways";
 import type { CrmEventLog, DealRepository, PipelineRepository } from "./CrmRepositories";
 
 // ---------------------------------------------------------------------------
 // StageTracker — escucha a Contactos y a Ventas y lleva el CRM al día.
 //
-//   labelsChanged   le pusieron o quitaron la etiqueta de una etapa (un flujo,
-//                   el chat, la ficha o el tablero): anota en qué etapa está,
-//                   desde cuándo, el historial y, si es nuevo en el embudo, su
-//                   valor por defecto y su responsable por turnos.
+//   labelsChanged   le pusieron o quitaron la etiqueta de una etapa: anota la
+//                   etapa, desde cuándo y el historial; si es nuevo, su valor
+//                   por defecto y su responsable por turnos.
 //   contactCreated  un contacto nuevo entra a la etapa de entrada de cada embudo
-//   contactWrote    y también quien escribe y aún no está en el embudo (un
-//                   cliente de antes, o que salió de él). Respeta «quiénes
-//                   entran solos» (todos o solo los de anuncios). Quien ya
-//                   está en el embudo, en cualquier etapa, no se mueve.
+//   contactWrote    y quien escribe y aún no está en el embudo (respeta
+//                   «quiénes entran solos»). Quien está en una etapa abierta
+//                   no se mueve.
 //   saleApproved    quien compra pasa a la etapa de compra, con el valor real.
+//
+// Compras (un cliente puede comprar varias veces): si su compra actual ya
+// cerró (ganó o se perdió) y vuelve a una etapa de «aún no compra», se abre
+// otra (`opensNewPurchase`); la anterior queda como estaba. Al volver a
+// escribir, eso pasa solo si ya pasaron `REOPEN_AFTER_DAYS`. Una venta nueva
+// sobre una compra que ya tenía su venta abre otra, ya ganada.
 //
 // Nunca lanza: un fallo del CRM no puede romper un flujo ni el chat (se avisa
 // por `onError`).
 // ---------------------------------------------------------------------------
-
-export interface ApprovedSale {
-  readonly contactId: string | null;
-  readonly amount: number | null;
-  readonly currency: string | null;
-  readonly productId: string | null;
-  readonly productName: string | null;
-}
 
 export class StageTracker {
   public constructor(
@@ -74,11 +71,19 @@ export class StageTracker {
       if (pipelines.length === 0) return;
       const contact = await this.labeler.snapshot(tenantId, contactId);
       if (!contact) return;
-      const labels = pipelines
-        .filter((pipeline) => pipeline.entrySource === "all" || contact.fromAd)
-        .filter((pipeline) => !pipeline.stages.some((stage) => contact.labelIds.includes(stage.labelId)))
-        .map((pipeline) => pipeline.stages.find((stage) => stage.id === pipeline.entryStageId)?.labelId)
-        .filter((id): id is string => Boolean(id));
+      const labels: string[] = [];
+      for (const pipeline of pipelines) {
+        if (pipeline.entrySource === "ads" && !contact.fromAd) continue;
+        const entry = pipeline.stages.find((stage) => stage.id === pipeline.entryStageId);
+        const held = pipeline.stages.find((stage) => contact.labelIds.includes(stage.labelId));
+        if (!entry) continue;
+        if (!held) labels.push(entry.labelId);
+        // Ya compró (o no compró) y vuelve a escribir días después: otra compra.
+        else if (step === "crm.contact_wrote" && held.outcome !== "open") {
+          const current = await this.deals.find(tenantId, pipeline.id, contactId);
+          if (current && readyToReopen(current, new Date())) labels.push(entry.labelId);
+        }
+      }
       if (labels.length > 0) await this.labeler.change(tenantId, contactId, { add: labels, remove: [] }, { kind: "auto" });
     } catch (error) {
       this.onError(error, { step, tenantId, contactId });
@@ -96,9 +101,22 @@ export class StageTracker {
         if (!target) continue;
         // Quien ya va más adelante (p. ej. «Entregado») no se devuelve a «Pagó».
         const ahead = pipeline.stages.some((stage) => stage.outcome === "won" && stage.position >= target.position && contact.labelIds.includes(stage.labelId));
+        const current = await this.deals.find(tenantId, pipeline.id, sale.contactId);
+        if (current && sale.id && current.saleId === sale.id) continue;
+        // Ya tenía su venta: esta es otra compra, ya ganada, en la etapa de compra.
+        if (current?.wonAt && current.saleId && sale.id) {
+          await this.deals.reopen(tenantId, pipeline.id, sale.contactId, {
+            stageId: target.id, won: true, value, productId: sale.productId, productName: sale.productName,
+            ownerId: current.ownerId, adSourceId: contact.adSourceId ?? null, saleId: sale.id
+          });
+          await this.log(tenantId, pipeline.id, sale.contactId, "stage", current.stageId, target.id, { kind: "sale" }, "Nueva compra");
+          await this.labeler.change(tenantId, sale.contactId, { add: [target.labelId], remove: [] }, { kind: "sale" });
+          continue;
+        }
         if (!ahead) await this.labeler.change(tenantId, sale.contactId, { add: [target.labelId], remove: [] }, { kind: "sale" });
-        if (value && (await this.deals.find(tenantId, pipeline.id, sale.contactId))) {
-          await this.deals.update(tenantId, pipeline.id, sale.contactId, { value, productId: sale.productId, productName: sale.productName });
+        if (await this.deals.find(tenantId, pipeline.id, sale.contactId)) {
+          if (value) await this.deals.update(tenantId, pipeline.id, sale.contactId, { value, productId: sale.productId, productName: sale.productName });
+          if (sale.id) await this.deals.attachSale(tenantId, pipeline.id, sale.contactId, sale.id);
         }
       }
     } catch (error) {
@@ -110,19 +128,28 @@ export class StageTracker {
     const pipeline = await this.pipelines.find(tenantId, pipelineId);
     if (!pipeline) return;
     const before = await this.deals.find(tenantId, pipelineId, contactId);
-    const fresh = !before || before.stageId === null;
-    const value = fresh && !before?.value ? await this.defaultValue(tenantId, pipeline, contactId) : null;
-    const ownerId = fresh && !before?.ownerId && pipeline.autoAssign ? await this.nextOwner(tenantId, pipelineId) : null;
-    await this.deals.enter(tenantId, pipelineId, contactId, {
+    const beforeOutcome = pipeline.stages.find((stage) => stage.id === before?.stageId)?.outcome ?? null;
+    const reopening = opensNewPurchase(before, beforeOutcome, to.outcome);
+    const fresh = reopening || !before || before.stageId === null;
+    const value = fresh && (reopening || !before?.value) ? await this.defaultValue(tenantId, pipeline, contactId) : null;
+    // En otra compra sigue con quien lo atendía; si no tenía, por turnos (si el embudo lo pide).
+    const keepOwner = reopening ? (before?.ownerId ?? null) : null;
+    const ownerId = fresh && !keepOwner && !before?.ownerId && pipeline.autoAssign ? await this.nextOwner(tenantId, pipelineId) : null;
+    const entry = {
       stageId: to.id,
       won: to.outcome === "won",
       value: value?.money ?? null,
       productId: value?.productId ?? null,
       productName: value?.productName ?? null,
-      ownerId: ownerId?.userId ?? null
-    });
+      ownerId: keepOwner ?? ownerId?.userId ?? null,
+      adSourceId: fresh ? ((await this.labeler.snapshot(tenantId, contactId))?.adSourceId ?? null) : null
+    };
+    const saved = reopening ? await this.deals.reopen(tenantId, pipelineId, contactId, entry) : await this.deals.enter(tenantId, pipelineId, contactId, entry);
     const fromStageId = from?.id ?? before?.stageId ?? null;
-    if (fromStageId !== to.id) await this.log(tenantId, pipelineId, contactId, "stage", fromStageId, to.id, origin, origin.note ?? null);
+    const note = reopening ? `Nueva compra (n.º ${saved.number})` : (origin.note ?? null);
+    // Si la compra actual ya estaba en esa etapa (p. ej. la abrió una venta), no se anota dos veces.
+    const already = !reopening && before?.stageId === to.id;
+    if (!already && (fromStageId !== to.id || reopening)) await this.log(tenantId, pipelineId, contactId, "stage", fromStageId, to.id, origin, note);
     if (ownerId) await this.log(tenantId, pipelineId, contactId, "owner", null, null, { kind: "auto" }, ownerId.name);
   }
 

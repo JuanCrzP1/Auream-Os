@@ -3,38 +3,14 @@ import type { DealCard, Money } from "../../../contracts/CrmContracts";
 import type { BoardQuery, BoardReader, StageCount } from "../../../domains/crm/application/CrmRepositories";
 import type { Pipeline } from "../../../domains/crm/domain/Pipeline";
 import type { SqlExecutor } from "./SqlClient";
+import { membersSql } from "./sqlCrmBoardMembers";
 
 // ---------------------------------------------------------------------------
-// SqlCrmBoard — el tablero de un embudo. Quién está en cada etapa sale de sus
-// ETIQUETAS (la etapa es la etiqueta); el valor y el responsable, de
-// `crm_deals`. Si alguien quedó con dos etapas del mismo embudo (dos cambios
-// a la vez), cuenta en la más avanzada: nunca aparece dos veces.
+// SqlCrmBoard — el tablero de un embudo: las compras actuales (por sus
+// etiquetas) y las anteriores (donde terminaron), con su valor, responsable,
+// seguimiento y lo que lleva comprado cada cliente (`sqlCrmBoardMembers`).
+// También los números: lo vendido, los días hasta comprar y la recompra.
 // ---------------------------------------------------------------------------
-
-/** `$1` cuenta · `$2` embudo. Deja `m` (contacto, etapa, desde cuándo) con su contacto y su registro. */
-function membersSql(query: BoardQuery, params: unknown[]): string {
-  const filters: string[] = [];
-  if (query.ownerId === "none") filters.push("d.owner_id is null");
-  else if (query.ownerId) {
-    params.push(query.ownerId);
-    filters.push(`d.owner_id = $${params.length}`);
-  }
-  if (query.search) {
-    params.push(`%${query.search.replace(/[\\%_]/g, (char) => `\\${char}`)}%`);
-    filters.push(`(c.name ilike $${params.length} or c.phone like $${params.length})`);
-  }
-  return `with st as (select id, label_id, position from crm_stages where tenant_id = $1 and pipeline_id = $2),
-               m as (select distinct on (a.contact_id) a.contact_id, st.id as stage_id, a.created_at as labeled_at
-                       from contact_label_assignments a join st on st.label_id = a.label_id
-                      where a.tenant_id = $1
-                      order by a.contact_id, st.position desc),
-               f as (select m.*, c.name, c.phone, d.amount, d.currency, d.product_name, d.owner_id,
-                            case when d.stage_id = m.stage_id then d.stage_entered_at else m.labeled_at end as entered_at
-                       from m
-                       join contacts c on c.tenant_id = $1 and c.id = m.contact_id
-                       left join crm_deals d on d.pipeline_id = $2 and d.contact_id = m.contact_id
-                      ${filters.length > 0 ? `where ${filters.join(" and ")}` : ""})`;
-}
 
 interface CardRow {
   readonly contact_id: string;
@@ -51,6 +27,11 @@ interface CardRow {
   readonly follow_title: string | null;
   readonly follow_due: Date | string | null;
   readonly last_message_at: Date | string | null;
+  readonly deal_id: string | null;
+  readonly number: number;
+  readonly current: boolean;
+  readonly bought_amount: string | null;
+  readonly bought_currency: string | null;
 }
 
 const iso = (value: Date | string) => (value instanceof Date ? value : new Date(value)).toISOString();
@@ -86,11 +67,13 @@ export class SqlCrmBoard implements BoardReader {
     const [stages, from, to] = [params.length - 2, params.length - 1, params.length];
     const result = await this.sql.query<CardRow>(
       `${members},
-       r as (select f.*, row_number() over (partition by f.stage_id order by f.entered_at desc, f.contact_id) as rn
+       r as (select f.*, row_number() over (partition by f.stage_id order by f.entered_at desc, f.contact_id, f.number desc) as rn
                from f where f.stage_id = any($${stages}::uuid[]))
        select r.contact_id, r.stage_id, r.name, r.phone, r.amount, r.currency, r.product_name, r.owner_id, r.entered_at,
+              r.deal_id, r.number, r.current,
               coalesce(u.display_name, u.email) as owner_name,
-              fu.id as follow_id, fu.title as follow_title, fu.due_at as follow_due, conv.last_message_at
+              fu.id as follow_id, fu.title as follow_title, fu.due_at as follow_due, conv.last_message_at,
+              bought.amount as bought_amount, bought.currency as bought_currency
          from r
          left join user_profiles u on u.user_id = r.owner_id
          left join lateral (select id, title, due_at from crm_follow_ups
@@ -98,12 +81,20 @@ export class SqlCrmBoard implements BoardReader {
                              order by due_at limit 1) fu on true
          left join lateral (select max(last_message_at) as last_message_at from conversations
                              where tenant_id = $1 and contact_id = r.contact_id) conv on true
+         left join lateral (select currency, sum(amount) as amount from crm_deals
+                             where r.number > 1 and tenant_id = $1 and pipeline_id = $2 and contact_id = r.contact_id
+                               and won_at is not null and amount is not null
+                             group by currency order by sum(amount) desc limit 1) bought on true
         where r.rn > $${from} and r.rn <= $${to}
         order by r.stage_id, r.rn`,
       params
     );
     return result.rows.map((row) => ({
       contactId: row.contact_id,
+      dealId: row.deal_id,
+      number: row.number,
+      current: row.current,
+      boughtTotal: money(row.bought_amount, row.bought_currency),
       name: row.name,
       phone: row.phone,
       country: countryOfPhone(row.phone),
@@ -134,6 +125,29 @@ export class SqlCrmBoard implements BoardReader {
       totals: totals.rows.map((row) => money(row.amount, row.currency)).filter((value): value is Money => value !== null).sort((a, b) => b.amount - a.amount),
       count: totals.rows.reduce((sum, row) => sum + Number(row.count), 0),
       avgDays: days === null || days === undefined ? null : Math.round(Number(days) * 10) / 10
+    };
+  }
+
+  public async loyalty(tenantId: string, pipelineId: string, since: Date) {
+    const repeat = await this.sql.query<{ buyers: string; repeaters: string }>(
+      `with buyers as (select contact_id, count(*) as purchases from crm_deals
+                        where tenant_id = $1 and pipeline_id = $2 and won_at is not null
+                        group by contact_id
+                       having max(won_at) >= $3)
+       select count(*) as buyers, count(*) filter (where purchases > 1) as repeaters from buyers`,
+      [tenantId, pipelineId, since.toISOString()]
+    );
+    const value = await this.sql.query<{ currency: string; amount: string; buyers: string }>(
+      `select currency, sum(amount) as amount, count(distinct contact_id) as buyers from crm_deals
+        where tenant_id = $1 and pipeline_id = $2 and won_at is not null and amount is not null
+        group by currency order by sum(amount) desc limit 1`,
+      [tenantId, pipelineId]
+    );
+    const buyers = Number(repeat.rows[0]?.buyers ?? 0);
+    const main = value.rows[0];
+    return {
+      repeatRate: buyers > 0 ? Number(repeat.rows[0]!.repeaters) / buyers : null,
+      valuePerBuyer: main && Number(main.buyers) > 0 ? { amount: Math.round((Number(main.amount) / Number(main.buyers)) * 100) / 100, currency: main.currency.trim() } : null
     };
   }
 }

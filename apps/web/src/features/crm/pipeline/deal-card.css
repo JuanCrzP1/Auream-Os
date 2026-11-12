@@ -163,3 +163,33 @@
   border: 1px dashed var(--line);
   color: var(--muted);
 }
+
+/* Si no es su primera compra: cuál es y cuánto lleva comprado el cliente. */
+.deal-card__purchase {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--primary-hover);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.deal-card__purchase-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--primary-soft, color-mix(in srgb, var(--primary) 12%, transparent));
+  color: var(--primary-hover);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+/* Una compra anterior: quieta (no se mueve) y un poco más tenue. */
+.deal-card--past {
+  opacity: 0.82;
+}
+
+.deal-card--past[draggable="false"] {
+  cursor: default;
+}

@@ -74,13 +74,16 @@ export function ListView({
                 {list.cards.map((card) => {
                   const due = card.nextFollowUp ? dueLabel(card.nextFollowUp.dueAt) : null;
                   return (
-                    <tr key={card.contactId}>
+                    <tr key={card.dealId ?? card.contactId}>
                       <td>
                         <button type="button" className="list-view__client" onClick={() => onOpen(card)}>
                           <span className={`list-view__avatar deal-card__avatar--${toneOf(card.contactId)}`} aria-hidden="true">{initialsOf(card.name, card.phone)}</span>
                           <span>
                             <span className="list-view__name">{card.name ?? `+${card.phone ?? ""}`}{card.country ? <span className="list-view__country">{card.country}</span> : null}</span>
-                            <span className="list-view__meta">{card.lastMessageAt ? `Escribió ${timeAgo(card.lastMessageAt)}` : `Aquí ${timeAgo(card.enteredAt)}`}</span>
+                            <span className="list-view__meta">
+                              {card.number > 1 || !card.current ? `${card.number}.ª compra${card.current ? "" : " (anterior)"} · ` : ""}
+                              {card.lastMessageAt ? `Escribió ${timeAgo(card.lastMessageAt)}` : `Aquí ${timeAgo(card.enteredAt)}`}
+                            </span>
                           </span>
                         </button>
                       </td>
@@ -90,7 +93,7 @@ export function ListView({
                       </td>
                       <td className="list-view__owner">{card.ownerName ?? "Sin responsable"}</td>
                       <td>{due ? <span className={`deal-card__due deal-card__due--${due.tone}`}>{due.text}</span> : <span className="list-view__meta">Sin seguimiento</span>}</td>
-                      <td className="list-view__actions">{canWrite ? <MoveMenu stages={stages} currentStageId={card.stageId} label={`Mover a ${card.name ?? "cliente"}`} onMove={(to) => onMove(card, to)} /> : null}</td>
+                      <td className="list-view__actions">{canWrite && card.current ? <MoveMenu stages={stages} currentStageId={card.stageId} label={`Mover a ${card.name ?? "cliente"}`} onMove={(to) => onMove(card, to)} /> : null}</td>
                     </tr>
                   );
                 })}

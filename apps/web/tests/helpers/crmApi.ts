@@ -17,11 +17,16 @@ export const PIPELINE: PipelineSummary = {
   entryStageId: "s1",
   saleStageId: "s3",
   defaultProductId: null,
-  autoAssign: false
+  autoAssign: false,
+  entrySource: "all"
 };
 
 export const card = (over: Partial<DealCard>): DealCard => ({
   contactId: "c1",
+  dealId: `d-${over.contactId ?? "c1"}`,
+  number: 1,
+  current: true,
+  boughtTotal: null,
   name: "Laura Gómez",
   phone: "573001112233",
   country: "CO",
@@ -44,12 +49,16 @@ export const BOARD: BoardResponse = {
     { stageId: "s3", count: 1, totals: [{ amount: 64900, currency: "COP" }], cards: [card({ contactId: "c3", name: "Ana", stageId: "s3", value: { amount: 64900, currency: "COP" } })] },
     { stageId: "s4", count: 0, totals: [], cards: [] }
   ],
-  metrics: { openTotals: [{ amount: 49900, currency: "COP" }], openCount: 4, wonTotals: [{ amount: 64900, currency: "COP" }], wonCount: 1, closeRate: 0.2, avgDaysToClose: 2.4, lostCount: 0, advance: [0.4, 0.5] }
+  metrics: { openTotals: [{ amount: 49900, currency: "COP" }], openCount: 4, wonTotals: [{ amount: 64900, currency: "COP" }], wonCount: 1, closeRate: 0.2, avgDaysToClose: 2.4, lostCount: 0, advance: [0.4, 0.5], repeatRate: 0.22, valuePerBuyer: { amount: 71800, currency: "COP" } }
 };
 
 export const FOLLOW_UP: FollowUpSummary = { id: "f1", contactId: "c1", contactName: "Laura Gómez", title: "Llamar a Laura", dueAt: new Date(Date.now() - 3_600_000).toISOString(), assigneeId: "u1", assigneeName: "Camilo", doneAt: null, doneByName: null };
 
 export const CONTACT_CRM: ContactCrmResponse = {
+  purchases: [
+    { dealId: "d2", pipelineId: "p1", number: 2, current: true, stageId: "s2", value: { amount: 49900, currency: "COP" }, productName: "Video personalizado", openedAt: new Date().toISOString(), wonAt: null, adName: null, adSourceId: null },
+    { dealId: "d1", pipelineId: "p1", number: 1, current: false, stageId: "s3", value: { amount: 49900, currency: "COP" }, productName: "Video personalizado", openedAt: "2026-08-10T15:00:00.000Z", wonAt: "2026-08-12T15:00:00.000Z", adName: "Canción para mamá", adSourceId: "120244" }
+  ],
   deals: [{ pipelineId: "p1", stageId: "s2", value: { amount: 49900, currency: "COP" }, productId: null, productName: "Video personalizado", ownerId: "u1", ownerName: "Camilo", enteredAt: new Date().toISOString() }],
   followUps: [FOLLOW_UP],
   events: [{ id: "e1", kind: "stage", pipelineId: "p1", fromStageId: "s1", toStageId: "s2", source: "flow", actorName: null, flowName: "Bienvenida", detail: null, createdAt: new Date().toISOString() }]
@@ -59,7 +68,7 @@ export interface CrmStub {
   readonly calls: Array<{ method: string; path: string; body: unknown }>;
 }
 
-export function stubCrmApi({ pipelines = [PIPELINE], canWrite = true, canManage = true } = {}): CrmStub {
+export function stubCrmApi({ pipelines = [PIPELINE], canWrite = true, canManage = true, board = BOARD }: { pipelines?: PipelineSummary[]; canWrite?: boolean; canManage?: boolean; board?: BoardResponse } = {}): CrmStub {
   const calls: CrmStub["calls"] = [];
   let current = [...pipelines];
   vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
@@ -72,8 +81,8 @@ export function stubCrmApi({ pipelines = [PIPELINE], canWrite = true, canManage 
       current = [PIPELINE];
       return reply(201, PIPELINE);
     }
-    if (path.startsWith("/crm/pipelines/p1/board")) return reply(200, BOARD);
-    if (path.includes("/cards")) return reply(200, { cards: BOARD.columns.find((column) => path.includes(`/stages/${column.stageId}/`))?.cards ?? [], nextOffset: null });
+    if (path.startsWith("/crm/pipelines/p1/board")) return reply(200, board);
+    if (path.includes("/cards")) return reply(200, { cards: board.columns.find((column) => path.includes(`/stages/${column.stageId}/`))?.cards ?? [], nextOffset: null });
     if (path.endsWith("/stage") && method === "PUT") return reply(204);
     if (path.startsWith("/crm/pipelines/p1/deals/") && method === "PATCH") return reply(200, CONTACT_CRM.deals[0]);
     if (path === "/crm/pipelines/p1" && method === "PATCH") return reply(200, PIPELINE);

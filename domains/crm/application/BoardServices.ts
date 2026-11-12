@@ -36,10 +36,11 @@ export class BoardServices {
     const pipeline = await this.pipelines.require(actor.tenantId, pipelineId);
     const query = queryOf(actor, filters);
     const now = this.now();
-    const [counts, cards, won] = await Promise.all([
+    const [counts, cards, won, loyalty] = await Promise.all([
       this.board.counts(actor.tenantId, pipeline, query),
       this.board.cards(actor.tenantId, pipeline, pipeline.stages.map((stage) => stage.id), query, 0, CRM_CARDS_PER_STAGE),
-      this.board.won(actor.tenantId, pipeline.id, new Date(now.getTime() - 30 * DAY_MS), new Date(now.getTime() - 90 * DAY_MS))
+      this.board.won(actor.tenantId, pipeline.id, new Date(now.getTime() - 30 * DAY_MS), new Date(now.getTime() - 90 * DAY_MS)),
+      this.board.loyalty(actor.tenantId, pipeline.id, new Date(now.getTime() - 90 * DAY_MS))
     ]);
     const byStage = new Map(counts.map((count) => [count.stageId, count]));
     const openIds = new Set(pipeline.stages.filter((stage) => stage.outcome === "open").map((stage) => stage.id));
@@ -58,7 +59,9 @@ export class BoardServices {
         openTotals: sumByCurrency(counts.filter((count) => openIds.has(count.stageId)).flatMap((count) => count.totals)),
         wonTotals: won.totals,
         wonCount: won.count,
-        avgDaysToClose: won.avgDays
+        avgDaysToClose: won.avgDays,
+        repeatRate: loyalty.repeatRate,
+        valuePerBuyer: loyalty.valuePerBuyer
       })
     };
   }

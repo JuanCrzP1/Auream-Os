@@ -47,6 +47,25 @@ Quitar una etapa o un embudo **no borra la etiqueta ni a nadie**: solo deja de s
 
 Nunca lanza: un fallo del CRM no rompe un flujo, el chat ni una venta (`crm.event_failed` en el registro). Contactos y Ventas avisan por sus puertos (`ContactEvents`, `SaleEvents`). Como el CRM usa los servicios de Contactos, se compone después, y los avisos le llegan por `CrmEventsRelay`.
 
+## Varias compras por cliente (`042_crm_purchases.sql`)
+
+Cada compra es un registro de `crm_deals` con su número (`number`: 1.ª, 2.ª…), su venta (`sale_id`) y el anuncio por el que llegó (`ad_source_id`). Solo una es la **actual** (`current`, índice único por cliente y embudo). Las etiquetas, los flujos, el tablero y las ventas mueven la actual. Las anteriores quedan donde terminaron y no se mueven.
+
+| Cuándo | Qué pasa |
+|---|---|
+| La compra actual ya cerró (ganó o se perdió) y el cliente pasa a una etapa de «aún no compra» (un flujo, un asesor, el tablero) | Se abre la compra siguiente en esa etapa, con el valor por defecto y el mismo responsable. La anterior queda como estaba (`opensNewPurchase`) |
+| Vuelve a escribir y su compra cerró hace **7 días o más** (`REOPEN_AFTER_DAYS`) | Se abre la siguiente en la etapa de entrada. Antes de eso, un «gracias» no abre nada |
+| Se aprueba una venta y la compra actual ya tenía **otra** venta | Se abre la siguiente, ya ganada, en la etapa de compra y con el valor real. La misma venta dos veces no cuenta doble |
+| Pasa de una etapa de compra a otra (Pagó → Entregado) | Sigue siendo la misma compra |
+
+- **El tablero** muestra la compra actual de cada cliente (por sus etiquetas) y las anteriores en la etapa donde quedaron (`sqlCrmBoardMembers.ts`). Cada tarjeta dice qué compra es («2.ª compra») y cuánto lleva comprado el cliente. Las anteriores dicen «Compra anterior» y no se pueden mover.
+- **Números nuevos**:
+  - «Vuelven a comprar»: de los que compraron en 90 días, cuántos han comprado más de una vez;
+  - «Valor por cliente»: lo que compra cada cliente en promedio, en la moneda principal.
+  - «Vendido · 30 días» cuenta compras, no clientes.
+- **La ficha** trae `purchases`: cada compra con su etapa, valor, producto, cuándo pagó, cuánto tardó y el nombre del anuncio (de `ad_entities`, si Meta Ads está conectado). Arriba muestra cuánto lleva comprado, cuántas compras y desde cuándo es cliente.
+- Los clientes de antes quedan con su registro como la compra n.º 1, actual.
+
 ## Arquitectura
 
 ```
@@ -123,6 +142,5 @@ CRM ──puertos ContactLabeler · StageLabels · CrmProductCatalog · CrmTeamD
 ## Después
 
 - Avisos de seguimientos por WhatsApp o notificación cuando lleguen. Hoy se ven en la app, con la insignia de vencidos.
-- **Varios negocios por cliente (recompras)**: hoy hay un registro por cliente y embudo, así que una segunda compra no queda como negocio aparte.
 - Difusiones por etapa (D5).
 - El Dashboard (G1) con los números del embudo por asesor.

@@ -9,9 +9,11 @@ const TONES = ["violet", "teal", "amber", "indigo"] as const;
 export const toneOf = (key: string) => TONES[[...key].reduce((sum, char) => sum + char.charCodeAt(0), 0) % TONES.length]!;
 
 /**
- * Un cliente en el tablero: quién es, hace cuánto escribió, cuánto vale, su
- * próximo seguimiento y quién lo atiende. Se arrastra a otra columna o se
- * mueve con «Mover a…» (teclado y celular). Tocarlo abre su ficha.
+ * Una compra en el tablero: quién es, hace cuánto escribió, cuánto vale, su
+ * próximo seguimiento y quién lo atiende; si no es su primera compra, cuál es
+ * («2.ª compra») y cuánto lleva comprado. La compra actual se arrastra a otra
+ * columna o se mueve con «Mover a…»; las anteriores quedan donde terminaron.
+ * Tocarla abre la ficha del cliente.
  */
 export function DealCard({
   card,
@@ -34,10 +36,11 @@ export function DealCard({
 }) {
   const due = card.nextFollowUp ? dueLabel(card.nextFollowUp.dueAt) : null;
   const name = card.name ?? (card.phone ? `+${card.phone}` : "Sin nombre");
+  const movable = canWrite && card.current;
   return (
     <article
-      className={`deal-card${dragging ? " deal-card--dragging" : ""}`}
-      draggable={canWrite}
+      className={`deal-card${dragging ? " deal-card--dragging" : ""}${card.current ? "" : " deal-card--past"}`}
+      draggable={movable}
       onDragStart={(event) => {
         event.dataTransfer.setData("text/plain", card.contactId);
         event.dataTransfer.effectAllowed = "move";
@@ -56,13 +59,21 @@ export function DealCard({
             </span>
           </span>
         </span>
+        {card.number > 1 || !card.current ? (
+          <span className="deal-card__purchase">
+            <span className="deal-card__purchase-tag">{card.number}.ª compra{card.current ? "" : " · anterior"}</span>
+            {card.current && card.boughtTotal ? `lleva ${formatMoney(card.boughtTotal.amount, card.boughtTotal.currency)}` : null}
+          </span>
+        ) : null}
         <span className="deal-card__value">
           {card.value ? formatMoney(card.value.amount, card.value.currency) : <span className="deal-card__novalue">Sin valor</span>}
           {card.productName ? <span className="deal-card__product">{card.productName}</span> : null}
         </span>
       </button>
       <span className="deal-card__footer">
-        {due ? <span className={`deal-card__due deal-card__due--${due.tone}`} title={card.nextFollowUp!.title}>{due.text}</span> : <span className="deal-card__due deal-card__due--none">Sin seguimiento</span>}
+        {!card.current ? <span className="deal-card__due deal-card__due--none">Compra anterior</span>
+          : due ? <span className={`deal-card__due deal-card__due--${due.tone}`} title={card.nextFollowUp!.title}>{due.text}</span>
+          : <span className="deal-card__due deal-card__due--none">Sin seguimiento</span>}
         <span className="deal-card__tools">
           {card.ownerId ? (
             <span className={`deal-card__owner deal-card__avatar--${toneOf(card.ownerId)}`} title={card.ownerName ?? ""} aria-label={`Lo atiende ${card.ownerName ?? "alguien del equipo"}`}>
@@ -71,7 +82,7 @@ export function DealCard({
           ) : (
             <span className="deal-card__owner deal-card__owner--none" title="Sin responsable" aria-label="Sin responsable">?</span>
           )}
-          {canWrite ? <MoveMenu stages={stages} currentStageId={card.stageId} onMove={(stageId) => onMove(card, stageId)} label={`Mover a ${name}`} /> : null}
+          {movable ? <MoveMenu stages={stages} currentStageId={card.stageId} onMove={(stageId) => onMove(card, stageId)} label={`Mover a ${name}`} /> : null}
         </span>
       </span>
     </article>

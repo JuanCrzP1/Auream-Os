@@ -72,12 +72,17 @@ export class DealServices {
   public async contact(actor: CrmActor, contactId: string): Promise<ContactCrmResponse> {
     const contact = UUID.test(contactId) ? await this.labeler.snapshot(actor.tenantId, contactId) : null;
     if (!contact) throw new NotFoundError("Ese cliente no existe.");
-    const [deals, followUps, events] = await Promise.all([
+    const [deals, followUps, events, stored] = await Promise.all([
       this.contactDeals(actor.tenantId, contactId, contact.labelIds),
       this.followUps.list(actor.tenantId, { assigneeId: null, contactId, now: new Date(), endOfToday: new Date(), limit: 50 }),
-      this.events.forContact(actor.tenantId, contactId, HISTORY)
+      this.events.forContact(actor.tenantId, contactId, HISTORY),
+      this.deals.forContact(actor.tenantId, contactId)
     ]);
-    return { deals, followUps: followUps.map(toFollowUpSummary), events: events.map(toEventSummary) };
+    const purchases = stored.map((deal) => ({
+      dealId: deal.id, pipelineId: deal.pipelineId, number: deal.number, current: deal.current, stageId: deal.stageId, value: deal.value,
+      productName: deal.productName, openedAt: deal.openedAt, wonAt: deal.wonAt, adName: deal.adName, adSourceId: deal.adSourceId
+    }));
+    return { deals, purchases, followUps: followUps.map(toFollowUpSummary), events: events.map(toEventSummary) };
   }
 
   /** La etapa sale de sus etiquetas (como en el tablero); el valor y el responsable, de su registro. */
@@ -86,7 +91,7 @@ export class DealServices {
     return pipelines.flatMap((pipeline) => {
       const stage = [...pipeline.stages].sort((a, b) => b.position - a.position).find((candidate) => labelIds.includes(candidate.labelId));
       if (!stage) return [];
-      const deal = stored.find((candidate) => candidate.pipelineId === pipeline.id);
+      const deal = stored.find((candidate) => candidate.pipelineId === pipeline.id && candidate.current);
       return [{
         pipelineId: pipeline.id,
         stageId: stage.id,

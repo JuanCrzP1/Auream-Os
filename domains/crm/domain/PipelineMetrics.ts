@@ -17,6 +17,8 @@ export interface MetricsInput {
   readonly wonTotals: ReadonlyArray<Money>;
   readonly wonCount: number;
   readonly avgDaysToClose: number | null;
+  readonly repeatRate: number | null;
+  readonly valuePerBuyer: Money | null;
 }
 
 export function pipelineMetrics(pipeline: Pick<Pipeline, "stages">, input: MetricsInput): PipelineMetrics {
@@ -44,6 +46,8 @@ export function pipelineMetrics(pipeline: Pick<Pipeline, "stages">, input: Metri
     closeRate: total > 0 ? won / total : null,
     avgDaysToClose: input.avgDaysToClose,
     lostCount: lost,
-    advance
+    advance,
+    repeatRate: input.repeatRate,
+    valuePerBuyer: input.valuePerBuyer
   };
 }

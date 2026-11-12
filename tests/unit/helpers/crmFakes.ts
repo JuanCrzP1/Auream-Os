@@ -20,7 +20,9 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   const labels = new Map<string, { id: string; name: string; color: string }>();
   const contacts = new Map<string, { phone: string | null; labels: Set<string>; fromAd?: boolean }>();
   const pipelines = new Map<string, PipelineRecord & { position: number }>();
+  /** La compra actual de cada cliente en cada embudo; las anteriores, en `history`. */
   const deals = new Map<string, Deal>();
+  const history: Deal[] = [];
   const events: Array<CrmEventInput & { at: number }> = [];
   let clock = 0;
 
@@ -49,11 +51,30 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   const key = (pipelineId: string, contactId: string) => `${pipelineId}:${contactId}`;
   const dealRepository: DealRepository = {
     find: async (_t, p, c) => deals.get(key(p, c)) ?? null,
-    forContact: async (_t, c) => [...deals.values()].filter((d) => d.contactId === c).map((d) => ({ ...d, ownerName: d.ownerId })),
+    forContact: async (_t, c) => [...deals.values(), ...history].filter((d) => d.contactId === c).sort((a, b) => b.number - a.number).map((d) => ({ ...d, ownerName: d.ownerId, adName: null })),
+    reopen: async (_t, p, c, entry) => {
+      const before = deals.get(key(p, c));
+      if (before) history.push({ ...before, current: false });
+      const now = new Date(Date.UTC(2026, 10, 10, 12, 0, clock++)).toISOString();
+      const deal: Deal = {
+        id: `deal-${clock}`, number: (before?.number ?? 0) + 1, current: true, tenantId: T, pipelineId: p, contactId: c, stageId: entry.stageId,
+        stageEnteredAt: now, wonAt: entry.won ? now : null, value: entry.value, productId: entry.productId, productName: entry.productName,
+        ownerId: entry.ownerId, openedAt: now, saleId: entry.saleId ?? null, adSourceId: entry.adSourceId ?? null
+      };
+      deals.set(key(p, c), deal);
+      return deal;
+    },
+    attachSale: async (_t, p, c, saleId) => void (deals.has(key(p, c)) && deals.set(key(p, c), { ...deals.get(key(p, c))!, saleId })),
     enter: async (_t, p, c, entry: DealEntry) => {
       const before = deals.get(key(p, c));
       const now = new Date(Date.UTC(2026, 10, 10, 12, 0, clock++)).toISOString();
       const deal: Deal = {
+        id: before?.id ?? `deal-${clock}`,
+        number: before?.number ?? 1,
+        current: true,
+        openedAt: before?.openedAt ?? now,
+        saleId: before?.saleId ?? null,
+        adSourceId: before?.adSourceId ?? entry.adSourceId ?? null,
         tenantId: T,
         pipelineId: p,
         contactId: c,
@@ -127,7 +148,7 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   const pipelineServices = new PipelineServices(pipelineRepository, stageLabels, team, catalog);
 
   return {
-    labels, contacts, deals, events, errors, labeler, catalog, team, tracker, rules,
+    labels, contacts, deals, history, events, errors, labeler, catalog, team, tracker, rules,
     pipelineRepository, dealRepository, eventLog, pipelineServices,
     addContact: (id: string, phone: string | null = "573001112233", held: string[] = [], fromAd = false) => void contacts.set(id, { phone, labels: new Set(held), fromAd }),
     labelsOf: (id: string) => [...contacts.get(id)!.labels]

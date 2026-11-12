@@ -71,8 +71,31 @@ export interface ContactDeal {
   readonly enteredAt: string | null;
 }
 
+/** Una compra del cliente en un embudo (la actual o una anterior), para su historial. */
+export interface ContactPurchase {
+  readonly dealId: string;
+  readonly pipelineId: string;
+  /** 1.ª, 2.ª, 3.ª… */
+  readonly number: number;
+  /** La compra actual (la que se mueve). */
+  readonly current: boolean;
+  /** Dónde está o dónde terminó (`null`: salió del embudo). */
+  readonly stageId: string | null;
+  readonly value: Money | null;
+  readonly productName: string | null;
+  /** Cuándo entró al embudo esta compra. */
+  readonly openedAt: string;
+  /** Cuándo compró (`null`: aún no, o no compró). */
+  readonly wonAt: string | null;
+  /** El anuncio por el que llegó (su nombre en Meta, si se conoce). */
+  readonly adName: string | null;
+  readonly adSourceId: string | null;
+}
+
 export interface ContactCrmResponse {
   readonly deals: ReadonlyArray<ContactDeal>;
+  /** Todas sus compras, de cada embudo, la más nueva primero. */
+  readonly purchases: ReadonlyArray<ContactPurchase>;
   readonly followUps: ReadonlyArray<FollowUpSummary>;
   readonly events: ReadonlyArray<CrmEventSummary>;
 }

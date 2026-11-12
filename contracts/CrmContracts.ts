@@ -109,6 +109,14 @@ export interface Money {
 
 export interface DealCard {
   readonly contactId: string;
+  /** La compra (`null`: el cliente tiene la etiqueta pero aún no su registro). */
+  readonly dealId: string | null;
+  /** 1.ª, 2.ª, 3.ª… compra del cliente en este embudo. */
+  readonly number: number;
+  /** La compra actual (se mueve). Las anteriores quedan donde terminaron: no se mueven. */
+  readonly current: boolean;
+  /** Lo que lleva comprado el cliente en este embudo (si es su 2.ª compra o más). */
+  readonly boughtTotal: Money | null;
   readonly name: string | null;
   readonly phone: string | null;
   readonly country: string | null;
@@ -145,6 +153,10 @@ export interface PipelineMetrics {
   readonly lostCount: number;
   /** Entre cada etapa (sin las de «no compró») y la siguiente: qué parte avanza (0 a 1). */
   readonly advance: ReadonlyArray<number | null>;
+  /** De los que compraron en los últimos 90 días, cuántos han comprado más de una vez (0 a 1). */
+  readonly repeatRate: number | null;
+  /** Lo que compra cada cliente en promedio, en la moneda en que más se vende. */
+  readonly valuePerBuyer: Money | null;
 }
 
 export interface BoardResponse {
