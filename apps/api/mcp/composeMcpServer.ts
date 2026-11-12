@@ -30,6 +30,8 @@ import { productTools } from "./tools/productTools";
 import { saleTools } from "./tools/saleTools";
 import { crmTools, type CrmToolServices } from "./tools/crmTools";
 import { analyticsTools, type DashboardToolServices } from "./tools/analyticsTools";
+import { salesLineTools } from "./tools/salesLineTools";
+import type { SalesLineServices } from "../../../domains/sales-lines/application/SalesLineServices";
 import type { SaleServices } from "../../../domains/sales/application/SaleServices";
 import type { SalesInsights } from "../../../domains/sales/application/SalesInsights";
 
@@ -74,6 +76,8 @@ export interface McpDependencies {
   readonly crm?: CrmToolServices;
   /** Dashboard: ventas y ROAS, anuncios y atención (área «Dashboard y anuncios»). */
   readonly dashboard?: DashboardToolServices;
+  /** Líneas de venta: verlas (Dashboard) y organizarlas (Ventas y productos). */
+  readonly salesLines?: Pick<SalesLineServices, "list" | "create" | "update" | "remove">;
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "createLabel" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list" | "triggers">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
@@ -110,6 +114,7 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     ...(deps.sales ? [...productTools(deps.sales.products), ...saleTools(deps.sales.sales, deps.sales.insights)] : []),
     ...(deps.crm ? crmTools(deps.crm) : []),
     ...(deps.dashboard ? analyticsTools(deps.dashboard) : []),
+    ...(deps.salesLines ? salesLineTools(deps.salesLines) : []),
     ...(deps.help ? helpTools(deps.help) : [])
   ];
   return {

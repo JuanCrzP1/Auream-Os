@@ -1,6 +1,6 @@
 import type { AdLevel } from "../../../contracts/DashboardContracts";
 import type { Period } from "../../../domains/analytics/application/DashboardPeriod";
-import type { AdsReader, AttributedDay, EntityDay, EntityInfo, SpendDay } from "../../../domains/analytics/application/DashboardReaders";
+import type { AdsReader, AttributedDay, DashboardScope, EntityDay, EntityInfo, SpendDay } from "../../../domains/analytics/application/DashboardReaders";
 import type { SqlExecutor } from "./SqlClient";
 
 // ---------------------------------------------------------------------------
@@ -27,22 +27,39 @@ const toSpend = (row: SpendRow): SpendDay => ({
   metaRevenue: Number(row.meta_revenue)
 });
 
+/** Filtro por campañas sobre un anuncio `e` (vacío: todas). */
+function campaignFilter(scope: DashboardScope | undefined, params: unknown[]): string {
+  if (!scope?.campaignIds?.length) return "";
+  params.push([...scope.campaignIds]);
+  return `and e.campaign_id = any($${params.length}::text[])`;
+}
+
+/** Números y productos sobre una venta `s` (vacíos: todos). */
+function saleFilter(scope: DashboardScope | undefined, params: unknown[]): string {
+  const clauses: string[] = [];
+  if (scope?.connectionIds?.length) clauses.push(`and s.connection_id = any($${params.push([...scope.connectionIds])}::uuid[])`);
+  if (scope?.productIds?.length) clauses.push(`and s.product_id = any($${params.push([...scope.productIds])}::uuid[])`);
+  return clauses.join(" ");
+}
+
 const SUMS = `sum(i.spend) as spend, sum(i.impressions) as impressions, sum(i.clicks) as clicks, sum(i.conversations) as conversations,
               sum(i.meta_purchases) as meta_purchases, sum(i.meta_revenue) as meta_revenue`;
 
 export class SqlDashboardAds implements AdsReader {
   public constructor(private readonly sql: SqlExecutor) {}
 
-  public async status(tenantId: string) {
+  public async status(tenantId: string, scope?: DashboardScope) {
+    const params: unknown[] = [tenantId];
+    const byCampaign = scope?.campaignIds?.length ? `and e.external_id = any($${params.push([...scope.campaignIds])}::text[])` : "";
     const { rows } = await this.sql.query<{ accounts: string; last_synced_at: Date | string | null; main_currency: string | null; active_campaigns: string }>(
       `select count(*) as accounts, max(a.last_synced_at) as last_synced_at,
               (select a2.currency from ad_accounts a2
                  left join ad_insights_daily i on i.account_id = a2.id and i.day >= current_date - 30
                 where a2.tenant_id = $1 and a2.enabled group by a2.id, a2.currency order by coalesce(sum(i.spend), 0) desc limit 1) as main_currency,
               (select count(*) from ad_entities e join ad_accounts a3 on a3.id = e.account_id and a3.enabled
-                where e.tenant_id = $1 and e.level = 'campaign' and e.status = 'ACTIVE') as active_campaigns
+                where e.tenant_id = $1 and e.level = 'campaign' and e.status = 'ACTIVE' ${byCampaign}) as active_campaigns
          from ad_accounts a where a.tenant_id = $1 and a.enabled`,
-      [tenantId]
+      params
     );
     const row = rows[0];
     const last = row?.last_synced_at ?? null;
@@ -54,26 +71,32 @@ export class SqlDashboardAds implements AdsReader {
     };
   }
 
-  public async spend(tenantId: string, period: Period): Promise<ReadonlyArray<SpendDay>> {
+  public async spend(tenantId: string, period: Period, scope?: DashboardScope): Promise<ReadonlyArray<SpendDay>> {
+    const params: unknown[] = [tenantId, period.fromDay, period.toDay];
+    const byCampaign = campaignFilter(scope, params);
+    // Con campañas elegidas, el gasto de cada anuncio cuenta si es de una de ellas.
+    const join = byCampaign ? `join ad_entities e on e.account_id = i.account_id and e.external_id = i.ad_id ${byCampaign}` : "";
     const { rows } = await this.sql.query<SpendRow>(
       `select to_char(i.day, 'YYYY-MM-DD') as day, a.currency, ${SUMS}
-         from ad_insights_daily i join ad_accounts a on a.id = i.account_id and a.enabled
+         from ad_insights_daily i join ad_accounts a on a.id = i.account_id and a.enabled ${join}
         where i.tenant_id = $1 and i.day between $2::date and $3::date
         group by 1, 2`,
-      [tenantId, period.fromDay, period.toDay]
+      params
     );
     return rows.map(toSpend);
   }
 
-  public async entityDays(tenantId: string, period: Period, level: AdLevel): Promise<ReadonlyArray<EntityDay>> {
+  public async entityDays(tenantId: string, period: Period, level: AdLevel, scope?: DashboardScope): Promise<ReadonlyArray<EntityDay>> {
+    const params: unknown[] = [tenantId, period.fromDay, period.toDay];
+    const byCampaign = campaignFilter(scope, params);
     const { rows } = await this.sql.query<SpendRow & { id: string }>(
       `select ${keyOf(level)} as id, to_char(i.day, 'YYYY-MM-DD') as day, a.currency, ${SUMS}
          from ad_insights_daily i
          join ad_accounts a on a.id = i.account_id and a.enabled
          join ad_entities e on e.account_id = i.account_id and e.external_id = i.ad_id
-        where i.tenant_id = $1 and i.day between $2::date and $3::date and ${keyOf(level)} is not null
+        where i.tenant_id = $1 and i.day between $2::date and $3::date and ${keyOf(level)} is not null ${byCampaign}
         group by 1, 2, 3`,
-      [tenantId, period.fromDay, period.toDay]
+      params
     );
     return rows.map((row) => ({ ...toSpend(row), id: row.id }));
   }
@@ -98,7 +121,9 @@ export class SqlDashboardAds implements AdsReader {
     }));
   }
 
-  public async attributed(tenantId: string, period: Period, level: AdLevel, timezone: string): Promise<ReadonlyArray<AttributedDay>> {
+  public async attributed(tenantId: string, period: Period, level: AdLevel, timezone: string, scope?: DashboardScope): Promise<ReadonlyArray<AttributedDay>> {
+    const params: unknown[] = [tenantId, period.from.toISOString(), period.until.toISOString(), timezone];
+    const filters = `${campaignFilter(scope, params)} ${saleFilter(scope, params)}`;
     const { rows } = await this.sql.query<{ id: string; day: string; currency: string; amount: string; count: string; late: string }>(
       `select ${keyOf(level)} as id, to_char(s.sold_at at time zone $4, 'YYYY-MM-DD') as day, s.currency,
               sum(s.amount) as amount, count(*) as count,
@@ -107,9 +132,9 @@ export class SqlDashboardAds implements AdsReader {
          join lateral (select e.* from ad_entities e join ad_accounts a on a.id = e.account_id and a.enabled
                         where e.tenant_id = s.tenant_id and e.level = 'ad' and e.external_id = s.ad_source_id limit 1) e on true
          left join lateral (select min(v.created_at) as at from conversations v where v.tenant_id = s.tenant_id and v.contact_id = s.contact_id) first on true
-        where s.tenant_id = $1 and s.status = 'approved' and s.sold_at >= $2 and s.sold_at < $3 and ${keyOf(level)} is not null
+        where s.tenant_id = $1 and s.status = 'approved' and s.sold_at >= $2 and s.sold_at < $3 and ${keyOf(level)} is not null ${filters}
         group by 1, 2, 3`,
-      [tenantId, period.from.toISOString(), period.until.toISOString(), timezone]
+      params
     );
     return rows.map((row) => ({ id: row.id, day: row.day, currency: row.currency.trim(), amount: Number(row.amount), count: Number(row.count), late: Number(row.late) }));
   }

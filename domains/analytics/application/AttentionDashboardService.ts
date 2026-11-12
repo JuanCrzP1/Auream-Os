@@ -2,7 +2,7 @@ import type { AttentionDashboardResponse, ConnectionAttention } from "../../../c
 import type { DashboardFilters } from "../../../contracts/DashboardContracts";
 import { CurrencyConverter, type FxRates } from "./CurrencyConverter";
 import { change, periodOf, previousPeriod, type Period } from "./DashboardPeriod";
-import { scopeOf } from "./SalesDashboardService";
+import { DashboardScopeResolver } from "./DashboardScopeResolver";
 import { MoneyBook, mostUsedCurrency, round } from "./MoneyBook";
 
 // ---------------------------------------------------------------------------
@@ -35,11 +35,11 @@ export interface AgentSale {
 }
 
 export interface AttentionReader {
-  chats(tenantId: string, period: Period, connectionId: string | undefined): Promise<ChatCounts>;
-  waiting(tenantId: string, connectionId: string | undefined): Promise<{ count: number; oldestAt: string | null }>;
+  chats(tenantId: string, period: Period, connectionIds: ReadonlyArray<string> | undefined): Promise<ChatCounts>;
+  waiting(tenantId: string, connectionIds: ReadonlyArray<string> | undefined): Promise<{ count: number; oldestAt: string | null }>;
   /** [lunes=0..domingo=6][bloque de 2 h] → chats nuevos. */
-  heatmap(tenantId: string, period: Period, connectionId: string | undefined, timezone: string): Promise<number[][]>;
-  agents(tenantId: string, period: Period, connectionId: string | undefined): Promise<ReadonlyArray<AgentActivity>>;
+  heatmap(tenantId: string, period: Period, connectionIds: ReadonlyArray<string> | undefined, timezone: string): Promise<number[][]>;
+  agents(tenantId: string, period: Period, connectionIds: ReadonlyArray<string> | undefined): Promise<ReadonlyArray<AgentActivity>>;
   agentSales(tenantId: string, period: Period, timezone: string): Promise<ReadonlyArray<AgentSale>>;
   connections(tenantId: string, period: Period): Promise<ReadonlyArray<ConnectionAttention>>;
 }
@@ -49,21 +49,23 @@ export class AttentionDashboardService {
     private readonly reader: AttentionReader,
     private readonly fx: FxRates,
     private readonly timezoneOf: (tenantId: string) => Promise<string>,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    /** Resuelve la línea de venta y los números elegidos. */
+    private readonly scopes: DashboardScopeResolver = new DashboardScopeResolver()
   ) {}
 
   public async overview(tenantId: string, filters: DashboardFilters): Promise<AttentionDashboardResponse> {
     const timezone = await this.timezoneOf(tenantId);
     const period = periodOf(filters.from, filters.to, timezone, this.now());
     const before = previousPeriod(period, timezone);
-    const { connectionId } = scopeOf(filters);
+    const { connectionIds } = await this.scopes.resolve(tenantId, filters);
     await this.fx.refresh();
     const [current, previous, waiting, heatmap, agents, sales, connections, rates] = await Promise.all([
-      this.reader.chats(tenantId, period, connectionId),
-      this.reader.chats(tenantId, before, connectionId),
-      this.reader.waiting(tenantId, connectionId),
-      this.reader.heatmap(tenantId, period, connectionId, timezone),
-      this.reader.agents(tenantId, period, connectionId),
+      this.reader.chats(tenantId, period, connectionIds),
+      this.reader.chats(tenantId, before, connectionIds),
+      this.reader.waiting(tenantId, connectionIds),
+      this.reader.heatmap(tenantId, period, connectionIds, timezone),
+      this.reader.agents(tenantId, period, connectionIds),
       this.reader.agentSales(tenantId, period, timezone),
       this.reader.connections(tenantId, period),
       this.fx.table(period.fromDay, period.toDay)

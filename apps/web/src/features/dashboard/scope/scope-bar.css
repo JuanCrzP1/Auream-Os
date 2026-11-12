@@ -1,0 +1,86 @@
+/* ===== LÍNEA, FILTROS Y MONEDA DEL DASHBOARD =====
+   Tres botones a la derecha de las pestañas; cada uno abre su panel encima
+   del Dashboard (nada se agrega debajo). */
+
+.scope-bar {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.scope-bar__wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.scope-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.scope-bar__btn strong {
+  overflow: hidden;
+  max-width: 220px;
+  color: var(--text);
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope-bar__btn--line {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+
+.scope-bar__dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; }
+.scope-bar__caret { color: var(--muted); font-size: 0.7rem; }
+.scope-bar__flag { font-size: 1.05rem; line-height: 1; }
+
+.scope-bar__btn--line:has(+ .scope-bar__clear) { padding-right: 38px; }
+
+.scope-bar__clear {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.scope-bar__badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary, #fff);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+

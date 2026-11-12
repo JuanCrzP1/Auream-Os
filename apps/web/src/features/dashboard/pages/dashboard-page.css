@@ -9,6 +9,15 @@
   container: dashboard / inline-size;
 }
 
+/* Las pestañas a la izquierda; línea, filtros y moneda a la derecha. */
+.dashboard-page__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .dashboard-page__wait {
   min-height: 320px;
   border-radius: 20px;

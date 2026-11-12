@@ -3,7 +3,9 @@ import { adviceFor } from "../domain/adAdvice";
 import { CurrencyConverter, type FxRates } from "./CurrencyConverter";
 import { periodOf } from "./DashboardPeriod";
 import type { AdsReader } from "./DashboardReaders";
+import { DashboardScopeResolver } from "./DashboardScopeResolver";
 import { MoneyBook, ratio, round } from "./MoneyBook";
+import { requestedCurrency } from "./SalesDashboardService";
 
 // ---------------------------------------------------------------------------
 // Dashboard › Anuncios: cada campaña, conjunto o anuncio con lo que gastó
@@ -45,24 +47,28 @@ export class AdsDashboardService {
     private readonly ads: AdsReader,
     private readonly fx: FxRates,
     private readonly timezoneOf: (tenantId: string) => Promise<string>,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    /** Resuelve la línea de venta y los filtros (campañas, números y productos). */
+    private readonly scopes: DashboardScopeResolver = new DashboardScopeResolver()
   ) {}
 
   public async performance(tenantId: string, filters: DashboardFilters, levelInput: string | undefined): Promise<AdsDashboardResponse> {
     const level: AdLevel = AD_LEVELS.includes(levelInput as AdLevel) ? (levelInput as AdLevel) : "campaign";
     const timezone = await this.timezoneOf(tenantId);
     const period = periodOf(filters.from, filters.to, timezone, this.now());
-    const status = await this.ads.status(tenantId);
+    const scope = await this.scopes.resolve(tenantId, filters);
+    const status = await this.ads.status(tenantId, scope);
     if (status.accounts === 0) {
       return { currency: status.mainCurrency ?? "USD", level, rows: [], totals: metrics(empty()), unseenSales: 0, lateShare: null, lastSyncedAt: status.lastSyncedAt, connected: false };
     }
     await this.fx.refresh();
     const [rates, days, sold] = await Promise.all([
       this.fx.table(period.fromDay, period.toDay),
-      this.ads.entityDays(tenantId, period, level),
-      this.ads.attributed(tenantId, period, level, timezone)
+      this.ads.entityDays(tenantId, period, level, scope),
+      this.ads.attributed(tenantId, period, level, timezone, scope)
     ]);
-    const book = new MoneyBook(new CurrencyConverter(rates), status.mainCurrency ?? "USD");
+    const converter = new CurrencyConverter(rates);
+    const book = new MoneyBook(converter, requestedCurrency(filters.currency, converter) ?? status.mainCurrency ?? "USD");
     const byId = new Map<string, Acc>();
     const at = (id: string) => byId.get(id) ?? byId.set(id, empty()).get(id)!;
     for (const d of days) {

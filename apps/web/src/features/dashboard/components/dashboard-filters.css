@@ -1,4 +1,4 @@
-/* El periodo en cápsulas y los filtros de número y producto. */
+/* El periodo en cápsulas (la línea, los filtros y la moneda están en scope/). */
 
 .dashboard-filters {
   display: flex;
@@ -32,27 +32,5 @@
 .dashboard-filters__periods button[aria-pressed="true"] {
   background: color-mix(in srgb, var(--primary) 12%, var(--surface));
   color: var(--primary);
-  font-weight: 700;
-}
-
-.dashboard-filters__select {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 42px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.74rem;
-}
-
-.dashboard-filters__select select {
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.84rem;
   font-weight: 700;
 }

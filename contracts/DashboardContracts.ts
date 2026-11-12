@@ -9,8 +9,20 @@
 export interface DashboardFilters {
   readonly from?: string;
   readonly to?: string;
+  /** Un solo número (como antes). `connectionIds` gana si llegan los dos. */
   readonly connectionId?: string;
+  /** Un solo producto (como antes). `productIds` gana si llegan los dos. */
   readonly productId?: string;
+  /** Varios números; vacío o ausente = todos. */
+  readonly connectionIds?: ReadonlyArray<string>;
+  /** Varios productos; vacío o ausente = todos. */
+  readonly productIds?: ReadonlyArray<string>;
+  /** Campañas de Meta (su gasto y las ventas que trajeron); vacío o ausente = todas. */
+  readonly campaignIds?: ReadonlyArray<string>;
+  /** Una línea de venta: lo que no se filtre a mano sale de ella. */
+  readonly lineId?: string;
+  /** Moneda en que se muestran los montos (ISO). Ausente: la de la cuenta de anuncios o la más vendida. */
+  readonly currency?: string;
 }
 
 /** Un número del periodo, el del periodo anterior del mismo largo y su cambio (0.18 = +18 %). */

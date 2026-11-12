@@ -1,4 +1,5 @@
 import "./sales-tab.css";
+import { useEffect } from "react";
 import type { AdsDashboardResponse, DashboardFilters, SalesDashboardResponse } from "@contracts/DashboardContracts";
 import { adsApi } from "@shared/ads/adsApi";
 import { dashboardApi } from "../services/dashboardApi";
@@ -19,10 +20,22 @@ import { SalesSummary } from "./summary/SalesSummary";
  * la venta, qué hacer con cada campaña, por hora, número, producto y país, y
  * las últimas ventas con su anuncio.
  */
-export function SalesTab({ filters, periodWords, onSeeAds }: { readonly filters: DashboardFilters; readonly periodWords: string; readonly onSeeAds: () => void }) {
+export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency }: {
+  readonly filters: DashboardFilters;
+  readonly periodWords: string;
+  readonly onSeeAds: () => void;
+  /** La moneda en que llegó el informe (para el botón de moneda). */
+  readonly onReportCurrency?: (code: string) => void;
+}) {
   const key = JSON.stringify(filters);
   const sales = useDashboardData<SalesDashboardResponse>(() => dashboardApi.sales(filters), key);
   const view = sales.data;
+  const reported = view?.currency;
+  useEffect(() => {
+    if (reported) onReportCurrency?.(reported);
+    // Solo cuando cambia la moneda del informe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reported]);
   const wantsAds = Boolean(view?.ads);
   const campaigns = useDashboardData<AdsDashboardResponse | null>(() => (wantsAds ? adsApi.performance(filters, "campaign") : Promise.resolve(null)), `${key}:${wantsAds}`);
 

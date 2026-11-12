@@ -1,0 +1,58 @@
+/* ===== CREAR O EDITAR UNA LÍNEA DE VENTA ===== */
+
+.sales-line-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(620px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.sales-line-dialog h4 {
+  margin: 6px 10px 4px;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sales-line-dialog__colors {
+  display: flex;
+  gap: 10px;
+}
+
+.sales-line-dialog__colors button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sales-line-dialog__colors button[aria-checked="true"] {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.sales-line-dialog__box {
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.sales-line-dialog__summary {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.sales-line-dialog__delete {
+  margin-right: auto;
+  color: var(--status-danger);
+}

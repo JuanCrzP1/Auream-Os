@@ -7,9 +7,15 @@ import type { Period } from "./DashboardPeriod";
 // montos llegan en su moneda; convertirlos es cosa del servicio.
 // ---------------------------------------------------------------------------
 
+/**
+ * Qué parte del negocio se mira. Cada lista vacía o ausente = todo. Números y
+ * productos recortan las ventas; las campañas recortan el gasto y las ventas
+ * que trajeron los anuncios (las orgánicas siguen contando).
+ */
 export interface DashboardScope {
-  readonly connectionId?: string;
-  readonly productId?: string;
+  readonly connectionIds?: ReadonlyArray<string>;
+  readonly productIds?: ReadonlyArray<string>;
+  readonly campaignIds?: ReadonlyArray<string>;
 }
 
 /** Ventas aprobadas de un día en una moneda; `ad*` = las que llegaron por un anuncio. */
@@ -94,9 +100,12 @@ export interface AttributedDay {
 
 export interface AdsReader {
   /** ¿Hay cuentas elegidas? Y su última sincronización y la moneda con más gasto. */
-  status(tenantId: string): Promise<{ accounts: number; lastSyncedAt: string | null; mainCurrency: string | null; activeCampaigns: number }>;
-  spend(tenantId: string, period: Period): Promise<ReadonlyArray<SpendDay>>;
-  entityDays(tenantId: string, period: Period, level: AdLevel): Promise<ReadonlyArray<EntityDay>>;
+  /** `activeCampaigns`: de las campañas elegidas en `scope`, si las hay. */
+  status(tenantId: string, scope?: DashboardScope): Promise<{ accounts: number; lastSyncedAt: string | null; mainCurrency: string | null; activeCampaigns: number }>;
+  /** El gasto (solo de las campañas de `scope`, si las hay). */
+  spend(tenantId: string, period: Period, scope?: DashboardScope): Promise<ReadonlyArray<SpendDay>>;
+  entityDays(tenantId: string, period: Period, level: AdLevel, scope?: DashboardScope): Promise<ReadonlyArray<EntityDay>>;
   entities(tenantId: string, level: AdLevel, ids: ReadonlyArray<string>): Promise<ReadonlyArray<EntityInfo>>;
-  attributed(tenantId: string, period: Period, level: AdLevel, timezone: string): Promise<ReadonlyArray<AttributedDay>>;
+  /** Ventas por anuncio: de las campañas de `scope` y de sus números y productos, si los hay. */
+  attributed(tenantId: string, period: Period, level: AdLevel, timezone: string, scope?: DashboardScope): Promise<ReadonlyArray<AttributedDay>>;
 }

@@ -1,7 +1,8 @@
 import type { AdsMoneySummary, Breakdown, DashboardFilters, SalesDashboardResponse } from "../../../contracts/DashboardContracts";
 import { CurrencyConverter, type FxRates } from "./CurrencyConverter";
 import { change, periodOf, previousPeriod, type Period } from "./DashboardPeriod";
-import type { AdsReader, BreakdownRow, DashboardScope, LeadCounts, SalesReader, SpendDay } from "./DashboardReaders";
+import type { AdsReader, BreakdownRow, LeadCounts, SalesReader, SpendDay } from "./DashboardReaders";
+import { DashboardScopeResolver } from "./DashboardScopeResolver";
 import { MoneyBook, mostUsedCurrency, ratio, round } from "./MoneyBook";
 
 // ---------------------------------------------------------------------------
@@ -17,13 +18,12 @@ export interface DashboardActor {
   readonly canSeeAds: boolean;
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export { scopeOf } from "./DashboardScopeResolver";
 
-export function scopeOf(filters: DashboardFilters): DashboardScope {
-  return {
-    ...(filters.connectionId && UUID.test(filters.connectionId) ? { connectionId: filters.connectionId } : {}),
-    ...(filters.productId && UUID.test(filters.productId) ? { productId: filters.productId } : {})
-  };
+/** La moneda que pidió la persona, si es un código ISO que se puede convertir; si no, `null`. */
+export function requestedCurrency(currency: string | undefined, converter: CurrencyConverter): string | null {
+  const code = currency?.trim().toUpperCase() ?? "";
+  return /^[A-Z]{3}$/.test(code) && converter.has(code) ? code : null;
 }
 
 export class SalesDashboardService {
@@ -32,7 +32,9 @@ export class SalesDashboardService {
     private readonly ads: AdsReader,
     private readonly fx: FxRates,
     private readonly timezoneOf: (tenantId: string) => Promise<string>,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    /** Resuelve la línea de venta y los filtros (sin líneas, solo lo pedido a mano). */
+    private readonly scopes: DashboardScopeResolver = new DashboardScopeResolver()
   ) {}
 
   public async overview(actor: DashboardActor, filters: DashboardFilters): Promise<SalesDashboardResponse> {
@@ -40,7 +42,7 @@ export class SalesDashboardService {
     const timezone = await this.timezoneOf(tenantId);
     const period = periodOf(filters.from, filters.to, timezone, this.now());
     const before = previousPeriod(period, timezone);
-    const scope = scopeOf(filters);
+    const scope = await this.scopes.resolve(tenantId, filters);
     await this.fx.refresh();
     const [rates, days, prevDays, leads, prevLeads, byHour, review, recent, status] = await Promise.all([
       this.fx.table(before.fromDay, period.toDay),
@@ -51,12 +53,15 @@ export class SalesDashboardService {
       this.sales.byHour(tenantId, period, scope, timezone),
       this.sales.reviewCount(tenantId),
       this.sales.recent(tenantId, scope, 8),
-      actor.canSeeAds ? this.ads.status(tenantId) : Promise.resolve(null)
+      actor.canSeeAds ? this.ads.status(tenantId, scope) : Promise.resolve(null)
     ]);
     const converter = new CurrencyConverter(rates);
-    // La moneda de reporte: la de la cuenta de anuncios con más gasto o, si no, la más vendida que se pueda convertir.
+    // La moneda de reporte: la que pidió la persona o, si no, la de la cuenta de anuncios con más gasto o la más vendida que se pueda convertir.
     const convertible = (rows: typeof days) => rows.filter((row) => converter.has(row.currency));
-    const book = new MoneyBook(converter, status?.mainCurrency ?? mostUsedCurrency(convertible(days)) ?? mostUsedCurrency(days) ?? mostUsedCurrency(prevDays) ?? "USD");
+    const book = new MoneyBook(
+      converter,
+      requestedCurrency(filters.currency, converter) ?? status?.mainCurrency ?? mostUsedCurrency(convertible(days)) ?? mostUsedCurrency(days) ?? mostUsedCurrency(prevDays) ?? "USD"
+    );
     const money = (day: { day: string; currency: string }, amount: number) => ({ amount, currency: day.currency, day: day.day });
 
     const revenue = book.sum(days, (d) => money(d, d.amount));
@@ -67,7 +72,7 @@ export class SalesDashboardService {
     const costsKnown = count > 0 && days.every((d) => d.withoutCost === 0);
 
     const hasAds = status !== null && status.accounts > 0;
-    const [spendDays, prevSpendDays] = hasAds ? await Promise.all([this.ads.spend(tenantId, period), this.ads.spend(tenantId, before)]) : [[], []];
+    const [spendDays, prevSpendDays] = hasAds ? await Promise.all([this.ads.spend(tenantId, period, scope), this.ads.spend(tenantId, before, scope)]) : [[], []];
     const spend = book.sum(spendDays, (d) => money(d, d.spend));
     const prevSpend = book.sum(prevSpendDays, (d) => money(d, d.spend));
     const prevCost = book.sum(prevDays, (d) => money(d, d.cost));

@@ -89,9 +89,38 @@ El resumen, la tabla con Campañas · Conjuntos · Anuncios, «¿Por qué Meta d
 
 ## Dinero en una sola moneda
 
-- Todo se muestra en la **moneda de reporte**: la de la cuenta publicitaria con más gasto o, si no hay, la más vendida que se pueda convertir.
+- Todo se muestra en la **moneda de reporte**: la que la persona eligió con el botón de moneda (`currency`) o, si no eligió, la de la cuenta publicitaria con más gasto o la más vendida que se pueda convertir.
 - Lo de otras monedas se convierte con la tasa **del día de cada monto** (`fx_rates`, unidades por 1 USD). La tasa se trae una vez al día de open.er-api.com, que incluye COP, VES y MXN.
 - Si falta una tasa, ese monto no se suma y la pantalla lo dice. Nunca se inventa un número.
+
+## Líneas de venta, filtros y moneda
+
+A la derecha de las pestañas hay tres botones (`apps/web/src/features/dashboard/scope/`); cada uno abre su panel encima del Dashboard:
+
+- **● Línea**: «Todo el negocio» o una **línea de venta** (`domains/sales-lines`). Desde ahí se crean y se editan.
+- **Filtros**: varios números, productos y campañas de Meta a la vez. Un número dice cuántos están activos.
+- **Moneda**: con la bandera y el nombre (🇨🇴 COP · Peso colombiano).
+
+**Qué recorta cada filtro** (`DashboardScope`):
+
+| Filtro | Recorta |
+|---|---|
+| Números | Ventas, leads y atención |
+| Productos | Ventas y conversión |
+| Campañas | El gasto, las campañas activas y las ventas «por anuncio» (las orgánicas siguen contando) |
+
+**Cómo se combinan** (`DashboardScopeResolver`):
+
+- Lo elegido a mano gana sobre la línea; lo que no se eligió sale de la línea. La web y el MCP mandan la línea (`line`) y lo elegido.
+- `*` en una lista = «todos, a propósito»: le gana a la línea sin recortar nada.
+- Ids inválidos o líneas de otra cuenta se ignoran.
+
+**Ejemplo:** la línea «Venezuela» = productos Mega Pack + campaña «Venezuela · USD». El Dashboard muestra solo sus ventas, el gasto de esa campaña, su ROAS y su ganancia, y en bolívares si se elige VES.
+
+**Cómo está armado:**
+
+- Analytics recibe las líneas por un puerto (`SalesLineLookup`) que arma `composeSalesLineServices`. Ningún dominio importa al otro.
+- Todo viaja en la dirección de la web: `line`, `numbers`, `products`, `campaigns`, `currency`. Así se puede compartir una vista.
 
 ## La ganancia real
 
@@ -156,9 +185,12 @@ SalesDashboardService · AdsDashboardService · AttentionDashboardService (domai
 | `POST /ads/meta/oauth` · `POST /ads/meta/token` | `ads.manage` | Conectar |
 | `PATCH /ads/accounts/:id` · `POST /ads/accounts/:id/sync` · `DELETE /ads/connection` | `ads.manage` | Elegir, sincronizar ya (una vez cada 5 min), desconectar |
 | `GET /ads/meta/callback` | — (`state` firmado) | La vuelta del inicio de sesión |
-| `GET /dashboard/sales?from&to&connectionId&productId` | `analytics.read` (el gasto, con `ads.read`) | Ventas |
-| `GET /dashboard/ads?from&to&level` | `ads.read` | Anuncios |
-| `GET /dashboard/attention?from&to&connectionId` | `analytics.read` | Atención |
+| `GET /dashboard/sales?from&to&line&connectionIds&productIds&campaignIds&currency` | `analytics.read` (el gasto, con `ads.read`) | Ventas |
+| `GET /dashboard/ads?from&to&level&line&campaignIds&productIds&connectionIds&currency` | `ads.read` | Anuncios |
+| `GET /dashboard/attention?from&to&line&connectionIds` | `analytics.read` | Atención |
+| `GET /sales-lines` · `POST /sales-lines` · `PATCH`/`DELETE /sales-lines/:id` | `analytics.read` · `sales.manage` | Líneas de venta |
+
+Las listas van separadas por comas. Se siguen aceptando `connectionId` y `productId` de uno solo.
 
 ## Pruebas
 

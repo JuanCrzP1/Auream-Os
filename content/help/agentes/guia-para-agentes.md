@@ -48,12 +48,14 @@ Cada herramienta aparece solo si la credencial tiene permiso en su área.
 | Ver o crear productos y precios | `list_products`, `create_product`, `update_product` | Ventas y productos |
 | Ver, anotar, corregir o anular ventas | `list_sales`, `sales_summary`, `record_sale`, `update_sale` | Ventas y productos |
 | Ver el CRM o mover clientes de etapa | `list_pipelines`, `get_pipeline_board`, `get_contact_crm`, `move_contact_stage`, `update_deal` | CRM |
-| Ver ROAS real, gasto, anuncios y atención | `dashboard_sales`, `dashboard_ads`, `dashboard_attention` | Dashboard y anuncios |
+| Ver ROAS real, gasto, anuncios y atención (de todo el negocio o de una línea, en la moneda que pidan) | `dashboard_sales`, `dashboard_ads`, `dashboard_attention` | Dashboard y anuncios |
+| Ver o armar líneas de venta («Venezuela», «Colombia») | `list_sales_lines`, `create_sales_line`, `update_sales_line`, `delete_sales_line` | Dashboard (ver) · Ventas y productos (editar) |
 
 ## Tareas completas
 
 - **Que un flujo registre sus ventas:** `list_products` (si no existe, pide nombre y precio y usa `create_product`) → `get_flow` → `add_block` de tipo `record-sale` con `after_block_id` = el bloque tras el pago confirmado (la salida «válido» del Comprobante o la etiqueta de pagado; se inserta en medio y conserva lo que seguía), con el producto, `amountMode: variable`, el monto `{comprobante.valor}`, la moneda `{comprobante.moneda}` y la referencia `{comprobante.referencia}` → `get_flow` para revisar.
 - **Que un flujo arranque en un número:** `list_connections` → `list_flows` → `list_triggers` (para no chocar con uno igual) → confirma con la persona → `create_trigger`.
+- **¿Cómo va una parte del negocio?:** `list_sales_lines` → `dashboard_sales` con su `line_id` (y `currency`, p. ej. `VES`). Si no existe la línea, propón crearla con `create_sales_line` (productos de `list_products`, campañas de `dashboard_ads`).
 - **¿Cómo voy?:** `dashboard_sales` (ROAS real, ventas, gasto y qué hacer con cada campaña) y `sales_summary` (lo vendido por producto y por día).
 - **Corregir ventas «Por revisar»:** `list_sales` con `status: review` → completa producto, monto y moneda con `update_sale` → apruébala (`status: approved`) solo si la persona lo confirma.
 

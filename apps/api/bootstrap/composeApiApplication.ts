@@ -40,6 +40,7 @@ import { composeContactNoteServices } from "../composition/composeContactNoteSer
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
 import { composeSimulatorTools } from "../composition/composeSimulatorTools";
+import { composeSalesLineServices } from "../composition/composeSalesLineServices";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
 
 // ---------------------------------------------------------------------------
@@ -150,8 +151,14 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     onContactWrote: (tenantId, contactId) => crm.tracker.contactWrote(tenantId, contactId)
   });
   // Meta Ads (se sincroniza en la cola de tareas) y el Dashboard.
-  const ads = composeAdsServices(config, tenancy.sqlClient, scheduling.scheduler, (error, context) =>
-    logger.warn("ads.sync_failed", { ...context, error: error instanceof Error ? error.message : String(error) })
+  // Líneas de venta: partes del negocio que el Dashboard mide aparte.
+  const salesLines = composeSalesLineServices(tenancy.sqlClient);
+  const ads = composeAdsServices(
+    config,
+    tenancy.sqlClient,
+    scheduling.scheduler,
+    (error, context) => logger.warn("ads.sync_failed", { ...context, error: error instanceof Error ? error.message : String(error) }),
+    salesLines.lookup
   );
   // Difusiones: envía por Mensajería, a su ritmo, en la cola de tareas.
   const broadcasts = composeBroadcastServices({
@@ -218,6 +225,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     quickReplyServices: composeQuickReplyServices(tenancy.sqlClient),
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
+    salesLineServices: salesLines.lines,
     simulatorTools: composeSimulatorTools(config, connectionsServices.channel, scheduling.scheduler),
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
@@ -232,6 +240,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       sales: { products: sales.products, sales: sales.sales, insights: sales.insights },
       crm: crm.routes,
       dashboard: ads.dashboard,
+      salesLines: salesLines.lines,
       help: help.help,
       // Cada acción de un agente queda en el registro (sin sus datos).
       onToolCall: (access, report) => logger.info("mcp.tool_call", { tenantId: access.tenantId, credentialId: access.credentialId, ...report })

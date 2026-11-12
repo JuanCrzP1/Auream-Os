@@ -5,6 +5,7 @@ import { OAuthStateSigner } from "../../../domains/ads/application/OAuthState";
 import { AdsDashboardService } from "../../../domains/analytics/application/AdsDashboardService";
 import { AttentionDashboardService } from "../../../domains/analytics/application/AttentionDashboardService";
 import { SalesDashboardService } from "../../../domains/analytics/application/SalesDashboardService";
+import { DashboardScopeResolver, type SalesLineLookup } from "../../../domains/analytics/application/DashboardScopeResolver";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { MetaMarketingClient } from "../../../infrastructure/meta/MetaMarketingClient";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
@@ -39,15 +40,23 @@ export interface AdsModule {
   readonly appOrigin: string;
 }
 
-export function composeAdsServices(config: ApiConfig, sql: SqlClient, scheduler: TaskScheduler, onError: (error: unknown, context: Record<string, unknown>) => void): AdsModule {
+export function composeAdsServices(
+  config: ApiConfig,
+  sql: SqlClient,
+  scheduler: TaskScheduler,
+  onError: (error: unknown, context: Record<string, unknown>) => void,
+  /** Las líneas de venta, para filtrar el Dashboard por línea. */
+  lines: SalesLineLookup | null = null
+): AdsModule {
   const tenants = new SqlTenantResolver(sql, config.defaultTimezone);
   const timezoneOf = async (tenantId: string) => (await tenants.resolve(tenantId)).timezone;
   const fx = new SqlFxRates(sql);
   const adsReader = new SqlDashboardAds(sql);
+  const scopes = new DashboardScopeResolver(lines);
   const dashboard: DashboardModule = {
-    sales: new SalesDashboardService(new SqlDashboardSales(sql), adsReader, fx, timezoneOf),
-    ads: new AdsDashboardService(adsReader, fx, timezoneOf),
-    attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf)
+    sales: new SalesDashboardService(new SqlDashboardSales(sql), adsReader, fx, timezoneOf, undefined, scopes),
+    ads: new AdsDashboardService(adsReader, fx, timezoneOf, undefined, scopes),
+    attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf, undefined, scopes)
   };
   if (!config.credentialsKeyRing) return { connection: null, syncHandler: null, dashboard, appOrigin: config.publicAppOrigin };
 

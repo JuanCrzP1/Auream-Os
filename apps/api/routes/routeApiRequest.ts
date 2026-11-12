@@ -29,6 +29,8 @@ import type { GroupActivity } from "../../../domains/groups/application/GroupAct
 import { routeAdsRequest } from "./routeAdsRequest";
 import { routeAdsCallback } from "./routeAdsCallback";
 import { routeDashboardRequest } from "./routeDashboardRequest";
+import { routeSalesLinesRequest } from "./routeSalesLinesRequest";
+import type { SalesLineServices } from "../../../domains/sales-lines/application/SalesLineServices";
 import type { AdsModule } from "../composition/composeAdsServices";
 import { recordLastSeen } from "../middleware/recordLastSeen";
 import { routeInvitationPublic } from "./routeInvitationPublic";
@@ -116,6 +118,8 @@ export interface ApiRouterDependencies {
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
   /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
   readonly adsServices?: AdsModule;
+  /** Líneas de venta (`/sales-lines`). Ausente: responde 503. */
+  readonly salesLineServices?: SalesLineServices;
   /** WhatsApp simulado (solo desarrollo): «Adelantar el tiempo». Ausente: la ruta no existe. */
   readonly simulatorTools?: SimulatorTools;
 }
@@ -218,6 +222,7 @@ export async function routeApiRequest(
   if (await routeQuickRepliesRequest(request, response, url, dependencies.quickReplyServices, requestContext)) return;
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
   if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
+  if (await routeSalesLinesRequest(request, response, url, dependencies.salesLineServices, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;
   if (await routeWebhooksRequest(request, response, url, dependencies.webhookServices ?? null, requestContext)) return;
   if (await routeMcpCredentialsRequest(request, response, url, dependencies.mcpServer, requestContext)) return;

@@ -6,6 +6,7 @@ import { saleTools } from "../../apps/api/mcp/tools/saleTools.js";
 import { triggerTools } from "../../apps/api/mcp/tools/triggerTools.js";
 import { crmTools } from "../../apps/api/mcp/tools/crmTools.js";
 import { analyticsTools } from "../../apps/api/mcp/tools/analyticsTools.js";
+import { salesLineTools } from "../../apps/api/mcp/tools/salesLineTools.js";
 import { requirePermissions, scopesOf } from "../../domains/mcp/domain/McpCredential.js";
 
 // ---------------------------------------------------------------------------
@@ -32,8 +33,9 @@ function services() {
     deals: { update: vi.fn(async () => ({}) as never), contact: vi.fn(async () => ({}) as never) }
   };
   const dashboard = { sales: { overview: vi.fn(async () => ({}) as never) }, ads: { performance: vi.fn(async () => ({}) as never) }, attention: { overview: vi.fn(async () => ({}) as never) } };
-  const tools = [...productTools(catalog), ...saleTools(sales, insights), ...triggerTools(triggers), ...crmTools(crm), ...analyticsTools(dashboard)];
-  return { catalog, sales, insights, triggers, crm, dashboard, tools };
+  const lines = { list: vi.fn(async () => ({ lines: [], canManage: false })), create: vi.fn(async () => ({}) as never), update: vi.fn(async () => ({}) as never), remove: vi.fn(async () => undefined) };
+  const tools = [...productTools(catalog), ...saleTools(sales, insights), ...triggerTools(triggers), ...crmTools(crm), ...analyticsTools(dashboard), ...salesLineTools(lines)];
+  return { catalog, sales, insights, triggers, crm, dashboard, lines, tools };
 }
 
 describe("productos", () => {
@@ -87,6 +89,14 @@ describe("disparadores, CRM y Dashboard", () => {
     await find(s.tools, "dashboard_sales").run({ from: "2026-11-01", to: "2026-11-12" }, ctx);
     expect(s.dashboard.sales.overview).toHaveBeenCalledWith({ tenantId: T, canSeeAds: true }, { from: "2026-11-01", to: "2026-11-12" });
   });
+
+  it("líneas de venta: el Dashboard de una línea en otra moneda, y crear una con sus productos y campañas", async () => {
+    const s = services();
+    await find(s.tools, "dashboard_sales").run({ line_id: "l1", currency: "VES", campaign_ids: ["111"] }, ctx);
+    expect(s.dashboard.sales.overview).toHaveBeenCalledWith({ tenantId: T, canSeeAds: true }, { lineId: "l1", currency: "VES", campaignIds: ["111"] });
+    await find(s.tools, "create_sales_line").run({ name: "Venezuela", product_ids: ["p1"], campaign_ids: ["111"] }, ctx);
+    expect(s.lines.create).toHaveBeenCalledWith(T, { name: "Venezuela", productIds: ["p1"], campaignIds: ["111"] });
+  });
 });
 
 describe("cada herramienta, solo con el permiso de su área", () => {
@@ -98,8 +108,8 @@ describe("cada herramienta, solo con el permiso de su área", () => {
 
   it("ver ventas no deja anotar ni editar; editar ventas sí; Dashboard solo lee", async () => {
     expect(await listed({ sales: "read" })).toEqual(["list_products", "list_sales", "sales_summary"]);
-    expect(await listed({ sales: "write" })).toEqual(["create_product", "list_products", "list_sales", "record_sale", "sales_summary", "update_product", "update_sale"]);
-    expect(await listed({ analytics: "read" })).toEqual(["dashboard_ads", "dashboard_attention", "dashboard_sales"]);
+    expect(await listed({ sales: "write" })).toEqual(["create_product", "create_sales_line", "delete_sales_line", "list_products", "list_sales", "record_sale", "sales_summary", "update_product", "update_sale", "update_sales_line"]);
+    expect(await listed({ analytics: "read" })).toEqual(["dashboard_ads", "dashboard_attention", "dashboard_sales", "list_sales_lines"]);
     expect(await listed({ connections: "read" })).toEqual(["list_triggers"]);
     expect(await listed({ crm: "read" })).toEqual(["get_contact_crm", "get_pipeline_board", "list_pipelines"]);
   });

@@ -12,16 +12,28 @@ import type { SqlExecutor } from "./SqlClient";
 /** `$1` cuenta · `$2` desde · `$3` hasta (excluido), y los filtros que pidan. */
 function where(period: Period, scope: DashboardScope, params: unknown[]): string {
   params.push(period.from.toISOString(), period.until.toISOString());
-  const clauses = ["s.tenant_id = $1", "s.status = 'approved'", "s.sold_at >= $2", "s.sold_at < $3"];
-  if (scope.connectionId) {
-    params.push(scope.connectionId);
-    clauses.push(`s.connection_id = $${params.length}`);
+  return ["s.tenant_id = $1", "s.status = 'approved'", "s.sold_at >= $2", "s.sold_at < $3", ...saleFilters(scope, params)].join(" and ");
+}
+
+/** Números y productos recortan las ventas (cada lista vacía = todos). */
+function saleFilters(scope: DashboardScope, params: unknown[]): string[] {
+  const clauses: string[] = [];
+  if (scope.connectionIds?.length) {
+    params.push([...scope.connectionIds]);
+    clauses.push(`s.connection_id = any($${params.length}::uuid[])`);
   }
-  if (scope.productId) {
-    params.push(scope.productId);
-    clauses.push(`s.product_id = $${params.length}`);
+  if (scope.productIds?.length) {
+    params.push([...scope.productIds]);
+    clauses.push(`s.product_id = any($${params.length}::uuid[])`);
   }
-  return clauses.join(" and ");
+  return clauses;
+}
+
+/** «Por anuncio»: un anuncio de las cuentas conectadas y, si se filtran campañas, de una de ellas. */
+function adCondition(scope: DashboardScope, params: unknown[]): string {
+  if (!scope.campaignIds?.length) return "";
+  params.push([...scope.campaignIds]);
+  return `and e.campaign_id = any($${params.length}::text[])`;
 }
 
 const tzParam = (params: unknown[], timezone: string) => {
@@ -36,14 +48,15 @@ export class SqlDashboardSales implements SalesReader {
     const params: unknown[] = [tenantId];
     const condition = where(period, scope, params);
     const tz = tzParam(params, timezone);
+    const byCampaign = adCondition(scope, params);
     const { rows } = await this.sql.query<{ day: string; currency: string; amount: string; count: string; ad_amount: string | null; ad_count: string; cost: string | null; without_cost: string }>(
       `select to_char(s.sold_at at time zone ${tz}, 'YYYY-MM-DD') as day, s.currency, sum(s.amount) as amount, count(*) as count,
               sum(s.amount) filter (where ad.known) as ad_amount, count(*) filter (where ad.known) as ad_count,
               sum(pp.cost) as cost, count(*) filter (where pp.cost is null) as without_cost
          from sales s
          left join product_prices pp on pp.product_id = s.product_id and pp.country = s.country and pp.currency = s.currency
-         -- «Por anuncio»: solo anuncios de las cuentas conectadas (así cuadra con el gasto).
-         cross join lateral (select exists (select 1 from ad_entities e where e.tenant_id = s.tenant_id and e.level = 'ad' and e.external_id = s.ad_source_id) as known) ad
+         -- «Por anuncio»: solo anuncios de las cuentas conectadas (y de las campañas elegidas): así cuadra con el gasto.
+         cross join lateral (select exists (select 1 from ad_entities e where e.tenant_id = s.tenant_id and e.level = 'ad' and e.external_id = s.ad_source_id ${byCampaign}) as known) ad
         where ${condition}
         group by 1, 2`,
       params
@@ -93,8 +106,8 @@ export class SqlDashboardSales implements SalesReader {
 
   public async leads(tenantId: string, period: Period, scope: DashboardScope): Promise<LeadCounts> {
     const params: unknown[] = [tenantId, period.from.toISOString(), period.until.toISOString()];
-    const byConnection = scope.connectionId ? (params.push(scope.connectionId), `and v.connection_id = $${params.length}`) : "";
-    const byProduct = scope.productId ? (params.push(scope.productId), `and s.product_id = $${params.length}`) : "";
+    const byConnection = scope.connectionIds?.length ? (params.push([...scope.connectionIds]), `and v.connection_id = any($${params.length}::uuid[])`) : "";
+    const byProduct = scope.productIds?.length ? (params.push([...scope.productIds]), `and s.product_id = any($${params.length}::uuid[])`) : "";
     // Compró: una venta aprobada del mismo cliente dentro del periodo (la de un
     // flujo trae el contacto; una anotada a mano, solo el teléfono).
     const { rows } = await this.sql.query<{ total: string; from_ads: string; converted: string }>(
@@ -119,7 +132,7 @@ export class SqlDashboardSales implements SalesReader {
 
   public async recent(tenantId: string, scope: DashboardScope, limit: number): Promise<ReadonlyArray<RecentSale>> {
     const params: unknown[] = [tenantId];
-    const filters = [scope.connectionId ? (params.push(scope.connectionId), `and s.connection_id = $${params.length}`) : "", scope.productId ? (params.push(scope.productId), `and s.product_id = $${params.length}`) : ""].join(" ");
+    const filters = saleFilters(scope, params).map((clause) => `and ${clause}`).join(" ");
     params.push(limit);
     const { rows } = await this.sql.query<{ id: string; customer_name: string | null; product_name: string | null; amount: string; currency: string; ad_name: string | null; connection_name: string | null; sold_at: Date | string }>(
       `select s.id, s.customer_name, s.product_name, s.amount, s.currency, coalesce(e.name, case when s.ad_source_id is not null then 'Anuncio ' || s.ad_source_id end) as ad_name, c.name as connection_name, s.sold_at

@@ -3,7 +3,7 @@ import type { AdsDashboardService } from "../../../../domains/analytics/applicat
 import type { AttentionDashboardService } from "../../../../domains/analytics/application/AttentionDashboardService";
 import type { SalesDashboardService } from "../../../../domains/analytics/application/SalesDashboardService";
 import type { McpInputSchema, McpTool } from "../McpTool";
-import { defined, textArg, type ToolArgs } from "./toolArgs";
+import { defined, stringListArg, textArg, type ToolArgs } from "./toolArgs";
 
 // ---------------------------------------------------------------------------
 // El Dashboard (área «Dashboard y anuncios», solo ver: `analytics.read` y
@@ -23,11 +23,23 @@ const PERIOD = "Fecha `YYYY-MM-DD` en la zona horaria de la empresa. Sin fechas:
 const filterProperties: McpInputSchema["properties"] = {
   from: { type: "string", description: `Desde. ${PERIOD}` },
   to: { type: "string", description: `Hasta. ${PERIOD}` },
-  connection_id: { type: "string", description: "Solo un número (de list_connections)." }
+  line_id: { type: "string", description: "Solo una línea de venta (de list_sales_lines): sus productos, números y campañas." },
+  connection_ids: { type: "array", items: { type: "string" }, description: "Solo estos números (de list_connections). Gana sobre la línea." },
+  product_ids: { type: "array", items: { type: "string" }, description: "Solo estos productos (de list_products). Gana sobre la línea." },
+  campaign_ids: { type: "array", items: { type: "string" }, description: "Solo estas campañas de Meta: su gasto y las ventas que trajeron. Gana sobre la línea." },
+  currency: { type: "string", description: "Moneda en que ver los montos (COP, USD, VES…). Sin ella: la de la cuenta de anuncios o la más vendida." }
 };
 
 function filtersOf(args: ToolArgs): DashboardFilters {
-  return defined({ from: textArg(args, "from"), to: textArg(args, "to"), connectionId: textArg(args, "connection_id"), productId: textArg(args, "product_id") });
+  return defined({
+    from: textArg(args, "from"),
+    to: textArg(args, "to"),
+    lineId: textArg(args, "line_id"),
+    connectionIds: stringListArg(args, "connection_ids"),
+    productIds: stringListArg(args, "product_ids"),
+    campaignIds: stringListArg(args, "campaign_ids"),
+    currency: textArg(args, "currency")
+  });
 }
 
 export function analyticsTools(dashboard: DashboardToolServices): McpTool[] {
@@ -39,7 +51,7 @@ export function analyticsTools(dashboard: DashboardToolServices): McpTool[] {
         "Ventas del periodo y su comparación con el anterior: facturación, ventas, compra promedio, ganancia (facturación − inversión en Meta − costos si se conocen), ROAS real (y el que reporta Meta), facturación por anuncios, gasto en Meta, costo por venta y por chat, leads nuevos, conversión (de los leads nuevos, cuántos compraron: `conversion`, `convertedLeads`), el embudo del anuncio a la venta, qué hacer con cada campaña (escalar, revisar, apagar) y ventas por hora, número, producto y país.",
       scope: "analytics.read",
       readOnly: true,
-      inputSchema: { type: "object", properties: { ...filterProperties, product_id: { type: "string", description: "Solo un producto (de list_products)." } } },
+      inputSchema: { type: "object", properties: filterProperties },
       run: async (args, { tenantId }) => dashboard.sales.overview({ tenantId, canSeeAds: true }, filtersOf(args))
     },
     {

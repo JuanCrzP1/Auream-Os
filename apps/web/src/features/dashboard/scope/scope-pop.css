@@ -1,0 +1,123 @@
+/* ===== PANELES DE LA BARRA DEL DASHBOARD =====
+   Línea, Filtros y Moneda: el panel, sus opciones y las casillas. */
+
+.scope-pop {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 320px;
+  max-height: min(70vh, 560px);
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgb(20 16 60 / 0.16);
+}
+
+.scope-pop--wide { width: 360px; }
+
+.scope-pop h4 {
+  margin: 4px 8px 6px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scope-pop__section { padding: 4px 0; }
+.scope-pop__hint { font-weight: 500; letter-spacing: 0; text-transform: none; }
+.scope-option-row { display: flex; align-items: center; }
+.scope-pop__section + .scope-pop__section { border-top: 1px solid var(--line); }
+.scope-pop__hr { height: 1px; margin: 6px 4px; background: var(--line); }
+.scope-pop__empty { margin: 4px 10px 8px; color: var(--muted); font-size: 0.78rem; }
+.scope-pop__note { margin: 6px 8px 2px; color: var(--muted); font-size: 0.72rem; line-height: 1.4; }
+
+.scope-pop__footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 6px;
+}
+
+.scope-pop__link {
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.scope-pop__link--primary { color: var(--primary); }
+
+.scope-pop__search {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 2px 0 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.scope-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scope-option:hover { background: var(--chip-bg); }
+.scope-option[aria-checked="true"] { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); }
+.scope-option small { display: block; color: var(--muted); font-size: 0.72rem; }
+.scope-option__body { flex: 1; min-width: 0; }
+.scope-option__check { color: var(--primary); font-weight: 800; }
+.scope-option--action { color: var(--primary); font-weight: 700; }
+
+.scope-option__edit {
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.scope-option__edit:hover { background: var(--surface); color: var(--primary); }
+
+.scope-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.scope-check:hover { background: var(--chip-bg); }
+.scope-check input { width: 16px; height: 16px; accent-color: var(--primary); }
+.scope-check__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scope-check small { color: var(--muted); font-size: 0.72rem; white-space: nowrap; }
+
+@media (max-width: 720px) {
+  .scope-pop { right: auto; left: 0; width: min(92vw, 360px); }
+}

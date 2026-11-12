@@ -17,9 +17,29 @@ import { sendJson } from "../http/sendJson";
 
 const ANALYTICS_READ: Scope = "analytics.read";
 
-function filtersOf(url: URL): DashboardFilters {
-  const get = (key: string) => url.searchParams.get(key) ?? undefined;
-  return { from: get("from"), to: get("to"), connectionId: get("connectionId"), productId: get("productId") };
+/**
+ * Los filtros de la dirección. Las listas van separadas por comas
+ * (`productIds=a,b`); vacías cuentan como no pedidas. `line` es una línea de
+ * venta: lo que no se filtre a mano sale de ella.
+ */
+export function filtersOf(url: URL): DashboardFilters {
+  const get = (key: string) => url.searchParams.get(key)?.trim() || undefined;
+  const list = (key: string) => {
+    const items = (get(key) ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+    return items.length > 0 ? items.slice(0, 200) : undefined;
+  };
+  const filters: DashboardFilters = {
+    from: get("from"),
+    to: get("to"),
+    connectionId: get("connectionId"),
+    productId: get("productId"),
+    connectionIds: list("connectionIds"),
+    productIds: list("productIds"),
+    campaignIds: list("campaignIds"),
+    lineId: get("line"),
+    currency: get("currency")
+  };
+  return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined)) as DashboardFilters;
 }
 
 export async function routeDashboardRequest(

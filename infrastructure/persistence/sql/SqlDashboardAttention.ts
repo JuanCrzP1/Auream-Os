@@ -27,9 +27,9 @@ function threads(connectionFilter: string): string {
 export class SqlDashboardAttention implements AttentionReader {
   public constructor(private readonly sql: SqlExecutor) {}
 
-  public async chats(tenantId: string, period: Period, connectionId: string | undefined): Promise<ChatCounts> {
+  public async chats(tenantId: string, period: Period, connectionIds: ReadonlyArray<string> | undefined): Promise<ChatCounts> {
     const params: unknown[] = [tenantId, period.from.toISOString(), period.until.toISOString()];
-    const filter = connectionId ? (params.push(connectionId), `and v.connection_id = $${params.length}`) : "";
+    const filter = connectionIds?.length ? (params.push([...connectionIds]), `and v.connection_id = any($${params.length}::uuid[])`) : "";
     const { rows } = await this.sql.query<{ leads: string; attended: string; bot_only: string; median: string | null }>(
       `${threads(filter)}
        select count(*) as leads, count(first_agent) as attended, count(*) filter (where first_agent is null and bot) as bot_only,
@@ -46,9 +46,9 @@ export class SqlDashboardAttention implements AttentionReader {
     };
   }
 
-  public async waiting(tenantId: string, connectionId: string | undefined) {
+  public async waiting(tenantId: string, connectionIds: ReadonlyArray<string> | undefined) {
     const params: unknown[] = [tenantId];
-    const filter = connectionId ? (params.push(connectionId), `and connection_id = $${params.length}`) : "";
+    const filter = connectionIds?.length ? (params.push([...connectionIds]), `and connection_id = any($${params.length}::uuid[])`) : "";
     const { rows } = await this.sql.query<{ n: string; oldest: Date | string | null }>(
       `select count(*) as n, min(last_message_at) as oldest from conversations where tenant_id = $1 and last_message_author = 'contact' ${filter}`,
       params
@@ -57,9 +57,9 @@ export class SqlDashboardAttention implements AttentionReader {
     return { count: Number(rows[0]?.n ?? 0), oldestAt: oldest === null ? null : (oldest instanceof Date ? oldest : new Date(oldest)).toISOString() };
   }
 
-  public async heatmap(tenantId: string, period: Period, connectionId: string | undefined, timezone: string): Promise<number[][]> {
+  public async heatmap(tenantId: string, period: Period, connectionIds: ReadonlyArray<string> | undefined, timezone: string): Promise<number[][]> {
     const params: unknown[] = [tenantId, period.from.toISOString(), period.until.toISOString(), timezone];
-    const filter = connectionId ? (params.push(connectionId), `and connection_id = $${params.length}`) : "";
+    const filter = connectionIds?.length ? (params.push([...connectionIds]), `and connection_id = any($${params.length}::uuid[])`) : "";
     const { rows } = await this.sql.query<{ dow: number; block: number; n: string }>(
       `select (extract(isodow from created_at at time zone $4)::int - 1) as dow, (extract(hour from created_at at time zone $4)::int / 2) as block, count(*) as n
          from conversations where tenant_id = $1 and created_at >= $2 and created_at < $3 ${filter} group by 1, 2`,
@@ -70,9 +70,9 @@ export class SqlDashboardAttention implements AttentionReader {
     return grid;
   }
 
-  public async agents(tenantId: string, period: Period, connectionId: string | undefined): Promise<ReadonlyArray<AgentActivity>> {
+  public async agents(tenantId: string, period: Period, connectionIds: ReadonlyArray<string> | undefined): Promise<ReadonlyArray<AgentActivity>> {
     const params: unknown[] = [tenantId, period.from.toISOString(), period.until.toISOString()];
-    const filter = connectionId ? (params.push(connectionId), `and v.connection_id = $${params.length}`) : "";
+    const filter = connectionIds?.length ? (params.push([...connectionIds]), `and v.connection_id = any($${params.length}::uuid[])`) : "";
     const { rows } = await this.sql.query<{ agent_id: string; name: string | null; attended: string; messages: string; median: string | null }>(
       `with replies as (
          select m.agent_id, m.conversation_id, min(m.created_at) as first_reply, count(*) as messages, max(m.agent_name) as agent_name

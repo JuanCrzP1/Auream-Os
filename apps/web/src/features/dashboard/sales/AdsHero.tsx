@@ -14,7 +14,7 @@ export function AdsHero({ view, periodWords }: { readonly view: SalesDashboardRe
   const roasMoney = ads.roas === null ? null : ads.roas.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const cards: ReadonlyArray<{ label: string; value: string; note: string; tone?: "profit" }> = [
     { label: "Facturación por anuncios", value: money(ads.revenue.value, c), note: trendText(ads.revenue)?.text ?? `${ads.attributedSales} ventas` },
-    { label: "Gasto en Meta", value: money(ads.spend.value, c), note: `${trendText(ads.spend, "down")?.text ?? ""} · ${ads.activeCampaigns} campañas activas`.replace(/^ · /, "") },
+    { label: "Gasto en Meta", value: money(ads.spend.value, c), note: `${trendText(ads.spend, "down")?.text ?? ""} · ${ads.activeCampaigns} ${ads.activeCampaigns === 1 ? "campaña activa" : "campañas activas"}`.replace(/^ · /, "") },
     { label: view.realProfit !== null ? "Ganancia real" : "Ganancia (ventas − anuncios)", value: money(view.realProfit ?? ads.profit.value, c), note: view.realProfit !== null ? "ventas − anuncios − costo de productos" : (trendText(ads.profit)?.text ?? "frente al periodo anterior"), tone: "profit" },
     { label: "Costo por venta", value: money(ads.costPerSale, c), note: `${ads.attributedSales} ventas por anuncio` },
     { label: "Costo por chat", value: money(ads.costPerChat, c), note: `${ads.chats.toLocaleString("es-CO")} chats por anuncio` },
