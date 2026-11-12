@@ -12,7 +12,8 @@ const LABEL: Readonly<Record<Access, string>> = { all: "Todo", edit: "Editar", r
  * (`ROLE_SCOPES` y `TeamPolicy`): si cambian allá, se actualiza aquí.
  */
 const AREAS: ReadonlyArray<{ readonly area: string; readonly access: Readonly<Record<TeamRole, Access>> }> = [
-  { area: "Conversaciones y contactos", access: { tenant_owner: "all", tenant_admin: "all", operator: "all", viewer: "view" } },
+  // Atender: responder (también con respuestas rápidas), reaccionar y etiquetar. Eliminar chats y organizar las respuestas rápidas: dueños y administradores.
+  { area: "Conversaciones y contactos", access: { tenant_owner: "all", tenant_admin: "all", operator: "attend", viewer: "view" } },
   // Atender: mover clientes de etapa, poner valor y responsable, seguimientos. Configurar embudos: dueños y administradores.
   { area: "CRM (embudo y seguimientos)", access: { tenant_owner: "all", tenant_admin: "all", operator: "attend", viewer: "view" } },
   { area: "Automatizaciones", access: { tenant_owner: "edit", tenant_admin: "edit", operator: "view", viewer: "view" } },

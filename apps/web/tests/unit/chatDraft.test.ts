@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { QuickReply } from "@contracts/QuickReplyContracts";
 import { applyQuickReply, fillVariables, toParts } from "../../src/features/conversations/components/composer/draft";
-import { matchQuickReplies } from "../../src/features/conversations/components/composer/quickReplyMatch";
+import { copyShortcut, groupByCategory, matchQuickReplies } from "../../src/features/conversations/quick-replies/quickReplyText";
 import { threadView } from "../../src/features/conversations/components/threadView";
 import { msg } from "../helpers/conversationsApi";
 
-const reply = (shortcut: string, pieces: QuickReply["pieces"]): QuickReply => ({ id: shortcut, shortcut, pieces, useCount: 0, lastUsedAt: null, createdAt: "", updatedAt: "" });
+const reply = (shortcut: string, pieces: QuickReply["pieces"], category: string | null = null): QuickReply => ({ id: shortcut, shortcut, category, pieces, useCount: 0, lastUsedAt: null, createdAt: "", updatedAt: "" });
 
 describe("borrador del compositor", () => {
   it("{nombre} es el primer nombre; sin nombre se quita con su espacio", () => {
@@ -26,6 +26,18 @@ describe("borrador del compositor", () => {
   it("busca primero por atajo y luego por contenido, sin importar tildes", () => {
     const replies = [reply("envios", [{ kind: "text", text: "Hacemos envíos" }]), reply("precios", [{ kind: "text", text: "Envío gratis" }])];
     expect(matchQuickReplies(replies, "envi").map((item) => item.shortcut)).toEqual(["envios", "precios"]);
+  });
+});
+
+describe("catálogo de respuestas rápidas", () => {
+  it("agrupa por categoría en orden alfabético, «Sin categoría» al final", () => {
+    const groups = groupByCategory([reply("a", [], null), reply("b", [], "Precios"), reply("c", [], "Envíos"), reply("d", [], "Precios")]);
+    expect(groups.map((group) => [group.category, group.replies.length])).toEqual([["Envíos", 1], ["Precios", 2], ["Sin categoría", 1]]);
+  });
+
+  it("la copia toma un atajo libre", () => {
+    expect(copyShortcut("saludo", ["saludo"])).toBe("saludo-copia");
+    expect(copyShortcut("saludo", ["saludo", "saludo-copia", "saludo-copia-2"])).toBe("saludo-copia-3");
   });
 });
 

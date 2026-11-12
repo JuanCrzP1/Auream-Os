@@ -1,9 +1,11 @@
 // ---------------------------------------------------------------------------
 // Respuestas rápidas (Conversaciones): mensajes guardados de la cuenta que el
 // asesor pone en el chat sin copiar y pegar. Cada una tiene un atajo
-// («saludo», se busca escribiendo «/saludo») y una o varias piezas en orden:
-// textos y archivos (foto, video, audio o documento). Contrato compartido por
-// la API y la web.
+// («saludo», se busca escribiendo «/saludo»), una categoría opcional y una o
+// varias piezas en orden: textos y archivos (foto, video, audio o
+// documento). Se organizan en Configuración › Respuestas rápidas (dueños y
+// administradores); en el chat solo se buscan y se envían. Contrato
+// compartido por la API y la web.
 // ---------------------------------------------------------------------------
 
 import type { MediaKind } from "./MediaContracts";
@@ -27,6 +29,8 @@ export type QuickReplyPiece =
 export interface QuickReply {
   readonly id: string;
   readonly shortcut: string;
+  /** «Saludos», «Precios»…; `null`: sin categoría. */
+  readonly category: string | null;
   readonly pieces: ReadonlyArray<QuickReplyPiece>;
   /** Veces que el equipo la usó (las más usadas salen primero). */
   readonly useCount: number;
@@ -37,12 +41,14 @@ export interface QuickReply {
 
 export interface QuickReplyListResponse {
   readonly quickReplies: ReadonlyArray<QuickReply>;
-  /** Quien mira puede crear, editar y borrar (`conversations.write`). */
-  readonly canWrite: boolean;
+  /** Quien mira puede crear, editar y borrar (`conversations.manage`: dueños y administradores). */
+  readonly canManage: boolean;
 }
 
 export interface SaveQuickReplyRequest {
   readonly shortcut: string;
+  /** Vacía o ausente: sin categoría. */
+  readonly category?: string | null;
   readonly pieces: ReadonlyArray<QuickReplyPiece>;
 }
 
@@ -51,6 +57,9 @@ export const QUICK_REPLY_SHORTCUT = /^[a-z0-9_-][a-z0-9 _-]{0,39}$/;
 export const MAX_QUICK_REPLY_PIECES = 10;
 export const MAX_QUICK_REPLY_TEXT = 4096;
 export const MAX_QUICK_REPLIES = 500;
+export const MAX_QUICK_REPLY_CATEGORY = 40;
+/** Cómo se llama el grupo de las que no tienen categoría. */
+export const UNCATEGORIZED = "Sin categoría";
 
 /** El atajo como se guarda: «Saludo Inicial » → «saludo inicial». */
 export function normalizeShortcut(value: string): string {

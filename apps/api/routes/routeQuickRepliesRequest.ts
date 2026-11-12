@@ -10,11 +10,14 @@ import { sendJson } from "../http/sendJson";
 // ---------------------------------------------------------------------------
 // routeQuickRepliesRequest — `/quick-replies`: respuestas rápidas del chat.
 //
-//   GET    /quick-replies           las de la cuenta (+ canWrite)   conversations.read
-//   POST   /quick-replies           crear { shortcut, pieces }      conversations.write
-//   PUT    /quick-replies/:id       editar { shortcut, pieces }     conversations.write
-//   DELETE /quick-replies/:id       borrar                          conversations.write
-//   POST   /quick-replies/:id/use   se usó en un chat (orden)       conversations.write
+//   GET    /quick-replies           las de la cuenta (+ canManage)            conversations.read
+//   POST   /quick-replies/:id/use   se usó en un chat (orden)                 conversations.write
+//   POST   /quick-replies           crear { shortcut, category, pieces }      conversations.manage
+//   PUT    /quick-replies/:id       editar { shortcut, category, pieces }     conversations.manage
+//   DELETE /quick-replies/:id       borrar                                    conversations.manage
+//
+// Se organizan en Configuración (dueños y administradores); en el chat el
+// equipo solo las busca y las envía.
 // ---------------------------------------------------------------------------
 
 const ITEM = /^\/quick-replies\/([^/]+)$/;
@@ -36,14 +39,15 @@ export async function routeQuickRepliesRequest(
 
   const { tenantId } = context;
   const method = request.method ?? "GET";
-  requireScope(context, method === "GET" ? ConversationPermissions.read : ConversationPermissions.write, tenantId);
+  const scope = method === "GET" ? ConversationPermissions.read : USE.test(path) ? ConversationPermissions.write : ConversationPermissions.manage;
+  requireScope(context, scope, tenantId);
   const noContent = () => {
     response.statusCode = 204;
     response.end();
   };
 
   if (path === "/quick-replies" && method === "GET") {
-    sendJson(response, 200, { quickReplies: await services.list(tenantId), canWrite: context.scopes.includes(ConversationPermissions.write) });
+    sendJson(response, 200, { quickReplies: await services.list(tenantId), canManage: context.scopes.includes(ConversationPermissions.manage) });
     return true;
   }
   if (path === "/quick-replies" && method === "POST") {

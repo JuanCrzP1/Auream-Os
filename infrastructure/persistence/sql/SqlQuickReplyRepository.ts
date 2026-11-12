@@ -1,13 +1,14 @@
 import type { QuickReply, QuickReplyPiece } from "../../../contracts/QuickReplyContracts";
-import type { NewQuickReply, QuickReplyRepository } from "../../../domains/quick-replies/application/QuickReplyRepository";
+import type { NewQuickReply, QuickReplyChanges, QuickReplyRepository } from "../../../domains/quick-replies/application/QuickReplyRepository";
 import type { SqlClient } from "./SqlClient";
 import { isUuid, toIso } from "./sqlValues";
 
-// Respuestas rápidas en PostgreSQL (`038_chat_tools.sql`). Todo filtra por cuenta.
+// Respuestas rápidas en PostgreSQL (`038_chat_tools.sql`, `039_quick_reply_categories.sql`). Todo filtra por cuenta.
 
 interface Row {
   id: string;
   shortcut: string;
+  category: string | null;
   pieces: QuickReplyPiece[];
   use_count: number;
   last_used_at: Date | string | null;
@@ -15,11 +16,12 @@ interface Row {
   updated_at: Date | string;
 }
 
-const COLUMNS = "id, shortcut, pieces, use_count, last_used_at, created_at, updated_at";
+const COLUMNS = "id, shortcut, category, pieces, use_count, last_used_at, created_at, updated_at";
 
 const toQuickReply = (row: Row): QuickReply => ({
   id: row.id,
   shortcut: row.shortcut,
+  category: row.category,
   pieces: row.pieces,
   useCount: row.use_count,
   lastUsedAt: row.last_used_at ? toIso(row.last_used_at) : null,
@@ -53,17 +55,17 @@ export class SqlQuickReplyRepository implements QuickReplyRepository {
 
   public async create(reply: NewQuickReply): Promise<QuickReply> {
     const result = await this.sql.query<Row>(
-      `insert into quick_replies (id, tenant_id, shortcut, pieces, created_by) values ($1, $2, $3, $4::jsonb, $5) returning ${COLUMNS}`,
-      [reply.id, reply.tenantId, reply.shortcut, JSON.stringify(reply.pieces), reply.createdBy]
+      `insert into quick_replies (id, tenant_id, shortcut, category, pieces, created_by) values ($1, $2, $3, $4, $5::jsonb, $6) returning ${COLUMNS}`,
+      [reply.id, reply.tenantId, reply.shortcut, reply.category, JSON.stringify(reply.pieces), reply.createdBy]
     );
     return toQuickReply(result.rows[0]!);
   }
 
-  public async update(tenantId: string, id: string, changes: { readonly shortcut: string; readonly pieces: ReadonlyArray<QuickReplyPiece> }): Promise<QuickReply | null> {
+  public async update(tenantId: string, id: string, changes: QuickReplyChanges): Promise<QuickReply | null> {
     if (!isUuid(tenantId) || !isUuid(id)) return null;
     const result = await this.sql.query<Row>(
-      `update quick_replies set shortcut = $3, pieces = $4::jsonb, updated_at = now() where tenant_id = $1 and id = $2 returning ${COLUMNS}`,
-      [tenantId, id, changes.shortcut, JSON.stringify(changes.pieces)]
+      `update quick_replies set shortcut = $3, category = $4, pieces = $5::jsonb, updated_at = now() where tenant_id = $1 and id = $2 returning ${COLUMNS}`,
+      [tenantId, id, changes.shortcut, changes.category, JSON.stringify(changes.pieces)]
     );
     return result.rows[0] ? toQuickReply(result.rows[0]) : null;
   }

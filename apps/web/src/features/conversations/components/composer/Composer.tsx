@@ -8,7 +8,6 @@ import type { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
 import { ComposerTools } from "./ComposerTools";
 import { applyQuickReply, toParts } from "./draft";
 import { PendingPieces } from "./PendingPieces";
-import { QuickReplyEditor } from "./QuickReplyEditor";
 import { QuickReplyPicker, type QuickReplyPickerHandle } from "./QuickReplyPicker";
 import { useDraftPieces } from "./useDraftPieces";
 import { useVoiceRecorder } from "./useVoiceRecorder";
@@ -47,7 +46,6 @@ export function Composer({
   const [sending, setSending] = useState(false);
   const [popover, setPopover] = useState<Popover>(null);
   const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState<{ readonly reply: QuickReply | null } | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<QuickReplyPickerHandle>(null);
   const draft = useDraftPieces(onError);
@@ -132,13 +130,11 @@ export function Composer({
           ref={picker}
           replies={quickReplies.replies}
           status={quickReplies.status}
-          canWrite={quickReplies.canWrite}
+          canManage={quickReplies.canManage}
           query={quickQuery}
           searchable={!popover.fromSlash}
           onQuery={setSearch}
           onPick={pickQuickReply}
-          onNew={() => setEditing({ reply: null })}
-          onEdit={(reply) => setEditing({ reply })}
           onRetry={() => void quickReplies.reload()}
           onClose={() => setPopover(null)}
         />
@@ -181,14 +177,6 @@ export function Composer({
         </div>
       )}
 
-      {editing ? (
-        <QuickReplyEditor
-          reply={editing.reply}
-          onSave={(request) => quickReplies.save(request, editing.reply?.id)}
-          onDelete={() => quickReplies.remove(editing.reply!.id)}
-          onClose={() => setEditing(null)}
-        />
-      ) : null}
     </footer>
   );
 }

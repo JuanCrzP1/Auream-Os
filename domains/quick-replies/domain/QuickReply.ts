@@ -1,5 +1,6 @@
 import type { MediaKind } from "../../../contracts/MediaContracts";
 import {
+  MAX_QUICK_REPLY_CATEGORY,
   MAX_QUICK_REPLY_PIECES,
   MAX_QUICK_REPLY_TEXT,
   QUICK_REPLY_SHORTCUT,
@@ -8,9 +9,10 @@ import {
 } from "../../../contracts/QuickReplyContracts";
 
 // ---------------------------------------------------------------------------
-// Una respuesta rápida bien formada: atajo válido y de una a diez piezas
-// (textos no vacíos; archivos con enlace https y su tipo). Puro: dice qué
-// está mal en vez de lanzar, y la aplicación lo convierte en error.
+// Una respuesta rápida bien formada: atajo válido, categoría opcional y de
+// una a diez piezas (textos no vacíos; archivos con enlace https y su tipo).
+// Puro: dice qué está mal en vez de lanzar, y la aplicación lo convierte en
+// error.
 // ---------------------------------------------------------------------------
 
 const MEDIA_KINDS: ReadonlyArray<MediaKind> = ["image", "video", "audio", "file"];
@@ -24,6 +26,16 @@ export function checkShortcut(value: unknown): Checked<string> {
   if (!shortcut) return { ok: false, problem: "Escribe el atajo (por ejemplo «saludo»)." };
   if (!QUICK_REPLY_SHORTCUT.test(shortcut)) return { ok: false, problem: "El atajo admite hasta 40 letras minúsculas, números, espacios, guiones y guiones bajos." };
   return { ok: true, value: shortcut };
+}
+
+/** Categoría opcional: sin espacios de más; vacía = sin categoría. */
+export function checkCategory(value: unknown): Checked<string | null> {
+  if (value === undefined || value === null) return { ok: true, value: null };
+  if (typeof value !== "string") return { ok: false, problem: "La categoría no es válida." };
+  const category = value.replace(/\s+/g, " ").trim();
+  if (!category) return { ok: true, value: null };
+  if (category.length > MAX_QUICK_REPLY_CATEGORY) return { ok: false, problem: `La categoría admite hasta ${MAX_QUICK_REPLY_CATEGORY} caracteres.` };
+  return { ok: true, value: category.charAt(0).toUpperCase() + category.slice(1) };
 }
 
 function checkPiece(value: unknown, position: number): Checked<QuickReplyPiece> {

@@ -44,11 +44,14 @@ describe("Herramientas del chat", () => {
   });
 
   it("una respuesta rápida con texto y documento queda en espera y sale en orden", async () => {
-    const api = stubApi();
+    const api = stubApi({ canManage: true });
     const chat = await openChat();
 
     await userEvent.click(within(chat).getByRole("button", { name: "Respuestas rápidas" }));
     const picker = await screen.findByRole("dialog", { name: "Respuestas rápidas" });
+    // En el chat solo se buscan y se envían; se organizan en Configuración.
+    expect(within(picker).queryByRole("button", { name: /Nueva|Editar/ })).not.toBeInTheDocument();
+    expect(within(picker).getByRole("link", { name: "Administrar →" })).toHaveAttribute("href", "/settings/quick-replies");
     await userEvent.type(within(picker).getByLabelText("Buscar respuesta rápida"), "precios");
     await userEvent.click(within(picker).getByRole("button", { name: /^\/precios/ }));
 

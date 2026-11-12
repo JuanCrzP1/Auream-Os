@@ -1,0 +1,126 @@
+/* Respuestas rápidas en el chat: la lista sobre el compositor (solo buscar y enviar). */
+.chat-quick__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+}
+
+.chat-quick__manage {
+  color: var(--wa-link);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chat-quick__manage:hover {
+  text-decoration: underline;
+}
+
+.chat-quick__group {
+  padding: 10px 10px 4px;
+  color: var(--wa-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.chat-quick__hint a {
+  color: var(--wa-link);
+}
+
+.chat-quick__search {
+  margin: 0 14px 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--wa-input-border);
+  border-radius: 10px;
+  background: var(--wa-search-bg);
+  color: var(--wa-text);
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.chat-quick__search:focus {
+  border-color: var(--wa-accent);
+}
+
+.chat-quick__list {
+  flex: 1;
+  margin: 0;
+  padding: 0 6px 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.chat-quick__hint {
+  padding: 14px 10px;
+  color: var(--wa-secondary);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.chat-quick__item {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.chat-quick__item.is-active {
+  background: var(--wa-row-active);
+}
+
+.chat-quick__pick {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--wa-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-quick__pick strong {
+  color: var(--wa-accent);
+  font-size: 0.86rem;
+}
+
+.chat-quick__pick span {
+  overflow: hidden;
+  color: var(--wa-secondary);
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-quick__pick em {
+  color: var(--wa-secondary);
+  font-size: 0.74rem;
+  font-style: normal;
+}
+
+.chat-quick__foot {
+  margin: 0;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--wa-separator);
+  color: var(--wa-secondary);
+  font-size: 0.74rem;
+}
+
+.chat-quick__foot kbd {
+  padding: 0 5px;
+  border: 1px solid var(--wa-separator);
+  border-radius: 4px;
+  font: inherit;
+}
+
+@media (hover: none) {
+  .chat-quick__foot {
+    display: none;
+  }
+}

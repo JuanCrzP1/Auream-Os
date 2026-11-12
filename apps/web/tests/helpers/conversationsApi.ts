@@ -32,10 +32,11 @@ export const msg = (over: Partial<ConversationMessage>): ConversationMessage => 
 });
 
 export const QUICK_REPLIES: QuickReply[] = [
-  { id: "q1", shortcut: "saludo", pieces: [{ kind: "text", text: "Hola {nombre}, ¿en qué te ayudo?" }], useCount: 3, lastUsedAt: NOW, createdAt: NOW, updatedAt: NOW },
+  { id: "q1", shortcut: "saludo", category: "Saludos", pieces: [{ kind: "text", text: "Hola {nombre}, ¿en qué te ayudo?" }], useCount: 3, lastUsedAt: NOW, createdAt: NOW, updatedAt: NOW },
   {
     id: "q2",
     shortcut: "precios",
+    category: "Precios",
     pieces: [
       { kind: "text", text: "Te paso los precios 👇" },
       { kind: "media", media: { type: "file", url: "https://blob.test/precios.pdf", fileName: "precios.pdf" } }
@@ -80,7 +81,7 @@ export function stubConversationsApi(options: { paged?: boolean; deleted?: boole
       }
       return reply(200, { conversations: removed ? [] : [chat], nextCursor: null, canManage });
     }
-    if (url.pathname === "/quick-replies" && method === "GET") return reply(200, { quickReplies: QUICK_REPLIES, canWrite: true });
+    if (url.pathname === "/quick-replies" && method === "GET") return reply(200, { quickReplies: QUICK_REPLIES, canManage });
     if (url.pathname.startsWith("/quick-replies/") && url.pathname.endsWith("/use")) return reply(204);
     if (url.pathname === "/conversations/c1" && method === "DELETE") {
       removed = true;

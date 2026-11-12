@@ -14,7 +14,8 @@ export const SETTINGS_ROUTES = {
   general: "/settings/general",
   team: "/settings/team",
   billing: "/settings/billing",
-  security: "/settings/security"
+  security: "/settings/security",
+  "quick-replies": "/settings/quick-replies"
 } as const;
 
 export type SettingsSectionId = keyof typeof SETTINGS_ROUTES;
@@ -40,6 +41,7 @@ const Icons = {
       <path d="M9 8h2M13 8h2M9 12h2M13 12h2M10 21v-4h4v4" />
     </>
   ),
+  quickReplies: icon(<path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" />),
   security: icon(<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3zM9.5 12l2 2 3.5-4" />)
 };
 
@@ -58,6 +60,18 @@ export const SETTINGS_GROUPS: ReadonlyArray<SettingsNavGroup> = [
       { id: "team", label: "Equipo", path: SETTINGS_ROUTES.team, icon: SidebarIcons.team, description: "Las personas de la empresa y lo que puede hacer cada una." },
       { id: "billing", label: "Plan y pagos", path: SETTINGS_ROUTES.billing, icon: SidebarIcons.billing, description: "Tu plan, lo que consumes en el mes, tu método de pago y tus facturas.", soon: true },
       { id: "security", label: "Seguridad", path: SETTINGS_ROUTES.security, icon: Icons.security, description: "Cómo entra tu equipo y quién puede hacerlo.", soon: true }
+    ]
+  },
+  {
+    title: "Chats",
+    items: [
+      {
+        id: "quick-replies",
+        label: "Respuestas rápidas",
+        path: SETTINGS_ROUTES["quick-replies"],
+        icon: Icons.quickReplies,
+        description: "Los mensajes que tu equipo envía en el chat sin copiar y pegar, organizados por categoría. En el chat se buscan escribiendo «/»."
+      }
     ]
   }
 ];

@@ -116,11 +116,11 @@ class MemoryQuickReplies implements QuickReplyRepository {
     return this.rows.find((row) => row.shortcut === shortcut) ?? null;
   }
   public async create(reply: NewQuickReply) {
-    const row: QuickReply = { id: reply.id, shortcut: reply.shortcut, pieces: reply.pieces, useCount: 0, lastUsedAt: null, createdAt: "", updatedAt: "" };
+    const row: QuickReply = { id: reply.id, shortcut: reply.shortcut, category: reply.category, pieces: reply.pieces, useCount: 0, lastUsedAt: null, createdAt: "", updatedAt: "" };
     this.rows.push(row);
     return row;
   }
-  public async update(_t: string, id: string, changes: Pick<QuickReply, "shortcut" | "pieces">) {
+  public async update(_t: string, id: string, changes: Pick<QuickReply, "shortcut" | "category" | "pieces">) {
     const index = this.rows.findIndex((row) => row.id === id);
     if (index < 0) return null;
     this.rows[index] = { ...this.rows[index]!, ...changes };
@@ -142,6 +142,15 @@ describe("respuestas rápidas", () => {
     expect(created.pieces).toEqual([{ kind: "text", text: "Hola {nombre}" }]);
     await expect(services.create(T, "u1", { shortcut: "saludo inicial", pieces: [{ kind: "text", text: "x" }] })).rejects.toThrow(/Ya tienes/);
     await expect(services.update(T, created.id, { shortcut: "saludo inicial", pieces: [{ kind: "text", text: "Otra" }] })).resolves.toMatchObject({ pieces: [{ kind: "text", text: "Otra" }] });
+  });
+
+  it("la categoría es opcional y «precios» se une a «Precios» si ya existe", async () => {
+    const services = new QuickReplyServices(new MemoryQuickReplies());
+    await services.create(T, "u1", { shortcut: "lista", category: "  Precios ", pieces: [{ kind: "text", text: "x" }] });
+    const second = await services.create(T, "u1", { shortcut: "envio", category: "precios", pieces: [{ kind: "text", text: "y" }] });
+    expect(second.category).toBe("Precios");
+    expect((await services.create(T, "u1", { shortcut: "hola", category: " ", pieces: [{ kind: "text", text: "z" }] })).category).toBeNull();
+    await expect(services.create(T, "u1", { shortcut: "largo", category: "x".repeat(41), pieces: [{ kind: "text", text: "z" }] })).rejects.toThrow(/categoría admite/);
   });
 
   it("valida atajo y piezas", async () => {

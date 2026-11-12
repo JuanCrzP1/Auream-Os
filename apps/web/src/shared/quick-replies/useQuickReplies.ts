@@ -5,12 +5,13 @@ import { createQuickReply, deleteQuickReply, fetchQuickReplies, updateQuickReply
 export type QuickRepliesStatus = "loading" | "ready" | "error";
 
 /**
- * Las respuestas rápidas de la cuenta: se cargan una vez al abrir la bandeja
- * y se mantienen al día con lo que crea, edita o borra quien mira.
+ * Las respuestas rápidas de la cuenta: se cargan una vez (al abrir la bandeja
+ * o Configuración) y se mantienen al día con lo que crea, edita o borra quien
+ * mira. Organizarlas (`canManage`) es de dueños y administradores.
  */
 export function useQuickReplies() {
   const [replies, setReplies] = useState<ReadonlyArray<QuickReply>>([]);
-  const [canWrite, setCanWrite] = useState(false);
+  const [canManage, setCanManage] = useState(false);
   const [status, setStatus] = useState<QuickRepliesStatus>("loading");
 
   const load = useCallback(async () => {
@@ -18,7 +19,7 @@ export function useQuickReplies() {
     try {
       const response = await fetchQuickReplies();
       setReplies(response.quickReplies);
-      setCanWrite(response.canWrite);
+      setCanManage(response.canManage);
       setStatus("ready");
     } catch {
       setStatus("error");
@@ -40,5 +41,5 @@ export function useQuickReplies() {
     setReplies((current) => current.filter((reply) => reply.id !== id));
   }, []);
 
-  return { replies, canWrite, status, reload: load, save, remove };
+  return { replies, canManage, status, reload: load, save, remove };
 }
