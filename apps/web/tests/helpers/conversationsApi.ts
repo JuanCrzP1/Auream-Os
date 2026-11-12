@@ -18,7 +18,7 @@ export const PAGO = { id: "l-pago", name: "Pagó", color: "#16a34a" };
 export const CHAT: ConversationSummary = {
   id: "c1", connectionId: "w1", connectionName: "venta", contactId: "k1", contactName: "Laura Gómez", phone: "573001112233",
   botEnabled: true, unreadCount: 2, lastMessageText: "Te envío info", lastMessageAuthor: "bot", lastMessageAt: NOW, activeFlowName: "Ventas",
-  labels: [VIP], connectionDeleted: false, status: "bot", assigneeId: null, assigneeName: null, awaitingSince: null, createdAt: NOW
+  labels: [VIP], connectionDeleted: false, status: "bot", assigneeId: null, assigneeName: null, awaitingSince: null, createdAt: NOW, fromAd: false
 };
 export const ME = { userId: "u-me", name: "Camilo", photoUrl: null };
 export const ANA = { userId: "u-ana", name: "Ana Ruiz", photoUrl: null };
@@ -48,7 +48,7 @@ export const QUICK_REPLIES: QuickReply[] = [
 ];
 
 export function stubConversationsApi(
-  options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[]; chat?: Partial<ConversationSummary>; connections?: unknown[]; canRecordSales?: boolean } = {}
+  options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[]; chat?: Partial<ConversationSummary>; connections?: unknown[]; canRecordSales?: boolean; ad?: unknown } = {}
 ) {
   let chat: ConversationSummary = { ...CHAT, connectionDeleted: options.deleted ?? false, ...options.chat };
   const listCalls: URLSearchParams[] = [];
@@ -126,6 +126,7 @@ export function stubConversationsApi(
       upsert(msg({ direction: "outbound", author: "agent", status: "sent", kind: "reaction", text: String(body["emoji"]), replyTo: { id: target.id, author: target.author, kind: target.kind, text: target.text } }));
       return reply(204);
     }
+    if (url.pathname === "/conversations/c1/ad") return reply(200, { ad: options.ad ?? null });
     // Ventas: el catálogo (con o sin permiso para anotar) y anotar desde el chat.
     if (url.pathname === "/products") return reply(200, { products: [{ id: "p1", name: "Video", kind: "main", status: "active", prices: [{ country: "CO", currency: "COP", amount: 49900 }] }], canManage: false, canRecordSales: options.canRecordSales ?? false });
     if (url.pathname === "/sales" && method === "POST") return reply(201, { ...body, id: "s1", status: "approved", productName: "Video", amount: 49900, currency: "COP", adSourceId: "ad-9", reviewReason: null });

@@ -129,7 +129,8 @@ describe("contactos", () => {
     const identity = { channel: "whatsapp", externalKey: "584121112233" };
     const ad = { sourceId: "120244", sourceUrl: "https://fb.me/abc", mediaUrl: null, thumbnailUrl: null, ctwaClid: "Afiq" };
     await s.directory.identify(tenant, identity, "Laura", ad);
-    expect((await s.directory.resolve(tenant, identity)).ad).toEqual(ad);
+    // Con la fecha en que llegó por ese anuncio (la pone Auream al guardarlo).
+    expect((await s.directory.resolve(tenant, identity)).ad).toEqual({ ...ad, receivedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) });
     await s.directory.identify(tenant, identity, "Laura", { ...ad, sourceId: "999" });
     expect((await s.directory.resolve(tenant, identity)).ad?.sourceId).toBe("999");
   });

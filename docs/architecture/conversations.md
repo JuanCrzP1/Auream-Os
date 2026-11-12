@@ -107,3 +107,11 @@ Web:
 - Botón con etiqueta de precio en el encabezado (junto a Ejecutar flujo) y en Info. del contacto, si `GET /products` dice `canRecordSales`.
 - `components/dialogs/ChatDialogs` junta los diálogos del chat (ejecutar flujo y registrar venta) con un solo estado; usa `RecordSaleDialog` de `shared/sales` con el chat (`conversationId`). No pide teléfono y propone el país por el indicativo (y con él, el precio).
 - La venta se amarra al cliente y a su anuncio en el servidor (ver [`sales.md`](sales.md)). El chat avisa cómo quedó (aprobada, por revisar, si cuenta para un anuncio).
+
+### Anuncio de origen
+
+- **Qué se guarda.** Al llegar por un anuncio de clic a WhatsApp (`externalAdReply` o `referral`), la ficha del contacto (`contacts.ad_origin`) guarda el id, los enlaces, la miniatura, el código de clic y, desde ahora, el **título**, el **texto** y **cuándo llegó** (`receivedAt`, lo pone `ContactDirectoryService`; el mismo anuncio conserva la primera fecha). Los campos nuevos son opcionales: los anuncios guardados antes siguen valiendo.
+- **En la lista.** `fromAd` en el resumen (`ad_origin is not null`) da la marca «Anuncio» en la fila y el filtro `from_ad` («Por anuncio»). La lista no trae el detalle, para seguir liviana.
+- **El detalle.** `GET /conversations/:id/ad` (`conversations.read`) → `ChatAdOriginService` + `SqlChatAdOrigin`: lo que trajo el mensaje y, si el anuncio está sincronizado de una cuenta de Meta conectada (la misma regla que «por anuncio» en el Dashboard), su nombre, campaña, estado y miniatura oficial. Se pide solo al abrir Info. del contacto (`AdOriginSection`).
+- **Seguridad.** Los datos del anuncio vienen dentro del mensaje y un cliente con una app modificada puede inventarlos. Solo pasan enlaces `https://`, que se abren con `noopener noreferrer`; la miniatura va sin referer. El código de clic (`ctwa_clid`) nunca sale. `connected: false` avisa que el anuncio no es de tus cuentas.
+

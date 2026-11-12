@@ -104,6 +104,8 @@ export class InMemoryConversationRepository implements ConversationRepository {
       .filter((row) => query.filter !== "bot_active" || row.botEnabled)
       .filter((row) => query.filter !== "bot_paused" || !row.botEnabled)
       .filter((row) => query.filter !== "unanswered" || row.awaitingSince !== null)
+      // En memoria no hay fichas con anuncio: «por anuncio» no trae ninguno.
+      .filter(() => query.filter !== "from_ad")
       .filter((row) => query.filter !== "mine" || (query.viewerId !== undefined && row.assigneeId === query.viewerId))
       .filter((row) => !query.status || row.status === query.status)
       .filter((row) => query.assigneeId === undefined || row.assigneeId === query.assigneeId)
@@ -193,7 +195,7 @@ export class InMemoryConversationRepository implements ConversationRepository {
       botEnabled: row.botEnabled, unreadCount: row.unreadCount, lastMessageText: row.lastMessageText, lastMessageAuthor: row.lastMessageAuthor,
       lastMessageAt: row.lastMessageAt, activeFlowName: null, labels: this.labelsOf(row),
       connectionDeleted: this.deletedConnections.has(row.connectionId), status: row.status, assigneeId: row.assigneeId, assigneeName: null,
-      awaitingSince: row.awaitingSince, createdAt: row.createdAt
+      awaitingSince: row.awaitingSince, createdAt: row.createdAt, fromAd: false
     };
   }
 }

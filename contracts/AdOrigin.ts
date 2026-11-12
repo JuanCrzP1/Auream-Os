@@ -18,6 +18,12 @@ export interface AdOrigin {
   readonly thumbnailUrl: string | null;
   /** `{ctwa_clid}`: código de clic de Meta (atribución de conversiones). */
   readonly ctwaClid: string | null;
+  /** El título del anuncio, como lo vio el cliente (`externalAdReply.title`). */
+  readonly title?: string | null;
+  /** El texto del anuncio (`externalAdReply.body`). */
+  readonly body?: string | null;
+  /** Cuándo llegó el cliente por este anuncio (lo pone Auream al guardarlo). */
+  readonly receivedAt?: string | null;
 }
 
 /** Variable → dato del anuncio. Los nombres son los de Leona. */
@@ -48,7 +54,10 @@ export function readAdOrigin(raw: unknown): AdOrigin | null {
     thumbnailUrl: clean(value["thumbnailUrl"]),
     ctwaClid: clean(value["ctwaClid"])
   };
-  return Object.values(ad).some((item) => item !== null) ? ad : null;
+  if (!Object.values(ad).some((item) => item !== null)) return null;
+  // Lo que se muestra (no identifica el anuncio): solo si llegó algo de lo demás.
+  const extra = Object.entries({ title: clean(value["title"]), body: clean(value["body"]), receivedAt: clean(value["receivedAt"]) }).filter(([, item]) => item !== null);
+  return { ...ad, ...Object.fromEntries(extra) };
 }
 
 /** El valor de una variable de anuncio (`source_url`…), si existe. */

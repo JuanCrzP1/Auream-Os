@@ -39,6 +39,7 @@ import { sendJson } from "../http/sendJson";
 //   POST   /conversations/:id/resolve         resolverlo (el bot vuelve a atender)
 //   PUT    /conversations/:id/labels          etiquetas del cliente { labelIds }
 //   POST   /conversations/:id/flows           enviar un flujo a mano
+//   GET    /conversations/:id/ad              el anuncio por el que llegó el cliente
 //
 // Ver exige conversations.read; eliminar, conversations.manage; todo lo
 // demás, conversations.write. Marcar como leído es lectura: no cambia nada
@@ -52,6 +53,7 @@ const FLOWS = /^\/conversations\/([^/]+)\/flows$/;
 const LABELS = /^\/conversations\/([^/]+)\/labels$/;
 const LIVE = /^\/conversations\/([^/]+)\/live$/;
 const ATTENTION = /^\/conversations\/([^/]+)\/(take|assign|resolve)$/;
+const AD = /^\/conversations\/([^/]+)\/ad$/;
 const REACTION = /^\/conversations\/([^/]+)\/messages\/([^/]+)\/reaction$/;
 
 /** Texto de la URL o nada (un parámetro vacío es como si no estuviera). */
@@ -111,6 +113,12 @@ export async function routeConversationsRequest(
       const body = await parseJsonBody<Partial<AssignConversationRequest>>(request);
       sendJson(response, 200, await services.attention.assign(tenantId, id!, body.assigneeId === undefined ? undefined : body.assigneeId, context.actorId));
     }
+    return true;
+  }
+
+  const ad = AD.exec(path);
+  if (ad && method === "GET") {
+    sendJson(response, 200, await services.adOrigin.get(tenantId, ad[1]!));
     return true;
   }
 

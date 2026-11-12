@@ -1,3 +1,5 @@
+import { ChatAdOriginService } from "../../../domains/conversations/application/ChatAdOriginService";
+import { SqlChatAdOrigin } from "../../../infrastructure/persistence/sql/SqlChatAdOrigin";
 import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import { ContactAvatarService } from "../../../domains/contacts/application/ContactAvatarService";
 import { SqlContactAvatarStore } from "../../../infrastructure/persistence/sql/SqlContactAvatarStore";
@@ -70,6 +72,8 @@ export interface MessagingServices {
   readonly avatars: Pick<ContactAvatarService, "refreshIfStale">;
   /** Escribirle primero a un cliente (Difusiones): un flujo o mensajes, y quedan en su chat. */
   readonly outreach: OutreachService;
+  /** De qué anuncio llegó el cliente de un chat. */
+  readonly adOrigin: ChatAdOriginService;
 }
 
 /** Oye cada mensaje entrante ya guardado (p. ej. Difusiones: «SALIR»). Nunca debe lanzar. */
@@ -167,6 +171,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
       }
     },
     timers: new FlowTimerService(lock, recorder, turn),
+    adOrigin: new ChatAdOriginService(new SqlChatAdOrigin(deps.sql)),
     flows: new StartFlowForContactService(recorder, launcher),
     avatars: new ContactAvatarService(new SqlContactAvatarStore(deps.sql)),
     outreach: new OutreachService(recorder, delivery, launcher),

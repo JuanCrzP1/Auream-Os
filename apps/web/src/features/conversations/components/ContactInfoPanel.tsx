@@ -5,6 +5,7 @@ import { Avatar } from "./Avatar";
 import { BoltGlyph, BotGlyph, CloseGlyph, SaleGlyph } from "./ChatGlyphs";
 import { displayName } from "./displayName";
 import { DeleteChatSection } from "./DeleteChatSection";
+import { AdOriginSection } from "./info/AdOriginSection";
 import { LabelsSection } from "./info/LabelsSection";
 import { NotesSection } from "./info/NotesSection";
 
@@ -94,6 +95,8 @@ export function ContactInfoPanel({
             <strong>{conversation.activeFlowName ?? "Ninguno"}</strong>
           </div>
         </section>
+
+        {conversation.fromAd ? <AdOriginSection conversationId={conversation.id} /> : null}
 
         <LabelsSection conversation={conversation} labels={labels} labelsStatus={labelsStatus} onSetLabels={onSetLabels} onCreateLabel={onCreateLabel} />
 

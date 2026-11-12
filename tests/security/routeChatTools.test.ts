@@ -29,7 +29,8 @@ const context = (role: keyof typeof ROLE_SCOPES) => makeContext({ scopes: [...RO
 const conversations = {
   conversations: { remove: vi.fn(async () => undefined) },
   attention: { take: vi.fn(async () => ({ id: "c1" })), resolve: vi.fn(async () => ({ id: "c1" })), agents: vi.fn(async () => []) },
-  newChats: { start: vi.fn(async () => ({ id: "c2" })) }
+  newChats: { start: vi.fn(async () => ({ id: "c2" })) },
+  adOrigin: { get: vi.fn(async () => ({ ad: null })) }
 } as unknown as MessagingServices;
 
 async function call(role: keyof typeof ROLE_SCOPES, method: string, path: string, body?: unknown) {
@@ -43,6 +44,13 @@ async function call(role: keyof typeof ROLE_SCOPES, method: string, path: string
 }
 
 describe("Herramientas del chat por HTTP", () => {
+  it("el anuncio de origen lo ve todo el equipo (también solo lectura); sin permiso de chats, no", async () => {
+    expect(await call("viewer", "GET", "/conversations/c1/ad")).toBe(200);
+    expect(await call("operator", "GET", "/conversations/c1/ad")).toBe(200);
+    expect((conversations as unknown as { adOrigin: { get: ReturnType<typeof vi.fn> } }).adOrigin.get).toHaveBeenCalledWith("tenant-a", "c1");
+    expect(await call("api_client", "GET", "/conversations/c1/ad")).toBe(403);
+  });
+
   it("tomar, resolver y chat nuevo: quien atiende sí, solo lectura no", async () => {
     expect(await call("operator", "POST", "/conversations/c1/take")).toBe(200);
     expect(await call("operator", "POST", "/conversations/c1/resolve")).toBe(200);

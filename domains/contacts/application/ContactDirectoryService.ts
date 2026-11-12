@@ -41,8 +41,10 @@ function flowOrigin(source: { readonly flowKey?: string | null } | undefined): L
   return { kind: "flow", flowKey: source?.flowKey ?? null };
 }
 
+/** El mismo anuncio (y no trae título o texto que falten): no se vuelve a guardar. */
 function sameAd(a: AdOrigin | null, b: AdOrigin): boolean {
-  return a !== null && a.sourceId === b.sourceId && a.sourceUrl === b.sourceUrl && a.mediaUrl === b.mediaUrl && a.thumbnailUrl === b.thumbnailUrl && a.ctwaClid === b.ctwaClid;
+  const same = a !== null && a.sourceId === b.sourceId && a.sourceUrl === b.sourceUrl && a.mediaUrl === b.mediaUrl && a.thumbnailUrl === b.thumbnailUrl && a.ctwaClid === b.ctwaClid;
+  return same && (!b.title || a.title === b.title) && (!b.body || a.body === b.body);
 }
 
 export class ContactDirectoryService {
@@ -68,8 +70,10 @@ export class ContactDirectoryService {
   ): Promise<{ readonly profile: ContactProfile; readonly isNew: boolean }> {
     const found = await this.findOrCreate(tenantId, identity, displayName);
     if (!ad || sameAd(found.profile.ad ?? null, ad)) return found;
-    await this.contacts.setAdOrigin(tenantId, found.profile.id, ad);
-    return { ...found, profile: { ...found.profile, ad } };
+    // Cuándo llegó por este anuncio (si es el mismo que ya tenía, se conserva la primera vez).
+    const saved: AdOrigin = { ...ad, receivedAt: found.profile.ad?.sourceId && found.profile.ad.sourceId === ad.sourceId ? found.profile.ad.receivedAt ?? null : new Date().toISOString() };
+    await this.contacts.setAdOrigin(tenantId, found.profile.id, saved);
+    return { ...found, profile: { ...found.profile, ad: saved } };
   }
 
   private async findOrCreate(tenantId: string, identity: ContactIdentity, displayName: string | null): Promise<{ readonly profile: ContactProfile; readonly isNew: boolean }> {

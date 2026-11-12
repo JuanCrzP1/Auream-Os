@@ -84,6 +84,55 @@ describe("ConversationsPage", () => {
     expect(within(chat).queryByRole("button", { name: "Registrar venta" })).not.toBeInTheDocument();
   });
 
+  it("anuncio de origen: marca en la lista, filtro «Por anuncio» y la tarjeta en la info con su campaña y enlaces seguros", async () => {
+    const api = stubApi({
+      chat: { fromAd: true },
+      ad: {
+        sourceId: "ad-9", title: "Tu canción", body: "Regala una canción con su nombre", thumbnailUrl: "https://meta.example/t.jpg", sourceUrl: "https://fb.me/x", mediaUrl: null,
+        receivedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(), connected: true, adName: "Tu canción · Mamás", campaignName: "Video Colombia", adStatus: "ACTIVE"
+      }
+    });
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
+    const row = await screen.findByRole("button", { name: /Laura Gómez, 2 sin leer, llegó por un anuncio/ });
+    expect(within(row).getByText("Anuncio")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Por anuncio" }));
+    await vi.waitFor(() => expect(api.last().get("filter")).toBe("from_ad"));
+
+    await userEvent.click(row);
+    const chat = await screen.findByRole("region", { name: "Chat con Laura Gómez" });
+    await userEvent.click(within(chat).getByRole("button", { name: "Info. del contacto" }));
+    const card = await screen.findByRole("region", { name: "Llegó por un anuncio" });
+    expect(await within(card).findByText("Tu canción · Mamás")).toBeInTheDocument();
+    expect(card).toHaveTextContent("Campaña: Video Colombia");
+    expect(card).toHaveTextContent("Activo");
+    expect(card).toHaveTextContent("Llegó hace 3 días");
+    expect(card).toHaveTextContent("«Tu canción»");
+    expect(within(card).getByRole("link", { name: "Ver anuncio ↗" })).toHaveAttribute("rel", "noopener noreferrer");
+    expect(within(card).queryByRole("link", { name: /Ver publicación/ })).not.toBeInTheDocument();
+    expect(card).not.toHaveTextContent("no está en tus cuentas conectadas");
+  });
+
+  it("anuncio de otra cuenta: lo dice; un chat orgánico no pide el anuncio", async () => {
+    stubApi({ chat: { fromAd: true }, ad: { sourceId: "777", title: "Promo", body: null, thumbnailUrl: null, sourceUrl: null, mediaUrl: null, receivedAt: null, connected: false, adName: null, campaignName: null, adStatus: null } });
+    const first = render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
+    const chat = await openChat();
+    await userEvent.click(within(chat).getByRole("button", { name: "Info. del contacto" }));
+    const card = await screen.findByRole("region", { name: "Llegó por un anuncio" });
+    expect(await within(card).findByText("Promo")).toBeInTheDocument();
+    expect(card).toHaveTextContent("no está en tus cuentas conectadas de Meta Ads");
+    expect(card).toHaveTextContent("Id: 777.");
+    first.unmount();
+
+    const api = stubApi();
+    render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
+    const organic = await openChat();
+    await userEvent.click(within(organic).getByRole("button", { name: "Info. del contacto" }));
+    await screen.findByRole("complementary", { name: "Info. de Laura Gómez" });
+    expect(screen.queryByRole("region", { name: "Llegó por un anuncio" })).not.toBeInTheDocument();
+    expect(api.fetchMock.mock.calls.some(([u]) => String(u).endsWith("/conversations/c1/ad"))).toBe(false);
+  });
+
   it("«Ejecutar flujo»: solo flujos no archivados, y confirma lo ejecutado", async () => {
     const api = stubApi();
     render(<MemoryRouter><ConversationsPage /></MemoryRouter>);

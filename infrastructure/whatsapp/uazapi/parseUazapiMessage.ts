@@ -82,7 +82,9 @@ function adOf(message: Json): AdOrigin | null {
     sourceUrl: first(pick(reply, "sourceUrl"), pick(referral, "sourceUrl")),
     mediaUrl: first(pick(reply, "mediaUrl"), pick(referral, "mediaUrl", "videoUrl", "imageUrl")),
     thumbnailUrl: first(pick(reply, "thumbnailUrl"), pick(referral, "thumbnailUrl")),
-    ctwaClid: first(pick(reply, "ctwaClid"), pick(context, "ctwaClid"), pick(referral, "ctwaClid"))
+    ctwaClid: first(pick(reply, "ctwaClid"), pick(context, "ctwaClid"), pick(referral, "ctwaClid")),
+    title: first(pick(reply, "title"), pick(referral, "headline", "title")),
+    body: first(pick(reply, "body"), pick(referral, "body"))
   });
 }
 

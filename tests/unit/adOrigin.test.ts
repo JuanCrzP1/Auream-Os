@@ -36,17 +36,17 @@ function parsedAd(body: unknown) {
 }
 
 describe("lectura del anuncio en el aviso de uazapi", () => {
-  it("toma los 5 datos de `externalAdReply` con los nombres de WhatsApp", () => {
+  it("toma los datos de `externalAdReply` con los nombres de WhatsApp, también el título y el texto", () => {
     const body = aviso({
       content: {
         text: "Hola",
         contextInfo: {
           conversionSource: "FB_Ads",
-          externalAdReply: { sourceID: AD.sourceId, sourceURL: AD.sourceUrl, mediaURL: AD.mediaUrl, thumbnailURL: AD.thumbnailUrl, ctwaClid: AD.ctwaClid, title: "Tu canción" }
+          externalAdReply: { sourceID: AD.sourceId, sourceURL: AD.sourceUrl, mediaURL: AD.mediaUrl, thumbnailURL: AD.thumbnailUrl, ctwaClid: AD.ctwaClid, title: "Tu canción", body: "Regala una canción con su nombre" }
         }
       }
     });
-    expect(parsedAd(body)).toEqual({ ad: AD, fromAd: true });
+    expect(parsedAd(body)).toEqual({ ad: { ...AD, title: "Tu canción", body: "Regala una canción con su nombre" }, fromAd: true });
   });
 
   it("también del formato `referral` (snake_case) y con datos parciales; un mensaje normal no trae anuncio", () => {
@@ -65,16 +65,19 @@ describe("el anuncio en la ficha del contacto", () => {
   }
   const identity = { channel: "whatsapp", externalKey: "584121112233" };
 
-  it("se guarda al llegar por un anuncio; el mismo anuncio no se reescribe; otro anuncio reemplaza al anterior; sin anuncio, queda el último", async () => {
+  it("se guarda al llegar por un anuncio (con la fecha); el mismo anuncio no se reescribe salvo que traiga su título; otro anuncio reemplaza al anterior; sin anuncio, queda el último", async () => {
     const { directory: dir, setAdOrigin } = directory();
-    expect((await dir.identify(T, identity, "Laura", AD)).profile.ad).toEqual(AD);
+    const first = (await dir.identify(T, identity, "Laura", AD)).profile.ad!;
+    expect(first).toEqual({ ...AD, receivedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/) });
     await dir.identify(T, identity, "Laura", AD);
     expect(setAdOrigin).toHaveBeenCalledTimes(1);
+    // El mismo anuncio, ahora con título: se completa y conserva cuándo llegó.
+    expect((await dir.identify(T, identity, "Laura", { ...AD, title: "Tu canción" })).profile.ad).toEqual({ ...AD, title: "Tu canción", receivedAt: first.receivedAt });
 
     const otro = { ...AD, sourceId: "999", ctwaClid: "otro-clic" };
     await dir.identify(T, identity, "Laura", otro);
-    expect((await dir.identify(T, identity, "Laura")).profile.ad).toEqual(otro);
-    expect((await dir.resolve(T, identity)).ad).toEqual(otro);
+    expect((await dir.identify(T, identity, "Laura")).profile.ad).toMatchObject(otro);
+    expect((await dir.resolve(T, identity)).ad).toMatchObject(otro);
   });
 });
 

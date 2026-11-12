@@ -32,6 +32,7 @@ interface InboxRow {
   last_message_at: Date | string | null;
   active_flow_name: string | null;
   labels: ConversationLabel[] | null;
+  from_ad: boolean;
 }
 
 const toSummary = (row: InboxRow): ConversationSummary => ({
@@ -54,7 +55,8 @@ const toSummary = (row: InboxRow): ConversationSummary => ({
   assigneeId: row.assignee_id,
   assigneeName: row.assignee_name,
   awaitingSince: row.awaiting_since === null ? null : toIso(row.awaiting_since),
-  createdAt: toIso(row.created_at)
+  createdAt: toIso(row.created_at),
+  fromAd: row.from_ad
 });
 
 /** Última actividad del chat: su último mensaje o, si aún no tiene, su creación. Igual que el índice. */
@@ -66,6 +68,7 @@ const INBOX_SELECT = `
          c.last_message_text, c.last_message_author, c.last_message_at,
          c.status, c.assignee_id, c.awaiting_since, coalesce(u.display_name, u.email) as assignee_name,
          w.name as connection_name, w.deleted_at is not null as connection_deleted, ct.name as contact_name, ct.avatar_url as contact_avatar_url, a.name as active_flow_name,
+         (ct.ad_origin is not null) as from_ad,
          (select json_agg(json_build_object('id', l.id, 'name', l.name, 'color', l.color) order by lower(l.name))
             from contact_label_assignments la
             join contact_labels l on l.tenant_id = la.tenant_id and l.id = la.label_id
@@ -95,6 +98,7 @@ export class SqlConversationInbox {
     if (query.filter === "bot_active") where.push("c.bot_enabled = true");
     if (query.filter === "bot_paused") where.push("c.bot_enabled = false");
     if (query.filter === "unanswered") where.push("c.awaiting_since is not null");
+    if (query.filter === "from_ad") where.push("ct.ad_origin is not null");
     if (query.filter === "mine") {
       if (!query.viewerId || !isUuid(query.viewerId)) return [];
       where.push(`c.assignee_id = ${param(query.viewerId)}::uuid`);

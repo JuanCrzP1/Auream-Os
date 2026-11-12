@@ -10,7 +10,8 @@ const AUTHOR_PREFIX = { contact: "", bot: "🤖 ", agent: "Tú: " } as const;
 /**
  * Un chat en la lista: avatar, nombre, hora, último mensaje y no leídos; abajo,
  * su atención (en espera, quién lo atiende, resuelto), cuánto lleva el
- * cliente esperando (en rojo si pasa de 15 min), sus etiquetas y el número.
+ * cliente esperando (en rojo si pasa de 15 min), si llegó por un anuncio, sus
+ * etiquetas y el número.
  */
 export function ConversationRow({
   conversation,
@@ -34,14 +35,14 @@ export function ConversationRow({
     : conversation.status === "attending" ? { tone: "attending", text: assignee ?? "En atención" }
     : conversation.status === "resolved" ? { tone: "resolved", text: "Resuelto" }
     : null;
-  const extra = attention || wait || conversation.labels.length || showConnection || conversation.connectionDeleted;
+  const extra = attention || wait || conversation.fromAd || conversation.labels.length || showConnection || conversation.connectionDeleted;
 
   return (
     <button
       type="button"
       className={`ios-row${selected ? " is-selected" : ""}`}
       aria-current={selected ? "true" : undefined}
-      aria-label={`${name}${conversation.unreadCount ? `, ${conversation.unreadCount} sin leer` : ""}${wait ? `, espera hace ${wait.text}` : ""}`}
+      aria-label={`${name}${conversation.unreadCount ? `, ${conversation.unreadCount} sin leer` : ""}${wait ? `, espera hace ${wait.text}` : ""}${conversation.fromAd ? ", llegó por un anuncio" : ""}`}
       onClick={onSelect}
     >
       <Avatar name={conversation.contactName} phone={conversation.phone} photoUrl={conversation.contactAvatarUrl} size={40} />
@@ -61,6 +62,7 @@ export function ConversationRow({
           <span className="ios-row__extra">
             {attention ? <span className={`row-attention row-attention--${attention.tone}`}>{attention.text}</span> : null}
             {wait ? <span className={`row-wait${wait.urgent ? " is-urgent" : ""}`} title="Lo que lleva el cliente esperando respuesta">⏱ {wait.text}</span> : null}
+            {conversation.fromAd ? <span className="row-ad" title="Llegó por un anuncio de Meta">Anuncio</span> : null}
             <ChatLabels labels={conversation.labels} />
             {conversation.connectionDeleted ? (
               <span className="ios-row__connection is-deleted">{conversation.connectionName} · eliminado</span>

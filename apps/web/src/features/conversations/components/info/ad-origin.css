@@ -1,0 +1,73 @@
+/* «Llegó por un anuncio» en Info. del contacto: miniatura, nombre, campaña,
+   estado, el texto del anuncio y sus enlaces. */
+
+.ad-origin { gap: 10px; padding: 12px 14px; }
+
+.ad-origin__heading {
+  margin: 0;
+  color: var(--wa-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ad-origin__card { display: flex; flex-direction: column; gap: 8px; }
+.ad-origin__top { display: flex; align-items: flex-start; gap: 12px; }
+
+.ad-origin__thumb {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--wa-grouped-bg);
+}
+
+.ad-origin__thumb--empty {
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  font-size: 1.4rem;
+}
+
+.ad-origin__info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ad-origin__info strong { overflow: hidden; color: var(--wa-text); font-size: 0.92rem; text-overflow: ellipsis; }
+.ad-origin__info > span { color: var(--wa-secondary); font-size: 0.8rem; }
+.ad-origin__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; }
+
+.ad-origin__status {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--wa-grouped-bg);
+  color: var(--wa-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.ad-origin__status.is-active { background: color-mix(in srgb, var(--teal) 18%, transparent); color: var(--status-active-text); }
+
+.ad-origin__title { margin: 0; color: var(--wa-text); font-size: 0.85rem; font-weight: 600; }
+
+.ad-origin__body {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--wa-secondary);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.ad-origin__links { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.ad-origin__links a { color: var(--primary); font-size: 0.84rem; font-weight: 700; text-decoration: none; }
+.ad-origin__links a:hover { text-decoration: underline; }
+.ad-origin__note { margin: 0; color: var(--wa-secondary); font-size: 0.76rem; line-height: 1.4; }
+
+.ad-origin__skeleton {
+  height: 56px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--wa-grouped-bg), color-mix(in srgb, var(--wa-grouped-bg) 60%, transparent), var(--wa-grouped-bg));
+}
