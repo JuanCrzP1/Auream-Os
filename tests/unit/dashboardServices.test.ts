@@ -43,7 +43,7 @@ const salesReader = (overrides: Partial<SalesReader> = {}): SalesReader => ({
     : [{ day: "2026-10-02", currency: "COP", amount: 300000, count: 6, adAmount: 200000, adCount: 4, cost: 60000, withoutCost: 0 }]),
   byHour: async () => Array.from({ length: 24 }, () => 0),
   breakdown: async () => [],
-  leads: async (_t, period) => (period.toDay === "2026-11-10" ? { total: 60, fromAds: 40 } : { total: 50, fromAds: 30 }),
+  leads: async (_t, period) => (period.toDay === "2026-11-10" ? { total: 60, fromAds: 40, converted: 9 } : { total: 50, fromAds: 30, converted: 5 }),
   reviewCount: async () => 2,
   recent: async () => [],
   ...overrides
@@ -72,13 +72,16 @@ describe("SalesDashboardService", () => {
     expect(view.currency).toBe("COP");
     expect(view.revenue).toEqual({ value: 600000, previous: 300000, change: 1 });
     expect(view.sales.value).toBe(12);
-    expect(view.conversion).toBe(0.2);
+    // Conversión: de los 60 leads nuevos, 9 compraron (no 12 ventas ÷ 60: esas incluyen clientes viejos).
+    expect([view.conversion, view.conversionPrevious, view.convertedLeads]).toEqual([0.15, 0.1, 9]);
     expect(view.ads).toMatchObject({
       spend: { value: 100000 }, revenue: { value: 500000 }, profit: { value: 400000 },
       roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, chats: 40, attributedSales: 10
     });
     // Ganancia real: 600.000 vendido − 140.000 de costo − 100.000 de anuncios.
     expect(view.realProfit).toBe(360000);
+    // Ganancia del resumen: igual, frente a 300.000 − 60.000 − 80.000 del periodo anterior.
+    expect(view.profit).toEqual({ value: 360000, previous: 160000, change: 1.25 });
     expect(view.funnel).toEqual({ impressions: 20000, clicks: 600, chats: 40, sales: 10 });
     expect(view.daily.find((d) => d.day === "2026-11-02")).toEqual({ day: "2026-11-02", revenue: 400000, spend: 100000 });
   });
@@ -86,7 +89,7 @@ describe("SalesDashboardService", () => {
   it("sin permiso para ver el gasto no hay nada de anuncios; sin costos no hay ganancia real", async () => {
     const reader = salesReader({ days: async () => [{ day: "2026-11-02", currency: "COP", amount: 1000, count: 1, adAmount: 0, adCount: 0, cost: 0, withoutCost: 1 }] });
     const view = await new SalesDashboardService(reader, adsReader(), fx, tz, () => NOW).overview({ tenantId: "t", canSeeAds: false }, {});
-    expect(view).toMatchObject({ ads: null, funnel: null, realProfit: null, costsKnown: false, canSeeAds: false });
+    expect(view).toMatchObject({ ads: null, funnel: null, realProfit: null, profit: null, costsKnown: false, canSeeAds: false });
   });
 
   it("una moneda sin tasa no se suma y se avisa", async () => {

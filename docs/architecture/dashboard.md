@@ -60,7 +60,14 @@ En los dos casos el token se guarda **cifrado** (`AesGcmSecretCipher`, contexto 
 ### Ventas
 
 1. **La franja oscura**: ROAS real frente al de Meta («por cada $ 1 te vuelven $ 8,30»). Al lado, facturación por anuncios, gasto, ganancia (o la **ganancia real**), costo por venta, costo por chat y cuánto deja cada chat.
-2. Facturación, leads nuevos (por anuncio y orgánicos), tasa de conversión y ganancia real.
+2. **El resumen del periodo** (`sales/summary/`): ocho tarjetas, cada una con su cambio frente al periodo anterior. Son Facturación, Ventas, Compra promedio, Ganancia, Leads nuevos, Conversión, ROAS real e Inversión en Meta.
+   - `summaryCards.ts` (puro) decide qué dice cada tarjeta.
+   - `SummaryIcon.tsx` tiene los íconos, con la convención de línea de Auream.
+   - `SalesSummary.tsx` pinta.
+   - Compra promedio y ROAS calculan su periodo anterior con lo que ya trae la respuesta (facturación ÷ ventas, ventas por anuncio ÷ gasto).
+   - La conversión cambia en **puntos** («▲ 5 pts»).
+   - La inversión en Meta va en gris: gastar más o menos no es bueno ni malo por sí solo.
+   - Quien no ve el gasto (`ads.read`) no ve ROAS, inversión ni ganancia.
 3. Facturación y gasto por día, con la ganancia punteada. La curva es monótona: nunca dibuja picos que no hubo.
 4. Del anuncio a la venta (lo vieron → clic → escribieron → compraron), con el costo de cada paso.
 5. Qué hacer con tus campañas.
@@ -93,6 +100,20 @@ El catálogo tiene ahora un **costo por país** junto a cada precio (`product_pr
 Ganancia real = ventas − costo de lo vendido − gasto en anuncios.
 
 Solo se muestra si **todas** las ventas del periodo tienen costo. Si falta alguno, la pantalla invita a completarlo.
+
+La tarjeta **Ganancia** del resumen (`profit`) siempre tiene valor para quien ve el gasto:
+
+- Es facturación − inversión en Meta, y además − costo de productos si se conocen todos.
+- Va con su periodo anterior.
+- Para quien no ve el gasto es `null`: con la facturación a la vista, la resta delataría el gasto.
+
+## La conversión
+
+**De los leads nuevos del periodo, cuántos compraron en el periodo** (`SqlDashboardSales.leads` → `converted`). Nunca pasa de 100 %.
+
+- Cuenta la venta aprobada del mismo contacto. Una venta anotada a mano no tiene contacto, así que cuenta por su teléfono.
+- Antes era ventas ÷ leads. Esa cuenta mezclaba compras de clientes viejos y daba números como 435 %; Leona tiene el mismo error.
+- Va con la del periodo anterior (`conversionPrevious`) y cuántos compraron (`convertedLeads`).
 
 ## Permisos
 

@@ -88,6 +88,8 @@ describe("Dashboard en PostgreSQL", () => {
     expect(sales.realProfit).toBe(70000);
     expect(sales.leads).toMatchObject({ value: 1 });
     expect(sales.leadsFromAds).toBe(1);
+    // Un lead con dos compras: 100 % (antes daba 200 %: ventas ÷ leads).
+    expect([sales.conversion, sales.convertedLeads]).toEqual([1, 1]);
     expect(sales.recentSales[1]).toMatchObject({ adName: "Tu canción", connectionName: "Ventas 1" });
     expect(sales.byHour[11]).toBe(2);
 
@@ -100,5 +102,27 @@ describe("Dashboard en PostgreSQL", () => {
     expect(attention.heatmap[0]![4]).toBe(1);
     expect(attention.agents).toEqual([expect.objectContaining({ userId: AGENT, name: "Sofía", attended: 1, responseMinutes: 6, sales: 2, revenue: 98000 })]);
     expect(attention.connections).toEqual([expect.objectContaining({ name: "Ventas 1", connected: true, leads: 1, attended: 1, unanswered: 1 })]);
+  });
+
+  it("conversión: de los leads nuevos, cuántos compraron (por contacto o, a mano, por teléfono) dentro del periodo", async () => {
+    const q = async (text: string, params: unknown[]) => (await sql.query<{ id: string }>(text, params)).rows[0]!.id;
+    const tenant = await q("insert into tenants (key, name) values ($1, 'conv') returning id", [TEST_KEY_PREFIX + "conv"]);
+    const connection = await q("insert into whatsapp_connections (id, tenant_id, name, method, status) values (gen_random_uuid(), $1, 'Ventas', 'qr', 'connected') returning id", [tenant]);
+    const lead = async (phone: string) => {
+      const contact = await q("insert into contacts (tenant_id, channel, external_key, name, phone) values ($1, 'whatsapp', $2, $2, $2) returning id", [tenant, phone]);
+      await q("insert into conversations (id, tenant_id, connection_id, contact_id, phone, created_at) values (gen_random_uuid(), $1, $2, $3, $4, '2026-11-03T14:00:00Z') returning id", [tenant, connection, contact, phone]);
+      return contact;
+    };
+    const product = await q("insert into products (tenant_id, name) values ($1, 'Video') returning id", [tenant]);
+    const sale = (contact: string | null, phone: string | null, at: string) =>
+      q("insert into sales (tenant_id, status, source, product_id, product_name, amount, currency, contact_id, customer_phone, sold_at) values ($1, 'approved', $2, $3, 'Video', 1000, 'COP', $4, $5, $6) returning id", [tenant, contact ? "receipt" : "manual", product, contact, phone, at]);
+    await sale(await lead("573000000001"), null, "2026-11-04T10:00:00Z"); // compró por el flujo
+    await lead("573000000002");
+    await sale(null, "573000000002", "2026-11-05T10:00:00Z"); // venta anotada a mano, por su teléfono
+    await lead("573000000003"); // no compró
+    await sale(await lead("573000000004"), null, "2026-12-01T10:00:00Z"); // compró, pero después del periodo
+
+    const counts = await new SqlDashboardSales(sql).leads(tenant, { fromDay: "2026-11-01", toDay: "2026-11-10", from: new Date("2026-11-01T05:00:00Z"), until: new Date("2026-11-11T05:00:00Z"), days: 10 }, {});
+    expect(counts).toEqual({ total: 4, fromAds: 0, converted: 2 });
   });
 });

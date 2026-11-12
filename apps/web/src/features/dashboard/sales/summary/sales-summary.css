@@ -1,0 +1,107 @@
+/* ===== RESUMEN DEL PERIODO (Dashboard › Ventas) =====
+   Ocho tarjetas de números: ícono de línea en un cuadro lila suave (el mismo
+   en todas, el color de la marca), título, cambio frente al periodo anterior,
+   el número y una nota. Los únicos colores fuertes son los del cambio. */
+
+.sales-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.sales-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@container dashboard (max-width: 980px) {
+  .sales-summary__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container dashboard (max-width: 420px) {
+  .sales-summary__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sales-summary__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.sales-summary__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sales-summary__icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.sales-summary__label {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sales-summary__chip {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.sales-summary__chip--good { background: color-mix(in srgb, var(--teal) 18%, var(--surface)); color: var(--status-active-text); }
+.sales-summary__chip--bad { background: color-mix(in srgb, var(--rose) 16%, var(--surface)); color: var(--status-danger); }
+.sales-summary__chip--flat { background: var(--chip-bg); color: var(--muted); }
+
+.sales-summary__value {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sales-summary__note {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.sales-summary__review {
+  justify-self: start;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 18%, var(--surface));
+  color: var(--status-paused-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}

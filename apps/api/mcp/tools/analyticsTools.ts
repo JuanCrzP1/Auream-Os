@@ -36,7 +36,7 @@ export function analyticsTools(dashboard: DashboardToolServices): McpTool[] {
       name: "dashboard_sales",
       title: "Dashboard: ventas y ROAS real",
       description:
-        "Ventas del periodo y su comparación con el anterior: ROAS real (y el que reporta Meta), facturación por anuncios, gasto en Meta, ganancia, costo por venta y por chat, leads nuevos, tasa de conversión, el embudo del anuncio a la venta, qué hacer con cada campaña (escalar, revisar, apagar) y ventas por hora, número, producto y país.",
+        "Ventas del periodo y su comparación con el anterior: facturación, ventas, compra promedio, ganancia (facturación − inversión en Meta − costos si se conocen), ROAS real (y el que reporta Meta), facturación por anuncios, gasto en Meta, costo por venta y por chat, leads nuevos, conversión (de los leads nuevos, cuántos compraron: `conversion`, `convertedLeads`), el embudo del anuncio a la venta, qué hacer con cada campaña (escalar, revisar, apagar) y ventas por hora, número, producto y país.",
       scope: "analytics.read",
       readOnly: true,
       inputSchema: { type: "object", properties: { ...filterProperties, product_id: { type: "string", description: "Solo un producto (de list_products)." } } },

@@ -75,13 +75,23 @@ export interface SalesDashboardResponse {
   readonly averageTicket: number | null;
   readonly leads: Trend;
   readonly leadsFromAds: number;
-  /** Ventas ÷ leads nuevos (0 a 1). */
+  /** De los leads nuevos del periodo, la parte que compró en el periodo (0 a 1; nunca más de 1). */
   readonly conversion: number | null;
+  /** La misma conversión en el periodo anterior (para su cambio). */
+  readonly conversionPrevious: number | null;
+  /** Leads nuevos del periodo que ya compraron. */
+  readonly convertedLeads: number;
   readonly reviewCount: number;
   /** `null`: sin Meta conectado o sin permiso para ver el gasto. */
   readonly ads: AdsMoneySummary | null;
   /** Ganancia real (ventas − anuncios − costo de productos); `null` si no hay costos. */
   readonly realProfit: number | null;
+  /**
+   * Ganancia del periodo: facturación − inversión en Meta (− costo de
+   * productos si el catálogo lo tiene), frente al periodo anterior. `null`
+   * para quien no puede ver el gasto (se deduciría de la resta).
+   */
+  readonly profit: Trend | null;
   readonly costsKnown: boolean;
   readonly daily: ReadonlyArray<DayPoint>;
   /** Del anuncio a la venta; `null` sin Meta. */

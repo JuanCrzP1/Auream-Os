@@ -1,6 +1,6 @@
 import type { RecentSale } from "../../../contracts/DashboardContracts";
 import type { Period } from "../../../domains/analytics/application/DashboardPeriod";
-import type { BreakdownRow, DashboardScope, SalesDay, SalesReader } from "../../../domains/analytics/application/DashboardReaders";
+import type { BreakdownRow, DashboardScope, LeadCounts, SalesDay, SalesReader } from "../../../domains/analytics/application/DashboardReaders";
 import type { SqlExecutor } from "./SqlClient";
 
 // ---------------------------------------------------------------------------
@@ -91,16 +91,25 @@ export class SqlDashboardSales implements SalesReader {
     return rows.map((row) => ({ key: row.key.trim(), label: row.label.trim(), day: row.day, currency: row.currency.trim(), amount: Number(row.amount), count: Number(row.count) }));
   }
 
-  public async leads(tenantId: string, period: Period, scope: DashboardScope): Promise<{ total: number; fromAds: number }> {
+  public async leads(tenantId: string, period: Period, scope: DashboardScope): Promise<LeadCounts> {
     const params: unknown[] = [tenantId, period.from.toISOString(), period.until.toISOString()];
     const byConnection = scope.connectionId ? (params.push(scope.connectionId), `and v.connection_id = $${params.length}`) : "";
-    const { rows } = await this.sql.query<{ total: string; from_ads: string }>(
-      `select count(*) as total, count(*) filter (where ct.ad_origin ->> 'sourceId' is not null) as from_ads
+    const byProduct = scope.productId ? (params.push(scope.productId), `and s.product_id = $${params.length}`) : "";
+    // Compró: una venta aprobada del mismo cliente dentro del periodo (la de un
+    // flujo trae el contacto; una anotada a mano, solo el teléfono).
+    const { rows } = await this.sql.query<{ total: string; from_ads: string; converted: string }>(
+      `select count(*) as total,
+              count(*) filter (where ct.ad_origin ->> 'sourceId' is not null) as from_ads,
+              count(*) filter (where exists (
+                select 1 from sales s
+                 where s.tenant_id = v.tenant_id and s.status = 'approved' and s.sold_at >= $2 and s.sold_at < $3 ${byProduct}
+                   and (s.contact_id = v.contact_id or (s.contact_id is null and s.customer_phone is not null and s.customer_phone = ct.phone))
+              )) as converted
          from conversations v left join contacts ct on ct.tenant_id = v.tenant_id and ct.id = v.contact_id
         where v.tenant_id = $1 and v.created_at >= $2 and v.created_at < $3 ${byConnection}`,
       params
     );
-    return { total: Number(rows[0]?.total ?? 0), fromAds: Number(rows[0]?.from_ads ?? 0) };
+    return { total: Number(rows[0]?.total ?? 0), fromAds: Number(rows[0]?.from_ads ?? 0), converted: Number(rows[0]?.converted ?? 0) };
   }
 
   public async reviewCount(tenantId: string): Promise<number> {

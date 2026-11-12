@@ -18,9 +18,9 @@ const trend = (value: number, previous: number) => ({ value, previous, change: p
 const metrics = { spend: 100000, impressions: 20000, clicks: 600, chats: 40, sales: 10, metaPurchases: 3, revenue: 500000, metaRevenue: 150000, profit: 400000, roas: 5, roasMeta: 1.5, costPerChat: 2500, costPerSale: 10000, ctr: 0.03 };
 
 const SALES = (withAds: boolean): SalesDashboardResponse => ({
-  currency: "COP", missingRates: [], revenue: trend(600000, 300000), sales: trend(12, 6), averageTicket: 50000, leads: trend(60, 50), leadsFromAds: 40, conversion: 0.2, reviewCount: 2,
+  currency: "COP", missingRates: [], revenue: trend(600000, 300000), sales: trend(12, 6), averageTicket: 50000, leads: trend(60, 50), leadsFromAds: 40, conversion: 0.15, conversionPrevious: 0.1, convertedLeads: 9, reviewCount: 2,
   ads: withAds ? { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: 360000, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, activeCampaigns: 3 } : null,
-  realProfit: 360000, costsKnown: true,
+  realProfit: 360000, profit: withAds ? trend(360000, 160000) : null, costsKnown: true,
   daily: [{ day: "2026-11-01", revenue: 100000, spend: 20000 }, { day: "2026-11-02", revenue: 500000, spend: 80000 }],
   funnel: withAds ? { impressions: 20000, clicks: 600, chats: 40, sales: 10 } : null,
   byHour: Array.from({ length: 24 }, (_, h) => (h === 20 ? 5 : 1)),
@@ -72,6 +72,17 @@ describe("Dashboard", () => {
     expect(await screen.findByRole("region", { name: "Qué hacer con tus campañas" })).toHaveTextContent("Escalar");
     expect(screen.getByText("Tu canción")).toBeInTheDocument();
     expect(screen.getByText("2 ventas por revisar →")).toBeInTheDocument();
+
+    const summary = screen.getByRole("region", { name: "Resumen del periodo" });
+    const card = (name: string) => within(summary).getByRole("article", { name });
+    expect(within(summary).getAllByRole("article").map((item) => item.getAttribute("aria-label"))).toEqual([
+      "Facturación", "Ventas", "Compra promedio", "Ganancia", "Leads nuevos", "Conversión", "ROAS real", "Inversión en Meta"
+    ]);
+    expect(card("Ventas")).toHaveTextContent("Ventas▲ 100 %12Aprobadas · 2 por revisar");
+    expect(card("Conversión")).toHaveTextContent("15 %");
+    expect(card("Conversión")).toHaveTextContent("9 de 60 leads compraron");
+    expect(card("Conversión")).toHaveTextContent("▲ 5 pts");
+    expect(card("Inversión en Meta")).toHaveTextContent("3 campañas activas");
   });
 
   it("el periodo y el número viajan a la API; Anuncios muestra la tabla con la venta real", async () => {
@@ -98,7 +109,9 @@ describe("Dashboard", () => {
   it("sin acceso al gasto (Asesor): ni franja de anuncios ni pestaña Anuncios", async () => {
     stub(false);
     page("/dashboard?tab=ads");
-    expect(await screen.findByRole("region", { name: "Ventas y leads" })).toBeInTheDocument();
+    const summary = await screen.findByRole("region", { name: "Resumen del periodo" });
+    // Sin el gasto no hay ROAS, inversión ni ganancia (la ganancia lo delataría).
+    expect(within(summary).getAllByRole("article").map((item) => item.getAttribute("aria-label"))).toEqual(["Facturación", "Ventas", "Compra promedio", "Leads nuevos", "Conversión"]);
     await waitFor(() => expect(screen.queryByRole("tab", { name: "Anuncios" })).not.toBeInTheDocument());
     expect(screen.queryByRole("region", { name: "La plata de tus anuncios" })).not.toBeInTheDocument();
     expect(paths.some((p) => p.startsWith("/dashboard/ads"))).toBe(false);

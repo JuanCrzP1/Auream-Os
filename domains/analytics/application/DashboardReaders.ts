@@ -39,13 +39,23 @@ export interface SalesReader {
   days(tenantId: string, period: Period, scope: DashboardScope, timezone: string): Promise<ReadonlyArray<SalesDay>>;
   byHour(tenantId: string, period: Period, scope: DashboardScope, timezone: string): Promise<ReadonlyArray<number>>;
   breakdown(tenantId: string, period: Period, scope: DashboardScope, timezone: string, by: "connection" | "product" | "country"): Promise<ReadonlyArray<BreakdownRow>>;
-  /** Chats nuevos del periodo (y cuántos llegaron por anuncio). */
-  leads(tenantId: string, period: Period, scope: DashboardScope): Promise<{ total: number; fromAds: number }>;
+  /**
+   * Chats nuevos del periodo, cuántos llegaron por anuncio y cuántos de ellos
+   * compraron en el periodo (venta aprobada del mismo cliente; una venta a
+   * mano cuenta por su teléfono).
+   */
+  leads(tenantId: string, period: Period, scope: DashboardScope): Promise<LeadCounts>;
   reviewCount(tenantId: string): Promise<number>;
   recent(tenantId: string, scope: DashboardScope, limit: number): Promise<ReadonlyArray<RecentSale>>;
 }
 
 /** Lo que reportó Meta en un día, en la moneda de la cuenta. */
+export interface LeadCounts {
+  readonly total: number;
+  readonly fromAds: number;
+  readonly converted: number;
+}
+
 export interface SpendDay {
   readonly day: string;
   readonly currency: string;

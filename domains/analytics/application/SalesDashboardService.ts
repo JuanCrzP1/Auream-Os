@@ -1,7 +1,7 @@
 import type { AdsMoneySummary, Breakdown, DashboardFilters, SalesDashboardResponse } from "../../../contracts/DashboardContracts";
 import { CurrencyConverter, type FxRates } from "./CurrencyConverter";
 import { change, periodOf, previousPeriod, type Period } from "./DashboardPeriod";
-import type { AdsReader, BreakdownRow, DashboardScope, SalesReader, SpendDay } from "./DashboardReaders";
+import type { AdsReader, BreakdownRow, DashboardScope, LeadCounts, SalesReader, SpendDay } from "./DashboardReaders";
 import { MoneyBook, mostUsedCurrency, ratio, round } from "./MoneyBook";
 
 // ---------------------------------------------------------------------------
@@ -69,6 +69,8 @@ export class SalesDashboardService {
     const hasAds = status !== null && status.accounts > 0;
     const [spendDays, prevSpendDays] = hasAds ? await Promise.all([this.ads.spend(tenantId, period), this.ads.spend(tenantId, before)]) : [[], []];
     const spend = book.sum(spendDays, (d) => money(d, d.spend));
+    const prevSpend = book.sum(prevSpendDays, (d) => money(d, d.spend));
+    const prevCost = book.sum(prevDays, (d) => money(d, d.cost));
     const ads = hasAds ? this.adsSummary(book, days, prevDays, spendDays, prevSpendDays, status!.activeCampaigns) : null;
     const [byConnection, byProduct, byCountry] = await Promise.all(
       (["connection", "product", "country"] as const).map((by) => this.sales.breakdown(tenantId, period, scope, timezone, by).then((rows) => group(book, rows)))
@@ -82,10 +84,14 @@ export class SalesDashboardService {
       averageTicket: count > 0 ? round(revenue / count) : null,
       leads: { value: leads.total, previous: prevLeads.total, change: change(leads.total, prevLeads.total) },
       leadsFromAds: leads.fromAds,
-      conversion: leads.total > 0 ? Math.round((count / leads.total) * 1000) / 1000 : null,
+      conversion: conversionOf(leads),
+      conversionPrevious: conversionOf(prevLeads),
+      convertedLeads: leads.converted,
       reviewCount: review,
       ads: ads ? { ...ads, realProfit: costsKnown ? round(ads.revenue.value - spend - cost) : null } : null,
       realProfit: costsKnown ? round(revenue - cost - spend) : null,
+      // Sin permiso para ver el gasto, la ganancia lo delataría (facturación − ganancia).
+      profit: actor.canSeeAds ? profitTrend(round(revenue - spend - (costsKnown ? cost : 0)), round(prevRevenue - prevSpend - (costsKnown ? prevCost : 0))) : null,
       costsKnown,
       daily: dailySeries(period, book, days, spendDays),
       funnel: ads ? { impressions: ads.impressions, clicks: ads.clicks, chats: ads.chats, sales: ads.attributedSales } : null,
@@ -128,6 +134,16 @@ export class SalesDashboardService {
 }
 
 type SalesReaderDays = Awaited<ReturnType<SalesReader["days"]>>;
+
+/** De los leads nuevos, la parte que compró (0 a 1, con tres decimales). */
+function conversionOf(leads: LeadCounts): number | null {
+  return leads.total > 0 ? Math.round((Math.min(leads.converted, leads.total) / leads.total) * 1000) / 1000 : null;
+}
+
+/** Una ganancia puede ser negativa: el cambio se mide contra su valor absoluto. */
+function profitTrend(value: number, previous: number) {
+  return { value, previous, change: previous !== 0 ? (value - previous) / Math.abs(previous) : null };
+}
 
 /** Una fila por día del periodo (aunque no haya ventas), con lo vendido y lo gastado. */
 function dailySeries(period: Period, book: MoneyBook, days: SalesReaderDays, spend: ReadonlyArray<SpendDay>) {

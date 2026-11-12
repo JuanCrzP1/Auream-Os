@@ -6,7 +6,7 @@ Cómo va el negocio, en tres pestañas: **Ventas** (primero la plata de los anun
 features/dashboard/
 ├── pages/        DashboardPage: periodo y filtros (en la dirección) y las pestañas
 ├── components/   DashboardFilters
-├── sales/        AdsHero, SalesKpis, RevenueChart, AdFunnel, CampaignAdvice, Breakdowns, RecentSales
+├── sales/        AdsHero, summary/ (resumen del periodo), RevenueChart, AdFunnel, CampaignAdvice, Breakdowns, RecentSales
 ├── ads/          AdsTab (usa la tabla compartida de `shared/ads`)
 ├── attention/    AttentionTab, Heatmap, AgentsTable
 ├── services/     dashboardApi (`/dashboard/sales`, `/dashboard/attention`)

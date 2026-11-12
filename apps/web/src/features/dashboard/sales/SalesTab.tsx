@@ -10,11 +10,12 @@ import { CampaignAdvice } from "./CampaignAdvice";
 import { ConnectMetaInvite } from "./ConnectMetaInvite";
 import { RecentSales } from "./RecentSales";
 import { RevenueChart } from "./RevenueChart";
-import { SalesKpis } from "./SalesKpis";
+import { SalesSummary } from "./summary/SalesSummary";
 
 /**
  * Dashboard › Ventas: primero la plata de los anuncios (ROAS real, gasto,
- * ganancia), luego ventas y leads, facturación y gasto por día, del anuncio a
+ * ganancia), luego el resumen del periodo (ocho números con su cambio),
+ * facturación y gasto por día, del anuncio a
  * la venta, qué hacer con cada campaña, por hora, número, producto y país, y
  * las últimas ventas con su anuncio.
  */
@@ -31,7 +32,7 @@ export function SalesTab({ filters, periodWords, onSeeAds }: { readonly filters:
   return (
     <div className="sales-tab">
       {view.ads ? <AdsHero view={view} periodWords={periodWords} /> : view.canSeeAds ? <ConnectMetaInvite /> : null}
-      <SalesKpis view={view} />
+      <SalesSummary view={view} />
       <section className="sales-tab__card" aria-labelledby="sales-chart-title">
         <header className="sales-tab__card-header">
           <h2 id="sales-chart-title">{view.ads ? "Facturación y gasto por día" : "Facturación por día"}</h2>
