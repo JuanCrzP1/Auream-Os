@@ -1,6 +1,7 @@
 import type { ApiConfig } from "../config/loadApiConfig";
 import { BoardServices } from "../../../domains/crm/application/BoardServices";
 import type { ContactLabeler, CrmProductCatalog, CrmTeamDirectory, StageLabels } from "../../../domains/crm/application/CrmGateways";
+import { DealOwnerClaims } from "../../../domains/crm/application/DealOwnerClaims";
 import { DealServices } from "../../../domains/crm/application/DealServices";
 import { FollowUpServices } from "../../../domains/crm/application/FollowUpServices";
 import { PipelineServices } from "../../../domains/crm/application/PipelineServices";
@@ -39,6 +40,8 @@ export interface CrmModule {
   readonly routes: CrmRoutes;
   /** Escucha a Contactos y a Ventas (se conecta con `CrmEventsRelay`). */
   readonly tracker: StageTracker;
+  /** El responsable compartido con Conversaciones (al tomar o pasar un chat). */
+  readonly ownerClaims: DealOwnerClaims;
 }
 
 export function composeCrmServices(deps: CrmDependencies): CrmModule {
@@ -60,6 +63,7 @@ export function composeCrmServices(deps: CrmDependencies): CrmModule {
       deals: new DealServices(pipelines, pipelineRepository, deals, events, followUpRepository, labeler, deps.products, team),
       followUps: new FollowUpServices(followUpRepository, labeler, team, timezoneOf)
     },
+    ownerClaims: new DealOwnerClaims(deals, events, team),
     tracker: new StageTracker(pipelineRepository, deals, events, labeler, deps.products, team, new SqlRoundRobinCounter(sql), deps.onError)
   };
 }

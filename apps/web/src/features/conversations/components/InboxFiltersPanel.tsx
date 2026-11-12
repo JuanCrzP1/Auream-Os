@@ -1,3 +1,4 @@
+import type { ChatAgent } from "@contracts/ConversationContracts";
 import { useId } from "react";
 import type { ConnectionSummary } from "@contracts/ConnectionContracts";
 import type { LabelSummary } from "@contracts/ContactContracts";
@@ -15,6 +16,7 @@ export function InboxFiltersPanel({
   connections,
   labels,
   labelsStatus,
+  agents,
   onChange,
   onClear
 }: {
@@ -22,6 +24,8 @@ export function InboxFiltersPanel({
   readonly connections: ReadonlyArray<ConnectionSummary>;
   readonly labels: ReadonlyArray<LabelSummary>;
   readonly labelsStatus: "loading" | "ready" | "error";
+  /** Quién puede atender (filtro por responsable). */
+  readonly agents: ReadonlyArray<ChatAgent>;
   readonly onChange: (next: Partial<InboxFilters>) => void;
   readonly onClear: () => void;
 }) {
@@ -49,6 +53,19 @@ export function InboxFiltersPanel({
                 onClick={() => onChange({ connectionId: connection.id })}
               >
                 {connection.name}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {agents.length > 0 ? (
+        <section className="ios-filter-panel__section">
+          <h3>Responsable</h3>
+          <div className="ios-filter-panel__options">
+            {[{ id: "", name: "Cualquiera" }, { id: "none", name: "Sin asignar" }, ...agents.map((agent) => ({ id: agent.userId, name: agent.name }))].map((option) => (
+              <button key={option.id || "any"} type="button" className="ios-choice" aria-pressed={filters.assigneeId === option.id} onClick={() => onChange({ assigneeId: option.id })}>
+                {option.name}
               </button>
             ))}
           </div>

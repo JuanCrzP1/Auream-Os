@@ -80,6 +80,20 @@ export interface ConversationLabel {
   readonly color: string;
 }
 
+/**
+ * La atención del chat (las pestañas de la bandeja):
+ *   bot        lo atiende el bot; nadie tiene que mirarlo
+ *   waiting    el bot está en pausa y nadie lo ha tomado: en espera
+ *   attending  un asesor lo tomó (`assigneeId`)
+ *   resolved   un asesor lo cerró; el bot vuelve a atender y, si el cliente
+ *              escribe otra vez, se reabre solo
+ */
+export type ConversationStatus = "bot" | "waiting" | "attending" | "resolved";
+export const CONVERSATION_STATUSES: ReadonlyArray<ConversationStatus> = ["waiting", "attending", "bot", "resolved"];
+
+/** Desde cuántos minutos esperando una respuesta un chat se marca en rojo. */
+export const AWAITING_ALERT_MINUTES = 15;
+
 export interface ConversationSummary {
   readonly id: string;
   readonly connectionId: string;
@@ -106,6 +120,12 @@ export interface ConversationSummary {
    * ejecutar flujos ni activar el bot.
    */
   readonly connectionDeleted: boolean;
+  readonly status: ConversationStatus;
+  /** Asesor responsable; `null`: sin asignar. */
+  readonly assigneeId: string | null;
+  readonly assigneeName: string | null;
+  /** Desde cuándo el cliente espera respuesta (su primer mensaje sin contestar); `null`: nada pendiente. */
+  readonly awaitingSince: string | null;
   readonly createdAt: string;
 }
 
@@ -115,8 +135,12 @@ export interface ConversationSummary {
  *   bot_active   los atiende el bot
  *   bot_paused   los atiende un asesor (bot pausado)
  */
-export type ConversationFilter = "all" | "unread" | "bot_active" | "bot_paused";
-export const CONVERSATION_FILTERS: ReadonlyArray<ConversationFilter> = ["all", "unread", "bot_active", "bot_paused"];
+/**
+ *   unanswered   el cliente espera respuesta (su último mensaje no se contestó)
+ *   mine         los que atiende quien mira
+ */
+export type ConversationFilter = "all" | "unread" | "unanswered" | "mine" | "bot_active" | "bot_paused";
+export const CONVERSATION_FILTERS: ReadonlyArray<ConversationFilter> = ["all", "unread", "unanswered", "mine", "bot_active", "bot_paused"];
 
 /**
  * Filtros de la bandeja (query string de `GET /conversations`).
@@ -125,6 +149,10 @@ export const CONVERSATION_FILTERS: ReadonlyArray<ConversationFilter> = ["all", "
  */
 export interface ConversationListQuery {
   readonly filter?: ConversationFilter;
+  /** Pestaña: un estado o todos. */
+  readonly status?: ConversationStatus | "all";
+  /** Responsable: un asesor, o `"none"` para los sin asignar. */
+  readonly assigneeId?: string;
   readonly search?: string;
   readonly connectionId?: string;
   /** Chats cuyo cliente tenga AL MENOS UNA de estas etiquetas. */
@@ -141,6 +169,41 @@ export interface ConversationListResponse {
   readonly nextCursor: string | null;
   /** Quien mira puede eliminar chats (`conversations.manage`). */
   readonly canManage: boolean;
+  /** Quien mira puede responder, tomar chats y empezar chats nuevos (`conversations.write`). */
+  readonly canWrite: boolean;
+  /** Cuántos chats hay en cada pestaña (sin los demás filtros). */
+  readonly counts: Readonly<Record<ConversationStatus, number>>;
+}
+
+/** Quien puede atender chats (para «Pasar a…» y el filtro por responsable). */
+export interface ChatAgent {
+  readonly userId: string;
+  readonly name: string;
+  readonly photoUrl: string | null;
+}
+
+export interface ChatAgentsResponse {
+  readonly agents: ReadonlyArray<ChatAgent>;
+  /** Quien mira (para «Mis chats» y «Tomar chat»). */
+  readonly meId: string;
+}
+
+/** Pasar el chat a un asesor (`null`: dejarlo sin asignar, en espera). */
+export interface AssignConversationRequest {
+  readonly assigneeId: string | null;
+}
+
+/**
+ * Escribirle a un número que nunca escribió (o abrir su chat si ya existe):
+ * desde qué número sale, a quién, y el primer mensaje o un flujo.
+ */
+export interface StartConversationRequest {
+  readonly connectionId: string;
+  /** Con prefijo de país, solo dígitos. */
+  readonly phone: string;
+  readonly name?: string;
+  readonly message?: SendAgentMessageRequest;
+  readonly automationId?: string;
 }
 
 export interface SetConversationLabelsRequest {

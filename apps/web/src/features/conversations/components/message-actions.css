@@ -1,26 +1,4 @@
-/* El menú de un mensaje (capa propia: fuera de la bandeja, con los colores globales). */
-.chat-actions {
-  position: fixed;
-  z-index: 90;
-  display: grid;
-  gap: 2px;
-  padding: 6px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface-floating, var(--surface));
-  color: var(--text);
-  box-shadow: 0 18px 40px -16px rgba(8, 6, 24, 0.45);
-  backdrop-filter: blur(18px) saturate(1.2);
-  animation: chat-actions-in 0.12s ease-out;
-}
-
-@keyframes chat-actions-in {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-}
-
+/* El menú de un mensaje: la base es `floating-menu.css`. */
 .chat-actions__reactions {
   display: flex;
   justify-content: space-between;
@@ -46,37 +24,6 @@
 
 .chat-actions__reactions button.is-on {
   background: var(--primary-soft, var(--chip-bg));
-}
-
-.chat-actions__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.9rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.chat-actions__item:hover,
-.chat-actions__item:focus-visible {
-  background: var(--chip-bg, var(--surface-alt));
-  outline: none;
-}
-
-.chat-actions__item svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* La flechita dentro de la burbuja: aparece al pasar el mouse (siempre en pantallas táctiles). */

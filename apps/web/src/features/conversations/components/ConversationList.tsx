@@ -1,73 +1,41 @@
+import "./list/inbox-list.css";
 import { useId, useState } from "react";
-import type { ConversationSummary } from "@contracts/ConversationContracts";
+import type { ChatAgent, ConversationStatus, ConversationSummary } from "@contracts/ConversationContracts";
 import type { ConnectionSummary } from "@contracts/ConnectionContracts";
 import type { LabelSummary } from "@contracts/ContactContracts";
-import { formatPhone } from "@shared/phone/formatPhone";
-import { dateLabel, isFiltered, panelFilterCount, STATUS_OPTIONS, type InboxFilters } from "../model/inboxFilters";
-import { Avatar } from "./Avatar";
-import { listTime } from "./chatTime";
-import { BotGlyph, ChatsGlyph, CloseGlyph, FilterGlyph, SearchGlyph } from "./ChatGlyphs";
-import { ChatLabels } from "./ChatLabels";
+import { isFiltered, panelFilterCount, STATUS_OPTIONS, TAB_OPTIONS, type InboxFilters } from "../model/inboxFilters";
+import { ChatsGlyph, FilterGlyph, SearchGlyph } from "./ChatGlyphs";
 import { InboxFiltersPanel } from "./InboxFiltersPanel";
+import { ActivePills } from "./list/ActivePills";
+import { ConversationRow } from "./list/ConversationRow";
+import { InboxTabs } from "./list/InboxTabs";
 
 // ---------------------------------------------------------------------------
-// Lista de chats al estilo WhatsApp iOS: título grande, buscador, estado
-// (Todos / No leídos / Con bot / Con asesor) y el panel «Filtros» (número,
-// etiquetas, fecha). Cada chat con avatar, nombre, último mensaje, hora, no
-// leídos y sus etiquetas. Por páginas: «Ver más chats».
+// La bandeja: buscador, «Chat nuevo» y «Filtros» (número, responsable,
+// etiquetas, fecha); las pestañas por atención (Todos · En espera · En
+// atención · Con bot · Resueltos) con sus conteos; los filtros rápidos (Mis
+// chats · No leídos · Sin responder) y los chats. Por páginas.
 // ---------------------------------------------------------------------------
 
-const AUTHOR_PREFIX = { contact: "", bot: "🤖 ", agent: "Tú: " } as const;
+export { displayName } from "./displayName";
 
-export function displayName(conversation: Pick<ConversationSummary, "contactName" | "phone">): string {
-  return conversation.contactName?.trim() || formatPhone(conversation.phone).text;
-}
-
-function ActivePills({
-  filters,
-  connections,
-  labels,
-  onChange
-}: {
-  readonly filters: InboxFilters;
-  readonly connections: ReadonlyArray<ConnectionSummary>;
-  readonly labels: ReadonlyArray<LabelSummary>;
-  readonly onChange: (next: Partial<InboxFilters>) => void;
-}) {
-  const pills: Array<{ key: string; text: string; color?: string; remove: () => void }> = [];
-  const connection = connections.find((item) => item.id === filters.connectionId);
-  if (filters.connectionId) pills.push({ key: "connection", text: connection?.name ?? "Número", remove: () => onChange({ connectionId: "" }) });
-  for (const id of filters.labelIds) {
-    const label = labels.find((item) => item.id === id);
-    pills.push({
-      key: `label-${id}`,
-      text: label?.name ?? "Etiqueta",
-      ...(label ? { color: label.color } : {}),
-      remove: () => onChange({ labelIds: filters.labelIds.filter((labelId) => labelId !== id) })
-    });
-  }
-  if (filters.date.preset !== "any") pills.push({ key: "date", text: dateLabel(filters.date), remove: () => onChange({ date: { preset: "any" } }) });
-  if (pills.length === 0) return null;
-  return (
-    <ul className="ios-pills" aria-label="Filtros aplicados">
-      {pills.map((pill) => (
-        <li key={pill.key} className="ios-pill" style={pill.color ? { ["--label-color" as string]: pill.color } : undefined}>
-          {pill.color ? <span className="ios-label__dot" aria-hidden="true" /> : null}
-          {pill.text}
-          <button type="button" aria-label={`Quitar filtro ${pill.text}`} onClick={pill.remove}>
-            <CloseGlyph />
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
+/** Qué decir cuando una pestaña está vacía (sin otros filtros). */
+const EMPTY_TAB: Readonly<Record<ConversationStatus, { readonly title: string; readonly text: string }>> = {
+  waiting: { title: "Nadie espera 🎉", text: "Cuando el bot se pause o un cliente pida un asesor, su chat aparece aquí para que alguien lo tome." },
+  attending: { title: "Nadie está atendiendo", text: "Los chats que toma un asesor aparecen aquí hasta que los resuelve." },
+  bot: { title: "El bot no atiende chats ahora", text: "Los chats que atiende tu bot aparecen aquí." },
+  resolved: { title: "Aún no hay chats resueltos", text: "Al resolver un chat, el bot vuelve a atenderlo y queda aquí." }
+};
 
 export function ConversationList({
   conversations,
+  counts,
   connections,
   labels,
   labelsStatus,
+  agents,
+  meId,
+  canWrite,
   selectedId,
   filters,
   filtering,
@@ -76,12 +44,18 @@ export function ConversationList({
   onFilters,
   onClearFilters,
   onLoadMore,
-  onSelect
+  onSelect,
+  onNewChat
 }: {
   readonly conversations: ReadonlyArray<ConversationSummary>;
+  readonly counts: Readonly<Record<ConversationStatus, number>> | null;
   readonly connections: ReadonlyArray<ConnectionSummary>;
   readonly labels: ReadonlyArray<LabelSummary>;
   readonly labelsStatus: "loading" | "ready" | "error";
+  readonly agents: ReadonlyArray<ChatAgent>;
+  readonly meId: string | null;
+  /** Quien mira puede escribir (y empezar chats). */
+  readonly canWrite: boolean;
   readonly selectedId: string | null;
   readonly filters: InboxFilters;
   readonly filtering: boolean;
@@ -91,11 +65,14 @@ export function ConversationList({
   readonly onClearFilters: () => void;
   readonly onLoadMore: () => void;
   readonly onSelect: (id: string) => void;
+  readonly onNewChat: () => void;
 }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelId = useId();
   const count = panelFilterCount(filters);
   const filtered = isFiltered(filters);
+  const emptyTab = filters.tab === "all" ? null : EMPTY_TAB[filters.tab];
+  const tabName = TAB_OPTIONS.find((option) => option.value === filters.tab)?.label ?? "";
 
   return (
     <section className="ios-list" aria-label="Chats" aria-busy={filtering || undefined}>
@@ -103,36 +80,23 @@ export function ConversationList({
         <div className="ios-list__titlebar">
           <label className="ios-search">
             <SearchGlyph />
-            <input
-              type="search"
-              value={filters.search}
-              placeholder="Buscar por nombre o número"
-              aria-label="Buscar chats"
-              onChange={(event) => onFilters({ search: event.target.value })}
-            />
+            <input type="search" value={filters.search} placeholder="Buscar por nombre o número" aria-label="Buscar chats" onChange={(event) => onFilters({ search: event.target.value })} />
           </label>
-          <button
-            type="button"
-            className={`ios-filter-btn${count ? " is-active" : ""}`}
-            aria-expanded={panelOpen}
-            aria-controls={panelId}
-            onClick={() => setPanelOpen((open) => !open)}
-          >
+          <button type="button" className={`ios-filter-btn${count ? " is-active" : ""}`} aria-expanded={panelOpen} aria-controls={panelId} onClick={() => setPanelOpen((open) => !open)}>
             <FilterGlyph />
             Filtros
             {count ? <span className="ios-filter-btn__count" aria-label={`${count} aplicados`}>{count}</span> : null}
           </button>
+          {canWrite ? (
+            <button type="button" className="inbox-new" aria-label="Chat nuevo" title="Chat nuevo: escríbele primero a un número" onClick={onNewChat}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+          ) : null}
         </div>
-        <div className="ios-filters" role="tablist" aria-label="Estado del chat">
+        <InboxTabs value={filters.tab} counts={counts} onChange={(tab) => onFilters({ tab })} />
+        <div className="ios-filters" role="group" aria-label="Filtros rápidos">
           {STATUS_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="tab"
-              aria-selected={filters.status === option.value}
-              className="ios-chip"
-              onClick={() => onFilters({ status: option.value })}
-            >
+            <button key={option.value} type="button" aria-pressed={filters.status === option.value} className="ios-chip" onClick={() => onFilters({ status: option.value })}>
               {option.label}
             </button>
           ))}
@@ -144,6 +108,7 @@ export function ConversationList({
               connections={connections}
               labels={labels}
               labelsStatus={labelsStatus}
+              agents={agents}
               onChange={onFilters}
               onClear={() => {
                 onClearFilters();
@@ -152,14 +117,20 @@ export function ConversationList({
             />
           ) : null}
         </div>
-        <ActivePills filters={filters} connections={connections} labels={labels} onChange={onFilters} />
+        <ActivePills filters={filters} connections={connections} labels={labels} agents={agents} onChange={onFilters} />
       </header>
 
       {conversations.length === 0 ? (
         <div className="ios-list__empty">
           <ChatsGlyph />
-          <strong>{filtered ? "Sin resultados" : "Aún no hay chats"}</strong>
-          <span>{filtered ? "Ningún chat coincide con estos filtros." : "Cuando un cliente escriba a uno de tus números, su chat aparece aquí."}</span>
+          <strong>{filtered ? "Sin resultados" : emptyTab ? emptyTab.title : "Aún no hay chats"}</strong>
+          <span>
+            {filtered
+              ? `Ningún chat${emptyTab ? ` en «${tabName}»` : ""} coincide con estos filtros.`
+              : emptyTab
+                ? emptyTab.text
+                : "Cuando un cliente escriba a uno de tus números, su chat aparece aquí."}
+          </span>
           {filtered ? (
             <button type="button" className="ios-link-btn" onClick={onClearFilters}>
               Limpiar filtros
@@ -168,51 +139,17 @@ export function ConversationList({
         </div>
       ) : (
         <ul className="ios-list__items">
-          {conversations.map((conversation) => {
-            const name = displayName(conversation);
-            const prefix = conversation.lastMessageAuthor ? AUTHOR_PREFIX[conversation.lastMessageAuthor] : "";
-            return (
-              <li key={conversation.id}>
-                <button
-                  type="button"
-                  className={`ios-row${conversation.id === selectedId ? " is-selected" : ""}`}
-                  aria-current={conversation.id === selectedId ? "true" : undefined}
-                  aria-label={`${name}${conversation.unreadCount ? `, ${conversation.unreadCount} sin leer` : ""}`}
-                  onClick={() => onSelect(conversation.id)}
-                >
-                  <Avatar name={conversation.contactName} phone={conversation.phone} photoUrl={conversation.contactAvatarUrl} size={40} />
-                  <span className="ios-row__body">
-                    <span className="ios-row__top">
-                      <span className="ios-row__name">{name}</span>
-                      <span className={`ios-row__time${conversation.unreadCount ? " is-unread" : ""}`}>{listTime(conversation.lastMessageAt)}</span>
-                    </span>
-                    <span className="ios-row__bottom">
-                      <span className="ios-row__preview">
-                        {prefix}
-                        {conversation.lastMessageText || "Sin mensajes"}
-                      </span>
-                      {!conversation.botEnabled ? (
-                        <span className="ios-row__paused" title="Atendido por un asesor (bot pausado)">
-                          <BotGlyph />
-                        </span>
-                      ) : null}
-                      {conversation.unreadCount ? <span className="ios-badge">{conversation.unreadCount}</span> : null}
-                    </span>
-                    {conversation.labels.length || connections.length > 1 || conversation.connectionDeleted ? (
-                      <span className="ios-row__extra">
-                        <ChatLabels labels={conversation.labels} />
-                        {conversation.connectionDeleted ? (
-                          <span className="ios-row__connection is-deleted">{conversation.connectionName} · eliminado</span>
-                        ) : connections.length > 1 ? (
-                          <span className="ios-row__connection">{conversation.connectionName}</span>
-                        ) : null}
-                      </span>
-                    ) : null}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
+          {conversations.map((conversation) => (
+            <li key={conversation.id}>
+              <ConversationRow
+                conversation={conversation}
+                selected={conversation.id === selectedId}
+                meId={meId}
+                showConnection={connections.length > 1}
+                onSelect={() => onSelect(conversation.id)}
+              />
+            </li>
+          ))}
           {hasMore ? (
             <li className="ios-list__more">
               <button type="button" className="ios-link-btn" disabled={loadingMore} onClick={onLoadMore}>

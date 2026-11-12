@@ -35,6 +35,10 @@ import { FlowTimerService } from "../../../domains/messaging/application/FlowTim
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { SchedulerFlowTimers } from "./flowTimerAdapters";
 import { ConversationInbox, ConversationRecorder } from "../../../domains/conversations/application/ConversationServices";
+import { ChatAttention } from "../../../domains/conversations/application/ChatAttention";
+import { NewChatService } from "../../../domains/conversations/application/NewChatService";
+import type { DealOwners } from "../../../domains/conversations/application/ports/ConversationPorts";
+import { SqlTeamRepository } from "../../../infrastructure/persistence/sql/SqlTeamRepository";
 import { SqlConversationRepository } from "../../../infrastructure/persistence/sql/SqlConversationRepository";
 
 // ---------------------------------------------------------------------------
@@ -51,6 +55,10 @@ export interface MessagingServices {
   readonly inbound: Pick<HandleInboundMessageService, "execute">;
   /** La bandeja de Conversaciones (lista y filtros, hilo, responder, pausar el bot, etiquetar, enviar flujos). */
   readonly conversations: ConversationInbox;
+  /** La atención de cada chat: tomar, pasar, resolver y quién puede atender. */
+  readonly attention: ChatAttention;
+  /** «Chat nuevo»: escribirle primero a un número. */
+  readonly newChats: NewChatService;
   /** Despertadores vencidos de los flujos (los ejecuta la cola de tareas). */
   readonly timers: FlowTimerService;
   /** Recibos de entregado/leído de lo que salió por un número (avisos del proveedor). */
@@ -86,6 +94,8 @@ export interface MessagingDependencies {
   readonly sales: SalesLedger;
   /** Quién oye los mensajes entrantes (se conecta después: Difusiones depende de Mensajería). */
   readonly inboundListeners?: { readonly current: ReadonlyArray<InboundListener> };
+  /** CRM: el responsable del chat es el mismo del embudo. */
+  readonly dealOwners: DealOwners;
 }
 
 export function composeMessagingServices(deps: MessagingDependencies): MessagingServices {
@@ -131,6 +141,13 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
       recorder
     );
 
+  const inbox = new ConversationInbox(conversations, recorder, delivery, launcher, {
+    // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).
+    setLabels: async (tenantId, contactId, labelIds) => {
+      await deps.contacts.setContactLabels.execute(tenantId, contactId, labelIds);
+    }
+  });
+
   return {
     // Cada mensaje entrante revisa, de paso, si quedaron despertadores vencidos.
     inbound: {
@@ -148,11 +165,31 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     avatars: new ContactAvatarService(new SqlContactAvatarStore(deps.sql)),
     outreach: new OutreachService(recorder, delivery, launcher),
     receipts: recorder,
-    conversations: new ConversationInbox(conversations, recorder, delivery, launcher, {
-      // Etiquetar el chat = etiquetar a su cliente en Contactos (valida que las etiquetas sean de la cuenta).
-      setLabels: async (tenantId, contactId, labelIds) => {
-        await deps.contacts.setContactLabels.execute(tenantId, contactId, labelIds);
-      }
-    })
+    conversations: inbox,
+    attention: new ChatAttention(conversations, chatTeam(new SqlTeamRepository(deps.sql)), deps.dealOwners),
+    newChats: new NewChatService(
+      {
+        isConnected: async (tenantId, connectionId) =>
+          (await deps.connections.list.execute(tenantId)).some((connection) => connection.id === connectionId && connection.status === "connected")
+      },
+      {
+        identify: async (tenantId, phone, name) => {
+          const { profile } = await deps.contacts.directory.identify(tenantId, { channel: "whatsapp", externalKey: phone }, name);
+          return { contactId: profile.id };
+        }
+      },
+      recorder,
+      inbox
+    )
+  };
+}
+
+/** Quién puede atender chats: el equipo, menos los de solo lectura (igual que el responsable del CRM). */
+function chatTeam(team: SqlTeamRepository) {
+  return {
+    agents: async (tenantId: string) =>
+      (await team.listMembers(tenantId))
+        .filter((member) => member.role !== "viewer" && member.role !== "api_client" && member.role !== "worker")
+        .map((member) => ({ userId: member.userId, name: member.displayName ?? member.email ?? "Sin nombre", photoUrl: member.photoUrl }))
   };
 }

@@ -1,12 +1,13 @@
-import type { ConversationLabel, ConversationSummary, MessageAuthor } from "../../../contracts/ConversationContracts";
+import type { ConversationLabel, ConversationStatus, ConversationSummary, MessageAuthor } from "../../../contracts/ConversationContracts";
 import type { InboxQuery } from "../../../domains/conversations/application/ConversationRepository";
 import type { SqlClient } from "./SqlClient";
 import { isUuid, toIso } from "./sqlValues";
 
 // ---------------------------------------------------------------------------
 // La bandeja en PostgreSQL: chats con su número, contacto, etiquetas, último
-// mensaje y flujo en curso, con filtros y páginas por la última actividad
-// (`017_conversations_activity_index.sql`).
+// mensaje, flujo en curso y atención (estado, responsable, espera), con
+// filtros y páginas por la última actividad (`017_conversations_activity_index.sql`,
+// `040_chat_attention.sql`).
 // ---------------------------------------------------------------------------
 
 interface InboxRow {
@@ -17,6 +18,10 @@ interface InboxRow {
   phone: string;
   bot_enabled: boolean;
   unread_count: number;
+  status: ConversationStatus;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  awaiting_since: Date | string | null;
   connection_deleted?: boolean;
   created_at: Date | string;
   connection_name: string;
@@ -45,6 +50,10 @@ const toSummary = (row: InboxRow): ConversationSummary => ({
   activeFlowName: row.active_flow_name,
   labels: row.labels ?? [],
   connectionDeleted: row.connection_deleted ?? false,
+  status: row.status,
+  assigneeId: row.assignee_id,
+  assigneeName: row.assignee_name,
+  awaitingSince: row.awaiting_since === null ? null : toIso(row.awaiting_since),
   createdAt: toIso(row.created_at)
 });
 
@@ -55,6 +64,7 @@ const ACTIVITY = "coalesce(c.last_message_at, c.created_at)";
 const INBOX_SELECT = `
   select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
          c.last_message_text, c.last_message_author, c.last_message_at,
+         c.status, c.assignee_id, c.awaiting_since, coalesce(u.display_name, u.email) as assignee_name,
          w.name as connection_name, w.deleted_at is not null as connection_deleted, ct.name as contact_name, ct.avatar_url as contact_avatar_url, a.name as active_flow_name,
          (select json_agg(json_build_object('id', l.id, 'name', l.name, 'color', l.color) order by lower(l.name))
             from contact_label_assignments la
@@ -63,6 +73,7 @@ const INBOX_SELECT = `
     from conversations c
     join whatsapp_connections w on w.id = c.connection_id
     left join contacts ct on ct.id = c.contact_id
+    left join user_profiles u on u.user_id = c.assignee_id
     left join flow_sessions s
       on s.id = c.tenant_id::text || ':' || c.connection_id::text || ':' || c.phone
      and s.status in ('active', 'waiting_input', 'delayed', 'paused')
@@ -83,6 +94,17 @@ export class SqlConversationInbox {
     if (query.filter === "unread") where.push("c.unread_count > 0");
     if (query.filter === "bot_active") where.push("c.bot_enabled = true");
     if (query.filter === "bot_paused") where.push("c.bot_enabled = false");
+    if (query.filter === "unanswered") where.push("c.awaiting_since is not null");
+    if (query.filter === "mine") {
+      if (!query.viewerId || !isUuid(query.viewerId)) return [];
+      where.push(`c.assignee_id = ${param(query.viewerId)}::uuid`);
+    }
+    if (query.status) where.push(`c.status = ${param(query.status)}`);
+    if (query.assigneeId === null) where.push("c.assignee_id is null");
+    else if (query.assigneeId !== undefined) {
+      if (!isUuid(query.assigneeId)) return [];
+      where.push(`c.assignee_id = ${param(query.assigneeId)}::uuid`);
+    }
     if (query.connectionId) {
       // Un número que no es un id no coincide con ningún chat.
       if (!isUuid(query.connectionId)) return [];

@@ -3,7 +3,9 @@ import type { RequestContext } from "../../../platform/identity/contracts/Reques
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
 import { ConversationPermissions } from "../../../platform/authorization/permissions/ConversationPermissions";
 import type {
+  AssignConversationRequest,
   ConversationFilter,
+  ConversationStatus,
   ReactToMessageRequest,
   SetConversationLabelsRequest,
   StartFlowRequest,
@@ -29,6 +31,12 @@ import { sendJson } from "../http/sendJson";
 //                                             { text } o { parts, replyToId }
 //   POST   /conversations/:id/messages/:mid/reaction  reaccionar { emoji }
 //   DELETE /conversations/:id                 eliminar el chat y su historial
+//   GET    /conversations/agents              quién puede atender (+ quién mira)
+//   POST   /conversations                     chat nuevo { connectionId, phone, name,
+//                                             message | automationId }
+//   POST   /conversations/:id/take            tomar el chat
+//   POST   /conversations/:id/assign          pasarlo { assigneeId } (null: sin asignar)
+//   POST   /conversations/:id/resolve         resolverlo (el bot vuelve a atender)
 //   PUT    /conversations/:id/labels          etiquetas del cliente { labelIds }
 //   POST   /conversations/:id/flows           enviar un flujo a mano
 //
@@ -43,6 +51,7 @@ const READ = /^\/conversations\/([^/]+)\/read$/;
 const FLOWS = /^\/conversations\/([^/]+)\/flows$/;
 const LABELS = /^\/conversations\/([^/]+)\/labels$/;
 const LIVE = /^\/conversations\/([^/]+)\/live$/;
+const ATTENTION = /^\/conversations\/([^/]+)\/(take|assign|resolve)$/;
 const REACTION = /^\/conversations\/([^/]+)\/messages\/([^/]+)\/reaction$/;
 
 /** Texto de la URL o nada (un parámetro vacío es como si no estuviera). */
@@ -69,6 +78,8 @@ export async function routeConversationsRequest(
     const labelIds = textParam(url, "labelIds")?.split(",").filter(Boolean);
     const query = {
       filter: (textParam(url, "filter") ?? "all") as ConversationFilter,
+      status: textParam(url, "status") as ConversationStatus | undefined,
+      assigneeId: textParam(url, "assigneeId"),
       search: textParam(url, "search"),
       connectionId: textParam(url, "connectionId"),
       labelIds,
@@ -77,7 +88,29 @@ export async function routeConversationsRequest(
       cursor: textParam(url, "cursor")
     };
     const defined = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined));
-    sendJson(response, 200, { ...(await inbox.list(tenantId, defined)), canManage: context.scopes.includes(ConversationPermissions.manage) });
+    sendJson(response, 200, { ...(await inbox.list(tenantId, defined, context.actorId)), canManage: context.scopes.includes(ConversationPermissions.manage), canWrite: context.scopes.includes(ConversationPermissions.write) });
+    return true;
+  }
+
+  const agent = { id: context.actorId, name: null };
+  if (path === "/conversations/agents" && method === "GET") {
+    sendJson(response, 200, { agents: await services.attention.agents(tenantId), meId: context.actorId });
+    return true;
+  }
+  if (path === "/conversations" && method === "POST") {
+    sendJson(response, 201, await services.newChats.start(tenantId, await parseJsonBody<Record<string, unknown>>(request), agent));
+    return true;
+  }
+
+  const attention = ATTENTION.exec(path);
+  if (attention && method === "POST") {
+    const [, id, action] = attention;
+    if (action === "take") sendJson(response, 200, await services.attention.take(tenantId, id!, context.actorId));
+    if (action === "resolve") sendJson(response, 200, await services.attention.resolve(tenantId, id!));
+    if (action === "assign") {
+      const body = await parseJsonBody<Partial<AssignConversationRequest>>(request);
+      sendJson(response, 200, await services.attention.assign(tenantId, id!, body.assigneeId === undefined ? undefined : body.assigneeId, context.actorId));
+    }
     return true;
   }
 
@@ -94,14 +127,14 @@ export async function routeConversationsRequest(
   }
   if (messages && method === "POST") {
     const body = await parseJsonBody<unknown>(request);
-    sendJson(response, 200, await inbox.sendAgentMessage(tenantId, messages[1]!, body, { id: context.actorId, name: null }));
+    sendJson(response, 200, await inbox.sendAgentMessage(tenantId, messages[1]!, body, agent));
     return true;
   }
 
   const reaction = REACTION.exec(path);
   if (reaction && method === "POST") {
     const body = await parseJsonBody<Partial<ReactToMessageRequest>>(request);
-    await inbox.react(tenantId, reaction[1]!, decodeURIComponent(reaction[2]!), body.emoji, { id: context.actorId, name: null });
+    await inbox.react(tenantId, reaction[1]!, decodeURIComponent(reaction[2]!), body.emoji, agent);
     response.statusCode = 204;
     response.end();
     return true;

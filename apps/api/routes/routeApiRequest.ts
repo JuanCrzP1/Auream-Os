@@ -19,6 +19,8 @@ import { routeGroupLink } from "./routeGroupLink";
 import { routeHelpRequest, type HelpRoutes } from "./routeHelpRequest";
 import { routeNotificationsRequest } from "./routeNotificationsRequest";
 import { routeQuickRepliesRequest } from "./routeQuickRepliesRequest";
+import { routeContactNotesRequest } from "./routeContactNotesRequest";
+import type { ContactNoteServices } from "../../../domains/contacts/application/ContactNoteServices";
 import type { QuickReplyServices } from "../../../domains/quick-replies/application/QuickReplyServices";
 import type { NotificationServices } from "../../../domains/notifications/application/NotificationServices";
 import { routeHelpDocs } from "./routeHelpDocs";
@@ -108,6 +110,8 @@ export interface ApiRouterDependencies {
   readonly notificationServices?: NotificationServices;
   /** Respuestas rápidas del chat (`/quick-replies`). Ausente: responde 503. */
   readonly quickReplyServices?: QuickReplyServices;
+  /** Notas internas de los clientes (`/contacts/:id/notes`). Ausente: responde 503. */
+  readonly contactNoteServices?: ContactNoteServices;
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
   /** Meta Ads (`/ads`) y el Dashboard (`/dashboard`). Ausente: responden 503. */
   readonly adsServices?: AdsModule;
@@ -193,6 +197,7 @@ export async function routeApiRequest(
   await enforceRateLimit(dependencies.rateLimiter, `api:tenant:${requestContext.tenantId}`, TENANT_API_POLICY);
   recordLastSeen(dependencies.teamServices, dependencies.background, requestContext);
 
+  if (await routeContactNotesRequest(request, response, url, dependencies.contactNoteServices, requestContext)) return;
   if (url.pathname.startsWith("/contacts") || url.pathname.startsWith("/labels")) {
     if (await routeContactsRequest(request, response, url, contactsServices, requestContext)) return;
   }

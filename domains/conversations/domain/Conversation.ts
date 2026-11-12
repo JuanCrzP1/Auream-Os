@@ -1,5 +1,6 @@
 import type {
   ConversationMessageKind,
+  ConversationStatus,
   MessageAuthor,
   MessageDirection,
   MessageStatus
@@ -14,6 +15,9 @@ export interface Conversation {
   readonly phone: string;
   readonly botEnabled: boolean;
   readonly unreadCount: number;
+  /** La atención del chat (`ChatStatus.ts`). */
+  readonly status: ConversationStatus;
+  readonly assigneeId: string | null;
   /** Su número fue eliminado: el historial se lee, pero ya no se puede responder. */
   readonly connectionDeleted: boolean;
   readonly createdAt: string;

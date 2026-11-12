@@ -7,7 +7,7 @@ import {
   type ConversationSummary
 } from "@contracts/ConversationContracts";
 import type { SendAgentMessageRequest } from "@contracts/ConversationContracts";
-import { deleteConversation, fetchLive, fetchMessages, markConversationRead, reactToMessage, sendAgentMessage, setConversationBot, setConversationLabels, startFlow } from "./conversationsApi";
+import { assignConversation, deleteConversation, fetchLive, fetchMessages, markConversationRead, reactToMessage, resolveConversation, sendAgentMessage, setConversationBot, setConversationLabels, startFlow, takeConversation } from "./conversationsApi";
 import { LivePoller } from "./LivePoller";
 import { isRecent, mergeThread } from "./mergeThread";
 
@@ -122,5 +122,9 @@ export function useConversationThread(id: string) {
     setConversation(await setConversationLabels(id, labelIds));
   }, [id]);
 
-  return { conversation, messages, hasMore, status, refresh, loadOlder, send, react, remove, setBot, launchFlow, setLabels };
+  const take = useCallback(async () => setConversation(await takeConversation(id)), [id]);
+  const assign = useCallback(async (assigneeId: string | null) => setConversation(await assignConversation(id, assigneeId)), [id]);
+  const resolve = useCallback(async () => setConversation(await resolveConversation(id)), [id]);
+
+  return { conversation, messages, hasMore, status, refresh, loadOlder, send, react, remove, setBot, launchFlow, setLabels, take, assign, resolve };
 }

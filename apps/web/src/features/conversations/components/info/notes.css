@@ -1,0 +1,75 @@
+/* Notas internas del cliente (info del chat). */
+.chat-notes .ios-group__title h3 svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chat-notes__new {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  padding: 0 14px 10px;
+}
+
+.chat-notes__new textarea {
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid var(--wa-input-border);
+  border-radius: 10px;
+  background: var(--wa-input-bg);
+  color: var(--wa-text);
+  font: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+  outline: none;
+}
+
+.chat-notes__new textarea:focus {
+  border-color: var(--wa-accent);
+}
+
+.chat-notes__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 14px 12px;
+  list-style: none;
+}
+
+.chat-notes__item {
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--wa-note-bg);
+  color: var(--wa-note-text);
+}
+
+.chat-notes__item p {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-notes__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  opacity: 0.8;
+}
+
+.chat-notes__delete {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

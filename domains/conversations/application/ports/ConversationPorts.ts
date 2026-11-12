@@ -24,3 +24,27 @@ export interface FlowLauncher {
 export interface ContactLabeler {
   setLabels(tenantId: string, contactId: string, labelIds: ReadonlyArray<string>): Promise<void>;
 }
+
+/** Equipo: quién puede atender chats (no es de solo lectura). */
+export interface ChatTeam {
+  agents(tenantId: string): Promise<ReadonlyArray<{ readonly userId: string; readonly name: string; readonly photoUrl: string | null }>>;
+}
+
+/**
+ * CRM: el responsable del chat es el mismo del cliente en el embudo. Al tomar
+ * o pasar un chat, sus negocios SIN responsable quedan con esa persona (no
+ * le quita un cliente a quien ya lo tenía).
+ */
+export interface DealOwners {
+  claimUnowned(tenantId: string, contactId: string, ownerId: string, actorId: string): Promise<void>;
+}
+
+/** Contactos: el cliente de ese teléfono (lo crea si no existe). */
+export interface ChatContacts {
+  identify(tenantId: string, phone: string, name: string | null): Promise<{ readonly contactId: string }>;
+}
+
+/** Conexiones: si un número de la cuenta está conectado (para escribir desde él). */
+export interface ChatNumbers {
+  isConnected(tenantId: string, connectionId: string): Promise<boolean>;
+}

@@ -4,6 +4,8 @@ import "@shared/ui/page/page.css";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useChatAgents } from "@shared/conversations/useChatAgents";
+import { startConversation } from "@shared/conversations/conversationsApi";
 import { useConversations } from "@shared/conversations/useConversations";
 import { useConnections } from "@shared/connections/useConnections";
 import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
@@ -13,6 +15,7 @@ import { StateIcons } from "@shared/ui/state/stateIcons";
 import { ConversationList } from "../components/ConversationList";
 import { ChatView } from "../components/ChatView";
 import { ChatsGlyph } from "../components/ChatGlyphs";
+import { NewChatDialog } from "../components/new-chat/NewChatDialog";
 import { EMPTY_FILTERS, toListQuery, type InboxFilters } from "../model/inboxFilters";
 
 /** Cabecera estándar de los módulos (la misma de Automatizaciones, Contactos…). */
@@ -48,6 +51,8 @@ export function ConversationsPage() {
   const { connections } = useConnections();
   const catalog = useLabelCatalog();
   const quickReplies = useQuickReplies();
+  const team = useChatAgents();
+  const [newChat, setNewChat] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(filters.search), 300);
@@ -99,6 +104,10 @@ export function ConversationsPage() {
       <div className={layout}>
         <ConversationList
           conversations={inbox.conversations}
+          counts={inbox.counts}
+          agents={team.agents}
+          meId={team.meId}
+          canWrite={inbox.canWrite}
           connections={connections}
           labels={catalog.labels}
           labelsStatus={catalog.status}
@@ -108,9 +117,10 @@ export function ConversationsPage() {
           hasMore={inbox.hasMore}
           loadingMore={inbox.loadingMore}
           onFilters={(next) => setFilters((current) => ({ ...current, ...next }))}
-          onClearFilters={() => setFilters(EMPTY_FILTERS)}
+          onClearFilters={() => setFilters((current) => ({ ...EMPTY_FILTERS, tab: current.tab }))}
           onLoadMore={() => void inbox.loadMore()}
           onSelect={setSelectedId}
+          onNewChat={() => setNewChat(true)}
         />
         {selectedId ? (
           <ChatView
@@ -120,6 +130,9 @@ export function ConversationsPage() {
             labelsStatus={catalog.status}
             quickReplies={quickReplies}
             canManage={inbox.canManage}
+            canWrite={inbox.canWrite}
+            agents={team.agents}
+            meId={team.meId}
             infoOpen={infoOpen}
             onInfo={setInfoOpen}
             onBack={() => {
@@ -144,6 +157,20 @@ export function ConversationsPage() {
           </section>
         )}
       </div>
+      {newChat ? (
+        <NewChatDialog
+          connections={connections}
+          quickReplies={quickReplies.replies}
+          onClose={() => setNewChat(false)}
+          onStart={async (request) => {
+            const chat = await startConversation(request);
+            setFilters((current) => ({ ...current, tab: "all" }));
+            setSelectedId(chat.id);
+            void inbox.refresh();
+            return chat;
+          }}
+        />
+      ) : null}
     </ConversationsShell>
   );
 }

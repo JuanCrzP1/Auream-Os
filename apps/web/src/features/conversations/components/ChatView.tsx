@@ -1,14 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { ConversationMessage } from "@contracts/ConversationContracts";
+import type { ChatAgent, ConversationMessage } from "@contracts/ConversationContracts";
 import type { CreateLabelRequest, LabelSummary } from "@contracts/ContactContracts";
 import { useConversationThread } from "@shared/conversations/useConversationThread";
-import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import type { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
-import { ChatHeader } from "./ChatHeader";
+import { ChatHeader } from "./header/ChatHeader";
+import { chatActions } from "./chatActions";
 import { ChatThread } from "./ChatThread";
 import { Composer } from "./composer/Composer";
 import { ContactInfoPanel } from "./ContactInfoPanel";
-import { displayName } from "./ConversationList";
+import { displayName } from "./displayName";
 import { SendFlowDialog } from "./SendFlowDialog";
 
 // ---------------------------------------------------------------------------
@@ -26,6 +26,9 @@ export function ChatView({
   labelsStatus,
   quickReplies,
   canManage,
+  canWrite,
+  agents,
+  meId,
   infoOpen,
   onInfo,
   onBack,
@@ -38,6 +41,10 @@ export function ChatView({
   readonly quickReplies: ReturnType<typeof useQuickReplies>;
   /** Quien mira puede eliminar el chat. */
   readonly canManage: boolean;
+  /** Quien mira puede atender (responder, tomar, resolver). */
+  readonly canWrite: boolean;
+  readonly agents: ReadonlyArray<ChatAgent>;
+  readonly meId: string | null;
   readonly infoOpen: boolean;
   readonly onInfo: (open: boolean) => void;
   readonly onBack: () => void;
@@ -79,23 +86,7 @@ export function ChatView({
   const name = displayName(conversation);
   const live = !conversation.connectionDeleted;
 
-  const toggleBot = async () => {
-    setNotice(null);
-    try {
-      await thread.setBot(!conversation.botEnabled);
-    } catch (e) {
-      setNotice({ kind: "error", text: apiErrorMessage(e, "No se pudo cambiar el bot.") });
-    }
-  };
-
-  const react = async (message: ConversationMessage, emoji: string) => {
-    setNotice(null);
-    try {
-      await thread.react(message.id, emoji);
-    } catch (e) {
-      setNotice({ kind: "error", text: apiErrorMessage(e, "No se pudo reaccionar al mensaje.") });
-    }
-  };
+  const { toggleBot, react, ...attention } = chatActions(thread, conversation.botEnabled, agents, meId, setNotice);
 
   return (
     <>
@@ -104,10 +95,14 @@ export function ChatView({
           conversation={conversation}
           name={name}
           infoOpen={infoOpen}
+          agents={agents}
+          meId={meId}
+          canWrite={canWrite}
           onBack={onBack}
           onInfo={onInfo}
           onRunFlow={() => setFlowDialog(true)}
-          onToggleBot={() => void toggleBot()}
+          onToggleBot={toggleBot}
+          {...attention}
         />
 
         <ChatThread
@@ -124,12 +119,12 @@ export function ChatView({
             void thread.loadOlder();
           }}
           onReply={setReplyTo}
-          onReact={(message, emoji) => void react(message, emoji)}
+          onReact={(message, emoji) => react(message.id, emoji)}
           footer={
             !conversation.botEnabled && live ? (
               <div className="ios-system ios-system--note">
                 <span>Atiendes este chat: el bot no responderá hasta que lo actives.</span>
-                <button type="button" className="ios-link-btn" onClick={() => void toggleBot()}>
+                <button type="button" className="ios-link-btn" onClick={toggleBot}>
                   Activar bot
                 </button>
               </div>
@@ -177,7 +172,7 @@ export function ChatView({
           labels={labels}
           labelsStatus={labelsStatus}
           onClose={() => onInfo(false)}
-          onToggleBot={() => void toggleBot()}
+          onToggleBot={toggleBot}
           onRunFlow={() => setFlowDialog(true)}
           onSetLabels={thread.setLabels}
           onCreateLabel={onCreateLabel}

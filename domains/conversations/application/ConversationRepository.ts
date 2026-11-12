@@ -1,4 +1,4 @@
-import type { ConversationFilter, ConversationMessage, ConversationSummary, DeliveryStatus } from "../../../contracts/ConversationContracts";
+import type { ConversationFilter, ConversationMessage, ConversationStatus, ConversationSummary, DeliveryStatus } from "../../../contracts/ConversationContracts";
 import type { Conversation, StoredMessage } from "../domain/Conversation";
 
 /** Posición en la bandeja: la última actividad del chat y su id (orden estable al paginar). */
@@ -9,6 +9,12 @@ export interface InboxCursor {
 
 export interface InboxQuery {
   readonly filter: ConversationFilter;
+  /** Pestaña (ausente: todas). */
+  readonly status?: ConversationStatus;
+  /** Responsable: un asesor o `null` (sin asignar). Ausente: cualquiera. */
+  readonly assigneeId?: string | null;
+  /** Quien mira (para «Mis chats»). */
+  readonly viewerId?: string;
   readonly search?: string;
   readonly connectionId?: string;
   /** Cliente con al menos una de estas etiquetas. */
@@ -43,7 +49,20 @@ export interface ConversationRepository {
   findByPhone(tenantId: string, connectionId: string, phone: string): Promise<Conversation | null>;
   /** Guarda el mensaje y actualiza el chat (último mensaje y no leídos) en una sola operación. */
   append(message: StoredMessage): Promise<void>;
+  /** Activa o pausa el bot; el estado sigue (`statusForBot`). */
   setBotEnabled(tenantId: string, id: string, enabled: boolean): Promise<void>;
+  /**
+   * Un asesor responde: pausa el bot y, si el chat no tenía responsable, lo
+   * deja a su nombre (`agentId` null: alguien sin cuenta, p. ej. un agente
+   * de IA por MCP, que solo lo pausa).
+   */
+  claim(tenantId: string, id: string, agentId: string | null): Promise<void>;
+  /** Pasa el chat a un asesor o lo deja sin asignar; el bot queda en pausa. */
+  assign(tenantId: string, id: string, assigneeId: string | null): Promise<void>;
+  /** Lo cierra: resuelto, el bot vuelve a atender y nada queda pendiente. */
+  resolve(tenantId: string, id: string): Promise<void>;
+  /** Cuántos chats hay en cada estado. */
+  counts(tenantId: string): Promise<Record<ConversationStatus, number>>;
   markRead(tenantId: string, id: string): Promise<void>;
   /**
    * La bandeja: chats con su número, contacto, etiquetas, último mensaje y

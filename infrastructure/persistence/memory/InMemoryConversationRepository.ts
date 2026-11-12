@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { DELIVERY_RANK, type ConversationLabel, type ConversationMessage, type ConversationSummary, type DeliveryStatus, type MessageAuthor } from "../../../contracts/ConversationContracts";
+import { DELIVERY_RANK, type ConversationStatus, type ConversationLabel, type ConversationMessage, type ConversationSummary, type DeliveryStatus, type MessageAuthor } from "../../../contracts/ConversationContracts";
 import type { ConversationRepository, DeliveryMarkOutcome, InboxQuery, MessageRef } from "../../../domains/conversations/application/ConversationRepository";
 import { previewOf, type Conversation, type StoredMessage } from "../../../domains/conversations/domain/Conversation";
+import { statusAfterInbound, statusForAssignee, statusForBot } from "../../../domains/conversations/domain/ChatStatus";
 
 interface Row extends Conversation {
   lastMessageText: string;
   lastMessageAuthor: MessageAuthor | null;
   lastMessageAt: string | null;
+  awaitingSince: string | null;
 }
 
 const activity = (row: Row) => row.lastMessageAt ?? row.createdAt;
@@ -27,8 +29,8 @@ export class InMemoryConversationRepository implements ConversationRepository {
     const existing = [...this.rows.values()].find((row) => row.connectionId === connectionId && row.phone === phone);
     if (existing) return existing;
     const row: Row = {
-      id: randomUUID(), tenantId, connectionId, contactId, phone, botEnabled: true, unreadCount: 0, connectionDeleted: false,
-      createdAt: new Date().toISOString(), lastMessageText: "", lastMessageAuthor: null, lastMessageAt: null
+      id: randomUUID(), tenantId, connectionId, contactId, phone, botEnabled: true, unreadCount: 0, connectionDeleted: false, status: "bot", assigneeId: null,
+      createdAt: new Date().toISOString(), lastMessageText: "", lastMessageAuthor: null, lastMessageAt: null, awaitingSince: null
     };
     this.rows.set(row.id, row);
     return row;
@@ -49,8 +51,11 @@ export class InMemoryConversationRepository implements ConversationRepository {
     this.changed.set(message.id, ++this.tick);
     const row = this.rows.get(message.conversationId);
     if (!row || message.kind === "reaction") return;
+    const inbound = message.direction === "inbound";
     this.rows.set(row.id, {
       ...row,
+      status: inbound ? statusAfterInbound(row.status, row.botEnabled, row.assigneeId) : row.status,
+      awaitingSince: inbound ? (row.awaitingSince ?? message.createdAt) : message.status === "failed" ? row.awaitingSince : null,
       lastMessageText: previewOf(message),
       lastMessageAuthor: message.author,
       lastMessageAt: message.createdAt,
@@ -60,7 +65,30 @@ export class InMemoryConversationRepository implements ConversationRepository {
 
   public async setBotEnabled(tenantId: string, id: string, enabled: boolean): Promise<void> {
     const row = this.rows.get(id);
-    if (row && row.tenantId === tenantId) this.rows.set(id, { ...row, botEnabled: enabled });
+    if (row && row.tenantId === tenantId) this.rows.set(id, { ...row, botEnabled: enabled, status: statusForBot(enabled, row.assigneeId) });
+  }
+
+  public async claim(tenantId: string, id: string, agentId: string | null): Promise<void> {
+    const row = this.rows.get(id);
+    if (!row || row.tenantId !== tenantId) return;
+    const assigneeId = row.assigneeId ?? agentId;
+    this.rows.set(id, { ...row, botEnabled: false, assigneeId, status: statusForAssignee(assigneeId) });
+  }
+
+  public async assign(tenantId: string, id: string, assigneeId: string | null): Promise<void> {
+    const row = this.rows.get(id);
+    if (row && row.tenantId === tenantId) this.rows.set(id, { ...row, botEnabled: false, assigneeId, status: statusForAssignee(assigneeId) });
+  }
+
+  public async resolve(tenantId: string, id: string): Promise<void> {
+    const row = this.rows.get(id);
+    if (row && row.tenantId === tenantId) this.rows.set(id, { ...row, status: "resolved", botEnabled: true, awaitingSince: null });
+  }
+
+  public async counts(tenantId: string): Promise<Record<ConversationStatus, number>> {
+    const counts: Record<ConversationStatus, number> = { bot: 0, waiting: 0, attending: 0, resolved: 0 };
+    for (const row of this.rows.values()) if (row.tenantId === tenantId) counts[row.status] += 1;
+    return counts;
   }
 
   public async markRead(tenantId: string, id: string): Promise<void> {
@@ -75,6 +103,10 @@ export class InMemoryConversationRepository implements ConversationRepository {
       .filter((row) => query.filter !== "unread" || row.unreadCount > 0)
       .filter((row) => query.filter !== "bot_active" || row.botEnabled)
       .filter((row) => query.filter !== "bot_paused" || !row.botEnabled)
+      .filter((row) => query.filter !== "unanswered" || row.awaitingSince !== null)
+      .filter((row) => query.filter !== "mine" || (query.viewerId !== undefined && row.assigneeId === query.viewerId))
+      .filter((row) => !query.status || row.status === query.status)
+      .filter((row) => query.assigneeId === undefined || row.assigneeId === query.assigneeId)
       .filter((row) => !query.connectionId || row.connectionId === query.connectionId)
       .filter((row) => !query.labelIds?.length || this.labelsOf(row).some((label) => query.labelIds!.includes(label.id)))
       .filter((row) => !query.from || activity(row) >= query.from)
@@ -160,7 +192,8 @@ export class InMemoryConversationRepository implements ConversationRepository {
       id: row.id, connectionId: row.connectionId, connectionName: "", contactId: row.contactId, contactName: null, contactAvatarUrl: null, phone: row.phone,
       botEnabled: row.botEnabled, unreadCount: row.unreadCount, lastMessageText: row.lastMessageText, lastMessageAuthor: row.lastMessageAuthor,
       lastMessageAt: row.lastMessageAt, activeFlowName: null, labels: this.labelsOf(row),
-      connectionDeleted: this.deletedConnections.has(row.connectionId), createdAt: row.createdAt
+      connectionDeleted: this.deletedConnections.has(row.connectionId), status: row.status, assigneeId: row.assigneeId, assigneeName: null,
+      awaitingSince: row.awaitingSince, createdAt: row.createdAt
     };
   }
 }

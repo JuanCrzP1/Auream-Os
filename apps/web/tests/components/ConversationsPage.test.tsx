@@ -41,19 +41,19 @@ describe("ConversationsPage", () => {
     await vi.waitFor(() => expect(api.fetchMock.mock.calls.some(([u]) => String(u).endsWith("/conversations/c1/read"))).toBe(true));
   });
 
-  it("responder como asesor envía, aparece en el hilo y pausa el bot; se puede reactivar", async () => {
+  it("responder como asesor envía, aparece en el hilo y toma el chat (bot en pausa); se puede devolver al bot", async () => {
     stubApi();
     render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     const chat = await openChat();
+    expect(within(chat).getByRole("button", { name: "Atención: Con bot. Cambiar" })).toBeInTheDocument();
 
     await userEvent.type(await within(chat).findByLabelText("Escribe un mensaje"), "Hola, te ayudo yo{Enter}");
     expect(await within(chat).findByText("Hola, te ayudo yo")).toBeInTheDocument();
-    const toggle = within(chat).getByRole("switch");
-    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(await within(chat).findByRole("button", { name: "Atención: Tú. Cambiar" })).toBeInTheDocument();
     expect(within(chat).getByText(/Atiendes este chat/)).toBeInTheDocument();
 
     await userEvent.click(within(chat).getByRole("button", { name: "Activar bot" }));
-    await vi.waitFor(() => expect(within(chat).getByRole("switch")).toHaveAttribute("aria-checked", "true"));
+    expect(await within(chat).findByRole("button", { name: "Atención: Con bot. Cambiar" })).toBeInTheDocument();
   });
 
   it("«Ejecutar flujo»: solo flujos no archivados, y confirma lo ejecutado", async () => {
@@ -77,8 +77,11 @@ describe("ConversationsPage", () => {
     render(<MemoryRouter><ConversationsPage /></MemoryRouter>);
     await screen.findByRole("button", { name: /Laura Gómez/ });
 
-    await userEvent.click(screen.getByRole("tab", { name: "Con asesor" }));
-    await vi.waitFor(() => expect(api.last().get("filter")).toBe("bot_paused"));
+    await userEvent.click(screen.getByRole("tab", { name: /En espera/ }));
+    await vi.waitFor(() => expect(api.last().get("status")).toBe("waiting"));
+    await userEvent.click(screen.getByRole("tab", { name: "Todos" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sin responder" }));
+    await vi.waitFor(() => expect(api.last().get("filter")).toBe("unanswered"));
 
     await userEvent.click(screen.getByRole("button", { name: /Filtros/ }));
     const panel = screen.getByRole("group", { name: "Filtros de la bandeja" });

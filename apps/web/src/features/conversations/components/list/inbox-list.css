@@ -1,0 +1,136 @@
+/* La bandeja: «Chat nuevo», pestañas por atención y la atención de cada chat en su fila. */
+.inbox-new {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--wa-accent-fill);
+  box-shadow: var(--wa-accent-glow);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.inbox-new svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.inbox-new:focus-visible {
+  outline: 2px solid var(--wa-accent);
+  outline-offset: 2px;
+}
+
+/* Pestañas subrayadas: caben las cinco en la columna de chats. */
+.inbox-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 2px 0 0;
+  border-bottom: 1px solid var(--wa-separator);
+}
+
+.inbox-tabs__tab {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 4px 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--wa-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.inbox-tabs__tab:hover {
+  color: var(--wa-text);
+}
+
+.inbox-tabs__tab.is-active {
+  border-bottom-color: var(--wa-accent);
+  color: var(--wa-accent);
+}
+
+.inbox-tabs__tab:focus-visible {
+  outline: 2px solid var(--wa-accent);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.inbox-tabs__count {
+  min-width: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--wa-chip-bg);
+  color: var(--wa-chip-text);
+  font-size: 0.7rem;
+  line-height: 17px;
+  text-align: center;
+}
+
+.inbox-tabs__count.is-alert {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+/* En la fila: en espera, quién atiende, resuelto y cuánto espera el cliente. */
+.row-attention,
+.row-wait {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.row-attention--waiting {
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  color: #b45309;
+}
+
+.row-attention--attending {
+  max-width: 110px;
+  overflow: hidden;
+  background: var(--wa-chip-on-bg);
+  color: var(--wa-chip-on-text);
+  text-overflow: ellipsis;
+}
+
+.row-attention--resolved {
+  background: color-mix(in srgb, #16a34a 14%, transparent);
+  color: #15803d;
+}
+
+.row-wait {
+  background: var(--wa-chip-bg);
+  color: var(--wa-chip-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.row-wait.is-urgent {
+  background: color-mix(in srgb, var(--wa-danger) 14%, transparent);
+  color: var(--wa-danger);
+}
+
+:root[data-theme="dark"] .row-attention--waiting {
+  color: #fbbf24;
+}
+
+:root[data-theme="dark"] .row-attention--resolved {
+  color: #4ade80;
+}

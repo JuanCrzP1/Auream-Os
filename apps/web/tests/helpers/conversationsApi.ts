@@ -18,8 +18,10 @@ export const PAGO = { id: "l-pago", name: "Pagó", color: "#16a34a" };
 export const CHAT: ConversationSummary = {
   id: "c1", connectionId: "w1", connectionName: "venta", contactId: "k1", contactName: "Laura Gómez", phone: "573001112233",
   botEnabled: true, unreadCount: 2, lastMessageText: "Te envío info", lastMessageAuthor: "bot", lastMessageAt: NOW, activeFlowName: "Ventas",
-  labels: [VIP], connectionDeleted: false, createdAt: NOW
+  labels: [VIP], connectionDeleted: false, status: "bot", assigneeId: null, assigneeName: null, awaitingSince: null, createdAt: NOW
 };
+export const ME = { userId: "u-me", name: "Camilo", photoUrl: null };
+export const ANA = { userId: "u-ana", name: "Ana Ruiz", photoUrl: null };
 export const OLD_CHAT: ConversationSummary = {
   ...CHAT, id: "c2", contactId: "k2", contactName: "Pedro Ruiz", phone: "573004445566", unreadCount: 0, labels: [],
   lastMessageText: "Gracias", lastMessageAuthor: "contact", lastMessageAt: "2026-01-02T10:00:00.000Z", activeFlowName: null
@@ -45,11 +47,16 @@ export const QUICK_REPLIES: QuickReply[] = [
   }
 ];
 
-export function stubConversationsApi(options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[] } = {}) {
-  let chat = { ...CHAT, connectionDeleted: options.deleted ?? false };
+export function stubConversationsApi(
+  options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[]; chat?: Partial<ConversationSummary>; connections?: unknown[] } = {}
+) {
+  let chat: ConversationSummary = { ...CHAT, connectionDeleted: options.deleted ?? false, ...options.chat };
   const listCalls: URLSearchParams[] = [];
   const canManage = options.canManage ?? false;
   let removed = false;
+  const notes: Array<{ id: string; body: string; authorId: string; authorName: string; createdAt: string; canDelete: boolean }> = [];
+  const counts = () => ({ bot: chat.status === "bot" ? 1 : 0, waiting: chat.status === "waiting" ? 1 : 0, attending: chat.status === "attending" ? 1 : 0, resolved: chat.status === "resolved" ? 1 : 0 });
+  const agentName = (id: string | null) => [ME, ANA].find((agent) => agent.userId === id)?.name ?? null;
   const liveCalls: URLSearchParams[] = [];
   const messages: ConversationMessage[] = options.messages ?? [
     msg({ text: "Hola" }),
@@ -76,10 +83,36 @@ export function stubConversationsApi(options: { paged?: boolean; deleted?: boole
       listCalls.push(url.searchParams);
       if (options.paged) {
         return url.searchParams.get("cursor") === "page-2"
-          ? reply(200, { conversations: [OLD_CHAT], nextCursor: null, canManage })
-          : reply(200, { conversations: [chat], nextCursor: "page-2", canManage });
+          ? reply(200, { conversations: [OLD_CHAT], nextCursor: null, canManage, canWrite: true, counts: counts() })
+          : reply(200, { conversations: [chat], nextCursor: "page-2", canManage, canWrite: true, counts: counts() });
       }
-      return reply(200, { conversations: removed ? [] : [chat], nextCursor: null, canManage });
+      if (method === "POST") {
+        chat = { ...chat, status: "attending", botEnabled: false, assigneeId: ME.userId, assigneeName: ME.name };
+        return reply(201, chat);
+      }
+      const status = url.searchParams.get("status");
+      const visible = !removed && (!status || chat.status === status);
+      return reply(200, { conversations: visible ? [chat] : [], nextCursor: null, canManage, canWrite: true, counts: counts() });
+    }
+    if (url.pathname === "/conversations/agents") return reply(200, { agents: [ME, ANA], meId: ME.userId });
+    if (url.pathname === "/conversations/c1/take") {
+      chat = { ...chat, status: "attending", botEnabled: false, assigneeId: ME.userId, assigneeName: ME.name };
+      return reply(200, chat);
+    }
+    if (url.pathname === "/conversations/c1/assign") {
+      const assigneeId = (body["assigneeId"] as string | null) ?? null;
+      chat = { ...chat, status: assigneeId ? "attending" : "waiting", botEnabled: false, assigneeId, assigneeName: agentName(assigneeId) };
+      return reply(200, chat);
+    }
+    if (url.pathname === "/conversations/c1/resolve") {
+      chat = { ...chat, status: "resolved", botEnabled: true, awaitingSince: null };
+      return reply(200, chat);
+    }
+    if (url.pathname === "/contacts/k1/notes" && method === "GET") return reply(200, { notes });
+    if (url.pathname === "/contacts/k1/notes" && method === "POST") {
+      const note = { id: `n${notes.length + 1}`, body: String(body["body"]), authorId: ME.userId, authorName: ME.name, createdAt: NOW, canDelete: true };
+      notes.unshift(note);
+      return reply(201, note);
     }
     if (url.pathname === "/quick-replies" && method === "GET") return reply(200, { quickReplies: QUICK_REPLIES, canManage });
     if (url.pathname.startsWith("/quick-replies/") && url.pathname.endsWith("/use")) return reply(204);
@@ -93,7 +126,7 @@ export function stubConversationsApi(options: { paged?: boolean; deleted?: boole
       upsert(msg({ direction: "outbound", author: "agent", status: "sent", kind: "reaction", text: String(body["emoji"]), replyTo: { id: target.id, author: target.author, kind: target.kind, text: target.text } }));
       return reply(204);
     }
-    if (url.pathname === "/connections") return reply(200, { connections: [] });
+    if (url.pathname === "/connections") return reply(200, { connections: options.connections ?? [] });
     if (url.pathname === "/labels") return reply(200, { labels: [VIP, PAGO] });
     if (url.pathname === "/automations") return reply(200, { flows: [{ id: "f1", key: "f1", name: "Ventas", status: "active" }, { id: "f2", key: "f2", name: "Viejo", status: "archived" }], folders: [] });
     if (url.pathname === "/conversations/c1/live") {
@@ -104,7 +137,8 @@ export function stubConversationsApi(options: { paged?: boolean; deleted?: boole
     }
     if (url.pathname === "/conversations/c1" && method === "GET") return reply(200, chat);
     if (url.pathname === "/conversations/c1" && method === "PATCH") {
-      chat = { ...chat, botEnabled: body["botEnabled"] as boolean };
+      const enabled = body["botEnabled"] as boolean;
+      chat = { ...chat, botEnabled: enabled, status: enabled ? "bot" : chat.assigneeId ? "attending" : "waiting" };
       return reply(200, chat);
     }
     if (url.pathname === "/conversations/c1/read") {
@@ -133,11 +167,11 @@ export function stubConversationsApi(options: { paged?: boolean; deleted?: boole
           })
         )
       );
-      chat = { ...chat, botEnabled: false };
+      chat = { ...chat, botEnabled: false, status: "attending", assigneeId: chat.assigneeId ?? ME.userId, assigneeName: chat.assigneeName ?? ME.name, awaitingSince: null };
       return reply(200, chat);
     }
     if (url.pathname === "/conversations/c1/flows") {
-      chat = { ...chat, botEnabled: true };
+      chat = { ...chat, botEnabled: true, status: "bot" };
       return reply(200, { flowName: "Ventas", sent: 2, failed: 0 });
     }
     return reply(404, { message: "no" });

@@ -1,11 +1,13 @@
 import { builderApiClient } from "@shared/http/builderApiClient";
 import type {
+  ChatAgentsResponse,
   ConversationListQuery,
   ConversationListResponse,
   ConversationLiveResponse,
   ConversationMessagesResponse,
   ConversationSummary,
-  SendAgentMessageRequest
+  SendAgentMessageRequest,
+  StartConversationRequest
 } from "@contracts/ConversationContracts";
 
 // La bandeja de Conversaciones de la cuenta activa.
@@ -15,6 +17,8 @@ const one = (id: string) => `/conversations/${encodeURIComponent(id)}`;
 /** Una página de la bandeja con sus filtros (`cursor` = `nextCursor` de la anterior). */
 export function fetchConversations(query: ConversationListQuery): Promise<ConversationListResponse> {
   const params = new URLSearchParams({ filter: query.filter ?? "all" });
+  if (query.status && query.status !== "all") params.set("status", query.status);
+  if (query.assigneeId) params.set("assigneeId", query.assigneeId);
   if (query.search?.trim()) params.set("search", query.search.trim());
   if (query.connectionId) params.set("connectionId", query.connectionId);
   if (query.labelIds?.length) params.set("labelIds", query.labelIds.join(","));
@@ -70,4 +74,29 @@ export function setConversationLabels(id: string, labelIds: ReadonlyArray<string
 
 export function startFlow(id: string, automationId: string): Promise<{ readonly flowName: string; readonly sent: number; readonly failed: number }> {
   return builderApiClient.post(`${one(id)}/flows`, { automationId });
+}
+
+/** Quién puede atender chats y quién mira. */
+export function fetchChatAgents(): Promise<ChatAgentsResponse> {
+  return builderApiClient.get<ChatAgentsResponse>("/conversations/agents");
+}
+
+/** «Tomar chat»: queda a nombre de quien mira y el bot se pausa. */
+export function takeConversation(id: string): Promise<ConversationSummary> {
+  return builderApiClient.post<ConversationSummary>(`${one(id)}/take`);
+}
+
+/** Pasar el chat a un asesor (`null`: sin asignar, en espera). */
+export function assignConversation(id: string, assigneeId: string | null): Promise<ConversationSummary> {
+  return builderApiClient.post<ConversationSummary>(`${one(id)}/assign`, { assigneeId });
+}
+
+/** «Resolver»: se cierra y el bot vuelve a atender. */
+export function resolveConversation(id: string): Promise<ConversationSummary> {
+  return builderApiClient.post<ConversationSummary>(`${one(id)}/resolve`);
+}
+
+/** «Chat nuevo»: escribirle primero a un número (o abrir su chat si ya existe). */
+export function startConversation(request: StartConversationRequest): Promise<ConversationSummary> {
+  return builderApiClient.post<ConversationSummary>("/conversations", request);
 }

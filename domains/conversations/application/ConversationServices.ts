@@ -43,12 +43,15 @@ export class ConversationInbox {
     private readonly labeler: ContactLabeler
   ) {}
 
-  /** Una página de la bandeja con sus filtros; `nextCursor` trae la siguiente. */
-  public async list(tenantId: string, query: ConversationListQuery): Promise<Omit<ConversationListResponse, "canManage">> {
-    const rows = await this.repository.inbox(tenantId, { ...inboxQuery(query), limit: CONVERSATIONS_PAGE_SIZE + 1 });
+  /** Una página de la bandeja con sus filtros, más cuántos chats hay en cada pestaña. `viewerId`: para «Mis chats». */
+  public async list(tenantId: string, query: ConversationListQuery, viewerId?: string): Promise<Omit<ConversationListResponse, "canManage" | "canWrite">> {
+    const [rows, counts] = await Promise.all([
+      this.repository.inbox(tenantId, { ...inboxQuery(query, viewerId), limit: CONVERSATIONS_PAGE_SIZE + 1 }),
+      this.repository.counts(tenantId)
+    ]);
     const conversations = rows.slice(0, CONVERSATIONS_PAGE_SIZE);
     const hasMore = rows.length > CONVERSATIONS_PAGE_SIZE;
-    return { conversations, nextCursor: hasMore ? encodeCursor(conversations.at(-1)!) : null };
+    return { conversations, nextCursor: hasMore ? encodeCursor(conversations.at(-1)!) : null, counts };
   }
 
   public async get(tenantId: string, id: string): Promise<ConversationSummary> {
@@ -92,8 +95,9 @@ export class ConversationInbox {
   /**
    * Un asesor responde: uno o varios mensajes en orden (texto, o `{ parts,
    * replyToId }` con archivos, notas de voz y la cita de un mensaje). Pausa el
-   * bot en el chat: si siguiera activo, el próximo mensaje del cliente lo
-   * contestaría el flujo encima del asesor. Si WhatsApp no acepta alguno,
+   * bot en el chat (si siguiera activo, el próximo mensaje del cliente lo
+   * contestaría el flujo encima del asesor) y, si nadie lo atendía, el chat
+   * queda a su nombre: responder es tomarlo. Si WhatsApp no acepta alguno,
    * queda en el hilo como fallido con su motivo (como en WhatsApp): no se
    * lanza, para no invitar a reenviarlo duplicado.
    */
@@ -110,7 +114,7 @@ export class ConversationInbox {
       ...(agent.name ? { agentName: agent.name } : {}),
       ...(quoted ? { replyToId: quoted.id } : {})
     });
-    if (conversation.botEnabled) await this.repository.setBotEnabled(tenantId, id, false);
+    if (conversation.botEnabled || conversation.assigneeId === null || conversation.status !== "attending") await this.repository.claim(tenantId, id, agent.id);
     return this.get(tenantId, id);
   }
 

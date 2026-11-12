@@ -86,13 +86,21 @@ export class SqlConversationThread {
       );
       // Las reacciones no cambian el último mensaje del chat.
       if (message.kind === "reaction") return;
+      // Lo que escribe el cliente reabre un chat resuelto y empieza (o sigue) su espera;
+      // lo que sale bien (bot o asesor) le responde: ya no espera nada. Un envío fallido no cuenta.
+      const inbound = message.direction === "inbound";
       await tx.query(
         `update conversations
             set last_message_text = $3, last_message_author = $4,
                 last_message_at = greatest(coalesce(last_message_at, $5::timestamptz), $5::timestamptz),
-                unread_count = unread_count + $6, updated_at = now()
+                unread_count = unread_count + $6,
+                awaiting_since = case when $7 then coalesce(awaiting_since, $5::timestamptz) when $8 then null else awaiting_since end,
+                status = case when $7 and status = 'resolved'
+                              then (case when bot_enabled then 'bot' when assignee_id is not null then 'attending' else 'waiting' end)
+                              else status end,
+                updated_at = now()
           where tenant_id = $1 and id = $2`,
-        [message.tenantId, message.conversationId, previewOf(message), message.author, message.createdAt, message.direction === "inbound" ? 1 : 0]
+        [message.tenantId, message.conversationId, previewOf(message), message.author, message.createdAt, inbound ? 1 : 0, inbound, message.status !== "failed"]
       );
     });
   }

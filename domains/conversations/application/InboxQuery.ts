@@ -1,5 +1,5 @@
 import type { ConversationFilter, ConversationListQuery, ConversationSummary } from "../../../contracts/ConversationContracts";
-import { CONVERSATION_FILTERS, MAX_LABEL_FILTERS } from "../../../contracts/ConversationContracts";
+import { CONVERSATION_FILTERS, CONVERSATION_STATUSES, MAX_LABEL_FILTERS } from "../../../contracts/ConversationContracts";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 import type { InboxCursor, InboxQuery } from "./ConversationRepository";
 
@@ -34,7 +34,7 @@ function isoDate(value: string | undefined, label: string): string | undefined {
 }
 
 /** Filtros de la bandeja validados (lo que llega de la URL es texto libre). */
-export function inboxQuery(query: ConversationListQuery): Omit<InboxQuery, "limit"> {
+export function inboxQuery(query: ConversationListQuery, viewerId?: string): Omit<InboxQuery, "limit"> {
   const filter: ConversationFilter = query.filter && CONVERSATION_FILTERS.includes(query.filter) ? query.filter : "all";
   const labelIds = [...new Set((query.labelIds ?? []).map((id) => id.trim()).filter(Boolean))];
   if (labelIds.length > MAX_LABEL_FILTERS) throw new ValidationError(`Filtra por hasta ${MAX_LABEL_FILTERS} etiquetas a la vez.`);
@@ -43,8 +43,14 @@ export function inboxQuery(query: ConversationListQuery): Omit<InboxQuery, "limi
   const to = isoDate(query.to, "hasta");
   if (from && to && from >= to) throw new ValidationError("La fecha «desde» debe ser anterior a «hasta».");
   const search = query.search?.trim().slice(0, 80);
+  const status = query.status && (CONVERSATION_STATUSES as ReadonlyArray<string>).includes(query.status) ? (query.status as InboxQuery["status"]) : undefined;
+  const assignee = query.assigneeId?.trim();
+  if (assignee && assignee.length > 64) throw new ValidationError("El responsable no es válido.");
   return {
     filter,
+    ...(status ? { status } : {}),
+    ...(assignee ? { assigneeId: assignee === "none" ? null : assignee } : {}),
+    ...(viewerId ? { viewerId } : {}),
     ...(search ? { search } : {}),
     ...(query.connectionId ? { connectionId: query.connectionId } : {}),
     ...(labelIds.length ? { labelIds } : {}),

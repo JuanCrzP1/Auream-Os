@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ConversationSummary, DeliveryStatus } from "../../../contracts/ConversationContracts";
+import type { ConversationStatus, ConversationSummary, DeliveryStatus } from "../../../contracts/ConversationContracts";
 import type { ConversationRepository, InboxQuery } from "../../../domains/conversations/application/ConversationRepository";
 import type { Conversation, StoredMessage } from "../../../domains/conversations/domain/Conversation";
 import type { SqlClient } from "./SqlClient";
@@ -24,6 +24,8 @@ interface ConversationRow {
   phone: string;
   bot_enabled: boolean;
   unread_count: number;
+  status: ConversationStatus;
+  assignee_id: string | null;
   /** Solo en lecturas que cruzan con el número (no en el alta). */
   connection_deleted?: boolean;
   created_at: Date | string;
@@ -37,11 +39,15 @@ const toConversation = (row: ConversationRow): Conversation => ({
   phone: row.phone,
   botEnabled: row.bot_enabled,
   unreadCount: row.unread_count,
+  status: row.status,
+  assigneeId: row.assignee_id,
   connectionDeleted: row.connection_deleted ?? false,
   createdAt: toIso(row.created_at)
 });
 
-const CONVERSATION_COLUMNS = "id, tenant_id, connection_id, contact_id, phone, bot_enabled, unread_count, created_at";
+const CONVERSATION_COLUMNS = "id, tenant_id, connection_id, contact_id, phone, bot_enabled, unread_count, status, assignee_id, created_at";
+
+
 
 export class SqlConversationRepository implements ConversationRepository {
   /** El hilo de mensajes de cada chat (guardar, páginas, en vivo, entregado/leído). */
@@ -69,7 +75,7 @@ export class SqlConversationRepository implements ConversationRepository {
   public async findById(tenantId: string, id: string): Promise<Conversation | null> {
     if (!isUuid(tenantId) || !isUuid(id)) return null;
     const result = await this.sql.query<ConversationRow>(
-      `select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
+      `select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.status, c.assignee_id, c.created_at,
               w.deleted_at is not null as connection_deleted
          from conversations c
          join whatsapp_connections w on w.id = c.connection_id
@@ -82,7 +88,7 @@ export class SqlConversationRepository implements ConversationRepository {
   public async findByPhone(tenantId: string, connectionId: string, phone: string): Promise<Conversation | null> {
     if (!isUuid(tenantId) || !isUuid(connectionId)) return null;
     const result = await this.sql.query<ConversationRow>(
-      `select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.created_at,
+      `select c.id, c.tenant_id, c.connection_id, c.contact_id, c.phone, c.bot_enabled, c.unread_count, c.status, c.assignee_id, c.created_at,
               w.deleted_at is not null as connection_deleted
          from conversations c
          join whatsapp_connections w on w.id = c.connection_id
@@ -97,7 +103,50 @@ export class SqlConversationRepository implements ConversationRepository {
   }
 
   public async setBotEnabled(tenantId: string, id: string, enabled: boolean): Promise<void> {
-    await this.sql.query("update conversations set bot_enabled = $3, updated_at = now() where tenant_id = $1 and id = $2", [tenantId, id, enabled]);
+    // En una sola sentencia: el estado se calcula con el valor nuevo del bot.
+    await this.sql.query(
+      `update conversations set bot_enabled = $3, status = case when $3 then 'bot' when assignee_id is not null then 'attending' else 'waiting' end, updated_at = now()
+        where tenant_id = $1 and id = $2`,
+      [tenantId, id, enabled]
+    );
+  }
+
+  public async claim(tenantId: string, id: string, agentId: string | null): Promise<void> {
+    const agent = agentId && isUuid(agentId) ? agentId : null;
+    await this.sql.query(
+      `update conversations
+          set bot_enabled = false, assignee_id = coalesce(assignee_id, $3::uuid),
+              status = case when coalesce(assignee_id, $3::uuid) is null then 'waiting' else 'attending' end, updated_at = now()
+        where tenant_id = $1 and id = $2`,
+      [tenantId, id, agent]
+    );
+  }
+
+  public async assign(tenantId: string, id: string, assigneeId: string | null): Promise<void> {
+    await this.sql.query(
+      `update conversations set bot_enabled = false, assignee_id = $3::uuid, status = case when $3::uuid is null then 'waiting' else 'attending' end, updated_at = now()
+        where tenant_id = $1 and id = $2`,
+      [tenantId, id, assigneeId]
+    );
+  }
+
+  public async resolve(tenantId: string, id: string): Promise<void> {
+    await this.sql.query(
+      `update conversations set status = 'resolved', bot_enabled = true, awaiting_since = null, resolved_at = now(), updated_at = now()
+        where tenant_id = $1 and id = $2`,
+      [tenantId, id]
+    );
+  }
+
+  public async counts(tenantId: string): Promise<Record<ConversationStatus, number>> {
+    const counts: Record<ConversationStatus, number> = { bot: 0, waiting: 0, attending: 0, resolved: 0 };
+    if (!isUuid(tenantId)) return counts;
+    const result = await this.sql.query<{ status: ConversationStatus; total: number }>(
+      "select status, count(*)::int as total from conversations where tenant_id = $1 group by status",
+      [tenantId]
+    );
+    for (const row of result.rows) counts[row.status] = row.total;
+    return counts;
   }
 
   public async markRead(tenantId: string, id: string): Promise<void> {

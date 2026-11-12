@@ -253,7 +253,8 @@
   cursor: pointer;
 }
 
-.ios-chip[aria-selected="true"] {
+.ios-chip[aria-selected="true"],
+.ios-chip[aria-pressed="true"] {
   background: var(--wa-chip-on-bg);
   color: var(--wa-chip-on-text);
 }
@@ -503,17 +504,6 @@
   font-size: 0.8rem;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.ios-row__paused {
-  display: inline-grid;
-  flex: 0 0 auto;
-  color: var(--wa-secondary);
-}
-
-.ios-row__paused svg {
-  width: 14px;
-  height: 14px;
 }
 
 .ios-row__extra {
@@ -767,89 +757,6 @@
 .ios-icon-btn:hover,
 .ios-icon-btn.is-active {
   background: var(--wa-search-bg);
-}
-
-.ios-run-flow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  height: 34px;
-  padding: 0 13px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--wa-accent-fill);
-  box-shadow: var(--wa-accent-glow);
-  color: var(--on-primary);
-  font-size: 0.84rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.ios-run-flow:hover {
-  filter: brightness(1.06);
-}
-
-.ios-run-flow svg {
-  width: 16px;
-  height: 16px;
-}
-
-.ios-bot-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  flex: 0 0 auto;
-  height: 34px;
-  padding: 0 6px 0 10px;
-  border: 1px solid var(--wa-separator);
-  border-radius: 999px;
-  background: var(--wa-list-bg);
-  color: var(--wa-secondary);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.ios-bot-toggle > svg {
-  width: 16px;
-  height: 16px;
-}
-
-.ios-bot-toggle.is-on {
-  color: var(--wa-chip-on-text);
-}
-
-/* Interruptor de iOS */
-.ios-bot-toggle__track {
-  position: relative;
-  width: 38px;
-  height: 23px;
-  border-radius: 999px;
-  background: var(--wa-switch-off);
-  transition: background 0.2s ease;
-}
-
-.ios-bot-toggle__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 19px;
-  height: 19px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
-}
-
-.ios-bot-toggle.is-on .ios-bot-toggle__track {
-  background: var(--wa-accent);
-}
-
-.ios-bot-toggle.is-on .ios-bot-toggle__thumb {
-  transform: translateX(15px);
 }
 
 .ios-thread {
@@ -1331,11 +1238,6 @@
   .ios-spinner {
     animation: none;
   }
-
-  .ios-bot-toggle__track,
-  .ios-bot-toggle__thumb {
-    transition: none;
-  }
 }
 
 /* --- Pantallas medianas: la info va encima del chat ------------------------------- */
@@ -1353,16 +1255,6 @@
     z-index: 5;
     width: min(360px, 100%);
     box-shadow: -12px 0 32px rgba(0, 0, 0, 0.18);
-  }
-
-  .ios-run-flow span {
-    display: none;
-  }
-
-  .ios-run-flow {
-    width: 34px;
-    padding: 0;
-    justify-content: center;
   }
 }
 
@@ -1405,17 +1297,6 @@
   .ios-chat__header {
     gap: 4px;
     padding: 6px 8px;
-  }
-
-  .ios-bot-toggle {
-    padding: 0 4px;
-    border: 0;
-    background: none;
-  }
-
-  .ios-bot-toggle > svg,
-  .ios-bot-toggle > span:not(.ios-bot-toggle__track) {
-    display: none;
   }
 
   .ios-thread {

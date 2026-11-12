@@ -36,6 +36,7 @@ import { composeGroupServices } from "../composition/composeGroupServices";
 import { composeHelpServices } from "../composition/composeHelpServices";
 import { composeNotificationServices } from "../composition/composeNotificationServices";
 import { composeQuickReplyServices } from "../composition/composeQuickReplyServices";
+import { composeContactNoteServices } from "../composition/composeContactNoteServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
 import { SqlCrmPipelineRepository } from "../../../infrastructure/persistence/sql/SqlCrmPipelineRepository";
@@ -143,7 +144,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     scheduler: scheduling.scheduler,
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
     sales: sales.ledger,
-    inboundListeners
+    inboundListeners,
+    dealOwners: crm.ownerClaims
   });
   // Meta Ads (se sincroniza en la cola de tareas) y el Dashboard.
   const ads = composeAdsServices(config, tenancy.sqlClient, scheduling.scheduler, (error, context) =>
@@ -212,6 +214,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     helpServices: { ...help, docsBase: config.helpDocsBase },
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
     quickReplyServices: composeQuickReplyServices(tenancy.sqlClient),
+    contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({

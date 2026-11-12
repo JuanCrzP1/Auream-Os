@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CONVERSATIONS_POLL_INTERVAL_MS, type ConversationListQuery, type ConversationSummary } from "@contracts/ConversationContracts";
+import { CONVERSATIONS_POLL_INTERVAL_MS, type ConversationListQuery, type ConversationStatus, type ConversationSummary } from "@contracts/ConversationContracts";
 import { RequestError } from "@shared/http/RequestError";
 import { fetchConversations } from "./conversationsApi";
 import { LivePoller } from "./LivePoller";
@@ -33,6 +33,8 @@ export function useConversations(query: ConversationListQuery) {
   const [status, setStatus] = useState<InboxStatus>("loading");
   const [filtering, setFiltering] = useState(false);
   const [canManage, setCanManage] = useState(false);
+  const [canWrite, setCanWrite] = useState(true);
+  const [counts, setCounts] = useState<Readonly<Record<ConversationStatus, number>> | null>(null);
   const loaded = useRef(false);
   const current = useRef(key);
   const olderLoaded = useRef(false);
@@ -44,6 +46,8 @@ export function useConversations(query: ConversationListQuery) {
       if (current.current !== requested) return;
       setHead([...page.conversations]);
       setCanManage(page.canManage === true);
+      setCanWrite(page.canWrite !== false);
+      if (page.counts) setCounts(page.counts);
       // El cursor de la primera página solo manda mientras no se hayan pedido más.
       if (!olderLoaded.current) setCursor(page.nextCursor);
       loaded.current = true;
@@ -97,6 +101,10 @@ export function useConversations(query: ConversationListQuery) {
     conversations: merge(head, older),
     /** Quien mira puede eliminar chats. */
     canManage,
+    /** Quien mira puede responder, tomar y empezar chats. */
+    canWrite,
+    /** Cuántos chats hay en cada pestaña (`null` hasta la primera respuesta). */
+    counts,
     forget,
     status,
     /** Cargando otra vez tras cambiar un filtro (la lista anterior sigue visible). */

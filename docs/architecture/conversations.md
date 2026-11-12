@@ -68,3 +68,34 @@ Cada mensaje del bot genera hasta tres avisos de uazapi (enviado, entregado, le�
 | **Respuestas rápidas** | Se organizan en Configuración › Respuestas rápidas, con categorías, uso, duplicar y vista previa (dueños y administradores, `conversations.manage`). En el chat solo se buscan y se envían. Ver `domains/quick-replies/README.md`. |
 
 Web: `ChatView` coordina y delega en `ChatHeader`, `ChatThread`, `MessageBubble` (con `MessageActions` y `QuotedMessage`) y `composer/Composer`. `Composer` usa `ComposerTools`, `PendingPieces`, `useDraftPieces`, `useVoiceRecorder` (con `VoiceRecordingBar`), `EmojiPicker` y `QuickReplyPicker`. La página de Configuración y el editor viven en `features/conversations/quick-replies/`.
+
+## Atención de los chats (fase 2)
+
+`040_chat_attention.sql` · `domains/conversations/domain/ChatStatus.ts` · `ChatAttention.ts` · `NewChatService.ts` · `domains/crm/application/DealOwnerClaims.ts` · `domains/contacts/application/ContactNoteServices.ts`
+
+| Estado | Cuándo |
+|---|---|
+| **Con bot** (`bot`) | El bot atiende. Se llega al activar el bot o al ejecutar un flujo. |
+| **En espera** (`waiting`) | El bot está en pausa y nadie tomó el chat. |
+| **En atención** (`attending`) | Un asesor lo tomó (`assignee_id`). Responder también lo toma, si no tenía responsable. |
+| **Resuelto** (`resolved`) | Un asesor lo cerró. El bot vuelve a atender; si el cliente escribe, el chat se reabre como «Con bot». |
+
+- **Sin responder** (`awaiting_since`): se marca con el primer mensaje del cliente sin contestar y se borra cuando el bot o un asesor le responden. Un envío fallido no cuenta como respuesta. La bandeja muestra cuánto lleva esperando, en rojo desde los 15 minutos (`AWAITING_ALERT_MINUTES`), solo en chats que atiende una persona.
+- **Responsable compartido con el CRM**: al tomar o pasar un chat, los negocios del cliente **sin** responsable quedan con esa persona (`DealOwnerClaims`), y queda anotado en su historial. Los que ya tenían responsable no cambian.
+- **Pestañas y filtros**: `GET /conversations` admite `status`, `filter=mine|unanswered` y `assigneeId` (o `none`), y devuelve cuántos chats hay en cada estado (`counts`) y `canWrite`.
+- **Rutas**:
+  - `POST /conversations/:id/take|assign|resolve` y `POST /conversations` (chat nuevo) piden `conversations.write`.
+  - `GET /conversations/agents` lista quién puede atender (todo el equipo menos los de solo lectura).
+- **Chat nuevo**:
+  - Sale de un número **conectado** de la cuenta. El cliente queda en Contactos, y si ya tenía chat por ese número se abre el mismo.
+  - El primer mensaje lo envía el asesor (el chat queda a su nombre) o un flujo (lo atiende el bot).
+- **Notas internas**:
+  - Rutas `/contacts/:id/notes`: verlas pide `contacts.read`; anotar, `contacts.write`.
+  - Las borra quien la escribió, o un dueño o administrador.
+  - El cliente no las ve.
+
+Web:
+- La bandeja: `list/InboxTabs`, `list/ConversationRow` (estado, responsable y espera), `list/ActivePills` y `new-chat/NewChatDialog`.
+- La cabecera: `header/ChatHeader` con `header/HeaderLabels` (las etiquetas que caben y «+N») y `header/AttentionControls` (el estado abre «Pasar a…», «Dejar sin asignar», el bot y «Resolver»; al lado, «Tomar chat» o «Resolver»).
+- La info del contacto: `info/LabelsSection` e `info/NotesSection`.
+- Las acciones del chat abierto: `chatActions.ts`. Los menús usan `FloatingMenu`.

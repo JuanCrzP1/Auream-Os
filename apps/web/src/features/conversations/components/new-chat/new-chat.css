@@ -1,0 +1,60 @@
+/* «Chat nuevo». */
+.new-chat {
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.new-chat__field {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.new-chat__field small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.new-chat__field textarea {
+  resize: vertical;
+}
+
+.new-chat__phone {
+  display: flex;
+  gap: 8px;
+}
+
+.new-chat__phone .ui-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.new-chat__kinds {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--chip-bg, var(--surface-alt));
+}
+
+.new-chat__kind {
+  flex: 1;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.new-chat__kind[aria-checked="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
