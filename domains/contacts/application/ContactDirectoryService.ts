@@ -143,7 +143,9 @@ export class ContactDirectoryService {
     if (wanted.length === 0) return [];
 
     const found = await this.labels.findByNames(tenantId, wanted);
-    const byKey = new Map(found.map((label) => [labelKey(label.name), label.id]));
+    // Si hay dos que se ven igual (repetidas de antes), se usa la más antigua.
+    const byKey = new Map<string, string>();
+    for (const label of found) if (!byKey.has(labelKey(label.name))) byKey.set(labelKey(label.name), label.id);
     if (create) {
       for (const name of wanted) {
         if (byKey.has(labelKey(name))) continue;

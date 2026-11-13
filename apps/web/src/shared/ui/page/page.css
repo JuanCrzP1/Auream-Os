@@ -42,7 +42,9 @@
 }
 
 .ui-tab {
+  display: inline-block;
   padding: 8px 14px;
+  text-decoration: none;
   border: 0;
   border-bottom: 2px solid transparent;
   background: none;
@@ -53,7 +55,9 @@
   cursor: pointer;
 }
 
-.ui-tab[aria-selected="true"] {
+/* Pestaña elegida, o la página actual cuando las pestañas son enlaces. */
+.ui-tab[aria-selected="true"],
+.ui-tab[aria-current="page"] {
   border-bottom-color: var(--primary);
   color: var(--text);
 }

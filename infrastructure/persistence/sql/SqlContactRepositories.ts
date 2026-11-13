@@ -1,10 +1,8 @@
 import { readAdOrigin, type AdOrigin } from "../../../contracts/AdOrigin";
 import { fieldFilterSql } from "./fieldFilterSql";
-import type { ContactQuery, ContactRepository, ContactWithLabels, LabelRepository } from "../../../domains/contacts/application/ContactRepository";
+import type { ContactQuery, ContactRepository, ContactWithLabels } from "../../../domains/contacts/application/ContactRepository";
 import type { Contact } from "../../../domains/contacts/domain/Contact";
-import type { Label } from "../../../domains/contacts/domain/Label";
 import type { ContactFieldValue } from "../../../contracts/ContactContracts";
-import { ConflictError } from "../../../platform/observability/errors/ConflictError";
 import type { SqlClient, SqlExecutor } from "./SqlClient";
 import { isUuid, toIso } from "./sqlValues";
 
@@ -27,15 +25,6 @@ interface ContactRow {
   readonly updated_at: Date;
   /** Etiquetas agregadas en la consulta (json). */
   readonly labels: Array<{ id: string; name: string; color: string; created_at: string }> | null;
-}
-
-interface LabelRow {
-  readonly id: string;
-  readonly tenant_id: string;
-  readonly name: string;
-  readonly color: string;
-  readonly created_at: Date;
-  readonly contact_count?: string;
 }
 
 const CONTACT_SELECT = `
@@ -64,10 +53,6 @@ function toContact(row: ContactRow): ContactWithLabels {
     },
     labels: (row.labels ?? []).map((label) => ({ id: label.id, tenantId: row.tenant_id, name: label.name, color: label.color, createdAt: toIso(label.created_at) }))
   };
-}
-
-function toLabel(row: LabelRow): Label {
-  return { id: row.id, tenantId: row.tenant_id, name: row.name, color: row.color, createdAt: toIso(row.created_at) };
 }
 
 /** Escapa comodines de LIKE en la búsqueda del usuario. */
@@ -179,69 +164,5 @@ export class SqlContactRepository implements ContactRepository {
   }
 }
 
-export class SqlLabelRepository implements LabelRepository {
-  public constructor(private readonly sql: SqlExecutor) {}
-
-  public async list(tenantId: string): Promise<Array<Label & { contactCount: number }>> {
-    if (!isUuid(tenantId)) return [];
-    const result = await this.sql.query<LabelRow>(
-      `select l.id, l.tenant_id, l.name, l.color, l.created_at, count(a.contact_id) as contact_count
-         from contact_labels l
-         left join contact_label_assignments a on a.label_id = l.id
-        where l.tenant_id = $1
-        group by l.id
-        order by lower(l.name)`,
-      [tenantId]
-    );
-    return result.rows.map((row) => ({ ...toLabel(row), contactCount: Number(row.contact_count ?? 0) }));
-  }
-
-  public async findById(tenantId: string, id: string): Promise<Label | null> {
-    if (!isUuid(tenantId) || !isUuid(id)) return null;
-    const result = await this.sql.query<LabelRow>("select id, tenant_id, name, color, created_at from contact_labels where tenant_id = $1 and id = $2", [tenantId, id]);
-    return result.rows[0] ? toLabel(result.rows[0]) : null;
-  }
-
-  public async findByNames(tenantId: string, names: ReadonlyArray<string>): Promise<Label[]> {
-    if (!isUuid(tenantId) || names.length === 0) return [];
-    const result = await this.sql.query<LabelRow>(
-      "select id, tenant_id, name, color, created_at from contact_labels where tenant_id = $1 and lower(name) = any($2::text[])",
-      [tenantId, names.map((name) => name.toLowerCase())]
-    );
-    return result.rows.map(toLabel);
-  }
-
-  public async create(label: Label): Promise<void> {
-    try {
-      await this.sql.query(
-        "insert into contact_labels (id, tenant_id, name, color, created_at) values ($1, $2, $3, $4, $5)",
-        [label.id, label.tenantId, label.name, label.color, label.createdAt]
-      );
-    } catch (error) {
-      if (isUniqueViolation(error)) throw new ConflictError(`Ya existe una etiqueta llamada «${label.name}».`);
-      throw error;
-    }
-  }
-
-  public async update(label: Label): Promise<void> {
-    try {
-      await this.sql.query(
-        "update contact_labels set name = $3, color = $4, updated_at = now() where tenant_id = $1 and id = $2",
-        [label.tenantId, label.id, label.name, label.color]
-      );
-    } catch (error) {
-      if (isUniqueViolation(error)) throw new ConflictError(`Ya existe una etiqueta llamada «${label.name}».`);
-      throw error;
-    }
-  }
-
-  public async delete(tenantId: string, id: string): Promise<void> {
-    if (!isUuid(tenantId) || !isUuid(id)) return;
-    await this.sql.query("delete from contact_labels where tenant_id = $1 and id = $2", [tenantId, id]);
-  }
-}
-
-/** Violación de unicidad de PostgreSQL (23505). */
-function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && (error as { code?: string }).code === "23505";
-}
+/** El catálogo de etiquetas vive en su archivo; se sigue importando desde aquí. */
+export { SqlLabelRepository } from "./SqlLabelRepository";

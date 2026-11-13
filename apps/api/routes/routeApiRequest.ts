@@ -21,6 +21,8 @@ import { routeNotificationsRequest } from "./routeNotificationsRequest";
 import { routeQuickRepliesRequest } from "./routeQuickRepliesRequest";
 import { routeContactFieldsRequest, type ContactFieldRoutes } from "./routeContactFieldsRequest";
 import { routeBusinessDataRequest } from "./routeBusinessDataRequest";
+import { routeLabelsRequest } from "./routeLabelsRequest";
+import type { LabelManagementServices } from "../../../domains/labels/application/LabelManagementServices";
 import type { BusinessDataServices } from "../../../domains/business-data/application/BusinessDataServices";
 
 import { routeContactNotesRequest } from "./routeContactNotesRequest";
@@ -124,6 +126,8 @@ export interface ApiRouterDependencies {
   readonly contactFieldServices?: ContactFieldRoutes;
   /** Datos del negocio (`/business-data`). Ausente: responde 503. */
   readonly businessDataServices?: BusinessDataServices;
+  /** Etiquetas: quién la usa, renombrar, unir y borrar (`/labels/overview`, `/labels/merge`, `PATCH`/`DELETE /labels/:id`). */
+  readonly labelServices?: LabelManagementServices;
   /** Notas internas de los clientes (`/contacts/:id/notes`). Ausente: responde 503. */
   readonly contactNoteServices?: ContactNoteServices;
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
@@ -222,6 +226,8 @@ export async function routeApiRequest(
   recordLastSeen(dependencies.teamServices, dependencies.background, requestContext);
 
   if (await routeContactNotesRequest(request, response, url, dependencies.contactNoteServices, requestContext)) return;
+  // Etiquetas: quién la usa, renombrar, unir y borrar sin romper nada (antes que el catálogo simple de Contactos).
+  if (await routeLabelsRequest(request, response, url, dependencies.labelServices, requestContext)) return;
   if (url.pathname.startsWith("/contacts") || url.pathname.startsWith("/labels")) {
     if (await routeContactsRequest(request, response, url, contactsServices, requestContext)) return;
   }

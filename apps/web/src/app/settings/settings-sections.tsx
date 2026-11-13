@@ -17,6 +17,7 @@ export const SETTINGS_ROUTES = {
   security: "/settings/security",
   "contact-fields": "/settings/contact-fields",
   "business-data": "/settings/business-data",
+  labels: "/settings/labels",
   "quick-replies": "/settings/quick-replies"
 } as const;
 
@@ -56,6 +57,12 @@ const Icons = {
       <path d="M9 20v-5h6v5M4 20h16M9.5 10.5h5" />
     </>
   ),
+  labels: icon(
+    <>
+      <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" />
+      <circle cx="8" cy="8" r="1.5" />
+    </>
+  ),
   quickReplies: icon(<path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" />),
   security: icon(<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3zM9.5 12l2 2 3.5-4" />)
 };
@@ -93,6 +100,13 @@ export const SETTINGS_GROUPS: ReadonlyArray<SettingsNavGroup> = [
         path: SETTINGS_ROUTES["business-data"],
         icon: Icons.businessData,
         description: "Lo que repites en tus mensajes (Pago Móvil, horario, dirección, enlaces), escrito una vez. Lo cambias aquí y cambia en todos tus flujos, difusiones y respuestas rápidas."
+      },
+      {
+        id: "labels",
+        label: "Etiquetas",
+        path: SETTINGS_ROUTES.labels,
+        icon: Icons.labels,
+        description: "Cuántos clientes tiene cada una, cuánto venden y quién la usa (embudos, flujos, difusiones, webhooks). Une las repetidas y borra sin romper nada."
       }
     ]
   },

@@ -1,0 +1,40 @@
+/* El detalle de una etiqueta: panel a la derecha con el encabezado oscuro de Auream y dónde trabaja. */
+.lb-drawer-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; justify-content: flex-end; background: rgba(0, 0, 0, 0.45); }
+.lb-drawer { display: flex; flex-direction: column; box-sizing: border-box; width: min(460px, 100vw); height: 100%; background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow); animation: lb-drawer-in 180ms var(--ease-out); }
+@keyframes lb-drawer-in { from { transform: translateX(24px); opacity: 0; } }
+
+.lb-drawer__hero { position: relative; display: grid; gap: 8px; padding: 26px 24px 22px; background: linear-gradient(125deg, #1e1530 0%, #33246b 55%, #5b4bd4 100%); color: #ffffff; }
+.lb-drawer__eyebrow { color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.lb-drawer__hero h2 { display: flex; align-items: center; gap: 10px; margin: 0; padding-right: 36px; font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; }
+.lb-drawer__hero .lb-dot { flex-basis: 14px; width: 14px; height: 14px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
+.lb-drawer__facts { display: flex; flex-wrap: wrap; gap: 14px; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; }
+.lb-drawer__facts strong { color: #ffffff; }
+.lb-drawer__close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border: 0; border-radius: 10px; background: rgba(255, 255, 255, 0.12); color: #ffffff; font-size: 1.2rem; cursor: pointer; }
+.lb-drawer__close:hover { background: rgba(255, 255, 255, 0.22); }
+
+.lb-drawer__body { display: grid; flex: 1; align-content: start; gap: 18px; padding: 20px 24px; overflow-y: auto; }
+.lb-drawer__section { display: grid; gap: 12px; }
+.lb-drawer__section + .lb-drawer__section { padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent); }
+.lb-drawer__section h3 { margin: 0; color: var(--text); font-size: 0.85rem; font-weight: 800; }
+.lb-drawer__hint { color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+.lb-drawer__warn { color: color-mix(in srgb, var(--amber) 65%, var(--text)); font-size: 0.78rem; font-weight: 600; line-height: 1.45; }
+
+.lb-drawer__footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--line); }
+.lb-drawer__links { display: flex; gap: 14px; }
+.lb-drawer__link { padding: 9px 2px; border: 0; background: none; color: var(--primary); font: 700 0.85rem var(--font-body); cursor: pointer; }
+.lb-drawer__link:disabled { color: var(--muted); cursor: not-allowed; }
+.lb-drawer__link--danger { color: color-mix(in srgb, var(--rose) 80%, var(--text)); }
+.lb-drawer__link:hover:not(:disabled) { text-decoration: underline; }
+
+.lb-uses { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.lb-uses__item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-alt); }
+.lb-uses__dot { flex: 0 0 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.lb-uses__dot--stage { background: var(--primary); }
+.lb-uses__dot--flow { background: color-mix(in srgb, var(--primary) 60%, var(--teal)); }
+.lb-uses__dot--broadcast, .lb-uses__dot--audience { background: var(--teal); }
+.lb-uses__dot--webhook, .lb-uses__dot--groupCampaign { background: var(--amber); }
+.lb-uses__text { display: grid; flex: 1; gap: 1px; min-width: 0; color: var(--text); font-size: 0.85rem; }
+.lb-uses__text span { color: var(--muted); font-size: 0.76rem; }
+.lb-uses__open { color: var(--primary); font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+.lb-uses__open:hover { text-decoration: underline; }
+.lb-uses__empty { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }

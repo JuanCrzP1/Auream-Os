@@ -1,0 +1,68 @@
+/* Configuración › Datos › Etiquetas: la barra, las uniones, las repetidas, la
+ * tabla y los diálogos. Solo tokens del tema (claro y oscuro), con el mismo
+ * lenguaje de Campos del cliente y Datos del negocio. */
+.lb, .lb-drawer, .lb-dialog {
+  --lb-line: color-mix(in srgb, var(--primary) 16%, transparent);
+  --lb-soft: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.lb__frame { display: grid; gap: 18px; container: lb / inline-size; }
+.lb-loading { height: 260px; border-radius: 20px; background: linear-gradient(90deg, var(--surface) 0%, var(--surface-alt) 50%, var(--surface) 100%); background-size: 200% 100%; animation: lb-shimmer 1.2s linear infinite; }
+@keyframes lb-shimmer { to { background-position: -200% 0; } }
+
+.lb__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.lb__who { flex: 1 1 360px; margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
+.lb__who a { color: var(--primary); font-weight: 700; }
+
+.lb-dot { display: inline-block; flex: 0 0 10px; width: 10px; height: 10px; border-radius: 50%; }
+
+/* Las repetidas */
+.lb-duplicates { display: grid; gap: 10px; }
+.lb-duplicates__item { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 20px; border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent); border-radius: 20px; background: color-mix(in srgb, var(--amber) 7%, var(--surface)); }
+.lb-duplicates__icon { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 12px; background: color-mix(in srgb, var(--amber) 16%, transparent); color: color-mix(in srgb, var(--amber) 70%, var(--text)); }
+.lb-duplicates__icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.lb-duplicates__text { display: grid; flex: 1 1 380px; gap: 2px; color: var(--text); font-size: 0.9rem; }
+.lb-duplicates__text span { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+.lb-duplicates__action { height: 38px; padding: 0 16px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--amber) 75%, #7c2d12); color: #ffffff; font: 700 0.85rem var(--font-body); cursor: pointer; }
+
+/* Las uniones */
+.lb-merges { display: grid; gap: 8px; }
+.lb-merge { display: grid; gap: 10px; padding: 14px 18px; border: 1px solid var(--lb-line); border-radius: 18px; background: var(--surface); }
+.lb-merge--done { border-color: color-mix(in srgb, var(--teal) 35%, transparent); background: color-mix(in srgb, var(--teal) 6%, var(--surface)); }
+.lb-merge--failed { border-color: color-mix(in srgb, var(--rose) 35%, transparent); }
+.lb-merge__text { display: grid; gap: 2px; color: var(--text); font-size: 0.88rem; }
+.lb-merge__text span { color: var(--muted); font-size: 0.8rem; }
+.lb-merge__bar { height: 6px; border-radius: 999px; background: var(--lb-soft); overflow: hidden; }
+.lb-merge__bar span { display: block; height: 100%; border-radius: inherit; background: var(--primary); transition: width 400ms ease; }
+
+/* La tabla */
+.lb-card { border: 1px solid var(--lb-line); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.lb-table__head, .lb-row { display: grid; grid-template-columns: 2fr 0.9fr 1.2fr 2.4fr 28px; gap: 12px; align-items: center; padding: 0 20px; }
+.lb-table--no-sales .lb-table__head, .lb-table--no-sales .lb-row { grid-template-columns: 2fr 0.9fr 3fr 28px; }
+.lb-table__head { padding-block: 10px; border-bottom: 1px solid var(--lb-soft); background: color-mix(in srgb, var(--primary) 3%, var(--surface)); color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.lb-table__rows { margin: 0; padding: 0; list-style: none; }
+.lb-table__rows li + li .lb-row { border-top: 1px solid var(--lb-soft); }
+.lb-row { box-sizing: border-box; width: 100%; padding-block: 13px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background var(--speed-fast) ease; }
+.lb-row:hover, .lb-row:focus-visible { background: color-mix(in srgb, var(--primary) 6%, transparent); outline: none; }
+.lb-row__name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lb-row__name strong { overflow: hidden; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+.lb-row__count, .lb-row__sales { font-size: 0.85rem; }
+.lb-row__sales { font-weight: 700; }
+.lb-row__uses { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8rem; }
+.lb-row__idle { color: color-mix(in srgb, var(--amber) 70%, var(--text)); font-weight: 700; }
+.lb-row__chevron { color: var(--muted); font-size: 1.2rem; text-align: right; }
+.lb-hidden { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--amber) 16%, transparent); color: color-mix(in srgb, var(--amber) 70%, var(--text)); font-size: 0.7rem; font-weight: 800; white-space: nowrap; }
+.lb-stage { padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); font-size: 0.74rem; font-weight: 800; white-space: nowrap; }
+
+/* Angosto: cada etiqueta es una tarjeta (nombre y clientes arriba, ventas y usos abajo). */
+@container lb (max-width: 640px) {
+  .lb-table__head { display: none; }
+  .lb-row, .lb-table--no-sales .lb-row { grid-template-columns: 1fr auto; row-gap: 6px; }
+  .lb-row__uses { grid-column: 1 / -1; }
+  .lb-row__chevron { display: none; }
+}
+
+/* Diálogos */
+.lb-dialog { width: min(520px, calc(100vw - 32px)); }
+.lb-dialog__risk { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--rose) 28%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--rose) 6%, transparent); color: var(--text); font-size: 0.85rem; }
+.lb-dialog__hint { color: var(--muted); font-size: 0.78rem; font-weight: 500; line-height: 1.45; }

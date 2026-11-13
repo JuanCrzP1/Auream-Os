@@ -93,50 +93,12 @@ describe("ficha del contacto", () => {
   });
 });
 
-describe("catálogo de etiquetas", () => {
-  async function abrirEtiquetas() {
+describe("etiquetas", () => {
+  it("se administran en Configuración: la pestaña lleva allá, con cuántas hay", async () => {
+    stubContactsApi({ contacts: [ANA], labels: [VIP, LEAD] });
     render(<MemoryRouter><ContactsSection /></MemoryRouter>);
-    await userEvent.click(screen.getByRole("tab", { name: /etiquetas/i }));
-  }
-
-  it("crea una etiqueta con su color", async () => {
-    const api = stubContactsApi({ labels: [VIP] });
-    await abrirEtiquetas();
-
-    await userEvent.type(screen.getByLabelText("Nombre de la nueva etiqueta"), "Interesado");
-    await userEvent.click(screen.getByRole("radio", { name: "Color #10b981" }));
-    await userEvent.click(screen.getByRole("button", { name: "Crear etiqueta" }));
-
-    expect(await screen.findByText("Interesado")).toBeInTheDocument();
-    expect(api.labels().at(-1)).toMatchObject({ name: "Interesado", color: "#10b981" });
-  });
-
-  it("un nombre repetido muestra el aviso del servidor", async () => {
-    stubContactsApi({ labels: [VIP] });
-    await abrirEtiquetas();
-    await screen.findByText("VIP");
-
-    await userEvent.type(screen.getByLabelText("Nombre de la nueva etiqueta"), "vip");
-    await userEvent.click(screen.getByRole("button", { name: "Crear etiqueta" }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("Ya existe una etiqueta con ese nombre.");
-  });
-
-  it("renombra y borra (con confirmación)", async () => {
-    const api = stubContactsApi({ contacts: [ANA], labels: [VIP, LEAD] });
-    await abrirEtiquetas();
-
-    await userEvent.click(await screen.findByRole("button", { name: "Editar Lead" }));
-    const campo = screen.getByLabelText("Nombre de la etiqueta");
-    await userEvent.clear(campo);
-    await userEvent.type(campo, "Prospecto");
-    await userEvent.click(screen.getByRole("button", { name: "Guardar" }));
-    expect(await screen.findByText("Prospecto")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "Borrar VIP" }));
-    await userEvent.click(screen.getByRole("button", { name: "Sí, borrar" }));
-    await waitFor(() => expect(api.labels().map((l) => l.name)).toEqual(["Prospecto"]));
-    expect(api.contacts()[0]?.labels).toEqual([]);
+    const link = await screen.findByRole("link", { name: /Etiquetas · 2/ });
+    expect(link).toHaveAttribute("href", "/settings/labels");
   });
 });
 

@@ -38,6 +38,7 @@ import { composeNotificationServices } from "../composition/composeNotificationS
 import { composeQuickReplyServices } from "../composition/composeQuickReplyServices";
 import { composeContactFieldServices, contactFieldCatalog } from "../composition/composeContactFieldServices";
 import { composeBusinessDataServices, composeBusinessValues } from "../composition/composeBusinessDataServices";
+import { composeLabelServices } from "../composition/composeLabelServices";
 import { SqlContactFieldRepository } from "../../../infrastructure/persistence/sql/SqlContactFields";
 import { composeContactNoteServices } from "../composition/composeContactNoteServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
@@ -199,7 +200,18 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     connections: connectionsServices,
     contacts: contactsServices.directory
   });
+  // Etiquetas: unir una en otra pasa a sus clientes por tandas en la cola (con las reglas del CRM).
+  const labels = composeLabelServices({
+    sql: tenancy.sqlClient,
+    labels: contactsServices.labelRepository,
+    contacts: contactsServices.repository,
+    automations: services.automationRepository,
+    workspaces: services.workspaceRepository,
+    saveDraft: services.saveDraftService,
+    scheduler: scheduling.scheduler
+  });
   const runner = scheduling.attachHandlers([
+    labels.handler,
     new FlowTimerTaskHandler(messagingServices.timers),
     messagingServices.scheduled.handler,
     ...(ads.syncHandler ? [ads.syncHandler] : []),
@@ -252,6 +264,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     quickReplyServices: quickReplies,
     contactFieldServices: { fields: contactFields.services, values: contactFields.values, tidy: contactFields.tidy, merge: contactFields.merge },
     businessDataServices: businessData,
+    labelServices: labels.services,
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
     salesLineServices: salesLines.lines,

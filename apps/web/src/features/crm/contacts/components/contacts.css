@@ -21,7 +21,6 @@
 }
 
 .contacts-table__open:focus-visible,
-.contacts-swatch:focus-visible,
 .contacts-label-toggle:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -179,69 +178,6 @@
   color: var(--muted);
   font: inherit;
   cursor: pointer;
-}
-
-.contacts-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.contacts-swatch {
-  width: 22px;
-  height: 22px;
-  border: 2px solid transparent;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.contacts-swatch--active {
-  border-color: var(--text);
-  box-shadow: 0 0 0 2px var(--surface);
-}
-
-.contacts-label-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 520px;
-}
-
-.contacts-label-list {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface-glass);
-  list-style: none;
-}
-
-.contacts-label-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
-}
-
-.contacts-label-row:last-child {
-  border-bottom: 0;
-}
-
-.contacts-label-row--editing {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.contacts-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
 }
 
 /* --- Ficha y diálogo ----------------------------------------------------- */
