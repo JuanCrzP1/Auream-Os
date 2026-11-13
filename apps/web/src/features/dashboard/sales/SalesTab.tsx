@@ -2,6 +2,7 @@ import "./sales-tab.css";
 import { useCallback, useEffect, useState } from "react";
 import type { AdsDashboardResponse, DashboardFilters, SalesDashboardResponse } from "@contracts/DashboardContracts";
 import { adsApi } from "@shared/ads/adsApi";
+import { MeasurementNotice } from "@shared/ads/MeasurementNotice";
 import { dashboardApi } from "../services/dashboardApi";
 import { useDashboardData } from "../useDashboardData";
 import { AdFunnel } from "./AdFunnel";
@@ -60,6 +61,7 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency, onS
 
   return (
     <div className="sales-tab">
+      {view.ads ? <MeasurementNotice measurement={view.ads.measurement} /> : null}
       {view.ads ? <AdsHero view={view} periodWords={periodWords} /> : view.canSeeAds ? <ConnectMetaInvite /> : null}
       <SalesSummary view={view} onOpenExpenses={() => setExpensesOpen(true)} />
       {expensesOpen ? (

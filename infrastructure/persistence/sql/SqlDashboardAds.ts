@@ -1,6 +1,6 @@
 import type { AdLevel } from "../../../contracts/DashboardContracts";
 import type { Period } from "../../../domains/analytics/application/DashboardPeriod";
-import type { AdsReader, AttributedDay, DashboardScope, EntityDay, EntityInfo, SpendDay } from "../../../domains/analytics/application/DashboardReaders";
+import type { AdsReader, ArrivedChats, AttributedDay, DashboardScope, EntityDay, EntityInfo, SpendDay } from "../../../domains/analytics/application/DashboardReaders";
 import type { SqlExecutor } from "./SqlClient";
 
 // ---------------------------------------------------------------------------
@@ -137,5 +137,35 @@ export class SqlDashboardAds implements AdsReader {
       params
     );
     return rows.map((row) => ({ id: row.id, day: row.day, currency: row.currency.trim(), amount: Number(row.amount), count: Number(row.count), late: Number(row.late) }));
+  }
+
+  public async arrivals(tenantId: string, period: Period, level: AdLevel, scope?: DashboardScope): Promise<ReadonlyArray<ArrivedChats>> {
+    const params: unknown[] = [tenantId, period.from.toISOString(), period.until.toISOString()];
+    const byCampaign = campaignFilter(scope, params);
+    const byConnection = scope?.connectionIds?.length
+      ? `and exists (select 1 from conversations v where v.tenant_id = ct.tenant_id and v.contact_id = ct.id and v.connection_id = any($${params.push([...scope.connectionIds])}::uuid[]))`
+      : "";
+    // Cuándo llegó por ese anuncio lo anota Auream al guardarlo; para los clientes de antes de eso vale el día en que se crearon.
+    const { rows } = await this.sql.query<{ id: string; chats: string }>(
+      `select ${keyOf(level)} as id, count(*) as chats
+         from contacts ct
+         join lateral (select e.* from ad_entities e join ad_accounts a on a.id = e.account_id and a.enabled
+                        where e.tenant_id = ct.tenant_id and e.level = 'ad' and e.external_id = ct.ad_origin ->> 'sourceId' limit 1) e on true
+         cross join lateral (select case when ct.ad_origin ->> 'receivedAt' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}'
+                                         then (ct.ad_origin ->> 'receivedAt')::timestamptz else ct.created_at end as at) arrived
+        where ct.tenant_id = $1 and ct.ad_origin ->> 'sourceId' is not null
+          and arrived.at >= $2 and arrived.at < $3 and ${keyOf(level)} is not null ${byCampaign} ${byConnection}
+        group by 1`,
+      params
+    );
+    return rows.map((row) => ({ id: row.id, chats: Number(row.chats) }));
+  }
+
+  public async recordsSales(tenantId: string, since: Date, until: Date): Promise<boolean> {
+    const { rows } = await this.sql.query<{ found: boolean }>(
+      `select exists (select 1 from sales where tenant_id = $1 and status = 'approved' and sold_at >= $2 and sold_at < $3) as found`,
+      [tenantId, since.toISOString(), until.toISOString()]
+    );
+    return rows[0]?.found === true;
   }
 }

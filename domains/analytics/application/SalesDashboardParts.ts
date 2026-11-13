@@ -1,4 +1,6 @@
+import { salesUnknown } from "../../../contracts/AdMeasurementContracts";
 import type { AdsMoneySummary, Breakdown } from "../../../contracts/DashboardContracts";
+import { measurementOf } from "../domain/adMeasurement";
 import { change, type Period } from "./DashboardPeriod";
 import type { BreakdownRow, LeadCounts, SalesDay, SpendDay } from "./DashboardReaders";
 import { ratio, round, type MoneyBook } from "./MoneyBook";
@@ -43,14 +45,19 @@ export function group(book: MoneyBook, rows: ReadonlyArray<BreakdownRow>): Break
   return [...map.values()].map((entry) => ({ ...entry, revenue: round(entry.revenue) })).sort((a, b) => b.revenue - a.revenue).slice(0, 8);
 }
 
-/** Lo de Meta en el periodo: gasto, lo que trajeron sus anuncios, ROAS y costos por chat y por venta. */
+/**
+ * Lo de Meta en el periodo: gasto, lo que trajeron sus anuncios, ROAS y costos
+ * por chat y por venta. `watch`: lo que llegó a Auream por anuncio y si el
+ * negocio anota ventas; sin ventas que mirar no hay ROAS real (no es 0).
+ */
 export function adsSummary(
   book: MoneyBook,
   days: ReadonlyArray<SalesDay>,
   prevDays: ReadonlyArray<SalesDay>,
   spendDays: ReadonlyArray<SpendDay>,
   prevSpendDays: ReadonlyArray<SpendDay>,
-  activeCampaigns: number
+  activeCampaigns: number,
+  watch: { readonly arrivedChats: number; readonly recordsSales: boolean }
 ): Omit<AdsMoneySummary, "realProfit"> {
   const pick = (amount: (d: SpendDay) => number) => (d: SpendDay) => ({ amount: amount(d), currency: d.currency, day: d.day });
   const spend = book.sum(spendDays, pick((d) => d.spend));
@@ -60,19 +67,23 @@ export function adsSummary(
   const prevAdRevenue = book.sum(prevDays, (d) => ({ amount: d.adAmount, currency: d.currency, day: d.day }));
   const adSales = days.reduce((sum, d) => sum + d.adCount, 0);
   const chats = spendDays.reduce((sum, d) => sum + d.conversations, 0);
+  const metaPurchases = spendDays.reduce((sum, d) => sum + d.metaPurchases, 0);
+  const measurement = measurementOf({ metaChats: chats, arrivedChats: watch.arrivedChats, sales: adSales, metaPurchases, recordsSales: watch.recordsSales });
+  const blind = salesUnknown(measurement, adSales);
   return {
     spend: { value: spend, previous: prevSpend, change: change(spend, prevSpend) },
     revenue: { value: adRevenue, previous: prevAdRevenue, change: change(adRevenue, prevAdRevenue) },
     profit: signedTrend(round(adRevenue - spend), round(prevAdRevenue - prevSpend)),
-    roas: ratio(adRevenue, spend),
+    roas: blind ? null : ratio(adRevenue, spend),
     roasMeta: ratio(metaRevenue, spend),
     costPerSale: adSales > 0 ? round(spend / adSales) : null,
     costPerChat: chats > 0 ? round(spend / chats) : null,
-    revenuePerChat: chats > 0 ? round(adRevenue / chats) : null,
+    revenuePerChat: chats > 0 && !blind ? round(adRevenue / chats) : null,
     chats,
     attributedSales: adSales,
     impressions: spendDays.reduce((sum, d) => sum + d.impressions, 0),
     clicks: spendDays.reduce((sum, d) => sum + d.clicks, 0),
-    activeCampaigns
+    activeCampaigns,
+    measurement
   };
 }

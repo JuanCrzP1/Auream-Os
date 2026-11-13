@@ -16,11 +16,11 @@ import { presetRange } from "../../src/features/dashboard/period/periodModel";
 
 const reply = (status: number, body?: unknown) => ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body ?? {}) }) as unknown as Response;
 const trend = (value: number, previous: number) => ({ value, previous, change: previous ? (value - previous) / previous : null });
-const metrics = { spend: 100000, impressions: 20000, clicks: 600, chats: 40, sales: 10, metaPurchases: 3, revenue: 500000, metaRevenue: 150000, profit: 400000, roas: 5, roasMeta: 1.5, costPerChat: 2500, costPerSale: 10000, ctr: 0.03 };
+const metrics = { spend: 100000, impressions: 20000, clicks: 600, chats: 40, arrivedChats: 38, sales: 10, metaPurchases: 3, revenue: 500000, metaRevenue: 150000, profit: 400000, roas: 5, roasMeta: 1.5, costPerChat: 2500, costPerSale: 10000, ctr: 0.03 };
 
 const SALES = (withAds: boolean): SalesDashboardResponse => ({
   currency: "COP", missingRates: [], revenue: trend(600000, 300000), sales: trend(12, 6), averageTicket: 50000, leads: trend(60, 50), leadsFromAds: 40, conversion: 0.15, conversionPrevious: 0.1, convertedLeads: 9, reviewCount: 2,
-  ads: withAds ? { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: 360000, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, activeCampaigns: 3 } : null,
+  ads: withAds ? { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: 360000, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, activeCampaigns: 3 } : null,
   realProfit: 360000, profit: withAds ? trend(360000, 160000) : null, otherSpend: null, otherExpenses: [], costsKnown: true,
   daily: [{ day: "2026-11-01", revenue: 100000, spend: 20000 }, { day: "2026-11-02", revenue: 500000, spend: 80000 }],
   funnel: withAds ? { impressions: 20000, clicks: 600, chats: 40, sales: 10 } : null,
@@ -30,7 +30,7 @@ const SALES = (withAds: boolean): SalesDashboardResponse => ({
   canSeeAds: withAds
 });
 const ADS: AdsDashboardResponse = {
-  currency: "COP", level: "campaign", connected: true, unseenSales: 7, lateShare: 0.2, lastSyncedAt: null, totals: metrics,
+  currency: "COP", level: "campaign", connected: true, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, unseenSales: 7, lateShare: 0.2, lastSyncedAt: null, totals: metrics,
   rows: [{ ...metrics, id: "c1", name: "Video Colombia", level: "campaign", status: "ACTIVE", parentName: null, dailyBudget: null, thumbnailUrl: null, advice: "scale", adviceReason: "Deja 5 por cada 1 que gastas." }]
 };
 const ATTENTION: AttentionDashboardResponse = {

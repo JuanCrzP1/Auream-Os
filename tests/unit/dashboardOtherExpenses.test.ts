@@ -34,7 +34,9 @@ const ads: AdsReader = {
   spend: async (_t, period) => [{ day: current(period.toDay) ? "2026-11-02" : "2026-10-02", currency: "COP", spend: current(period.toDay) ? 100_000 : 80_000, impressions: 0, clicks: 0, conversations: 0, metaPurchases: 0, metaRevenue: 0 }],
   entityDays: async () => [],
   entities: async () => [],
-  attributed: async () => []
+  attributed: async () => [],
+  arrivals: async () => [],
+  recordsSales: async () => true
 };
 
 const rules: ExpenseRule[] = [

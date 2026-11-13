@@ -1,4 +1,5 @@
 import type { SalesDashboardResponse, Trend } from "@contracts/DashboardContracts";
+import { salesUnknown } from "@contracts/AdMeasurementContracts";
 import { formatRoas } from "@shared/ads/adsFormat";
 import { money } from "../../dashboardFormat";
 import { investmentCard, profitNote, type InvestmentMode, LINE_WITHOUT_CAMPAIGNS } from "./investmentCard";
@@ -93,7 +94,7 @@ export function summaryCards(view: SalesDashboardResponse, investment: Investmen
           icon: "roas",
           label: "ROAS real",
           value: ads ? formatRoas(ads.roas) : "—",
-          note: ads ? `Meta dice ${formatRoas(ads.roasMeta)}` : noAds,
+          note: ads ? `${salesUnknown(ads.measurement, ads.attributedSales) ? "Sin medir · " : ""}Meta dice ${formatRoas(ads.roasMeta)}` : noAds,
           trend: ads ? relativeTrend(ads.roas, divide(ads.revenue.previous, ads.spend.previous)) : null
         }
       : null,

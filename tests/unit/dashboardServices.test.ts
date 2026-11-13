@@ -50,7 +50,7 @@ const salesReader = (overrides: Partial<SalesReader> = {}): SalesReader => ({
   ...overrides
 });
 
-const adsReader = (accounts = 1): AdsReader => ({
+const adsReader = (accounts = 1, overrides: Partial<AdsReader> = {}): AdsReader => ({
   status: async () => ({ accounts, lastSyncedAt: "2026-11-10T20:00:00.000Z", mainCurrency: accounts ? "COP" : null, activeCampaigns: 3 }),
   spend: async (_t, period) => (period.toDay === "2026-11-10"
     ? [{ day: "2026-11-02", currency: "COP", spend: 100000, impressions: 20000, clicks: 600, conversations: 40, metaPurchases: 3, metaRevenue: 150000 }]
@@ -63,7 +63,11 @@ const adsReader = (accounts = 1): AdsReader => ({
   attributed: async () => [
     { id: "c1", day: "2026-11-02", currency: "COP", amount: 300000, count: 6, late: 2 },
     { id: "c1", day: "2026-11-03", currency: "USD", amount: 50, count: 4, late: 0 }
-  ]
+  ],
+  // A Auream llegan casi todos los chats que cobra Meta, y el negocio anota sus ventas.
+  arrivals: async () => [{ id: "c1", chats: 28 }, { id: "c2", chats: 14 }],
+  recordsSales: async () => true,
+  ...overrides
 });
 
 describe("SalesDashboardService", () => {
@@ -77,7 +81,8 @@ describe("SalesDashboardService", () => {
     expect([view.conversion, view.conversionPrevious, view.convertedLeads]).toEqual([0.15, 0.1, 9]);
     expect(view.ads).toMatchObject({
       spend: { value: 100000 }, revenue: { value: 500000 }, profit: { value: 400000 },
-      roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, chats: 40, attributedSales: 10
+      roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, chats: 40, attributedSales: 10,
+      measurement: { state: "measured", metaChats: 40, arrivedChats: 42, metaPurchases: 3 }
     });
     // Ganancia real: 600.000 vendido − 140.000 de costo − 100.000 de anuncios.
     expect(view.realProfit).toBe(360000);
@@ -108,7 +113,8 @@ describe("AdsDashboardService", () => {
     expect(video).toMatchObject({ id: "c1", name: "Video Colombia", spend: 80000, sales: 10, revenue: 500000, roas: 6.25, roasMeta: 1.88, advice: "scale" });
     expect(other).toMatchObject({ id: "c2", name: "Anuncio c2", sales: 0, chats: 16, advice: "pause" });
     expect(view.totals).toMatchObject({ spend: 100000, revenue: 500000, profit: 400000, roas: 5, costPerSale: 10000 });
-    expect(view).toMatchObject({ unseenSales: 7, lateShare: 0.2, connected: true, currency: "COP" });
+    expect(view).toMatchObject({ unseenSales: 7, lateShare: 0.2, connected: true, currency: "COP", measurement: { state: "measured", metaChats: 46, arrivedChats: 42 } });
+    expect([video!.arrivedChats, other!.arrivedChats]).toEqual([28, 14]);
   });
 
   it("sin cuentas conectadas responde vacío y lo dice", async () => {

@@ -1,7 +1,8 @@
 import type { DashboardFilters, SalesDashboardResponse } from "../../../contracts/DashboardContracts";
 import { CurrencyConverter, type FxRates } from "./CurrencyConverter";
 import { change, periodOf, previousPeriod, todayIn, type Period } from "./DashboardPeriod";
-import type { AdsReader, SalesReader } from "./DashboardReaders";
+import { salesProofSince } from "../domain/adMeasurement";
+import type { AdsReader, ArrivedChats, SalesReader, SpendDay } from "./DashboardReaders";
 import { DashboardScopeResolver } from "./DashboardScopeResolver";
 import { MoneyBook, mostUsedCurrency, round } from "./MoneyBook";
 import { chargesOf, percentLines, revenueBase, rulesFor, totalOf, type ExpenseRule, type OtherExpensesReader, type RevenueDay } from "./OtherExpenseLedger";
@@ -82,10 +83,18 @@ export class SalesDashboardService {
 
     // Una línea sin campañas no tiene gasto conocido: ni el de todo el negocio ni 0.
     const hasAds = status !== null && status.accounts > 0 && !scope.withoutCampaigns;
-    const [spendDays, prevSpendDays] = hasAds ? await Promise.all([this.ads.spend(tenantId, period, scope), this.ads.spend(tenantId, before, scope)]) : [[], []];
+    const [spendDays, prevSpendDays, arrivals, recordsSales]: [ReadonlyArray<SpendDay>, ReadonlyArray<SpendDay>, ReadonlyArray<ArrivedChats>, boolean] = hasAds
+      ? await Promise.all([
+          this.ads.spend(tenantId, period, scope),
+          this.ads.spend(tenantId, before, scope),
+          this.ads.arrivals(tenantId, period, "campaign", scope),
+          this.ads.recordsSales(tenantId, salesProofSince(period), period.until)
+        ])
+      : [[], [], [], true];
     const spend = book.sum(spendDays, (d) => money(d, d.spend));
     const prevSpend = book.sum(prevSpendDays, (d) => money(d, d.spend));
-    const ads = hasAds ? adsSummary(book, days, prevDays, spendDays, prevSpendDays, status!.activeCampaigns) : null;
+    const watch = { arrivedChats: arrivals.reduce((sum, a) => sum + a.chats, 0), recordsSales };
+    const ads = hasAds ? adsSummary(book, days, prevDays, spendDays, prevSpendDays, status!.activeCampaigns, watch) : null;
 
     // Otros gastos: los fijos con la tasa del día de cada cobro; los % sobre lo vendido en lo que se mira
     // (mirando todo el negocio, el % de una línea sale de lo vendido por esa línea).

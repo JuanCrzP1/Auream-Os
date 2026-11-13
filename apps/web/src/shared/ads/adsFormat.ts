@@ -11,7 +11,11 @@ export const formatPercent = (value: number | null, digits = 1) => (value === nu
 
 export const formatCount = (value: number) => value.toLocaleString("es-CO");
 
-export const ADVICE_LABEL: Readonly<Record<AdAdvice, string>> = { scale: "Escalar", keep: "Mantener", review: "Revisar", pause: "Apagar", learning: "Aprendiendo" };
+/** Los tres últimos no son un veredicto: Auream no ve lo suficiente para darlo. */
+export const ADVICE_LABEL: Readonly<Record<AdAdvice, string>> = {
+  scale: "Escalar", keep: "Mantener", review: "Revisar", pause: "Apagar", learning: "Aprendiendo",
+  unmeasured: "Sin medir", partial: "Medición parcial", unsold: "Sin ventas"
+};
 
 /** El estado de una campaña, conjunto o anuncio en Meta. */
 export const STATUS_LABEL: Readonly<Record<string, string>> = { ACTIVE: "Activa", PAUSED: "Pausada", CAMPAIGN_PAUSED: "Campaña pausada", ADSET_PAUSED: "Conjunto pausado", ARCHIVED: "Archivada", DELETED: "Eliminada" };

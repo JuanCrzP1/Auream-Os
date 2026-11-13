@@ -38,7 +38,7 @@ function stub(comparison: LineComparisonResponse) {
     if (url.pathname === "/ads/accounts") return reply(200, { connection: { connected: true }, accounts: [], canManage: true, oauthAvailable: false });
     if (url.pathname === "/dashboard/sales") return reply(200, SALES);
     if (url.pathname === "/dashboard/lines") return reply(200, comparison);
-    if (url.pathname === "/dashboard/ads") return reply(200, { currency: "COP", level: "campaign", connected: true, unseenSales: 0, lateShare: null, lastSyncedAt: null, totals: {}, rows: [] });
+    if (url.pathname === "/dashboard/ads") return reply(200, { currency: "COP", level: "campaign", connected: true, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, unseenSales: 0, lateShare: null, lastSyncedAt: null, totals: {}, rows: [] });
     if (url.pathname === "/connections") return reply(200, { connections: [] });
     if (url.pathname === "/products") return reply(200, { products: [], canManage: false });
     if (url.pathname === "/sales-lines") return reply(200, { lines: [{ id: VE, name: "Venezuela", color: "#e0a400", productIds: [], connectionIds: [], campaignIds: [], createdAt: "", updatedAt: "" }], canManage: true });

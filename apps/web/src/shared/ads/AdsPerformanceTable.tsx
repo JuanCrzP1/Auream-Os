@@ -4,7 +4,8 @@ import { ADVICE_LABEL, formatCop, formatCount, formatRoas, STATUS_LABEL } from "
 
 /**
  * Cada campaña, conjunto o anuncio con lo que gastó (Meta) y lo que vendió de
- * verdad (Auream), frente a lo que cree Meta, y qué hacer con cada uno. Se
+ * verdad (Auream), frente a lo que cree Meta, y qué hacer con cada uno. Donde
+ * Auream no ve las ventas (`profit` es `null`) van rayas, no ceros. Se
  * desplaza de lado en pantallas angostas.
  */
 export function AdsPerformanceTable({ data }: { readonly data: AdsDashboardResponse }) {
@@ -14,9 +15,11 @@ export function AdsPerformanceTable({ data }: { readonly data: AdsDashboardRespo
       <td>{money(row.spend)}</td>
       <td>{formatCount(row.chats)}</td>
       <td>{money(row.costPerChat)}</td>
-      <td><strong>{formatCount(row.sales)}</strong> <span className="ads-table__meta">/ {formatCount(row.metaPurchases)}</span></td>
-      <td>{money(row.revenue)}</td>
-      <td className={row.profit >= 0 ? "ads-table__good" : "ads-table__bad"}><strong>{row.profit < 0 ? "−" : ""}{money(Math.abs(row.profit))}</strong></td>
+      <td><strong>{row.profit === null ? "—" : formatCount(row.sales)}</strong> <span className="ads-table__meta">/ {formatCount(row.metaPurchases)}</span></td>
+      <td>{row.profit === null ? "—" : money(row.revenue)}</td>
+      {row.profit === null ? <td>—</td> : (
+        <td className={row.profit >= 0 ? "ads-table__good" : "ads-table__bad"}><strong>{row.profit < 0 ? "−" : ""}{money(Math.abs(row.profit))}</strong></td>
+      )}
       <td><strong className={row.roas !== null && row.roas >= 3 ? "ads-table__good" : row.roas !== null && row.roas < 1 ? "ads-table__bad" : undefined}>{formatRoas(row.roas)}</strong> <span className="ads-table__meta">/ {formatRoas(row.roasMeta)}</span></td>
       <td>{money(row.costPerSale)}</td>
     </>

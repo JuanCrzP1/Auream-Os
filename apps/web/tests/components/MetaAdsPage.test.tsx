@@ -26,7 +26,7 @@ function stubApi(pixels: ReadonlyArray<typeof PIXEL> = [PIXEL]) {
     if (url.pathname === "/inbound-webhooks") return reply(200, { webhooks: [] });
     if (url.pathname === "/mcp-credentials") return reply(200, { server: { url: "https://x/api/mcp" }, credentials: [] });
     if (url.pathname === "/ads/accounts") return reply(200, { connection: { connected: false, method: null, userName: null, expiresAt: null, needsReconnect: false, lastError: null }, accounts: [], canManage: true, oauthAvailable: false });
-    if (url.pathname === "/dashboard/ads") return reply(200, { connected: false, rows: [], totals: {}, currency: "COP", level: "campaign", unseenSales: 0, lateShare: null, lastSyncedAt: null });
+    if (url.pathname === "/dashboard/ads") return reply(200, { connected: false, rows: [], totals: {}, currency: "COP", level: "campaign", measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, unseenSales: 0, lateShare: null, lastSyncedAt: null });
     return reply(404, { message: "no" });
   }));
 }

@@ -113,7 +113,7 @@ describe("OAuthStateSigner", () => {
 });
 
 describe("qué hacer con cada campaña", () => {
-  const base = { spend: 100000, sales: 5, chats: 40, roas: 4, accountCostPerSale: 10000 };
+  const base = { spend: 100000, sales: 5, chats: 40, roas: 4, accountCostPerSale: 10000, measurement: { state: "measured" as const, metaChats: 40, arrivedChats: 38, metaPurchases: 2 } };
   it("escalar, mantener, revisar, apagar o esperar", () => {
     expect(adviceFor(base).advice).toBe("scale");
     expect(adviceFor({ ...base, roas: 2 }).advice).toBe("keep");

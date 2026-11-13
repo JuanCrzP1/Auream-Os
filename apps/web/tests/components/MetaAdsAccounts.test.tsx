@@ -21,9 +21,9 @@ const connected = (enabled: boolean): AdsAccountsResponse => ({
   canManage: true,
   oauthAvailable: false
 });
-const metrics = { spend: 100000, impressions: 20000, clicks: 600, chats: 40, sales: 10, metaPurchases: 3, revenue: 500000, metaRevenue: 150000, profit: 400000, roas: 5, roasMeta: 1.5, costPerChat: 2500, costPerSale: 10000, ctr: 0.03 };
+const metrics = { spend: 100000, impressions: 20000, clicks: 600, chats: 40, arrivedChats: 38, sales: 10, metaPurchases: 3, revenue: 500000, metaRevenue: 150000, profit: 400000, roas: 5, roasMeta: 1.5, costPerChat: 2500, costPerSale: 10000, ctr: 0.03 };
 const PERFORMANCE: AdsDashboardResponse = {
-  currency: "COP", level: "campaign", connected: true, unseenSales: 7, lateShare: 0.2, lastSyncedAt: new Date().toISOString(), totals: metrics,
+  currency: "COP", level: "campaign", connected: true, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, unseenSales: 7, lateShare: 0.2, lastSyncedAt: new Date().toISOString(), totals: metrics,
   rows: [
     { ...metrics, id: "c1", name: "Video Colombia", level: "campaign", status: "ACTIVE", parentName: null, dailyBudget: 15000, thumbnailUrl: null, advice: "scale", adviceReason: "Deja 5 por cada 1 que gastas." },
     { ...metrics, id: "c2", name: "Navidad", level: "campaign", status: "PAUSED", parentName: null, dailyBudget: null, thumbnailUrl: null, spend: 40000, sales: 0, revenue: 0, profit: -40000, roas: 0, advice: "pause", adviceReason: "18 chats y ninguna venta." }

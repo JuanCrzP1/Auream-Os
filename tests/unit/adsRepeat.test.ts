@@ -23,7 +23,9 @@ const ads = (accounts = 1): AdsReader => ({
     { id: "c2", day: "2026-10-05", currency: "COP", spend: 300000, impressions: 0, clicks: 0, conversations: 0, metaPurchases: 0, metaRevenue: 0 }
   ],
   entities: async () => [{ id: "c1", name: "Video Colombia · Mamás", status: "ACTIVE", parentName: null, dailyBudget: null, thumbnailUrl: null }],
-  attributed: async () => []
+  attributed: async () => [],
+  arrivals: async () => [],
+  recordsSales: async () => true
 });
 
 const repeats = (): RepeatPurchasesReader => ({

@@ -5,6 +5,8 @@
 // al cambio del día. El gasto y la ganancia solo los ve quien tiene `ads.read`.
 // ---------------------------------------------------------------------------
 
+import type { AdMeasurement } from "./AdMeasurementContracts";
+
 /** `from`/`to` en `YYYY-MM-DD`, días de la empresa (como en Ventas). */
 export interface DashboardFilters {
   readonly from?: string;
@@ -68,6 +70,8 @@ export interface AdsMoneySummary {
   readonly impressions: number;
   readonly clicks: number;
   readonly activeCampaigns: number;
+  /** Cuánto ve Auream de lo que venden los anuncios: sin ventas que mirar, `roas` y `revenuePerChat` son `null`. */
+  readonly measurement: AdMeasurement;
 }
 
 export interface DayPoint {
@@ -149,49 +153,5 @@ export interface SalesDashboardResponse {
 /** Tope de filas de «Descargar ventas» (que la descarga nunca se caiga). */
 export const SALES_EXPORT_MAX_ROWS = 20_000;
 
-export const AD_LEVELS = ["campaign", "adset", "ad"] as const;
-export type AdLevel = (typeof AD_LEVELS)[number];
-
-/** Qué hacer con una campaña, conjunto o anuncio. */
-export type AdAdvice = "scale" | "keep" | "review" | "pause" | "learning";
-
-export interface AdPerformanceRow {
-  readonly id: string;
-  readonly name: string;
-  readonly level: AdLevel;
-  readonly status: string;
-  readonly parentName: string | null;
-  readonly dailyBudget: number | null;
-  readonly thumbnailUrl: string | null;
-  readonly spend: number;
-  readonly impressions: number;
-  readonly clicks: number;
-  readonly chats: number;
-  readonly sales: number;
-  readonly metaPurchases: number;
-  readonly revenue: number;
-  readonly metaRevenue: number;
-  readonly profit: number;
-  readonly roas: number | null;
-  readonly roasMeta: number | null;
-  readonly costPerChat: number | null;
-  readonly costPerSale: number | null;
-  readonly ctr: number | null;
-  readonly advice: AdAdvice;
-  readonly adviceReason: string;
-}
-
-export interface AdsDashboardResponse {
-  readonly currency: string;
-  readonly level: AdLevel;
-  readonly rows: ReadonlyArray<AdPerformanceRow>;
-  readonly totals: Omit<AdPerformanceRow, "id" | "name" | "level" | "status" | "parentName" | "dailyBudget" | "thumbnailUrl" | "advice" | "adviceReason">;
-  /** Ventas por anuncio que Meta no vio (las nuestras − las del Píxel). */
-  readonly unseenSales: number;
-  /** De las ventas por anuncio, qué parte compró después del primer día de chat (0 a 1). */
-  readonly lateShare: number | null;
-  readonly lastSyncedAt: string | null;
-  readonly connected: boolean;
-  /** La línea elegida no tiene campañas: no hay anuncios que mostrar (no son los de todo el negocio). */
-  readonly lineWithoutCampaigns?: true;
-}
+/** Las filas de Anuncios viven en su archivo; se siguen importando desde aquí. */
+export { AD_LEVELS, type AdAdvice, type AdLevel, type AdPerformanceRow, type AdsDashboardResponse } from "./AdsPerformanceContracts";

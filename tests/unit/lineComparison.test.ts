@@ -47,7 +47,9 @@ const ads: AdsReader = {
   },
   entityDays: async () => [],
   entities: async () => [],
-  attributed: async () => []
+  attributed: async () => [],
+  arrivals: async () => [],
+  recordsSales: async () => true
 };
 
 const line = (id: string, name: string, productIds: string[], campaignIds: string[]): LineInfo => ({ id, name, color: "#6c4fe0", productIds, connectionIds: [], campaignIds });

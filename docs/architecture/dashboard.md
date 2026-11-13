@@ -55,6 +55,22 @@ En los dos casos el token se guarda **cifrado** (`AesGcmSecretCipher`, contexto 
 | Revisar | ROAS menor que 1,5 |
 | Mantener | Todo lo demás |
 
+### Medición: cuándo hay con qué juzgar
+
+El gasto y los chats los reporta Meta; la venta real solo existe si el chat llegó a Auream por ese anuncio y la venta quedó anotada. Sin eso, «no tengo datos» se vería como «no vendió» y Auream mandaría a apagar campañas que venden. Por eso antes del consejo se decide cuánto ve Auream (`domains/analytics/domain/adMeasurement.ts`, contrato en `contracts/AdMeasurementContracts.ts`), con la misma regla para una fila y para la cuenta entera:
+
+| Estado | Cuándo | Qué se muestra |
+|---|---|---|
+| `none` (Sin medir) | Meta cobró 5 chats o más y a Auream no llegó ninguno, ni hay ventas | Sin consejo; ROAS real y ganancia en `null` |
+| `partial` (Medición parcial) | Meta cobró 10 chats o más y llegó menos de la mitad | Sin consejo; las ventas que haya se muestran (son un piso) y, si no hay ninguna, `null` |
+| `unsold` (Sin ventas) | Los chats llegan, no hay ventas, y el negocio no anota ventas (ninguna aprobada en el periodo ni en los últimos 30 días) o Meta cuenta 3 compras o más | Sin consejo; ROAS real y ganancia en `null` |
+| `measured` | Lo demás | El consejo de la tabla de arriba |
+
+- **Lo que llegó** (`SqlDashboardAds.arrivals`): los contactos cuyo `ad_origin.sourceId` es un anuncio de una cuenta elegida y que llegaron en el periodo (`ad_origin.receivedAt`, o el día en que se creó el contacto si es anterior a ese dato).
+- **Las ventas de Meta nunca deciden un consejo**: solo sirven para avisar que algo no se está anotando.
+- La respuesta de `/dashboard/ads` y el resumen de anuncios de `/dashboard/sales` llevan `measurement` (estado, chats de Meta, chats que llegaron, compras de Meta), calculado igual en los dos.
+- En la web, `shared/ads/MeasurementNotice` muestra el mismo aviso en Meta Ads › Rendimiento, Dashboard › Anuncios y Dashboard › Ventas; los textos están en `shared/ads/measurementText.ts`.
+
 ## El Dashboard
 
 ### El periodo

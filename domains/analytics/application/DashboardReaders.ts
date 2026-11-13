@@ -104,6 +104,12 @@ export interface AttributedDay {
   readonly late: number;
 }
 
+/** Clientes que llegaron a Auream por una campaña, conjunto o anuncio en el periodo. */
+export interface ArrivedChats {
+  readonly id: string;
+  readonly chats: number;
+}
+
 export interface AdsReader {
   /** ¿Hay cuentas elegidas? Y su última sincronización y la moneda con más gasto. */
   /** `activeCampaigns`: de las campañas elegidas en `scope`, si las hay. */
@@ -114,4 +120,11 @@ export interface AdsReader {
   entities(tenantId: string, level: AdLevel, ids: ReadonlyArray<string>): Promise<ReadonlyArray<EntityInfo>>;
   /** Ventas por anuncio: de las campañas de `scope` y de sus números y productos, si los hay. */
   attributed(tenantId: string, period: Period, level: AdLevel, timezone: string, scope?: DashboardScope): Promise<ReadonlyArray<AttributedDay>>;
+  /**
+   * Los clientes que llegaron a Auream por cada anuncio en el periodo: frente
+   * a los chats que cobró Meta dice si Auream ve lo que pasa con ese anuncio.
+   */
+  arrivals(tenantId: string, period: Period, level: AdLevel, scope?: DashboardScope): Promise<ReadonlyArray<ArrivedChats>>;
+  /** ¿El negocio anota ventas en Auream? Alguna aprobada entre las dos fechas. */
+  recordsSales(tenantId: string, since: Date, until: Date): Promise<boolean>;
 }

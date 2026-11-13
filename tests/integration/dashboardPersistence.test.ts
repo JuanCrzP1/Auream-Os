@@ -9,6 +9,7 @@ import { AdsDashboardService } from "../../domains/analytics/application/AdsDash
 import { AttentionDashboardService } from "../../domains/analytics/application/AttentionDashboardService.js";
 import { SalesDashboardService } from "../../domains/analytics/application/SalesDashboardService.js";
 import { SalesExportService } from "../../domains/analytics/application/SalesExportService.js";
+import { periodOf } from "../../domains/analytics/application/DashboardPeriod.js";
 import { SqlSalesExport } from "../../infrastructure/persistence/sql/SqlSalesExport.js";
 import { cleanupTestData, createTestSqlClient, TEST_KEY_PREFIX } from "./setup/testDatabase.js";
 
@@ -116,6 +117,35 @@ describe("Dashboard en PostgreSQL", () => {
     const [usd, cop] = table.rows;
     expect([usd![at("Fecha")], usd![at("Hora")], usd![at("Monto")], usd![at("Moneda")], usd![at("Monto en COP")], usd![at("Origen")]]).toEqual(["2026-11-05", "11:00", 12, "USD", 48000, "Orgánica"]);
     expect([cop![at("Número de WhatsApp")], cop![at("Origen")], cop![at("Campaña")], cop![at("Anuncio")], cop![at("Cómo se registró")]]).toEqual(["Ventas 1", "Anuncio", "Video Colombia", "Tu canción", "Comprobante en el chat"]);
+  });
+
+  it("lo que llegó a Auream por cada anuncio (frente a lo que cobró Meta) y si el negocio anota ventas", async () => {
+    const tenant = await seed();
+    const reader = new SqlDashboardAds(sql);
+    const november = periodOf("2026-11-01", "2026-11-10", "America/Bogota", NOW());
+    const arrived = async (ad: string, at: Record<string, string>, phone: string) =>
+      sql.query("insert into contacts (tenant_id, channel, external_key, name, phone, ad_origin, created_at) values ($1, 'whatsapp', $2, $2, $2, $3::jsonb, $4)", [tenant, phone, JSON.stringify({ sourceId: ad, ...at }), "2026-11-03T15:00:00Z"]);
+    // Laura (la del sembrado) llegó por el anuncio el 2 de noviembre; otro cliente, sin fecha anotada, se creó el 3.
+    await sql.query(`update contacts set ad_origin = ad_origin || '{"receivedAt":"2026-11-02T14:00:00.000Z"}'::jsonb where tenant_id = $1`, [tenant]);
+    await arrived("ad-9", {}, "573000000011");
+    await arrived("ad-9", { receivedAt: "2026-10-20T10:00:00.000Z" }, "573000000012"); // llegó antes del periodo
+    await arrived("ad-de-otra-cuenta", { receivedAt: "2026-11-02T10:00:00.000Z" }, "573000000013"); // un anuncio que Auream no sincroniza
+
+    expect(await reader.arrivals(tenant, november, "campaign")).toEqual([{ id: "camp-1", chats: 2 }]);
+    expect(await reader.arrivals(tenant, november, "adset")).toEqual([{ id: "set-1", chats: 2 }]);
+    expect(await reader.arrivals(tenant, november, "ad")).toEqual([{ id: "ad-9", chats: 2 }]);
+    // Por número: solo Laura tiene un chat en «Ventas 1». Por campaña: las de otra no cuentan.
+    expect(await reader.arrivals(tenant, november, "ad", { connectionIds: ["11111111-1111-4111-8111-111111111111"] })).toEqual([{ id: "ad-9", chats: 1 }]);
+    expect(await reader.arrivals(tenant, november, "ad", { campaignIds: ["camp-otra"] })).toEqual([]);
+
+    expect(await reader.recordsSales(tenant, new Date("2026-11-01T05:00:00Z"), new Date("2026-11-11T05:00:00Z"))).toBe(true);
+    expect(await reader.recordsSales(tenant, new Date("2026-09-01T05:00:00Z"), new Date("2026-10-01T05:00:00Z"))).toBe(false);
+
+    // Meta cobró 12 chats y a Auream llegaron 2: aún no se juzga el anuncio, aunque ya tenga una venta.
+    const fx = new SqlFxRates(sql, async () => { throw new Error("sin red en la prueba"); });
+    const ads = await new AdsDashboardService(reader, fx, TZ, NOW).performance(tenant, { from: "2026-11-01", to: "2026-11-10" }, "ad");
+    expect(ads.measurement).toEqual({ state: "partial", metaChats: 12, arrivedChats: 2, metaPurchases: 0 });
+    expect(ads.rows[0]).toMatchObject({ id: "ad-9", advice: "partial", arrivedChats: 2, sales: 1, roas: 5 });
   });
 
   it("conversión: de los leads nuevos, cuántos compraron (por contacto o, a mano, por teléfono) dentro del periodo", async () => {

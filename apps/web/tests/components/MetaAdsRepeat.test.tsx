@@ -31,7 +31,7 @@ function stub() {
       calls.push(url.searchParams);
       return reply(200, repeat(Number(url.searchParams.get("window"))));
     }
-    if (url.pathname === "/dashboard/ads") return reply(200, { connected: true, rows: [], totals: { roas: 2, roasMeta: 1 }, currency: "COP", level: "campaign", unseenSales: 0, lateShare: null, lastSyncedAt: null });
+    if (url.pathname === "/dashboard/ads") return reply(200, { connected: true, rows: [], totals: { roas: 2, roasMeta: 1 }, currency: "COP", level: "campaign", measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, unseenSales: 0, lateShare: null, lastSyncedAt: null });
     return reply(404, { message: "no" });
   }));
   return calls;
