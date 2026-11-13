@@ -81,6 +81,8 @@ export interface GroupSummary extends GroupNumbers {
   readonly isAdmin: boolean;
   readonly announce: boolean;
   readonly locked: boolean;
+  /** El enlace de invitación de este grupo (solo si administras el grupo y ya se pidió a WhatsApp). */
+  readonly inviteLink: string | null;
   readonly syncedAt: string | null;
 }
 

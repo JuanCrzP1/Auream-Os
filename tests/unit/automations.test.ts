@@ -148,7 +148,7 @@ describe("ListAutomationsService", () => {
     });
 
     const result = await sut.execute("t1");
-    expect(result.flows[0]?.graphSummary).toEqual({ nodeCount: 2, connectionStatus: "connected" });
+    expect(result.flows[0]?.graphSummary).toMatchObject({ nodeCount: 2, connectionStatus: "connected" });
     expect(workspaceRepo.reads).toBe(1);
     expect(workspaceRepo.count()).toBe(1);
   });
@@ -182,7 +182,7 @@ describe("ListAutomationsService", () => {
   it("proyecta cero y rojo cuando el workspace no existe", async () => {
     automationRepo.seed({ id: "f1", tenantId: "t1", key: "missing", name: "Flow", status: "draft", metadata: { createdAt: "x", updatedAt: "x" } });
     const result = await sut.execute("t1");
-    expect(result.flows[0]?.graphSummary).toEqual({ nodeCount: 0, connectionStatus: "disconnected" });
+    expect(result.flows[0]?.graphSummary).toEqual({ nodeCount: 0, connectionStatus: "disconnected", reviewErrors: 0, reviewWarnings: 0 });
     expect(workspaceRepo.count()).toBe(0);
   });
 
@@ -199,7 +199,7 @@ describe("ListAutomationsService", () => {
     });
 
     const result = await sut.execute("t1");
-    expect(result.flows.map(({ graphSummary }) => graphSummary)).toEqual([
+    expect(result.flows.map(({ graphSummary }) => graphSummary)).toMatchObject([
       { nodeCount: 2, connectionStatus: "connected" },
       { nodeCount: 2, connectionStatus: "disconnected" }
     ]);

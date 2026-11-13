@@ -29,6 +29,12 @@ FunnelChat es la referencia del sector: un enlace que crea el grupo siguiente cu
   - Una posición única por campaña: si dos procesos lo intentan a la vez, se guarda uno solo.
 - **Editar la campaña** lleva los cambios a todos sus grupos (`groups.apply`).
 - **Apagar el enlace:** deja de recibir gente.
+- **El menú «⋯» de cada grupo** (en la campaña, solo con `groups.manage`):
+  - **Copiar el enlace de este grupo:** el `inviteLink` guardado; la API solo lo entrega si el número conectado administra el grupo.
+  - **Enviar solo a este grupo:** abre «Enviar a grupos» con ese grupo elegido (`?view=send&to=<campaña>&group=<grupo>` → `groupIds`).
+  - **Sacar de la campaña** (con confirmación): `PATCH /groups/list/:id` con `campaignId: null`. El grupo sigue en WhatsApp; se puede volver a sumar desde «Mis grupos».
+  - Pendiente: ver los miembros de un grupo (necesita un endpoint nuevo).
+- **El cupo** se escribe libre y se ajusta a 20–1.024 al salir del campo, no mientras se escribe.
 
 ## Mis grupos
 

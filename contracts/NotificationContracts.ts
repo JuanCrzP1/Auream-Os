@@ -5,7 +5,7 @@
 // (No confundir con `NotificationConfig`: el bloque de flujo que avisa por WhatsApp.)
 // ---------------------------------------------------------------------------
 
-export const NOTIFICATION_KINDS = ["number_disconnected", "broadcast_auto_paused", "sales_review", "follow_ups_due", "group_created"] as const;
+export const NOTIFICATION_KINDS = ["number_disconnected", "broadcast_auto_paused", "sales_review", "follow_ups_due", "group_created", "flow_failures"] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export interface AppNotification {

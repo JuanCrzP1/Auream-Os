@@ -41,3 +41,7 @@
   color: var(--muted);
   text-align: center;
 }
+
+.bc-list__body {
+  gap: 20px;
+}

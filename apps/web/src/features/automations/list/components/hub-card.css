@@ -143,6 +143,7 @@
   align-items: center;
   min-width: 0;
   gap: 6px;
+  overflow: hidden;
   white-space: nowrap;
 }
 
@@ -240,3 +241,14 @@
   font-size: 0.68rem;
   font-weight: 600;
 }
+
+/* Lo que marca la revisión del editor, en la tarjeta (nunca un verde engañoso). */
+.hub-card__connection-status--warning { background: var(--amber); }
+
+.hub-card__review {
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.hub-card__review--disconnected { color: var(--status-danger); }
+.hub-card__review--warning { color: var(--amber); }

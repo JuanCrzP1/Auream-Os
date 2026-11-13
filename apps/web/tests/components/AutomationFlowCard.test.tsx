@@ -14,7 +14,9 @@ const flow: AutomationSummary = {
   updatedAt: "2024-06-15T00:00:00.000Z",
   tags: ["soporte", "ventas"],
   nodeCount: 6,
-  connectionStatus: "connected"
+  connectionStatus: "connected",
+  reviewErrors: 0,
+  reviewWarnings: 0
 };
 
 function renderCard(f: AutomationSummary = flow, props: Partial<{ onDelete: (f: AutomationSummary) => void; onRename: (f: AutomationSummary) => void }> = {}) {
@@ -60,7 +62,20 @@ describe("AutomationFlowCard", () => {
 
     expect(screen.getByLabelText("6 nodos")).toBeInTheDocument();
     expect(document.querySelector(".hub-card__tools-icon svg")).not.toBeNull();
-    expect(screen.getByLabelText("Estructura conectada")).toHaveClass("hub-card__connection-status--connected");
+    expect(screen.getByLabelText("En orden")).toHaveClass("hub-card__connection-status--connected");
+    expect(screen.queryByText(/por revisar/)).not.toBeInTheDocument();
+  });
+
+  it("con errores de la revisión del editor sale en rojo y lo dice, aunque las flechas estén unidas", () => {
+    renderCard({ ...flow, reviewErrors: 1, reviewWarnings: 2 });
+    expect(screen.getByRole("img", { name: "3 puntos por revisar" })).toHaveClass("hub-card__connection-status--disconnected");
+    expect(screen.getByText("⚠ 3 puntos por revisar")).toHaveClass("hub-card__review--disconnected");
+  });
+
+  it("solo con avisos sale en ámbar", () => {
+    renderCard({ ...flow, reviewErrors: 0, reviewWarnings: 1 });
+    expect(screen.getByRole("img", { name: "1 punto por revisar" })).toHaveClass("hub-card__connection-status--warning");
+    expect(screen.getByText("⚠ 1 punto por revisar")).toHaveClass("hub-card__review--warning");
   });
 
   it("renderiza estado desconectado", () => {

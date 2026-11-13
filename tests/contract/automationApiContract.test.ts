@@ -6,7 +6,7 @@ import {
 import type { AutomationFlow } from "../../domains/automations/catalog/domain/AutomationFlow.js";
 import type { AutomationFolder } from "../../domains/automations/catalog/domain/AutomationFolder.js";
 
-const graphSummary = { nodeCount: 2, connectionStatus: "connected" as const };
+const graphSummary = { nodeCount: 2, connectionStatus: "connected" as const, reviewErrors: 1, reviewWarnings: 2 };
 
 // ---------------------------------------------------------------------------
 // Contrato de `GET /automations`.
@@ -49,7 +49,7 @@ describe("contrato GET /automations", () => {
   it("expone exactamente las claves del contrato y ninguna mas", () => {
     const summary = toAutomationSummary(persistedFlow, graphSummary);
 
-    expect(Object.keys(summary).sort()).toEqual(["connectionStatus", "id", "key", "name", "nodeCount", "status", "updatedAt"]);
+    expect(Object.keys(summary).sort()).toEqual(["connectionStatus", "id", "key", "name", "nodeCount", "reviewErrors", "reviewWarnings", "status", "updatedAt"]);
   });
 
   it("propaga tags a la raiz cuando existen", () => {

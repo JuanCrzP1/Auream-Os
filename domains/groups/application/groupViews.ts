@@ -33,6 +33,7 @@ export function toGroupSummary(group: WaGroup, numbers: GroupNumbers | undefined
     isAdmin: group.isAdmin,
     announce: group.announce,
     locked: group.locked,
+    inviteLink: group.isAdmin ? group.inviteLink : null,
     syncedAt: group.syncedAt
   };
 }

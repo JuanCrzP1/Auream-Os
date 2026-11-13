@@ -1,6 +1,6 @@
 import type { NotificationKind } from "../../../contracts/NotificationContracts";
 import type { SignalQuery, SignalSource } from "../../../domains/notifications/application/NotificationPorts";
-import { RECENT_GROUP_DAYS, type Signal } from "../../../domains/notifications/domain/Signal";
+import { FLOW_FAILURE_HOURS, RECENT_GROUP_DAYS, type Signal } from "../../../domains/notifications/domain/Signal";
 import type { SqlClient } from "./SqlClient";
 
 // ---------------------------------------------------------------------------
@@ -10,7 +10,18 @@ import type { SqlClient } from "./SqlClient";
 //   · ventas por revisar, en un solo aviso         (sales)
 //   · MIS seguimientos de hoy o vencidos           (crm_follow_ups, día del negocio)
 //   · grupos que abrió una campaña esta semana     (wa_groups + group_campaigns)
+//   · flujos con bloques que fallaron en 24 h      (flow_turn_log + automations)
 // ---------------------------------------------------------------------------
+
+/** Los turnos con algo que falló: un bloque (`…_failed:…`), un error interno o mensajes que WhatsApp no aceptó. */
+const FAILED_TURNS = `
+  with turns as (
+    select l.flow_key, l.started_at, l.error, jsonb_array_length(l.failures) as send_failures,
+           (select e from jsonb_array_elements_text(l.events) e where e like '%\\_failed:%' limit 1) as event
+      from flow_turn_log l
+     where l.tenant_id = $1 and l.started_at > $2::timestamptz - make_interval(hours => $3)
+  )
+  select * from turns where event is not null or error is not null or send_failures > 0`;
 
 type Reader = (sql: SqlClient, query: SignalQuery) => Promise<ReadonlyArray<Signal>>;
 
@@ -62,6 +73,24 @@ const READERS: Record<NotificationKind, Reader> = {
       [tenantId, now, RECENT_GROUP_DAYS]
     )).rows;
     return rows.map((row) => ({ kind: "group_created", id: row.id, campaignId: row.campaign_id, campaign: row.campaign, group: row.name, at: new Date(row.at) }));
+  },
+  flow_failures: async (sql, { tenantId, now }) => {
+    const rows = (await sql.query<{ flow_key: string; name: string; count: string; at: Date; event: string | null; error: string | null; send_failures: number }>(
+      `with failed as (${FAILED_TURNS})
+       select a.key as flow_key, a.name, x.count, x.at, last.event, last.error, last.send_failures
+         from (select flow_key, count(*) as count, max(started_at) as at from failed group by flow_key) x
+         join automations a on a.tenant_id = $1 and a.key = x.flow_key and a.status <> 'archived'
+         join lateral (select f.event, f.error, f.send_failures from failed f where f.flow_key = x.flow_key order by f.started_at desc limit 1) last on true`,
+      [tenantId, now, FLOW_FAILURE_HOURS]
+    )).rows;
+    return rows.map((row) => ({
+      kind: "flow_failures",
+      flowKey: row.flow_key,
+      flow: row.name,
+      count: Number(row.count),
+      last: { event: row.event, error: row.error, sendFailures: Number(row.send_failures) },
+      at: new Date(row.at)
+    }));
   }
 };
 

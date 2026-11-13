@@ -20,8 +20,8 @@ const context = (role: keyof typeof ROLE_SCOPES) => makeContext({ scopes: [...RO
 
 describe("Notificaciones por HTTP", () => {
   it("cada aviso solo si la persona puede leer su módulo", () => {
-    expect([...notificationViewer(context("tenant_owner")).kinds].sort()).toEqual(["broadcast_auto_paused", "follow_ups_due", "group_created", "number_disconnected", "sales_review"]);
-    expect([...notificationViewer(context("viewer")).kinds]).toHaveLength(5);
+    expect([...notificationViewer(context("tenant_owner")).kinds].sort()).toEqual(["broadcast_auto_paused", "flow_failures", "follow_ups_due", "group_created", "number_disconnected", "sales_review"]);
+    expect([...notificationViewer(context("viewer")).kinds]).toHaveLength(6);
     expect(notificationViewer(context("api_client")).kinds.size).toBe(0);
     expect(notificationViewer(makeContext({ scopes: ["sales.read"], tenantId: "t", actorId: "u" })).kinds).toEqual(new Set(["sales_review"]));
   });

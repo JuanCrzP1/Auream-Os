@@ -85,6 +85,7 @@ export function AutomationFlowCard({
         <span className="hub-card__name">{flow.name}</span>
         {archived ? <span className="hub-card__archived-badge">Archivada</span> : null}
       </div>
+      {hayResumen ? <FlowReviewLine flow={flow} /> : null}
       {flow.tags && flow.tags.length > 0 && (
         <div className="hub-card__tags">
           {flow.tags.map((tag) => (
@@ -104,10 +105,7 @@ export function AutomationFlowCard({
                 <span className="hub-card__tools-icon" aria-hidden="true"><ToolsLayersIcon /></span>
                 {flow.nodeCount}
               </span>
-              <span
-                className={`hub-card__connection-status hub-card__connection-status--${flow.connectionStatus}`}
-                aria-label={flow.connectionStatus === "connected" ? "Estructura conectada" : "Estructura desconectada"}
-              />
+              <FlowHealth flow={flow} />
             </>
           )}
         </div>
@@ -126,4 +124,25 @@ export function AutomationFlowCard({
       </footer>
     </article>
   );
+}
+
+/** El peor estado del flujo: flechas sueltas o errores de la revisión del editor, solo avisos, o en orden. */
+function healthOf(flow: AutomationSummary) {
+  const errors = flow.reviewErrors ?? 0;
+  const pending = errors + (flow.reviewWarnings ?? 0);
+  const tone = flow.connectionStatus === "disconnected" || errors > 0 ? "disconnected" : pending > 0 ? "warning" : "connected";
+  const label = pending > 0 ? `${pending} ${pending === 1 ? "punto" : "puntos"} por revisar` : flow.connectionStatus === "connected" ? "En orden" : "Estructura desconectada";
+  return { pending, tone, label };
+}
+
+/** El punto del pie: rojo, ámbar o verde, como la revisión del editor (nunca un verde engañoso). */
+function FlowHealth({ flow }: { readonly flow: AutomationSummary }) {
+  const { tone, label } = healthOf(flow);
+  return <span className={`hub-card__connection-status hub-card__connection-status--${tone}`} role="img" aria-label={label} title={label} />;
+}
+
+/** Con problemas, lo dice en texto bajo el nombre, con las mismas palabras del editor. */
+function FlowReviewLine({ flow }: { readonly flow: AutomationSummary }) {
+  const { pending, tone, label } = healthOf(flow);
+  return pending > 0 ? <span className={`hub-card__review hub-card__review--${tone}`}>⚠ {label}</span> : null;
 }

@@ -105,6 +105,27 @@ describe("Difusiones en PostgreSQL", () => {
     expect(await new SqlBroadcastAudience(sql).nonResponders(tenant, id, 10)).toEqual([]);
   });
 
+  it("quien responde «SALIR» cuenta como leído y respondido igual arriba que en los filtros", async () => {
+    const { tenant, people } = await seed();
+    const recipients = new SqlBroadcastRecipients(sql);
+    const id = "55555555-5555-4555-8555-555555555555";
+    await new SqlBroadcastRepository(sql).create(broadcast(tenant, id));
+    const laura = { contactId: people["Laura"]!.contact, name: "Laura", phone: "573001110001", connectionId: CONNECTION, variant: 0 };
+    await recipients.insert(tenant, id, [laura]);
+    const now = new Date();
+    const claimed = (await recipients.claimNext(tenant, id, CONNECTION, now))!;
+    await recipients.finish(tenant, claimed.id, { status: "sent", providerMessageId: "wamid.salir", error: null, at: now });
+    await q("insert into conversation_messages (id, tenant_id, conversation_id, direction, author, kind, status, provider_message_id, created_at) values (gen_random_uuid(), $1, $2, 'outbound', 'bot', 'text', 'read', 'wamid.salir', $3) returning id", [tenant, people["Laura"]!.chat, now]);
+    await q("insert into conversation_messages (id, tenant_id, conversation_id, direction, author, kind, status, created_at) values (gen_random_uuid(), $1, $2, 'inbound', 'contact', 'text', 'received', $3::timestamptz + interval '1 minute') returning id", [tenant, people["Laura"]!.chat, now]);
+    await q("insert into broadcast_opt_outs (tenant_id, phone, created_at) values ($1, '573001110001', $2::timestamptz + interval '1 minute') returning phone as id", [tenant, now]);
+
+    const results = new SqlBroadcastResults(sql);
+    expect((await results.stats(tenant, [id])).get(id)).toMatchObject({ read: 1, replied: 1, optedOut: 1 });
+    const page = await results.recipients(tenant, id, "replied", 0, 50);
+    expect(page.counts).toMatchObject({ all: 1, read: 1, replied: 1, unread: 0 });
+    expect(page.recipients).toEqual([expect.objectContaining({ name: "Laura", state: "opted_out" })]);
+  });
+
   it("un solo segundo envío por difusión y audiencias guardadas", async () => {
     const { tenant } = await seed();
     const repo = new SqlBroadcastRepository(sql);

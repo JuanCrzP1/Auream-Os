@@ -45,5 +45,5 @@ export function useCampaignDetail(id: string) {
     [refresh]
   );
 
-  return { data, status, actionError, run };
+  return { data, status, actionError, run, refresh };
 }

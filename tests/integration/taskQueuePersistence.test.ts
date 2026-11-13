@@ -29,11 +29,19 @@ afterAll(async () => {
   await sql.close();
 });
 
+/**
+ * La hora de estas pruebas, en el pasado. La base de pruebas es compartida y la
+ * cola es global (`claimDue` y `peekNext` no filtran por cuenta, como el
+ * trabajador real): a esta hora solo vencen las tareas de estas pruebas, nunca
+ * las pendientes de otras cuentas (ni las toman ni dependen de ellas).
+ */
+const CLOCK = new Date("2000-01-01T00:00:00.000Z");
+
 describe("SqlTaskRepository", () => {
   it("encola sin duplicar, reparte entre rondas simultáneas y retoma reservas caducadas", async () => {
     const tenant = await insertTenant("tasks-a");
     const repo = new SqlTaskRepository(sql);
-    const now = new Date();
+    const now = CLOCK;
     const task = (key: string, dueAt = now): NewTask => ({ tenantId: tenant, kind: "flow.timer", groupKey: "conversation:c1", dedupeKey: `${tenant}:${key}`, payload: { n: key }, dueAt });
 
     for (let i = 0; i < 6; i++) expect(await repo.enqueue(randomUUID(), task(`k${i}`))).toBe(true);
@@ -60,7 +68,7 @@ describe("SqlTaskRepository", () => {
   it("completa, reintenta, falla, cancela un grupo (salvo una) y limpia las terminadas", async () => {
     const tenant = await insertTenant("tasks-b");
     const repo = new SqlTaskRepository(sql);
-    const now = new Date();
+    const now = CLOCK;
     const enqueue = (key: string, group = "g1") =>
       repo.enqueue(randomUUID(), { tenantId: tenant, kind: "demo", groupKey: group, dedupeKey: `${tenant}:${key}`, payload: {}, dueAt: now, maxAttempts: 3 });
     await enqueue("ok");
@@ -86,7 +94,9 @@ describe("SqlTaskRepository", () => {
     expect(await repo.cancelGroup(tenant, "chat", `${tenant}:y`)).toBe(1);
     expect(await repo.cancelGroup(tenant, "chat")).toBe(1);
 
-    expect(await repo.purgeFinished(new Date(now.getTime() + 60_000), 100)).toBe(4);
+    // La limpieza es global como el trabajo real (solo borra terminadas): corta
+    // a la hora real porque cancelar marca la hora de la base.
+    expect(await repo.purgeFinished(new Date(Date.now() + 60_000), 1000)).toBeGreaterThanOrEqual(4);
     const left = await sql.query<{ dedupe_key: string }>("select dedupe_key from scheduled_tasks where tenant_id = $1", [tenant]);
     expect(left.rows.map((r) => r.dedupe_key.split(":")[1])).toEqual(["retry"]);
   });
@@ -94,7 +104,7 @@ describe("SqlTaskRepository", () => {
   it("adelantar el tiempo: lo pendiente de un grupo vence ya y dice cuándo iba a vencer", async () => {
     const tenant = await insertTenant("tasks-c");
     const repo = new SqlTaskRepository(sql);
-    const now = new Date();
+    const now = CLOCK;
     const later = new Date(now.getTime() + 30 * 60_000);
     const enqueue = (key: string, group: string, dueAt: Date) => repo.enqueue(randomUUID(), { tenantId: tenant, kind: "flow.timer", groupKey: group, dedupeKey: `${tenant}:${key}`, payload: {}, dueAt });
     await enqueue("chat-a", "conversation:a", later);

@@ -14,8 +14,9 @@ export interface PostDraft {
 
 export const KINDS: ReadonlyArray<readonly [GroupPostKind, string]> = [["text", "Texto"], ["image", "Foto"], ["video", "Video"], ["audio", "Audio"], ["poll", "Encuesta"]];
 
-export function emptyPost(preset: string | null): PostDraft {
-  return { campaignIds: preset ? [preset] : [], groupIds: [], kind: "text", text: "", media: null, choices: ["", ""], mentionAll: true, scheduledAt: null };
+/** Empieza con una campaña elegida, o con un solo grupo (desde la tarjeta del grupo). */
+export function emptyPost(preset: string | null, presetGroup: string | null = null): PostDraft {
+  return { campaignIds: preset && !presetGroup ? [preset] : [], groupIds: presetGroup ? [presetGroup] : [], kind: "text", text: "", media: null, choices: ["", ""], mentionAll: true, scheduledAt: null };
 }
 
 export function postProblem(draft: PostDraft, groups: number): string | null {

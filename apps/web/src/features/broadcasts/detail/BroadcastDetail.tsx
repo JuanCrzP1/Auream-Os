@@ -16,10 +16,10 @@ export function BroadcastDetail({ id, onBack, onOpen }: { readonly id: string; r
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  if (status === "loading") return <div className="ui-page bc-detail"><p className="ui-muted">Cargando…</p></div>;
+  if (status === "loading") return <div className="ui-page ui-page--content bc-detail"><p className="ui-muted">Cargando…</p></div>;
   if (!data) {
     return (
-      <div className="ui-page bc-detail">
+      <div className="ui-page ui-page--content bc-detail">
         <button type="button" className="ui-link" onClick={onBack}>← Difusiones</button>
         <p className="ui-error" role="alert">{status === "missing" ? "Esa difusión no existe." : "No pudimos cargar la difusión."}</p>
       </div>
@@ -37,7 +37,7 @@ export function BroadcastDetail({ id, onBack, onOpen }: { readonly id: string; r
   const canCancel = !["done", "cancelled"].includes(broadcast.status);
 
   return (
-    <div className="ui-page bc-detail">
+    <div className="ui-page ui-page--content bc-detail">
       <header className="bc-detail__header">
         <div className="bc-detail__title">
           <button type="button" className="bc-detail__back" onClick={onBack} aria-label="Volver a Difusiones">←</button>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { reviewDraft } from "../../domains/automations/editing/domain/draftGraph";
 import { deriveBuilderGraphSummary } from "../../domains/automations/builder/application/deriveBuilderGraphSummary.js";
 import type { BuilderFlowSnapshot, NodeType } from "../../contracts/FlowSnapshot.js";
 
@@ -40,19 +41,19 @@ describe("deriveBuilderGraphSummary", () => {
   it("Inicio → Etiquetas está conectado, sin necesidad de Finalizar", () => {
     // El caso que se veía rojo con dos nodos unidos por una flecha real.
     expect(deriveBuilderGraphSummary(snapshot([["inicio", "message"], ["etiquetas", "tags"]], [["inicio", "etiquetas"]]), tenantId))
-      .toEqual({ nodeCount: 2, connectionStatus: "connected" });
+      .toMatchObject({ nodeCount: 2, connectionStatus: "connected" });
   });
 
   it("Inicio → Etiquetas → otro nodo está conectado", () => {
     expect(deriveBuilderGraphSummary(snapshot(
       [["inicio", "message"], ["etiquetas", "tags"], ["aviso", "notification"]],
       [["inicio", "etiquetas"], ["etiquetas", "aviso"]]
-    ), tenantId)).toEqual({ nodeCount: 3, connectionStatus: "connected" });
+    ), tenantId)).toMatchObject({ nodeCount: 3, connectionStatus: "connected" });
   });
 
   it("Inicio con un nodo suelto al lado está desconectado", () => {
     expect(deriveBuilderGraphSummary(snapshot([["inicio", "message"], ["suelto", "tags"]]), tenantId))
-      .toEqual({ nodeCount: 2, connectionStatus: "disconnected" });
+      .toMatchObject({ nodeCount: 2, connectionStatus: "disconnected" });
   });
 
   it("Inicio solo, sin salida, está conectado: no hay nada suelto que conectar", () => {
@@ -60,12 +61,12 @@ describe("deriveBuilderGraphSummary", () => {
     // respuesta es no: un único nodo es alcanzable desde sí mismo. Que ese
     // flujo no sirva todavía para publicar es cierto y lo dice otro sitio.
     expect(deriveBuilderGraphSummary(snapshot([["inicio", "message"]]), tenantId))
-      .toEqual({ nodeCount: 1, connectionStatus: "connected" });
+      .toMatchObject({ nodeCount: 1, connectionStatus: "connected" });
   });
 
   it("un flujo que sí termina en Finalizar sigue estando conectado", () => {
     expect(deriveBuilderGraphSummary(snapshot([["inicio", "message"], ["fin", "end"]], [["inicio", "fin"]]), tenantId))
-      .toEqual({ nodeCount: 2, connectionStatus: "connected" });
+      .toMatchObject({ nodeCount: 2, connectionStatus: "connected" });
   });
 
   it("una flecha que apunta a un nodo inexistente desconecta", () => {
@@ -82,7 +83,7 @@ describe("deriveBuilderGraphSummary", () => {
 
   it("cuenta cero nodos y marca el grafo vacío como desconectado", () => {
     expect(deriveBuilderGraphSummary(snapshot([]), tenantId))
-      .toEqual({ nodeCount: 0, connectionStatus: "disconnected" });
+      .toMatchObject({ nodeCount: 0, connectionStatus: "disconnected" });
   });
 
   it("un Inicio que no existe en el mapa de nodos desconecta", () => {
@@ -102,4 +103,16 @@ describe("deriveBuilderGraphSummary", () => {
       expect(deriveBuilderGraphSummary(caso, tenantId).connectionStatus).toBe("connected");
     }
   });
+
+  it("cuenta los errores y avisos de la revisión del editor: un Píxel sin píxel elegido nunca sale en verde", () => {
+    const conPixel = snapshot([["inicio", "start"], ["pixel", "pixel"]], [["inicio", "pixel"]]);
+    const summary = deriveBuilderGraphSummary(conPixel, tenantId);
+    const review = reviewDraft(conPixel);
+
+    // La lista y el editor dicen lo mismo, siempre.
+    expect({ errors: summary.reviewErrors, warnings: summary.reviewWarnings }).toEqual({ errors: review.errorCount, warnings: review.warningCount });
+    expect(summary.reviewErrors).toBeGreaterThan(0);
+    expect(review.issues.some((issue) => issue.message.includes("Elige el píxel de Meta"))).toBe(true);
+  });
 });
+

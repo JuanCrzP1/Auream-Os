@@ -91,3 +91,16 @@
 .gr-groups__bar .gr-groups__full {
   background: var(--teal);
 }
+
+/* El estado y el menú «⋯», juntos a la derecha. */
+.gr-groups__badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gr-groups__copied {
+  color: var(--teal);
+  font-size: 0.75rem;
+  font-weight: 600;
+}

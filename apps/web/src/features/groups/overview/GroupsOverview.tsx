@@ -37,29 +37,31 @@ export function GroupsOverview({ tab, onTab, onOpen, onNew, onSend }: {
         ) : null}
       </header>
 
-      {status === "loading" ? <p className="ui-muted gr-page__loading" aria-busy="true">Cargando grupos…</p> : null}
-      {status === "error" || status === "forbidden" ? (
-        <StateCard
-          icon={StateIcons.offline}
-          tone="warning"
-          role="alert"
-          title={status === "forbidden" ? "No tienes acceso a Grupos" : "No pudimos cargar tus grupos"}
-          description={status === "forbidden" ? "Pídele a un administrador que te dé acceso." : "Revisa tu conexión e inténtalo de nuevo."}
-          actions={status === "error" ? <RetryButton busy={retrying} onRetry={() => { setRetrying(true); void refresh().finally(() => setRetrying(false)); }} /> : null}
-        />
-      ) : null}
+      <div className="ui-panel gr-page__body">
+        {status === "loading" ? <p className="ui-muted gr-page__loading" aria-busy="true">Cargando grupos…</p> : null}
+        {status === "error" || status === "forbidden" ? (
+          <StateCard
+            icon={StateIcons.offline}
+            tone="warning"
+            role="alert"
+            title={status === "forbidden" ? "No tienes acceso a Grupos" : "No pudimos cargar tus grupos"}
+            description={status === "forbidden" ? "Pídele a un administrador que te dé acceso." : "Revisa tu conexión e inténtalo de nuevo."}
+            actions={status === "error" ? <RetryButton busy={retrying} onRetry={() => { setRetrying(true); void refresh().finally(() => setRetrying(false)); }} /> : null}
+          />
+        ) : null}
 
-      {data && !empty ? <GroupsHero month={data.month} /> : null}
-      {data ? (
-        <PillTabs label="Ver" tabs={[{ id: "campaigns", label: "Campañas", count: campaigns.length }, { id: "mine", label: "Mis grupos" }]} selected={tab} onSelect={onTab} />
-      ) : null}
-      {empty ? <FirstGroups canManage={data.canManage} hasNumbers={data.hasNumbers} onNew={onNew} onMine={() => onTab("mine")} /> : null}
-      {data && tab === "campaigns" && campaigns.length > 0 ? (
-        <section className="gr-cards" aria-label="Campañas">
-          {campaigns.map((campaign) => <CampaignCard key={campaign.id} campaign={campaign} onOpen={onOpen} />)}
-        </section>
-      ) : null}
-      {data && tab === "mine" ? <MyGroups campaigns={campaigns} canManage={data.canManage} /> : null}
+        {data && !empty ? <GroupsHero month={data.month} /> : null}
+        {data ? (
+          <PillTabs label="Ver" tabs={[{ id: "campaigns", label: "Campañas", count: campaigns.length }, { id: "mine", label: "Mis grupos" }]} selected={tab} onSelect={onTab} />
+        ) : null}
+        {empty ? <FirstGroups canManage={data.canManage} hasNumbers={data.hasNumbers} onNew={onNew} onMine={() => onTab("mine")} /> : null}
+        {data && tab === "campaigns" && campaigns.length > 0 ? (
+          <section className="gr-cards" aria-label="Campañas">
+            {campaigns.map((campaign) => <CampaignCard key={campaign.id} campaign={campaign} onOpen={onOpen} />)}
+          </section>
+        ) : null}
+        {data && tab === "mine" ? <MyGroups campaigns={campaigns} canManage={data.canManage} /> : null}
+      </div>
     </div>
   );
 }

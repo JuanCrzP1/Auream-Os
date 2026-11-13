@@ -86,6 +86,8 @@ Dos responsabilidades, dos módulos. La feature no tiene código suelto en su ra
 
 La traducción vive en un único punto, `apps/api/http/toAutomationListResponse.ts`, y `tests/contract/automationApiContract.test.ts` la protege.
 
+**El punto de cada tarjeta nunca miente.** `connectionStatus` mide solo si las flechas están unidas; `reviewErrors` y `reviewWarnings` traen lo mismo que «Revisión del flujo» en el editor (`reviewDraft`, la revisión compartida en `contracts/blocks/reviewFlow.ts`). La tarjeta pinta el peor estado: rojo con flechas sueltas o errores (por ejemplo un Píxel sin píxel elegido), ámbar con solo avisos, verde en orden; con problemas lo dice bajo el nombre («⚠ 3 puntos por revisar»). `tests/unit/deriveBuilderGraphSummary.test.ts` vigila que la lista y el editor digan lo mismo.
+
 Existió una copia del tipo en `apps/web/.../list/types/automation.ts` que declaraba `updatedAt` en raíz mientras la API enviaba `metadata.updatedAt`: la tarjeta del hub renderizaba «Invalid Date» y ningún test lo detectaba, porque los fixtures del frontend codificaban la forma equivocada. Por eso el contrato es único.
 
 ### list

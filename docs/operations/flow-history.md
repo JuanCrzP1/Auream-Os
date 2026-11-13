@@ -19,6 +19,14 @@ Cada turno de un flujo (`FlowTurn`), venga de un mensaje del cliente, de un desp
 
 Anotar nunca rompe el turno: si Neon falla, queda la línea del registro y el aviso `flow.turn_log_failed`.
 
+## Lo que ve el cliente: «Un flujo falló» en la campana
+
+Los bloques que dependen de algo externo (Píxel, Integración, Extensión IA, Registrar venta) **no detienen el flujo** cuando fallan: siguen por su salida y anotan `<bloque>_failed:<bloque>:<motivo>` en `events`. Para que eso no pase en silencio, la campana lee este historial:
+
+- Un aviso por flujo con turnos fallidos en las **últimas 24 h** (un bloque fallido, un error interno o mensajes que WhatsApp no aceptó), con cuántas veces y la falla más reciente en palabras del negocio («El Píxel no envió el evento a Meta: el bloque no tiene píxel elegido»). Lleva al flujo.
+- Lo ve quien puede ver flujos **y** chats (`flows.read` + `conversations.read`); una clave de máquina con permiso de flujos no.
+- Código: `SqlNotificationSignals` (lector `flow_failures`), `domains/notifications/domain/flowFailure.ts` (el texto). Pruebas: `tests/unit/flowFailureNotice.test.ts` y `tests/integration/notificationsPersistence.test.ts`.
+
 ## Cómo leerlo
 
 ```bash

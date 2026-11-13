@@ -1,9 +1,12 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { NotificationKind } from "../../../contracts/NotificationContracts";
+import type { Scope } from "../../../platform/authorization/contracts/Scope";
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
 import { BroadcastPermissions } from "../../../platform/authorization/permissions/BroadcastPermissions";
 import { ConnectionPermissions } from "../../../platform/authorization/permissions/ConnectionPermissions";
+import { ConversationPermissions } from "../../../platform/authorization/permissions/ConversationPermissions";
 import { CrmPermissions } from "../../../platform/authorization/permissions/CrmPermissions";
+import { FlowPermissions } from "../../../platform/authorization/permissions/FlowPermissions";
 import { GroupPermissions } from "../../../platform/authorization/permissions/GroupPermissions";
 import { SalesPermissions } from "../../../platform/authorization/permissions/SalesPermissions";
 import type { NotificationServices, NotificationViewer } from "../../../domains/notifications/application/NotificationServices";
@@ -16,17 +19,22 @@ import { sendJson } from "../http/sendJson";
 //   POST /notifications/seen   abrió la campana: lo de hasta ahora deja de ser nuevo
 // ---------------------------------------------------------------------------
 
-/** El permiso que pide cada aviso: el de leer el módulo donde se resuelve. */
-const NEEDS: Record<NotificationKind, string> = {
-  number_disconnected: ConnectionPermissions.read,
-  broadcast_auto_paused: BroadcastPermissions.read,
-  sales_review: SalesPermissions.read,
-  follow_ups_due: CrmPermissions.read,
-  group_created: GroupPermissions.read
+/**
+ * Los permisos que pide cada aviso: el de leer el módulo donde se resuelve.
+ * Una falla de flujo ocurre en los chats: pide ver flujos y chats (así una
+ * clave de máquina con permiso de flujos no recibe la campana).
+ */
+const NEEDS: Record<NotificationKind, ReadonlyArray<Scope>> = {
+  number_disconnected: [ConnectionPermissions.read],
+  broadcast_auto_paused: [BroadcastPermissions.read],
+  sales_review: [SalesPermissions.read],
+  follow_ups_due: [CrmPermissions.read],
+  group_created: [GroupPermissions.read],
+  flow_failures: [FlowPermissions.read, ConversationPermissions.read]
 };
 
 export function notificationViewer(context: RequestContext): NotificationViewer {
-  const kinds = (Object.keys(NEEDS) as NotificationKind[]).filter((kind) => context.scopes.includes(NEEDS[kind]));
+  const kinds = (Object.keys(NEEDS) as NotificationKind[]).filter((kind) => NEEDS[kind].every((scope) => context.scopes.includes(scope)));
   return { tenantId: context.tenantId, userId: context.actorId, kinds: new Set(kinds) };
 }
 

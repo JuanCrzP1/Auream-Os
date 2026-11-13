@@ -34,11 +34,7 @@ export function TemplateFields({ draft, update }: { readonly draft: SaveCampaign
           <span>Nombre de cada grupo (se agrega « #1», « #2»…)</span>
           <input className="ui-input" value={template.namePattern} maxLength={GROUP_LIMITS.maxNamePattern} placeholder="Ej. Navidad · Dilo cantando" onChange={(event) => setTemplate({ namePattern: event.target.value })} />
         </label>
-        <label className="ui-field">
-          <span>Cupo por grupo</span>
-          <input className="ui-input" type="number" min={GROUP_LIMITS.minCapacity} max={GROUP_LIMITS.maxCapacity} value={draft.capacity}
-            onChange={(event) => update({ capacity: Math.max(GROUP_LIMITS.minCapacity, Math.min(GROUP_LIMITS.maxCapacity, Number(event.target.value) || GROUP_LIMITS.defaultCapacity)) })} />
-        </label>
+        <CapacityField key={draft.capacity} value={draft.capacity} onChange={(capacity) => update({ capacity })} />
       </div>
       <label className="ui-field">
         <span>Descripción del grupo</span>
@@ -80,6 +76,27 @@ function Switch({ on, title, detail, onChange }: { readonly on: boolean; readonl
     <label className="gr-editor__switch">
       <input type="checkbox" checked={on} onChange={(event) => onChange(event.target.checked)} />
       <span><strong>{title}</strong>{detail}</span>
+    </label>
+  );
+}
+
+/** Se escribe libre y se ajusta al límite (20 a 1024) solo al salir del campo: así se puede escribir «50» sin que salte a 20. */
+function CapacityField({ value, onChange }: { readonly value: number; readonly onChange: (capacity: number) => void }) {
+  const [text, setText] = useState(String(value));
+  const commit = () => {
+    const typed = Number(text);
+    const capacity = Number.isFinite(typed) && text.trim() ? Math.max(GROUP_LIMITS.minCapacity, Math.min(GROUP_LIMITS.maxCapacity, Math.round(typed))) : value;
+    setText(String(capacity));
+    if (capacity !== value) onChange(capacity);
+  };
+  return (
+    <label className="ui-field">
+      <span>Cupo por grupo</span>
+      <input className="ui-input" inputMode="numeric" value={text} aria-describedby="gr-capacity-hint"
+        onChange={(event) => setText(event.target.value.replace(/\D/g, "").slice(0, 4))}
+        onBlur={commit}
+        onKeyDown={(event) => { if (event.key === "Enter") commit(); }} />
+      <small id="gr-capacity-hint" className="ui-muted">Entre {GROUP_LIMITS.minCapacity} y {GROUP_LIMITS.maxCapacity} personas.</small>
     </label>
   );
 }

@@ -62,26 +62,33 @@ interface StatsRow {
   readonly bought: string;
 }
 
+/** Lo leyó: WhatsApp lo marcó leído o respondió (responder es leer). */
+const WAS_READ = "status = 'sent' and (message_status = 'read' or replied)";
+
 const COUNTS = `count(*) as total,
   count(*) filter (where status in ('pending', 'sending')) as pending,
   count(*) filter (where status = 'sent') as sent,
   count(*) filter (where status = 'failed') as failed,
   count(*) filter (where status in ('opted_out', 'cancelled')) as skipped,
   count(*) filter (where status = 'sent' and (message_status in ('delivered', 'read') or replied)) as delivered,
-  count(*) filter (where status = 'sent' and (message_status = 'read' or replied)) as read,
+  count(*) filter (where ${WAS_READ}) as read,
   count(*) filter (where replied) as replied,
   count(*) filter (where state = 'opted_out') as opted_out,
   count(*) filter (where bought) as bought`;
 
 const n = (value: string | undefined) => Number(value ?? 0);
-const READ_STATES: ReadonlyArray<RecipientState> = ["read", "replied", "bought"];
+/**
+ * Los filtros de «Cada persona» cuentan los mismos hechos que las tarjetas de
+ * arriba (`COUNTS`), no el estado final: quien respondió «SALIR» respondió y
+ * leyó, aunque su estado sea «No quiere más».
+ */
 const FILTER_SQL: Readonly<Record<RecipientFilter, string>> = {
   all: "true",
-  bought: "state = 'bought'",
-  replied: "state in ('replied', 'bought')",
-  read: `state in (${READ_STATES.map((state) => `'${state}'`).join(", ")})`,
-  unread: "state in ('sent', 'delivered')",
-  failed: "state = 'failed'"
+  bought: "bought",
+  replied: "replied",
+  read: WAS_READ,
+  unread: "status = 'sent' and coalesce(message_status, '') <> 'read' and not replied",
+  failed: "status = 'failed'"
 };
 
 export class SqlBroadcastResults implements BroadcastResults {

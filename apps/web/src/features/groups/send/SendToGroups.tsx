@@ -9,10 +9,10 @@ import { PostContent } from "./PostContent";
 import { emptyPost, postProblem, toRequest, type PostDraft } from "./postDraft";
 
 /** Un mensaje a muchos grupos: elegir campañas o grupos sueltos, qué enviar, avisar a todos y cuándo. */
-export function SendToGroups({ preset, onClose, onSent }: { readonly preset: string | null; readonly onClose: () => void; readonly onSent: () => void }) {
+export function SendToGroups({ preset, presetGroup = null, onClose, onSent }: { readonly preset: string | null; readonly presetGroup?: string | null; readonly onClose: () => void; readonly onSent: () => void }) {
   const [campaigns, setCampaigns] = useState<ReadonlyArray<CampaignSummary>>([]);
   const [groups, setGroups] = useState<ReadonlyArray<GroupSummary>>([]);
-  const [draft, setDraft] = useState<PostDraft>(() => emptyPost(preset));
+  const [draft, setDraft] = useState<PostDraft>(() => emptyPost(preset, presetGroup));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const update = (patch: Partial<PostDraft>) => setDraft((current) => ({ ...current, ...patch }));
@@ -40,7 +40,7 @@ export function SendToGroups({ preset, onClose, onSent }: { readonly preset: str
   };
 
   return (
-    <div className="ui-page gr-send">
+    <div className="ui-page ui-page--content gr-send">
       <header className="gr-send__header">
         <button type="button" className="gr-send__back" onClick={onClose} aria-label="Volver">←</button>
         <div>

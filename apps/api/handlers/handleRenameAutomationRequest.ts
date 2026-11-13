@@ -4,7 +4,7 @@ import { sendJson } from "../http/sendJson";
 import { toAutomationSummary } from "../http/toAutomationListResponse";
 import type { AutomationRepository } from "../../../domains/automations/catalog/application/AutomationRepository";
 import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
-import { deriveBuilderGraphSummary } from "../../../domains/automations/builder/application/deriveBuilderGraphSummary";
+import { deriveBuilderGraphSummary, EMPTY_GRAPH_SUMMARY } from "../../../domains/automations/builder/application/deriveBuilderGraphSummary";
 
 export async function handleRenameAutomationRequest(
   request: IncomingMessage,
@@ -40,6 +40,6 @@ export async function handleRenameAutomationRequest(
   const workspace = await workspaceRepository.getWorkspace(tenantId, updated.key);
   sendJson(response, 200, toAutomationSummary(
     updated,
-    workspace ? deriveBuilderGraphSummary(workspace.draft, tenantId) : { nodeCount: 0, connectionStatus: "disconnected" }
+    workspace ? deriveBuilderGraphSummary(workspace.draft, tenantId) : EMPTY_GRAPH_SUMMARY
   ));
 }

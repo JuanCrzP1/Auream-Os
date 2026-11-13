@@ -70,10 +70,17 @@
   padding: 20px 32px 32px;
 }
 
+/* Página sin la cabecera compartida (detalle, editor, asistente): el mismo
+   margen que el panel, para no quedar pegada al menú. */
+.ui-page--content {
+  padding: 24px 32px 32px;
+}
+
 @media (max-width: 720px) {
   .ui-page__header,
   .ui-tabs,
-  .ui-panel {
+  .ui-panel,
+  .ui-page--content {
     padding-left: 16px;
     padding-right: 16px;
   }

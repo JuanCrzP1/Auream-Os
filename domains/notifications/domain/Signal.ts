@@ -1,4 +1,5 @@
 import type { AppNotification, NotificationKind } from "../../../contracts/NotificationContracts";
+import { describeFlowFailure, type FlowFailure } from "./flowFailure";
 
 // ---------------------------------------------------------------------------
 // Una señal: algo en la cuenta que pide atención, tal como lo leen los
@@ -10,13 +11,17 @@ export type Signal =
   | { readonly kind: "broadcast_auto_paused"; readonly id: string; readonly name: string; readonly reason: string | null; readonly at: Date }
   | { readonly kind: "sales_review"; readonly count: number; readonly at: Date }
   | { readonly kind: "follow_ups_due"; readonly count: number; readonly overdue: number; readonly at: Date }
-  | { readonly kind: "group_created"; readonly id: string; readonly campaignId: string; readonly campaign: string; readonly group: string; readonly at: Date };
+  | { readonly kind: "group_created"; readonly id: string; readonly campaignId: string; readonly campaign: string; readonly group: string; readonly at: Date }
+  | { readonly kind: "flow_failures"; readonly flowKey: string; readonly flow: string; readonly count: number; readonly last: FlowFailure; readonly at: Date };
 
 /** Cuántos avisos muestra la campana como máximo. */
 export const FEED_LIMIT = 30;
 
 /** Los grupos nuevos de una campaña se avisan durante esta ventana. */
 export const RECENT_GROUP_DAYS = 7;
+
+/** Las fallas de un flujo se avisan durante esta ventana (el historial de turnos guarda 14 días). */
+export const FLOW_FAILURE_HOURS = 24;
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
@@ -39,6 +44,13 @@ export function describe(signal: Signal): Described {
       };
     case "group_created":
       return { id: `group:${signal.id}`, title: `Nuevo grupo: ${signal.group}`, detail: `«${signal.campaign}» llenó un grupo y abrió el siguiente.`, path: `/groups?campaign=${signal.campaignId}` };
+    case "flow_failures":
+      return {
+        id: `flow:${signal.flowKey}`,
+        title: `«${signal.flow}» falló ${plural(signal.count, "vez", "veces")} en 24 h`,
+        detail: describeFlowFailure(signal.last),
+        path: `/builder/${encodeURIComponent(signal.flowKey)}`
+      };
   }
 }
 

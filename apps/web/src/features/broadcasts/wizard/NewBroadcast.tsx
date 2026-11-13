@@ -50,7 +50,7 @@ export function NewBroadcast({ onClose, onCreated }: { readonly onClose: () => v
   };
 
   return (
-    <div className="ui-page bc-new">
+    <div className="ui-page ui-page--content bc-new">
       <header className="bc-new__header">
         <div className="bc-new__title">
           <button type="button" className="bc-new__back" onClick={onClose} aria-label="Volver a Difusiones">←</button>

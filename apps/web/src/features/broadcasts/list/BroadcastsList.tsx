@@ -42,41 +42,43 @@ export function BroadcastsList({ onNew, onOpen }: { readonly onNew: () => void; 
         ) : null}
       </header>
 
-      {status === "loading" ? <div className="bc-list__loading" aria-busy="true">Cargando difusiones…</div> : null}
-      {status === "error" || status === "forbidden" ? (
-        <StateCard
-          icon={StateIcons.offline}
-          tone="warning"
-          role="alert"
-          title={status === "forbidden" ? "No tienes acceso a Difusiones" : "No pudimos cargar las difusiones"}
-          description={status === "forbidden" ? "Pídele a un administrador que te dé acceso." : "Revisa tu conexión e inténtalo de nuevo."}
-          actions={status === "error" ? <RetryButton busy={retrying} onRetry={() => { setRetrying(true); void refresh().finally(() => setRetrying(false)); }} /> : null}
-        />
-      ) : null}
+      <div className="ui-panel bc-list__body">
+        {status === "loading" ? <div className="bc-list__loading" aria-busy="true">Cargando difusiones…</div> : null}
+        {status === "error" || status === "forbidden" ? (
+          <StateCard
+            icon={StateIcons.offline}
+            tone="warning"
+            role="alert"
+            title={status === "forbidden" ? "No tienes acceso a Difusiones" : "No pudimos cargar las difusiones"}
+            description={status === "forbidden" ? "Pídele a un administrador que te dé acceso." : "Revisa tu conexión e inténtalo de nuevo."}
+            actions={status === "error" ? <RetryButton busy={retrying} onRetry={() => { setRetrying(true); void refresh().finally(() => setRetrying(false)); }} /> : null}
+          />
+        ) : null}
 
-      {data && list.length === 0 ? <FirstBroadcast canManage={data.canManage} onNew={onNew} /> : null}
-      {data && list.length > 0 ? (
-        <>
-          <MonthHero month={data.month} />
-          <div className="bc-list__bar">
-            <PillTabs
-              label="Filtrar difusiones"
-              tabs={(Object.keys(LABELS) as Filter[]).map((key) => ({ id: key, label: LABELS[key], ...(key === "all" ? {} : { count: list.filter((b) => inGroup(key, b)).length, alert: key === "paused" }) }))}
-              selected={filter}
-              onSelect={setFilter}
-            />
-            <span className={`bc-list__shield${autoPaused > 0 ? " bc-list__shield--warn" : ""}`}>
-              {autoPaused > 0 ? `${autoPaused} se pausó sola para cuidar tu número: revísala` : "Envío seguro: pausas al azar, horario y tope por número"}
-            </span>
-          </div>
-          <section className="bc-list__rows" aria-label="Difusiones">
-            {shown.map((broadcast) => (
-              <BroadcastRow key={broadcast.id} broadcast={broadcast} onOpen={onOpen} />
-            ))}
-            {shown.length === 0 ? <p className="ui-muted bc-list__none">No hay difusiones aquí.</p> : null}
-          </section>
-        </>
-      ) : null}
+        {data && list.length === 0 ? <FirstBroadcast canManage={data.canManage} onNew={onNew} /> : null}
+        {data && list.length > 0 ? (
+          <>
+            <MonthHero month={data.month} />
+            <div className="bc-list__bar">
+              <PillTabs
+                label="Filtrar difusiones"
+                tabs={(Object.keys(LABELS) as Filter[]).map((key) => ({ id: key, label: LABELS[key], ...(key === "all" ? {} : { count: list.filter((b) => inGroup(key, b)).length, alert: key === "paused" }) }))}
+                selected={filter}
+                onSelect={setFilter}
+              />
+              <span className={`bc-list__shield${autoPaused > 0 ? " bc-list__shield--warn" : ""}`}>
+                {autoPaused > 0 ? `${autoPaused} se pausó sola para cuidar tu número: revísala` : "Envío seguro: pausas al azar, horario y tope por número"}
+              </span>
+            </div>
+            <section className="bc-list__rows" aria-label="Difusiones">
+              {shown.map((broadcast) => (
+                <BroadcastRow key={broadcast.id} broadcast={broadcast} onOpen={onOpen} />
+              ))}
+              {shown.length === 0 ? <p className="ui-muted bc-list__none">No hay difusiones aquí.</p> : null}
+            </section>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

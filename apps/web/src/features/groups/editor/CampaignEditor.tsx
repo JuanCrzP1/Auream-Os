@@ -42,7 +42,7 @@ export function CampaignEditor({ campaignId, onClose, onSaved }: { readonly camp
   };
 
   return (
-    <div className="ui-page gr-editor">
+    <div className="ui-page ui-page--content gr-editor">
       <header className="gr-editor__header">
         <button type="button" className="gr-editor__back" onClick={onClose} aria-label="Volver">←</button>
         <div>

@@ -12,7 +12,8 @@ const TONE: Record<NotificationKind, string> = {
   broadcast_auto_paused: "amber",
   sales_review: "amber",
   follow_ups_due: "primary",
-  group_created: "teal"
+  group_created: "teal",
+  flow_failures: "rose"
 };
 
 /** La campana debajo de la cuenta (solo ícono, con su nombre al pasar el mouse): lo que pide atención, con el número de lo nuevo. Cada aviso lleva a donde se resuelve. */

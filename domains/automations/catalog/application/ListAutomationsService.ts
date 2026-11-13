@@ -3,7 +3,7 @@ import type { FolderRepository } from "./FolderRepository";
 import type { AutomationFlow } from "../domain/AutomationFlow";
 import type { AutomationFolder } from "../domain/AutomationFolder";
 import type { BuilderWorkspaceRepository } from "../../builder/application/BuilderWorkspaceRepository";
-import { deriveBuilderGraphSummary, type BuilderGraphSummary } from "../../builder/application/deriveBuilderGraphSummary";
+import { deriveBuilderGraphSummary, EMPTY_GRAPH_SUMMARY, type BuilderGraphSummary } from "../../builder/application/deriveBuilderGraphSummary";
 
 export interface AutomationListItem {
   readonly flow: AutomationFlow;
@@ -39,7 +39,7 @@ export class ListAutomationsService {
           flow,
           graphSummary: workspace
             ? deriveBuilderGraphSummary(workspace.draft, tenantId)
-            : { nodeCount: 0, connectionStatus: "disconnected" }
+            : EMPTY_GRAPH_SUMMARY
         };
       }),
       folders

@@ -42,6 +42,10 @@ export interface AutomationSummary {
   readonly nodeCount: number;
   /** Estado estructural derivado del draft actual; nunca se persiste. */
   readonly connectionStatus: "connected" | "disconnected";
+  /** Errores de la revisión del flujo (lo mismo que el editor): el flujo no funcionará así. */
+  readonly reviewErrors: number;
+  /** Avisos de la revisión del flujo: funciona, pero quizá no como esperas. */
+  readonly reviewWarnings: number;
 }
 
 // ---------------------------------------------------------------------------
