@@ -1,5 +1,5 @@
 import type { AgentMedia, AgentMessagePart } from "@contracts/ConversationContracts";
-import type { QuickReply } from "@contracts/QuickReplyContracts";
+import { fillQuickReplyName, type QuickReply } from "@contracts/QuickReplyContracts";
 
 // ---------------------------------------------------------------------------
 // El borrador del compositor: piezas en espera (archivos adjuntos o piezas de
@@ -15,12 +15,8 @@ export type DraftPiece =
 let sequence = 0;
 export const pieceId = () => `piece-${Date.now().toString(36)}-${(sequence += 1)}`;
 
-/** `{nombre}` → primer nombre del cliente (o nada, si no lo sabemos). */
-export function fillVariables(text: string, contactName: string | null): string {
-  const first = contactName?.trim().split(/\s+/)[0] ?? "";
-  // Sin nombre se quita la variable con el espacio de antes: «Hola {nombre}, …» → «Hola, …».
-  return first ? text.replace(/\{\s*nombre\s*\}/gi, first) : text.replace(/ ?\{\s*nombre\s*\}/gi, "");
-}
+/** `{nombre}` con el primer nombre del cliente (la misma regla que el MCP, en `contracts`). */
+export const fillVariables = fillQuickReplyName;
 
 /** El tipo de archivo de WhatsApp según el archivo elegido. */
 export function mediaKindOf(file: File): AgentMedia["type"] {

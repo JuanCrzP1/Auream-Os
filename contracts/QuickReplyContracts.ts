@@ -8,6 +8,7 @@
 // compartido por la API y la web.
 // ---------------------------------------------------------------------------
 
+import type { AgentMessagePart } from "./ConversationContracts";
 import type { MediaKind } from "./MediaContracts";
 
 export interface QuickReplyMedia {
@@ -71,4 +72,23 @@ export function normalizeShortcut(value: string): string {
     .replace(/^[#/]+/, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * `{nombre}` con el primer nombre del cliente. Sin nombre se quita la variable
+ * con el espacio de antes: «Hola {nombre}, …» → «Hola, …». La usan el chat de
+ * la web y el MCP (`send_quick_reply`): las dos dicen lo mismo.
+ */
+export function fillQuickReplyName(text: string, contactName: string | null): string {
+  const first = contactName?.trim().split(/\s+/)[0] ?? "";
+  return first ? text.replace(/\{\s*nombre\s*\}/gi, first) : text.replace(/ ?\{\s*nombre\s*\}/gi, "");
+}
+
+/** Lo que sale al chat: las piezas en orden, con `{nombre}` ya puesto. */
+export function quickReplyParts(reply: Pick<QuickReply, "pieces">, contactName: string | null): AgentMessagePart[] {
+  return reply.pieces.map((piece): AgentMessagePart =>
+    piece.kind === "text"
+      ? { kind: "text", text: fillQuickReplyName(piece.text, contactName) }
+      : { kind: "media", media: piece.media, ...(piece.caption ? { caption: fillQuickReplyName(piece.caption, contactName) } : {}) }
+  );
 }

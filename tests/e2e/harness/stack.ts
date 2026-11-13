@@ -28,6 +28,8 @@ import type { Clients } from "../../../apps/wa-sim/demo/steps.js";
 /** `api` entra con la clave de desarrollo a la cuenta de la corrida; `phone` es el teléfono de prueba. */
 export interface Stack extends Clients {
   readonly tenantId: string;
+  /** La dirección de la API (para hablar con `/mcp` con un token de agente). */
+  readonly apiBase: string;
   readonly sql: SqlClient;
   readonly app: ApiApplication;
   stop(): Promise<void>;
@@ -107,6 +109,7 @@ async function compose(sql: SqlClient, tenantId: string, databaseUrl: string, se
 
   return {
     tenantId,
+    apiBase,
     sql,
     app,
     api: <T>(method: string, path: string, body?: unknown) => call<T>(apiBase, method, path, body, { "x-api-key": apiKey }),

@@ -32,6 +32,12 @@ import { crmTools, type CrmToolServices } from "./tools/crmTools";
 import { analyticsTools, type DashboardToolServices } from "./tools/analyticsTools";
 import { salesLineTools } from "./tools/salesLineTools";
 import { otherExpenseTools } from "./tools/otherExpenseTools";
+import { broadcastTools } from "./tools/broadcastTools";
+import { groupTools, type GroupToolServices } from "./tools/groupTools";
+import { quickReplyTools } from "./tools/quickReplyTools";
+import type { AudienceServices } from "../../../domains/broadcasts/application/AudienceServices";
+import type { BroadcastServices } from "../../../domains/broadcasts/application/BroadcastServices";
+import type { QuickReplyServices } from "../../../domains/quick-replies/application/QuickReplyServices";
 import type { OtherExpenseServices } from "../../../domains/expenses/application/OtherExpenseServices";
 import type { SalesLineServices } from "../../../domains/sales-lines/application/SalesLineServices";
 import type { SaleServices } from "../../../domains/sales/application/SaleServices";
@@ -82,6 +88,12 @@ export interface McpDependencies {
   readonly salesLines?: Pick<SalesLineServices, "list" | "create" | "update" | "remove">;
   /** Otros gastos: verlos (quien ve el gasto) y anotarlos (Ventas y productos). */
   readonly otherExpenses?: Pick<OtherExpenseServices, "list" | "create" | "update" | "remove">;
+  /** Difusiones: verlas, calcular a cuántos les llega, crearlas y pausarlas (área «Difusiones»). */
+  readonly broadcasts?: { readonly broadcasts: Pick<BroadcastServices, "list" | "detail" | "recipients" | "create" | "pause" | "resume" | "cancel">; readonly audiences: Pick<AudienceServices, "preview"> };
+  /** Grupos y comunidades: campañas, grupos y envíos (área «Grupos y comunidades»). */
+  readonly groups?: GroupToolServices;
+  /** Respuestas rápidas: verlas, organizarlas y enviarlas a un chat. */
+  readonly quickReplies?: Pick<QuickReplyServices, "list" | "create" | "update" | "remove" | "markUsed">;
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "createLabel" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list" | "triggers">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
@@ -120,6 +132,9 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     ...(deps.dashboard ? analyticsTools(deps.dashboard) : []),
     ...(deps.salesLines ? salesLineTools(deps.salesLines) : []),
     ...(deps.otherExpenses ? otherExpenseTools(deps.otherExpenses) : []),
+    ...(deps.broadcasts ? broadcastTools(deps.broadcasts.broadcasts, deps.broadcasts.audiences) : []),
+    ...(deps.groups ? groupTools(deps.groups) : []),
+    ...(deps.quickReplies ? quickReplyTools(deps.quickReplies, deps.messaging?.conversations ?? null) : []),
     ...(deps.help ? helpTools(deps.help) : [])
   ];
   return {

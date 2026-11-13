@@ -3,7 +3,7 @@ title: Conectar un agente de IA (MCP) a tu cuenta
 module: equipo
 summary: Deja que Claude, ChatGPT u otro agente trabaje en tu cuenta con permisos que tú eliges.
 order: 4
-updated: 2026-11-12
+updated: 2026-11-13
 keywords: mcp, agente, claude, chatgpt, ia, credencial
 related: roles-y-permisos
 ---
@@ -23,13 +23,18 @@ Por cada área eliges **Sin acceso**, **Ver** o **Ver y editar**. Con los atajos
 |---|---|---|
 | Flujos | Tus flujos y sus bloques | Crear flujos y editar sus bloques |
 | Contactos y etiquetas | Contactos y sus etiquetas | Crear y editar contactos, crear etiquetas y ponerlas |
-| Conversaciones | Los chats y sus mensajes | Responder como asesor y enviar flujos |
+| Conversaciones | Los chats y sus mensajes | Responder como asesor (también con respuestas rápidas) y enviar flujos |
+| Respuestas rápidas | Las respuestas guardadas | Crearlas, editarlas y borrarlas |
 | Números de WhatsApp | Tus números y sus disparadores | Crear, editar y quitar disparadores |
 | Ventas y productos | Ventas, totales y catálogo | Anotar, corregir o anular ventas; crear y editar productos |
 | CRM | Embudos, etapas y clientes | Mover clientes de etapa y editar su negocio |
 | Dashboard y anuncios | ROAS real, gasto, anuncios y atención | (solo ver) |
+| Difusiones | Las difusiones y a quién le llegaron | Calcular a cuántos les llega, crearlas, pausarlas y cancelarlas |
+| Grupos y comunidades | Las campañas, sus grupos y lo vendido | Crear y editar campañas, encender o apagar el enlace y enviar a grupos |
 
-Conectar un número nuevo, configurar embudos, el equipo y las difusiones se hacen en Auream, no desde el agente.
+**Las difusiones y los envíos a grupos llegan a muchos clientes.** El agente siempre te dice a cuántos les llega y te pide confirmación antes de enviar. Además usa el mismo envío seguro de Auream (pausas, horario, tope por número y «SALIR»), que no se puede saltar.
+
+Conectar un número nuevo, configurar embudos y el equipo se hacen en Auream, no desde el agente. Las fotos y videos de difusiones, grupos y respuestas rápidas se suben en Auream; el agente envía textos, encuestas y flujos.
 
 > **¿Ya lo tenías conectado?** Los permisos nuevos no se agregan solos. Vuelve a autorizar el agente (o crea otra credencial) y marca las áreas que quieras darle.
 

@@ -42,10 +42,14 @@ const SCOPES: Readonly<Record<McpAreaId, { readonly read: ReadonlyArray<Scope>; 
   flows: { read: ["flows.read"], write: ["flows.read", "flows.write"] },
   contacts: { read: ["contacts.read"], write: ["contacts.read", "contacts.write"] },
   conversations: { read: ["conversations.read"], write: ["conversations.read", "conversations.write"] },
+  // Organizar respuestas rápidas es `conversations.manage` en la web; aquí solo habilita esas herramientas.
+  quick_replies: { read: ["conversations.read"], write: ["conversations.read", "conversations.manage"] },
   connections: { read: ["connections.read"], write: ["connections.read", "connections.write"] },
   sales: { read: ["sales.read"], write: ["sales.read", "sales.write", "sales.manage"] },
   crm: { read: ["crm.read"], write: ["crm.read", "crm.write"] },
-  analytics: { read: ["analytics.read", "ads.read"], write: ["analytics.read", "ads.read"] }
+  analytics: { read: ["analytics.read", "ads.read"], write: ["analytics.read", "ads.read"] },
+  broadcasts: { read: ["broadcasts.read"], write: ["broadcasts.read", "broadcasts.manage"] },
+  groups: { read: ["groups.read"], write: ["groups.read", "groups.manage"] }
 };
 
 export function requireCredentialName(value: unknown): string {

@@ -167,6 +167,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     salesLines.directory
   );
   // Difusiones: envía por Mensajería, a su ritmo, en la cola de tareas.
+  // Respuestas rápidas: las mismas para la web y para el MCP.
+  const quickReplies = composeQuickReplyServices(tenancy.sqlClient);
   const broadcasts = composeBroadcastServices({
     config,
     sql: tenancy.sqlClient,
@@ -231,7 +233,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     groupServices: groups,
     helpServices: { ...help, docsBase: config.helpDocsBase },
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
-    quickReplyServices: composeQuickReplyServices(tenancy.sqlClient),
+    quickReplyServices: quickReplies,
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
     salesLineServices: salesLines.lines,
@@ -252,6 +254,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       dashboard: ads.dashboard,
       salesLines: salesLines.lines,
       otherExpenses: otherExpenses.expenses,
+      broadcasts: { broadcasts: broadcasts.broadcasts, audiences: broadcasts.audiences },
+      groups: { campaigns: groups.campaigns, groups: groups.groups, posts: groups.posts },
+      quickReplies,
       help: help.help,
       // Cada acción de un agente queda en el registro (sin sus datos).
       onToolCall: (access, report) => logger.info("mcp.tool_call", { tenantId: access.tenantId, credentialId: access.credentialId, ...report })

@@ -10,7 +10,7 @@
 /** Qué puede una credencial en un área. */
 export type McpAccessLevel = "none" | "read" | "write";
 
-export type McpAreaId = "flows" | "contacts" | "conversations" | "connections" | "sales" | "crm" | "analytics";
+export type McpAreaId = "flows" | "contacts" | "conversations" | "quick_replies" | "connections" | "sales" | "crm" | "analytics" | "broadcasts" | "groups";
 
 export interface McpAreaDefinition {
   readonly id: McpAreaId;
@@ -34,7 +34,13 @@ export const MCP_AREAS: ReadonlyArray<McpAreaDefinition> = [
     read: "Ver contactos, sus datos y etiquetas.",
     write: "Crear y editar contactos, crear etiquetas y ponerlas o quitarlas."
   },
-  { id: "conversations", label: "Conversaciones", read: "Ver los chats y sus mensajes.", write: "Responder como asesor y enviar flujos a un chat." },
+  { id: "conversations", label: "Conversaciones", read: "Ver los chats y sus mensajes.", write: "Responder como asesor (también con respuestas rápidas) y enviar flujos a un chat." },
+  {
+    id: "quick_replies",
+    label: "Respuestas rápidas",
+    read: "Ver las respuestas rápidas guardadas.",
+    write: "Crear, editar y borrar respuestas rápidas (lo que el equipo usa en los chats)."
+  },
   {
     id: "connections",
     label: "Números de WhatsApp",
@@ -48,7 +54,19 @@ export const MCP_AREAS: ReadonlyArray<McpAreaDefinition> = [
     write: "Anotar ventas, corregirlas, aprobarlas o anularlas (con motivo), y crear, editar o archivar productos."
   },
   { id: "crm", label: "CRM", read: "Ver embudos, etapas y en qué etapa va cada cliente.", write: "Mover clientes de etapa y editar sus negocios." },
-  { id: "analytics", label: "Dashboard y anuncios", read: "Ver el Dashboard: ventas, ROAS real, gasto en Meta, anuncios y atención." }
+  { id: "analytics", label: "Dashboard y anuncios", read: "Ver el Dashboard: ventas, ROAS real, gasto en Meta, anuncios y atención." },
+  {
+    id: "broadcasts",
+    label: "Difusiones",
+    read: "Ver las difusiones, sus resultados y a quién le llegaron.",
+    write: "Calcular a cuántos les llega, crear difusiones (ahora o programadas), pausarlas, seguirlas y cancelarlas. Siempre con envío seguro."
+  },
+  {
+    id: "groups",
+    label: "Grupos y comunidades",
+    read: "Ver las campañas de grupos, sus grupos y lo que vende cada uno.",
+    write: "Crear y editar campañas, encender o apagar su enlace, traer los grupos de WhatsApp, sumar o sacar grupos y enviar a grupos."
+  }
 ];
 
 export type McpPermissions = Readonly<Partial<Record<McpAreaId, McpAccessLevel>>>;

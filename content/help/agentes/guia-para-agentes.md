@@ -3,7 +3,7 @@ title: Guía de Auream para agentes de IA
 module: agentes
 summary: Qué es cada módulo, cómo se relacionan, las reglas que no se pueden romper y qué herramienta usar.
 order: 1
-updated: 2026-11-12
+updated: 2026-11-13
 keywords: agente, mcp, guía, reglas, herramientas
 ---
 
@@ -16,6 +16,7 @@ Auream es una plataforma para **vender por WhatsApp**. Una cuenta (la empresa) c
 - **Contactos y etiquetas:** cada cliente es un contacto con etiquetas. Las etiquetas las ponen los flujos (bloque Etiquetas), los asesores o las reglas de Grupos.
 - **CRM:** un embudo tiene etapas y **cada etapa ES una etiqueta**. Un cliente está en una sola etapa por embudo; ponerle la etiqueta de otra etapa lo mueve. Una venta aprobada lo pasa a la etapa de venta.
 - **Conversaciones:** la bandeja. Si un asesor responde, el bot se pausa en ese chat.
+- **Respuestas rápidas:** mensajes guardados del equipo (un atajo como «precio», una categoría y una o varias piezas). `{nombre}` se cambia por el primer nombre del cliente al enviarla.
 - **Ventas y productos:** cada producto tiene precio (y costo) por país. Una venta la registra el bloque Registrar venta (después de un comprobante válido) o un asesor. Sin precio para ese país, la venta queda **«Por revisar»**: nunca se inventa un precio.
 - **Dashboard y Meta Ads:** el ROAS real cruza las ventas de Auream con el gasto de Meta (por el anuncio del que llegó cada cliente). Se compara con el ROAS que reporta Meta.
 - **Difusiones:** un flujo o un mensaje a muchos clientes que **ya escribieron**, con envío seguro (pausas al azar, horario, tope y calentamiento por número, «SALIR»).
@@ -51,6 +52,12 @@ Cada herramienta aparece solo si la credencial tiene permiso en su área.
 | Ver ROAS real, gasto, anuncios y atención (de todo el negocio o de una línea, en la moneda que pidan) | `dashboard_sales`, `dashboard_ads`, `dashboard_attention` | Dashboard y anuncios |
 | Ver o armar líneas de venta («Venezuela», «Colombia») | `list_sales_lines`, `create_sales_line`, `update_sales_line`, `delete_sales_line` | Dashboard (ver) · Ventas y productos (editar) |
 | Ver o anotar otros gastos (nómina, pasarela, herramientas) | `list_other_expenses`, `create_other_expense`, `update_other_expense`, `delete_other_expense` | Dashboard (ver) · Ventas y productos (editar) |
+| Ver u organizar respuestas rápidas | `list_quick_replies`, `create_quick_reply`, `update_quick_reply`, `delete_quick_reply` | Respuestas rápidas |
+| Enviar una respuesta rápida a un chat | `send_quick_reply` | Conversaciones (responder) |
+| Ver difusiones y sus resultados | `list_broadcasts`, `get_broadcast`, `list_broadcast_recipients` | Difusiones |
+| Crear, pausar, seguir o cancelar una difusión | `preview_broadcast_audience`, `create_broadcast`, `change_broadcast` | Difusiones (editar) |
+| Ver campañas de grupos, sus grupos y lo vendido | `list_group_campaigns`, `get_group_campaign`, `list_groups` | Grupos y comunidades |
+| Crear o editar campañas, enviar a grupos, sumar o sacar grupos | `create_group_campaign`, `update_group_campaign`, `set_group_campaign_link`, `sync_groups`, `set_group_campaign`, `send_to_groups`, `cancel_group_post` | Grupos y comunidades (editar) |
 
 ## Tareas completas
 
@@ -59,6 +66,9 @@ Cada herramienta aparece solo si la credencial tiene permiso en su área.
 - **¿Cómo va una parte del negocio?:** `list_sales_lines` → `dashboard_sales` con su `line_id` (y `currency`, p. ej. `VES`). Si no existe la línea, propón crearla con `create_sales_line` (productos de `list_products`, campañas de `dashboard_ads`).
 - **¿Cuánto gano de verdad?:** `dashboard_sales` → `profit` ya resta Meta y los otros gastos (`otherSpend`, y cada uno en `otherExpenses`). Si la persona menciona un gasto que no está (la pasarela, un sueldo), pídele el monto, la moneda, cada cuánto y desde cuándo, y anótalo con `create_other_expense` (`kind: percent` para un % de las ventas). Nunca inventes montos.
 - **¿Cómo voy?:** `dashboard_sales` (ROAS real, ventas, gasto y qué hacer con cada campaña) y `sales_summary` (lo vendido por producto y por día).
+- **Una difusión:** `list_connections` (números conectados) → `list_labels` si filtra por etiqueta o etapa → `preview_broadcast_audience` → **dile a la persona a cuántos les llega, el texto y cuándo, y espera su sí** → `create_broadcast` (2 o 3 textos parecidos mejor que uno solo; `{first_name}` pone el nombre). Nunca subas el tope ni quites «SALIR» para que llegue más rápido.
+- **Responder con una respuesta rápida:** `list_quick_replies` (búscala por atajo) → `list_conversations` → confirma con la persona → `send_quick_reply`. Si no existe, propón crearla con `create_quick_reply`.
+- **Lanzar una campaña de grupos:** `list_connections` (solo números por QR) → confirma nombre, números y cupo → `create_group_campaign` → comparte el `link` (agrega `?src=instagram` para saber de dónde llegan). Para avisar a todos los grupos: `send_to_groups` con `campaign_ids`, confirmado antes.
 - **Corregir ventas «Por revisar»:** `list_sales` con `status: review` → completa producto, monto y moneda con `update_sale` → apruébala (`status: approved`) solo si la persona lo confirma.
 
 ## Cómo responder a la persona
