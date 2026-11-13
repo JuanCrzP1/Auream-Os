@@ -69,10 +69,15 @@ describe("AdConnectionServices", () => {
 
   it("rechaza un token incompleto, uno sin cuentas y explica el error de Meta", async () => {
     await expect(world().connectionServices.connectWithToken(world().actor, "corto")).rejects.toThrow("Pega el token completo de Meta.");
-    await expect(world([]).connectionServices.connectWithToken(world().actor, "EAAB" + "x".repeat(30))).rejects.toThrow("no tiene cuentas publicitarias");
+    await expect(world([]).connectionServices.connectWithToken(world().actor, "EAAB" + "x".repeat(30))).rejects.toThrow("asígnale al usuario del sistema tu cuenta publicitaria");
+    // Al pegar un token, lo que dice Meta se traduce en qué arreglar.
     const w = world();
-    w.provider.me.mockRejectedValueOnce(new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true));
-    await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("Vuelve a conectar");
+    w.provider.me.mockRejectedValueOnce(new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true, "token"));
+    await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("mal copiado, vencido o revocado");
+    w.provider.listAccounts.mockRejectedValueOnce(new AdsProviderError("Falta el permiso ads_read.", true, "permission"));
+    await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("marca ads_read");
+    w.provider.me.mockRejectedValueOnce(new AdsProviderError("Meta está limitando las consultas; se reintenta más tarde."));
+    await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("limitando las consultas");
   });
 
   it("sin app de Meta no hay inicio de sesión; sincronizar a mano pide esperar 5 minutos entre una y otra", async () => {

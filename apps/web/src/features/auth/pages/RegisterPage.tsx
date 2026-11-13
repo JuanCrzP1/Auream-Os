@@ -2,6 +2,7 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@shared/auth/context/AuthContext";
 import { useAuthActions } from "@shared/auth/hooks/useAuthActions";
 import { AuthLayout } from "@shared/ui/auth-layout/AuthLayout";
+import { ConsentNotice } from "@shared/legal/LegalLinks";
 import { RegisterForm } from "../components/RegisterForm";
 
 /**
@@ -36,6 +37,7 @@ export function RegisterPage() {
       }
     >
       <RegisterForm pending={pending} error={error} onSubmit={(e, p, n) => void signUp(e, p, n)} />
+      <ConsentNotice />
     </AuthLayout>
   );
 }

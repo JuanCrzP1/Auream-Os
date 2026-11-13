@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 // ---------------------------------------------------------------------------
-// El Markdown de los artículos, como elementos de React (nunca HTML crudo):
-// títulos `##`/`###` (con ancla), párrafos, listas, tablas, avisos
-// (`> **Importante:** …`) y en línea **negrita**, `código` y [enlaces]
-// (un enlace a otro artículo, `slug`, abre ese artículo).
+// Markdown como elementos de React (nunca HTML crudo): títulos `##`/`###`
+// (con ancla), párrafos, listas, tablas, avisos (`> **Importante:** …`) y en
+// línea **negrita**, `código` y [enlaces]. Un enlace a `slug` abre ese
+// artículo de la Ayuda; a `/ruta`, esa pantalla; `https://` y `mailto:` salen
+// afuera. Lo usan la Ayuda y las páginas legales.
 // ---------------------------------------------------------------------------
 
 export function anchorOf(title: string): string {
@@ -25,7 +26,13 @@ function inline(text: string, key: string): ReactNode[] {
     else if (match[2]) parts.push(<code key={id}>{match[2]}</code>);
     else if (match[3] && match[4]) {
       const href = match[4];
-      parts.push(/^https?:\/\//.test(href) ? <a key={id} href={href} target="_blank" rel="noreferrer">{match[3]}</a> : /^[a-z0-9-]+$/.test(href) ? <Link key={id} to={`/help?article=${href}`}>{match[3]}</Link> : match[3]);
+      parts.push(
+        /^https?:\/\//.test(href) ? <a key={id} href={href} target="_blank" rel="noreferrer">{match[3]}</a>
+        : /^mailto:[^\s]+$/.test(href) ? <a key={id} href={href}>{match[3]}</a>
+        : /^\/[a-z0-9/-]*$/.test(href) ? <Link key={id} to={href}>{match[3]}</Link>
+        : /^[a-z0-9-]+$/.test(href) ? <Link key={id} to={`/help?article=${href}`}>{match[3]}</Link>
+        : match[3]
+      );
     }
     last = match.index + match[0].length;
   }

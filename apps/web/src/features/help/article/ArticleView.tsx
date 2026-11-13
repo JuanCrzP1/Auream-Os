@@ -9,7 +9,7 @@ import { ArticleAside } from "./ArticleAside";
 import { ArticleFeedback } from "./ArticleFeedback";
 import { ArticleFooter } from "./ArticleFooter";
 import { ArticleHeader } from "./ArticleHeader";
-import { Markdown } from "./Markdown";
+import { Markdown } from "@shared/markdown/Markdown";
 import { useActiveSection } from "./useActiveSection";
 
 type Navigate = (next: Record<string, string>) => void;

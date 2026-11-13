@@ -101,9 +101,10 @@ describe("Meta Ads", () => {
     renderAt("/meta-ads");
     expect(await screen.findByRole("heading", { level: 2, name: "Conecta tu cuenta de Meta" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Cuentas" })).toHaveAccessibleDescription("Sin conectar");
-    // Sin la app de Meta en el servidor, el inicio de sesión no se ofrece; el token sí.
-    expect(screen.getByRole("button", { name: "Conectar con Meta" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Pégalo aquí/ })).toBeInTheDocument();
+    // Sin la app de Meta en el servidor, el token es la acción principal (nunca un botón apagado).
+    expect(screen.queryByRole("button", { name: "Conectar con Meta" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Conectar con un token" })).toBeEnabled();
+    expect(screen.getByText(/usuario del sistema de tu Business Manager, con el permiso ads_read/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("tab", { name: "Rendimiento" }));
     expect(await screen.findByRole("heading", { level: 2, name: "Conecta tus cuentas para ver el rendimiento" })).toBeInTheDocument();

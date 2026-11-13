@@ -115,3 +115,22 @@ Todo se guarda como huella SHA-256; códigos y tokens se TOMAN con `delete … r
 Herramientas: `list_flows`, `get_flow` (bloques, salidas y a dónde lleva cada una, y la revisión), `list_block_types`, `get_block_type`, `list_flow_resources` (conexiones de IA y píxeles, sin claves) con «ver»; `create_flow`, `rename_flow`, `add_block`, `update_block`, `delete_block`, `connect_blocks`, `disconnect_blocks` con «ver y editar».
 
 Los flujos no se publican: cada cambio se guarda y queda activo al instante; por eso cada operación se valida entera antes de guardar (un error no guarda nada) y su respuesta trae la revisión del flujo, la misma que ve el usuario en el editor.
+
+## App de Meta y borrado de datos
+
+- **La app de Auream en Meta:** tipo Negocio, id `1497068415680505`, portafolio «Auream», caso de uso «Medir datos de rendimiento de los anuncios con la API de marketing». Tiene una configuración de inicio de sesión para empresas, «Conectar Meta Ads», con estas características:
+  - token de usuario del sistema que no vence;
+  - el cliente debe elegir al menos una cuenta publicitaria;
+  - permiso ANALYZE sobre esas cuentas;
+  - un solo permiso de la app: `ads_read`.
+
+  El enlace lleva `config_id` y nunca `scope` (`MetaMarketingClient.authorizeUrl`).
+- **Interruptor del botón:** `META_LOGIN_CONFIG_ID`. Sin esa variable no hay botón, aunque `META_APP_ID` y `META_APP_SECRET` estén en el servidor. Así la app puede ir a producción antes de que Meta apruebe el acceso avanzado sin mostrar a los clientes un botón que les fallaría.
+- **Avisos de Meta** (`routeMetaDataDeletion`, `MetaDataDeletionService`, sin sesión):
+  - `POST /meta/deauthorize`: alguien quitó Auream de su Facebook. Se borra la conexión de Meta Ads hecha con su permiso.
+  - `POST /meta/data-deletion`: pidió borrar sus datos. Se borra lo mismo, queda constancia en `meta_data_deletions` (migración 047) y responde `{ url, confirmation_code }`.
+  - `GET /meta/data-deletion/:code`: el estado, sin datos personales. Lo muestra la página pública `/eliminar-datos?codigo=`.
+
+  Todos verifican el `signed_request` con HMAC-SHA256 y el secreto de la app (`MetaSignedRequest`). Uno falso no borra nada. Solo se guarda una huella SHA-256 del id de la persona.
+- **Páginas legales públicas** (`features/legal`, direcciones en `shared/legal/LegalLinks`): `/privacidad`, `/terminos` y `/eliminar-datos`. Los textos están en Markdown (`features/legal/content`) y los datos del responsable en `legalOwner.ts`, el único lugar donde viven; deben coincidir con el certificado de Cámara de Comercio. Las direcciones van en la configuración de la app de Meta: no cambiarlas.
+

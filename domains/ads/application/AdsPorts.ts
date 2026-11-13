@@ -7,8 +7,18 @@ import type { AdAccount, AdDailyInsight, AdEntity, MetaConnection, ProviderAdAcc
 // ---------------------------------------------------------------------------
 
 /** Un fallo de Meta ya explicado en español. `reconnect`: el token ya no sirve. */
+/**
+ * Un error de Meta, ya en español. `reconnect`: hace falta otro permiso.
+ * `reason`: el token no sirve (mal copiado, vencido o revocado) o le falta el
+ * permiso de leer anuncios; quien conecta con un token recibe instrucciones
+ * concretas para arreglarlo.
+ */
 export class AdsProviderError extends Error {
-  public constructor(message: string, public readonly reconnect = false) {
+  public constructor(
+    message: string,
+    public readonly reconnect = false,
+    public readonly reason: "token" | "permission" | null = null
+  ) {
     super(message);
   }
 }

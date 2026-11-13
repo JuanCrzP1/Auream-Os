@@ -1,0 +1,20 @@
+/* Conectar con un token: los tres pasos para sacarlo, el enlace a la ayuda y
+   la nota de que se guarda cifrado. */
+
+.meta-token { display: flex; flex-direction: column; gap: 10px; width: min(500px, calc(100vw - 32px)); }
+.meta-token h2, .meta-token .ui-muted { margin: 0; }
+
+.meta-token__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px 10px 30px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.meta-token__help { align-self: flex-start; font-size: 0.86rem; font-weight: 600; }
+.meta-token__safe { margin: 0; color: var(--muted); font-size: 0.78rem; }

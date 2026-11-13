@@ -8,6 +8,7 @@ import { IntegrationsPage } from "@features/integrations/pages/IntegrationsPage"
 import { IntegrationDetailPage } from "@features/integrations/pages/IntegrationDetailPage";
 import { IntegrationItemPage } from "@features/integrations/pages/IntegrationItemPage";
 import { OAuthConsentPage } from "@features/integrations/pages/OAuthConsentPage";
+import { LegalPage } from "@features/legal/LegalPage";
 import { LoginPage } from "@features/auth/pages/LoginPage";
 import { RegisterPage } from "@features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@features/auth/pages/ForgotPasswordPage";
@@ -37,6 +38,10 @@ export function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      {/* Páginas legales: públicas (las pide Meta y la ley de datos), sin sesión. */}
+      <Route path="/privacidad" element={<LegalPage id="privacy" />} />
+      <Route path="/terminos" element={<LegalPage id="terms" />} />
+      <Route path="/eliminar-datos" element={<LegalPage id="deletion" />} />
       {/* Invitación al equipo: se abre sin sesión (quien la recibe puede no tener
           cuenta); la página pide entrar o registrarse y vuelve a sí misma. */}
       <Route path="/invite/:token" element={<AcceptInvitationPage />} />

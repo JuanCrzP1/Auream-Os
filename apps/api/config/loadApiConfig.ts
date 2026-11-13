@@ -75,10 +75,13 @@ export interface ApiConfig {
   /** Versión de la Graph API de Meta para el Pixel (`META_GRAPH_API_VERSION`, p. ej. `v23.0`). */
   readonly metaGraphVersion: string;
   /**
-   * La app de Meta para «Conectar con Meta» en Meta Ads (`META_APP_ID` +
-   * `META_APP_SECRET`). `null`: solo se conecta pegando un token.
+   * La app de Meta (`META_APP_ID` + `META_APP_SECRET`): firma la vuelta del
+   * inicio de sesión y verifica los avisos de borrado de datos de Meta.
+   * `META_LOGIN_CONFIG_ID` (la configuración del inicio de sesión para
+   * empresas) es lo que enciende «Conectar con Meta»: ponerla en producción
+   * SOLO cuando Meta apruebe el acceso avanzado. `null`: sin app.
    */
-  readonly metaApp: { readonly appId: string; readonly appSecret: string } | null;
+  readonly metaApp: { readonly appId: string; readonly appSecret: string; readonly loginConfigId?: string } | null;
   /** Adonde vuelve el inicio de sesión de Meta (`META_OAUTH_REDIRECT_URL`; por defecto `<dominio>/api/ads/meta/callback`). */
   readonly metaOAuthRedirectUrl: string;
   /** Delante del enlace de cada campaña de grupos (`<base>/<slug>`): el dominio de la app en producción. */
@@ -210,7 +213,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`,
     publicAppOrigin: env["PUBLIC_APP_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}` : (allowedOrigins[0] ?? "http://localhost:5173")),
     metaGraphVersion,
-    metaApp: env["META_APP_ID"]?.trim() && env["META_APP_SECRET"]?.trim() ? { appId: env["META_APP_ID"]!.trim(), appSecret: env["META_APP_SECRET"]!.trim() } : null,
+    metaApp: metaAppOf(env),
     metaOAuthRedirectUrl:
       env["META_OAUTH_REDIRECT_URL"]?.trim() ||
       (productionHost ? `https://${productionHost}/api/ads/meta/callback` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/ads/meta/callback`),
@@ -221,4 +224,14 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     helpDocsBase: productionHost ? `https://${productionHost}/api/help/docs` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/help/docs`,
     tasks: loadTasksConfig(env, productionHost)
   };
+}
+
+/** La app de Meta (id, secreto y, si hay, la configuración del inicio de sesión para empresas). */
+function metaAppOf(env: NodeJS.ProcessEnv): ApiConfig["metaApp"] {
+  const appId = env["META_APP_ID"]?.trim();
+  const appSecret = env["META_APP_SECRET"]?.trim();
+  if (!appId || !appSecret) return null;
+  const loginConfigId = env["META_LOGIN_CONFIG_ID"]?.trim();
+  if (loginConfigId && !/^\d{5,30}$/.test(loginConfigId)) throw new ApiConfigError("META_LOGIN_CONFIG_ID debe ser el número de la configuración de Meta.");
+  return { appId, appSecret, ...(loginConfigId ? { loginConfigId } : {}) };
 }

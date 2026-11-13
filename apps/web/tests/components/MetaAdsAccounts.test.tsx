@@ -56,7 +56,7 @@ describe("Meta Ads conectado", () => {
   it("conectar con un token guarda la cuenta y la muestra con su interruptor", async () => {
     stub("none");
     renderAt("/meta-ads?tab=accounts");
-    await userEvent.click(await screen.findByRole("button", { name: /Pégalo aquí/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "Conectar con un token" }));
     const dialog = screen.getByRole("dialog", { name: "Conectar con un token" });
     await userEvent.type(within(dialog).getByLabelText("Token de acceso"), "EAAB" + "x".repeat(30));
     await userEvent.click(within(dialog).getByRole("button", { name: "Conectar" }));

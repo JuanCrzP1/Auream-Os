@@ -1,0 +1,7 @@
+/* Enlaces a las páginas legales al pie de iniciar sesión y registrarse, y el
+   aviso de que al crear la cuenta se aceptan. */
+.auth-legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 14px; font-size: 0.8rem; }
+.auth-legal a { color: var(--muted); text-decoration: none; }
+.auth-legal a:hover { color: var(--primary); text-decoration: underline; }
+.auth-consent { margin: 12px 0 0; color: var(--muted); font-size: 0.8rem; line-height: 1.5; text-align: center; }
+.auth-consent a { color: var(--primary); }

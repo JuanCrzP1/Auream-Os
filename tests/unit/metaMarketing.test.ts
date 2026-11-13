@@ -51,18 +51,30 @@ describe("MetaMarketingClient", () => {
 
   it("errores de Meta en español; un token vencido pide reconectar y nunca aparece en el mensaje", async () => {
     const client = (body: unknown, status = 400) => new MetaMarketingClient(null, "v23.0", vi.fn().mockResolvedValue(json(status, body)));
-    await expect(client({ error: { code: 190, message: "Error validating access token" } }).me(TOKEN)).rejects.toMatchObject({ reconnect: true, message: expect.stringContaining("Vuelve a conectar") });
+    await expect(client({ error: { code: 190, message: "Error validating access token" } }).me(TOKEN)).rejects.toMatchObject({ reconnect: true, reason: "token", message: expect.stringContaining("Vuelve a conectar") });
     await expect(client({ error: { code: 17 } }).me(TOKEN)).rejects.toMatchObject({ reconnect: false, message: expect.stringContaining("limitando") });
     const leaky = client({ error: { code: 1, message: `boom ${TOKEN}` } }, 500).me(TOKEN);
     await expect(leaky).rejects.toBeInstanceOf(AdsProviderError);
     await expect(leaky).rejects.not.toThrow(TOKEN);
   });
 
-  it("sin app configurada no ofrece el inicio de sesión; con app arma el enlace con los permisos de anuncios", () => {
+  it("el botón solo existe con la configuración del inicio de sesión: sin app, o con app pero sin configuración, no hay enlace", () => {
     expect(new MetaMarketingClient(null).authorizeUrl("s", "https://x/cb")).toBeNull();
-    const url = new URL(new MetaMarketingClient({ appId: "123", appSecret: "s".repeat(20) }).authorizeUrl("estado", "https://x/cb")!);
+    expect(new MetaMarketingClient({ appId: "123", appSecret: "s".repeat(20) }).authorizeUrl("estado", "https://x/cb")).toBeNull();
+  });
+
+  it("app de tipo Negocio: el enlace lleva la configuración (config_id) y nunca scope; su token no vence y no se «alarga»", async () => {
+    const app = { appId: "123", appSecret: "s".repeat(20), loginConfigId: "2321905838596706" };
+    const url = new URL(new MetaMarketingClient(app).authorizeUrl("estado", "https://x/cb")!);
     expect(url.pathname).toBe("/v23.0/dialog/oauth");
-    expect(Object.fromEntries(url.searchParams)).toMatchObject({ client_id: "123", redirect_uri: "https://x/cb", state: "estado", scope: "ads_read,business_management" });
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      client_id: "123", redirect_uri: "https://x/cb", state: "estado", response_type: "code", config_id: "2321905838596706", override_default_response_type: "true"
+    });
+    const fetchMock = vi.fn().mockResolvedValueOnce(json(200, { access_token: TOKEN, token_type: "bearer" }));
+    const result = await new MetaMarketingClient(app, "v23.0", fetchMock).exchangeCode("codigo", "https://x/cb");
+    expect(result).toEqual({ token: TOKEN, expiresAt: null });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]![0])).not.toContain("fb_exchange_token");
   });
 });
 

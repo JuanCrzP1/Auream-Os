@@ -16,7 +16,8 @@ const PERKS = [
 
 /**
  * Meta Ads → Cuentas. Sin conectar: «Conectar con Meta» (inicio de sesión de
- * Meta) o pegar un token de usuario del sistema. Conectado: las cuentas
+ * Meta) o pegar un token de usuario del sistema; si el servidor no tiene la
+ * app de Meta, el token es la acción principal (nunca un botón apagado). Conectado: las cuentas
  * publicitarias para elegir cuáles usa Auream, su última actualización y
  * desconectar. Solo dueños y administradores.
  */
@@ -46,23 +47,40 @@ export function AccountsPanel({ ads }: { readonly ads: ReturnType<typeof useAdAc
       <div className="ads-accounts__main">
         <MetaMark size="lg" />
         <h2 id="ads-accounts-title" className="ads-accounts__title">Conecta tu cuenta de Meta</h2>
-        <p className="ads-accounts__text">Inicias sesión con Meta y eliges qué cuentas publicitarias usa Auream. Nada que descargar ni subir: el gasto se actualiza solo.</p>
-        <button
-          type="button"
-          className="ads-accounts__meta"
-          disabled={!canManage || !oauth}
-          aria-describedby={noteId}
-          onClick={() => void ads.startOAuth().catch((e) => setError(apiErrorMessage(e, "No se pudo abrir Meta.")))}
-        >
-          <IntegrationGlyph kind="meta" mono />
-          Conectar con Meta
-        </button>
-        <p id={noteId} className="ads-accounts__note">
-          {!canManage ? "Pide a un dueño o administrador que conecte Meta." : oauth ? "Te pedirá permiso para leer tus anuncios (ads_read)." : "El inicio de sesión con Meta aún no está configurado en el servidor."}
+        <p className="ads-accounts__text">
+          {oauth ? "Inicias sesión con Meta y eliges qué cuentas publicitarias usa Auream." : "Pegas el token de tu Business Manager y eliges qué cuentas publicitarias usa Auream."} Nada que descargar ni subir: el gasto
+          se actualiza solo.
         </p>
-        {canManage ? (
+        {oauth ? (
+          <button
+            type="button"
+            className="ads-accounts__meta"
+            disabled={!canManage}
+            aria-describedby={noteId}
+            onClick={() => void ads.startOAuth().catch((e) => setError(apiErrorMessage(e, "No se pudo abrir Meta.")))}
+          >
+            <IntegrationGlyph kind="meta" mono />
+            Conectar con Meta
+          </button>
+        ) : (
+          // Sin el inicio de sesión de Meta (la app aún no está aprobada), el token es la forma de conectar: para todos igual.
+          <button type="button" className="ads-accounts__meta" disabled={!canManage} aria-describedby={noteId} onClick={() => setTokenOpen(true)}>
+            <IntegrationGlyph kind="meta" mono />
+            Conectar con un token
+          </button>
+        )}
+        <p id={noteId} className="ads-accounts__note" hidden={!data}>
+          {!data
+            ? null
+            : !canManage
+            ? "Pide a un dueño o administrador que conecte Meta."
+            : oauth
+              ? "Te pedirá permiso para leer tus anuncios (ads_read)."
+              : "Un token de usuario del sistema de tu Business Manager, con el permiso ads_read. No vence y se guarda cifrado."}
+        </p>
+        {canManage && oauth ? (
           <button type="button" className="ui-link ads-accounts__token" onClick={() => setTokenOpen(true)}>
-            ¿Tienes un token de usuario del sistema de Meta? Pégalo aquí
+            ¿Prefieres un token de usuario del sistema? Pégalo aquí
           </button>
         ) : null}
         {error ? <p className="ui-error" role="alert">{error}</p> : null}

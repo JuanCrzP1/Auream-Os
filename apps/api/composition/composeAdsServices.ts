@@ -1,3 +1,5 @@
+import { MetaDataDeletionService } from "../../../domains/ads/application/MetaDataDeletionService";
+import { SqlMetaDataDeletions } from "../../../infrastructure/persistence/sql/SqlMetaDataDeletions";
 import type { ApiConfig } from "../config/loadApiConfig";
 import { AdConnectionServices } from "../../../domains/ads/application/AdConnectionServices";
 import { AdsSyncService } from "../../../domains/ads/application/AdsSyncService";
@@ -49,6 +51,8 @@ export interface AdsModule {
   readonly dashboard: DashboardModule;
   /** Adonde vuelve la web al terminar el inicio de sesión de Meta. */
   readonly appOrigin: string;
+  /** Avisos de Meta (quitar la app, borrar datos). `null` sin la app de Meta en el servidor. */
+  readonly dataDeletion: MetaDataDeletionService | null;
 }
 
 export function composeAdsServices(
@@ -79,7 +83,11 @@ export function composeAdsServices(
     export: new SalesExportService(new SqlSalesExport(sql), adsReader, fx, timezoneOf, scopes),
     ...(directory ? { lines: new LineComparisonService(salesReader, adsReader, fx, timezoneOf, directory, expenses) } : {})
   };
-  if (!config.credentialsKeyRing) return { connection: null, syncHandler: null, dashboard, appOrigin: config.publicAppOrigin };
+  // Quitar la app o pedir el borrado desde Facebook: se verifica con el secreto de la app.
+  const dataDeletion = config.metaApp
+    ? new MetaDataDeletionService(config.metaApp.appSecret, new SqlMetaDataDeletions(sql), new SqlAdsRepository(sql), `${config.publicAppOrigin}/eliminar-datos`)
+    : null;
+  if (!config.credentialsKeyRing) return { connection: null, syncHandler: null, dashboard, appOrigin: config.publicAppOrigin, dataDeletion };
 
   const repository = new SqlAdsRepository(sql);
   const provider = new MetaMarketingClient(config.metaApp, config.metaGraphVersion);
@@ -91,6 +99,7 @@ export function composeAdsServices(
     connection: new AdConnectionServices(repository, provider, cipher, syncScheduler, signer, config.metaOAuthRedirectUrl),
     syncHandler: new AdsSyncTaskHandler(new AdsSyncService(repository, provider, cipher, syncScheduler, onError)),
     dashboard,
-    appOrigin: config.publicAppOrigin
+    appOrigin: config.publicAppOrigin,
+    dataDeletion
   };
 }

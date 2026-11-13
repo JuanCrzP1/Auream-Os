@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ThemeToggleButton } from "@shared/theme/components/ThemeToggleButton";
+import { LegalLinks } from "@shared/legal/LegalLinks";
 import { AuthHero } from "./AuthHero";
 import "./auth-page.css";
 
@@ -37,6 +38,7 @@ export function AuthLayout({ title, subtitle, children, footer }: Props) {
           {children}
 
           <footer className="auth-page__footer">{footer}</footer>
+          <LegalLinks />
         </section>
       </div>
     </main>

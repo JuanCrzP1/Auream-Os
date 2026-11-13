@@ -79,4 +79,11 @@ describe("loadApiConfig · WhatsApp por QR (uazapi)", () => {
     expect(config.whatsappWebhookBaseUrl).toBe("https://auream-os.vercel.app/api");
     expect(loadApiConfig({ JWT_SECRET: VALID_SECRET, VERCEL_ENV: "preview", VERCEL_PROJECT_PRODUCTION_URL: "auream-os.vercel.app" }).whatsappWebhookBaseUrl).toBeNull();
   });
+
+  it("la app de Meta: id y secreto juntos; la configuración del inicio de sesión para empresas es un número", () => {
+    expect(loadApiConfig({ META_APP_ID: "1497068415680505" }).metaApp).toBeNull();
+    expect(loadApiConfig({ META_APP_ID: "1497068415680505", META_APP_SECRET: "s".repeat(32) }).metaApp).toEqual({ appId: "1497068415680505", appSecret: "s".repeat(32) });
+    expect(loadApiConfig({ META_APP_ID: "1", META_APP_SECRET: "s".repeat(32), META_LOGIN_CONFIG_ID: " 2321905838596706 " }).metaApp?.loginConfigId).toBe("2321905838596706");
+    expect(() => loadApiConfig({ META_APP_ID: "1", META_APP_SECRET: "s".repeat(32), META_LOGIN_CONFIG_ID: "ads_read" })).toThrow(/META_LOGIN_CONFIG_ID/);
+  });
 });

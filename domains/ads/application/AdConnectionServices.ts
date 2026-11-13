@@ -102,10 +102,10 @@ export class AdConnectionServices {
       user = await this.provider.me(token);
       accounts = await this.provider.listAccounts(token);
     } catch (error) {
-      if (error instanceof AdsProviderError) throw new ValidationError(error.message);
+      if (error instanceof AdsProviderError) throw new ValidationError(method === "token" ? (TOKEN_PROBLEMS[error.reason ?? ""] ?? error.message) : error.message);
       throw error;
     }
-    if (accounts.length === 0) throw new ValidationError("Ese usuario de Meta no tiene cuentas publicitarias (o el token no tiene el permiso ads_read).");
+    if (accounts.length === 0) throw new ValidationError(method === "token" ? TOKEN_WITHOUT_ACCOUNTS : "Ese usuario de Meta no tiene cuentas publicitarias (o no aceptó el permiso ads_read).");
     await this.repository.saveConnection({
       tenantId,
       method,
@@ -124,6 +124,14 @@ export class AdConnectionServices {
     for (const account of toSync) if (account) await this.scheduler.scheduleSync(tenantId, account.id, this.now());
   }
 }
+
+/** Al pegar un token: qué está mal y cómo arreglarlo (lo que dice Meta no le sirve a un cliente). */
+const TOKEN_PROBLEMS: Readonly<Record<string, string>> = {
+  token: "Meta no acepta ese token: puede estar mal copiado, vencido o revocado. Genera uno nuevo en tu Business Manager y pégalo completo.",
+  permission: "A ese token le falta el permiso ads_read. Genéralo de nuevo y marca ads_read en la lista de permisos."
+};
+const TOKEN_WITHOUT_ACCOUNTS =
+  "Ese token no ve ninguna cuenta publicitaria. En tu Business Manager, asígnale al usuario del sistema tu cuenta publicitaria (con permiso para ver el rendimiento) y vuelve a pegarlo.";
 
 function toSummary(account: AdAccount) {
   return {

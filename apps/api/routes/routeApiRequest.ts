@@ -28,6 +28,7 @@ import type { LinkService } from "../../../domains/groups/application/LinkServic
 import type { GroupActivity } from "../../../domains/groups/application/GroupActivity";
 import { routeAdsRequest } from "./routeAdsRequest";
 import { routeAdsCallback } from "./routeAdsCallback";
+import { routeMetaDataDeletion } from "./routeMetaDataDeletion";
 import { routeDashboardRequest } from "./routeDashboardRequest";
 import { routeSalesLinesRequest } from "./routeSalesLinesRequest";
 import { routeOtherExpensesRequest } from "./routeOtherExpensesRequest";
@@ -157,6 +158,8 @@ export async function routeApiRequest(
   if (await routeHelpDocs(request, response, url, dependencies.helpServices?.help, dependencies.helpServices?.docsBase ?? "")) return;
   if (await routeGroupLink(request, response, url, dependencies.groupServices?.link, dependencies.rateLimiter)) return;
   if (await routeAdsCallback(request, response, url, dependencies.adsServices?.connection, dependencies.adsServices?.appOrigin ?? "", dependencies.rateLimiter)) return;
+  // Avisos de Meta (quitar la app, borrar datos): sin sesión, los autoriza la firma con el secreto de la app.
+  if (await routeMetaDataDeletion(request, response, url, dependencies.adsServices?.dataDeletion, dependencies.rateLimiter)) return;
 
   // Enlace de invitación al equipo: lo autoriza su secreto; quien lo abre puede no tener cuenta.
   if (await routeInvitationPublic(request, response, url, dependencies.invitationServices, dependencies.rateLimiter)) return;

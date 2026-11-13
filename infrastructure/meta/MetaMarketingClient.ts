@@ -19,11 +19,16 @@ import { parseEntity, parseInsight } from "./metaInsights";
 
 const TIMEOUT_MS = 20_000;
 const MAX_PAGES = 40;
-const SCOPES = "ads_read,business_management";
-
 export interface MetaAppCredentials {
   readonly appId: string;
   readonly appSecret: string;
+  /**
+   * La configuración de «Facebook Login for Business» (apps de tipo Negocio):
+   * define en Meta el tipo de token, las cuentas y los permisos (solo
+   * ads_read). El enlace lleva `config_id` y nunca `scope` (Meta pide no
+   * mezclarlos). Sin ella no se ofrece el botón.
+   */
+  readonly loginConfigId?: string;
 }
 
 const scrub = (value: string) => value.replace(/\bEA[A-Za-z0-9]{20,}\b/g, "[token oculto]").slice(0, 240);
@@ -41,25 +46,33 @@ export class MetaMarketingClient implements AdsProvider {
     this.fetchImpl = fetchImpl ?? ((input, init) => fetch(input, init));
   }
 
+  /**
+   * El enlace de «Conectar con Meta», solo con la configuración del inicio de
+   * sesión para empresas: es lo que enciende el botón. Sin ella (la app aún no
+   * está aprobada), no hay botón aunque la app esté en el servidor: su secreto
+   * igual sirve para los avisos de borrado de datos de Meta.
+   */
   public authorizeUrl(state: string, redirectUri: string): string | null {
-    if (!this.app) return null;
-    const query = new URLSearchParams({ client_id: this.app.appId, redirect_uri: redirectUri, state, scope: SCOPES, response_type: "code" });
+    if (!this.app?.loginConfigId) return null;
+    const query = new URLSearchParams({
+      client_id: this.app.appId,
+      redirect_uri: redirectUri,
+      state,
+      response_type: "code",
+      config_id: this.app.loginConfigId,
+      override_default_response_type: "true"
+    });
     return `${this.dialogUrl}/${this.graphVersion}/dialog/oauth?${query}`;
   }
 
   public async exchangeCode(code: string, redirectUri: string): Promise<{ token: string; expiresAt: string | null }> {
     if (!this.app) throw new AdsProviderError("La app de Meta no está configurada en el servidor.");
     const short = await this.request("oauth/access_token", null, { client_id: this.app.appId, client_secret: this.app.appSecret, redirect_uri: redirectUri, code });
-    // El de corta duración se cambia por uno de 60 días.
-    const long = await this.request("oauth/access_token", null, {
-      grant_type: "fb_exchange_token",
-      client_id: this.app.appId,
-      client_secret: this.app.appSecret,
-      fb_exchange_token: String(short["access_token"] ?? "")
-    });
-    const token = String(long["access_token"] ?? short["access_token"] ?? "");
+    // La configuración «Conectar Meta Ads» entrega un token de usuario del sistema
+    // que no vence: se usa tal cual (no hay que «alargarlo»).
+    const token = String(short["access_token"] ?? "");
     if (!token) throw new AdsProviderError("Meta no entregó el permiso. Inténtalo de nuevo.");
-    const seconds = Number(long["expires_in"] ?? 0);
+    const seconds = Number(short["expires_in"] ?? 0);
     return { token, expiresAt: seconds > 0 ? new Date(Date.now() + seconds * 1000).toISOString() : null };
   }
 
@@ -138,8 +151,8 @@ export class MetaMarketingClient implements AdsProvider {
     const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
     if (response.ok) return body;
     const error = (body["error"] ?? {}) as { code?: number; message?: string; error_user_msg?: string };
-    if (error.code === 190 || response.status === 401) throw new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true);
-    if (error.code === 200 || error.code === 10) throw new AdsProviderError("Falta el permiso ads_read para leer los anuncios. Vuelve a conectar y acéptalo.", true);
+    if (error.code === 190 || response.status === 401) throw new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true, "token");
+    if (error.code === 200 || error.code === 10) throw new AdsProviderError("Falta el permiso ads_read para leer los anuncios. Vuelve a conectar y acéptalo.", true, "permission");
     if (error.code === 4 || error.code === 17 || error.code === 613 || error.code === 80004) throw new AdsProviderError("Meta está limitando las consultas; se reintenta más tarde.");
     throw new AdsProviderError(`Meta respondió ${response.status}: ${scrub(error.error_user_msg || error.message || "error desconocido")}`);
   }
