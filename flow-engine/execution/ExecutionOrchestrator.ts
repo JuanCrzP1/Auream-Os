@@ -4,6 +4,7 @@ import { type InboundEnvelope } from "../../contracts/RuntimeContracts";
 import { timerOf, type FlowRunResult } from "../../contracts/FlowTimerContracts";
 import type { Session } from "../../contracts/RuntimeContracts";
 
+import type { BusinessDataReader } from "../ports/BusinessDataReader";
 import type { SessionStore, TenantContextResolver } from "../ports/RuntimePorts";
 import { ExecutionLoop } from "./ExecutionLoop";
 
@@ -22,7 +23,9 @@ export class ExecutionOrchestrator {
     private readonly tenantResolver: TenantContextResolver,
     private readonly flowRegistry: FlowRegistry,
     private readonly sessionService: SessionStore,
-    private readonly executionLoop: ExecutionLoop
+    private readonly executionLoop: ExecutionLoop,
+    /** Los Datos del negocio (`{g_…}`), una vez por turno. Ausente: el motor no los conoce. */
+    private readonly business?: BusinessDataReader
   ) {}
 
   public async handle(envelope: InboundEnvelope): Promise<FlowRunResult> {
@@ -40,7 +43,9 @@ export class ExecutionOrchestrator {
     }
 
     const snapshot = await this.resolveSnapshot(initialSession, publishedSnapshot);
-    return this.executionLoop.run(snapshot, initialSession, envelope, { timezone: tenant.timezone });
+    // Un fallo al leerlos no tumba el turno: los textos quedan con su valor por defecto.
+    const business = this.business ? await this.business.values(tenant.tenantId).catch(() => ({})) : undefined;
+    return this.executionLoop.run(snapshot, initialSession, envelope, { timezone: tenant.timezone, ...(business ? { business } : {}) });
   }
 
   private async resolveSnapshot(session: Session, publishedSnapshot: FlowSnapshot): Promise<FlowSnapshot> {

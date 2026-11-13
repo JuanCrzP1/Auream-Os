@@ -62,7 +62,7 @@ export function MessageEditor({ message, onChange }: { readonly message: Message
         <input ref={file} type="file" accept="image/*,video/*" hidden onChange={(event) => void upload(event.target.files?.[0])} />
         <span className="bc-message__count">{message.text.length}/{BROADCAST_LIMITS.maxTextLength}</span>
       </div>
-      <span className="bc-hint">Si no sabemos el nombre, dice «Hola 👋» sin dejar un hueco.</span>
+      <span className="bc-hint">Si no sabemos el nombre, dice «Hola 👋» sin dejar un hueco. Tus Datos del negocio también sirven: {"{g_horario}"}.</span>
       {error ? <p className="ui-error" role="alert">{error}</p> : null}
     </div>
   );

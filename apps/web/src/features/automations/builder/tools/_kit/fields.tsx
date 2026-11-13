@@ -241,6 +241,10 @@ export function VariableHint({ variables }: { readonly variables: ReadonlyArray<
       <p className="kit-hint">
         Si puede faltar, dale un valor por defecto: <code className="kit-variable">{"{first_name|amigo}"}</code>
       </p>
+      <p className="kit-hint">
+        Lo que repites en tus mensajes (Pago Móvil, horario, enlaces) va en Configuración › Datos del negocio y se escribe así:{" "}
+        <code className="kit-variable">{"{g_horario}"}</code>
+      </p>
     </>
   );
 }

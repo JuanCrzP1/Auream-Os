@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { BusinessDataReader } from "../../../flow-engine/ports/BusinessDataReader";
 import type { ApiConfig } from "../config/loadApiConfig";
 import { AudienceServices } from "../../../domains/broadcasts/application/AudienceServices";
 import { BroadcastDispatcher } from "../../../domains/broadcasts/application/BroadcastDispatcher";
@@ -34,6 +35,8 @@ export interface BroadcastDependencies {
   readonly scheduler: TaskScheduler;
   readonly outreach: OutreachService;
   readonly connections: { readonly list: Pick<ListConnectionsService, "execute">; readonly flows: FlowCatalog };
+  /** Datos del negocio (`{g_…}`) para el texto de las difusiones. */
+  readonly businessValues?: BusinessDataReader;
   readonly onError: (error: unknown, context: Record<string, unknown>) => void;
 }
 
@@ -62,7 +65,8 @@ export function composeBroadcastServices(deps: BroadcastDependencies): Broadcast
     timezoneOf: async (tenantId) => (await tenants.resolve(tenantId)).timezone,
     now: () => new Date(),
     random: Math.random,
-    newId: randomUUID
+    newId: randomUUID,
+    ...(deps.businessValues ? { business: (tenantId: string) => deps.businessValues!.values(tenantId) } : {})
   };
   const launcher = new BroadcastLauncher(engine);
   const dispatcher = new BroadcastDispatcher(engine);

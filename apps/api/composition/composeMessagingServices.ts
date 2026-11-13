@@ -32,6 +32,7 @@ import { NewChatService } from "../../../domains/conversations/application/NewCh
 import type { DealOwners } from "../../../domains/conversations/application/ports/ConversationPorts";
 import { SqlTeamRepository } from "../../../infrastructure/persistence/sql/SqlTeamRepository";
 import { composeProductionEngine } from "./composeProductionEngine";
+import type { BusinessDataReader } from "../../../flow-engine/ports/BusinessDataReader";
 import { chatTeam, inboundContacts } from "./messagingAdapters";
 import { SqlConversationRepository } from "../../../infrastructure/persistence/sql/SqlConversationRepository";
 
@@ -89,6 +90,8 @@ export interface MessagingDependencies {
   readonly contactFields?: Pick<ContactFieldSync, "persist">;
   /** El tipo de cada campo (Esperar respuesta: volver a preguntar si no encaja). */
   readonly fieldCatalog?: ContactFieldCatalog;
+  /** Datos del negocio (`{g_…}`) para los mensajes y el Condicional. Ausente: el motor no los conoce. */
+  readonly businessValues?: BusinessDataReader;
   /** Ventas del bloque Registrar venta (se guardan en Ventas). */
   readonly sales: SalesLedger;
   /** Quién oye los mensajes entrantes (se conecta después: Difusiones depende de Mensajería). */

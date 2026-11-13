@@ -1,5 +1,6 @@
 import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import type { ContactFieldCatalog } from "../../../flow-engine/ports/ContactFieldCatalog";
+import type { BusinessDataReader } from "../../../flow-engine/ports/BusinessDataReader";
 import type { ApiConfig } from "../config/loadApiConfig";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
@@ -39,6 +40,8 @@ export interface ProductionEngineDependencies {
   readonly sales: SalesLedger;
   /** Campos del cliente de la cuenta (su tipo). Ausente: ninguna clave tiene tipo. */
   readonly fieldCatalog?: ContactFieldCatalog;
+  /** Datos del negocio (`{g_…}`), leídos una vez por turno. Ausente: el motor no los conoce. */
+  readonly businessValues?: BusinessDataReader;
 }
 
 export function composeProductionEngine(deps: ProductionEngineDependencies) {
@@ -65,7 +68,8 @@ export function composeProductionEngine(deps: ProductionEngineDependencies) {
     tenants,
     new SavedFlowRegistry(deps.workspaces),
     sessions,
-    new ExecutionLoop(sessions, new ContextService(), nodeRuntime, new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService()))
+    new ExecutionLoop(sessions, new ContextService(), nodeRuntime, new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService())),
+    deps.businessValues
   );
 
   return { engine, sessionRepository, tenants };

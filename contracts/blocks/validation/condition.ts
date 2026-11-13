@@ -41,7 +41,7 @@ export function validateCondition(_content: BlockData, config: BlockData): Block
   for (const rule of rules) {
     if (categoryHasField(rule.category) && rule.field.trim().length === 0) return invalid(MISSING_FIELD_MESSAGE);
     if (!operatorNeedsValue(rule)) continue;
-    if (rule.category === "customField") {
+    if (rule.category === "customField" || rule.category === "globalVariable") {
       const problem = typedFieldProblem(rule);
       if (problem) return invalid(problem);
     }

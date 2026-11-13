@@ -1,4 +1,5 @@
 import { GetBuilderWorkspaceService } from "../../../domains/automations/builder/application/GetBuilderWorkspaceService";
+import type { BusinessDataReader } from "../../../flow-engine/ports/BusinessDataReader";
 import { NO_CONTACT_FIELDS, type ContactFieldCatalog } from "../../../flow-engine/ports/ContactFieldCatalog";
 import { SaveDraftService } from "../../../domains/automations/builder/application/SaveDraftService";
 import { SimulateTurnService } from "../../../domains/automations/simulation/application/SimulateTurnService";
@@ -134,7 +135,9 @@ export function composeBuilderServices(
   /** Registrar venta en la simulación: calcula la venta con el catálogo real, sin guardarla. */
   salesPreview: SalesLedger = new DisabledSalesLedger(),
   /** Campos del cliente (su tipo): el laboratorio repregunta y llena la ficha igual que un flujo real. */
-  fields: ContactFieldCatalog = NO_CONTACT_FIELDS
+  fields: ContactFieldCatalog = NO_CONTACT_FIELDS,
+  /** Datos del negocio (`{g_…}`): el laboratorio usa los valores reales. Ausente: no los conoce. */
+  business?: BusinessDataReader
 ): ApiServices {
   const { automationRepository, folderRepository, workspaceRepository, unitOfWork } =
     composeAutomationsPersistence(config, sqlClient);
@@ -153,7 +156,7 @@ export function composeBuilderServices(
       automationRepository
     ),
     saveDraftService: new SaveDraftService(unitOfWork),
-    simulateTurnService: new SimulateTurnService(composeSimulationSandbox({ ai, http, timezoneOf, sales: salesPreview, fields }), rateLimiter),
+    simulateTurnService: new SimulateTurnService(composeSimulationSandbox({ ai, http, timezoneOf, sales: salesPreview, fields, ...(business ? { business } : {}) }), rateLimiter),
     testIntegrationService: new TestIntegrationRequestService(new EngineIntegrationRequestTester(http), rateLimiter),
     testAiService: new TestAiStepService(new EngineAiStepTester(ai), rateLimiter),
     testPixelService: new TestPixelEventService(new EnginePixelEventTester(conversions), rateLimiter),

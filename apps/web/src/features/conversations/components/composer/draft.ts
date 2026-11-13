@@ -1,5 +1,7 @@
 import type { AgentMedia, AgentMessagePart } from "@contracts/ConversationContracts";
 import { fillQuickReplyName, type QuickReply } from "@contracts/QuickReplyContracts";
+import { fillBusinessData } from "@contracts/BusinessDataContracts";
+import type { ContactFieldValue } from "@contracts/ContactContracts";
 
 // ---------------------------------------------------------------------------
 // El borrador del compositor: piezas en espera (archivos adjuntos o piezas de
@@ -33,18 +35,24 @@ export const MEDIA_LABEL: Readonly<Record<AgentMedia["type"], string>> = { image
  * texto (se puede retocar antes de enviar); si tiene varias piezas o
  * archivos, quedan en espera, en orden.
  */
-export function applyQuickReply(reply: QuickReply, contactName: string | null): { readonly text?: string; readonly pieces: DraftPiece[] } {
+export function applyQuickReply(
+  reply: QuickReply,
+  contactName: string | null,
+  /** Los Datos del negocio (`{g_horario}`): salen puestos, igual que desde el MCP. */
+  business: Readonly<Record<string, ContactFieldValue>> = {}
+): { readonly text?: string; readonly pieces: DraftPiece[] } {
+  const fill = (text: string) => fillBusinessData(fillVariables(text, contactName), business);
   const only = reply.pieces.length === 1 ? reply.pieces[0] : undefined;
-  if (only?.kind === "text") return { text: fillVariables(only.text, contactName), pieces: [] };
+  if (only?.kind === "text") return { text: fill(only.text), pieces: [] };
   return {
     pieces: reply.pieces.map((piece): DraftPiece =>
       piece.kind === "text"
-        ? { id: pieceId(), kind: "text", text: fillVariables(piece.text, contactName) }
+        ? { id: pieceId(), kind: "text", text: fill(piece.text) }
         : {
             id: pieceId(),
             kind: "media",
             media: piece.media,
-            ...(piece.caption ? { caption: fillVariables(piece.caption, contactName) } : {}),
+            ...(piece.caption ? { caption: fill(piece.caption) } : {}),
             label: piece.media.fileName ?? MEDIA_LABEL[piece.media.type]
           }
     )

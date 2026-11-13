@@ -1,13 +1,16 @@
 import "./phone-preview.css";
 import type { FlowOption } from "@shared/automations/flowOptions";
 import type { BroadcastDraft } from "./broadcastDraft";
+import { fillBusinessData } from "@contracts/BusinessDataContracts";
+import type { ContactFieldValue } from "@contracts/ContactContracts";
+import { useBusinessValues } from "@shared/business-data/useBusinessData";
 
 const FOOTER = "Para no recibir más mensajes, responde SALIR.";
 
-/** El texto como lo verá un cliente (con su nombre; sin nombre, sin hueco). */
-export function previewText(text: string, name: string | null): string {
+/** El texto como lo verá un cliente: con su nombre (sin nombre, sin hueco) y los Datos del negocio de la cuenta. */
+export function previewText(text: string, name: string | null, business: Readonly<Record<string, ContactFieldValue>> = {}): string {
   const first = (name ?? "").trim().split(/\s+/)[0] ?? "";
-  return text
+  return fillBusinessData(text, business)
     .replace(/\{(first_name|nombre)(\|[^}]*)?\}/g, first)
     .replace(/\{full_name(\|[^}]*)?\}/g, (name ?? "").trim())
     .replace(/\{[A-Za-z_][\w.-]*(\|[^}]*)?\}/g, "")
@@ -19,6 +22,7 @@ export function previewText(text: string, name: string | null): string {
 /** Cómo lo ve el cliente en su WhatsApp (la primera versión). */
 export function PhonePreview({ draft, flows, sampleName }: { readonly draft: BroadcastDraft; readonly flows: ReadonlyArray<FlowOption>; readonly sampleName: string | null }) {
   const name = sampleName ?? "Laura";
+  const business = useBusinessValues();
   const message = draft.messages[0];
   const flowName = flows.find((flow) => flow.id === draft.flowIds[0])?.name;
   return (
@@ -40,7 +44,7 @@ export function PhonePreview({ draft, flows, sampleName }: { readonly draft: Bro
             {message.media ? (
               message.media.type === "image" ? <img className="bc-phone__media" src={message.media.url} alt="" /> : <video className="bc-phone__media" src={message.media.url} muted />
             ) : null}
-            {message.text.trim() ? <p>{previewText(message.text, name)}</p> : null}
+            {message.text.trim() ? <p>{previewText(message.text, name, business)}</p> : null}
             {draft.settings.optOutFooter ? <p className="bc-phone__footer">{FOOTER}</p> : null}
             <span className="bc-phone__time">10:02 ✓✓</span>
           </div>

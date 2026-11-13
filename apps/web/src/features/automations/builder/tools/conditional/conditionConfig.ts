@@ -44,7 +44,7 @@ export const RULE_CATEGORY_OPTIONS: ReadonlyArray<Option<RuleCategory>> = [
   { value: "attendant", label: "Asesor asignado" },
   { value: "contactField", label: "Dato del contacto" },
   { value: "customField", label: "Campo del cliente" },
-  { value: "globalVariable", label: "Variable global" }
+  { value: "globalVariable", label: "Dato del negocio (variable global)" }
 ];
 
 const OPERATOR_LABELS: Readonly<Record<string, string>> = {
@@ -87,8 +87,10 @@ const CATEGORY_OPERATOR_LABELS: Partial<Record<RuleCategory, Readonly<Record<str
  * cliente ofrece los de su tipo (una lista: «es una de»; una fecha: «es hoy»…).
  */
 export function operatorsFor(category: RuleCategory, fieldType?: ContactFieldType): ReadonlyArray<Option<string>> {
-  const labels = category === "customField" && fieldType === "boolean" ? { equal: "es" } : (CATEGORY_OPERATOR_LABELS[category] ?? {});
-  const values = category === "customField" ? operatorsForFieldType(fieldType) : ruleOperators(category);
+  // Un campo del cliente y un dato del negocio se comparan igual: con su tipo.
+  const typed = category === "customField" || category === "globalVariable";
+  const labels = typed && fieldType === "boolean" ? { equal: "es" } : (CATEGORY_OPERATOR_LABELS[category] ?? {});
+  const values = typed ? operatorsForFieldType(fieldType) : ruleOperators(category);
   return values.map((value) => ({ value, label: labels[value] ?? OPERATOR_LABELS[value] ?? value }));
 }
 
@@ -145,14 +147,15 @@ function optionLabel(options: ReadonlyArray<Option<string>>, value: string): str
 /** Frase corta de una regla: «Etiqueta tiene vip», «Ciudad es una de Medellín o Bogotá». `fieldLabel`: el nombre del campo del cliente, si se conoce. */
 export function describeRule(rule: ConditionRule, fieldLabel?: string): string {
   const subject = optionLabel(RULE_CATEGORY_OPTIONS, rule.category);
-  const operator = OPERATOR_LABELS[rule.operator] && rule.category === "customField" ? OPERATOR_LABELS[rule.operator]! : optionLabel(operatorsFor(rule.category), rule.operator);
-  const field = rule.category === "contactField" ? optionLabel(CONTACT_FIELD_OPTIONS, rule.field) : rule.category === "customField" && fieldLabel ? fieldLabel : rule.field;
+  const typed = rule.category === "customField" || rule.category === "globalVariable";
+  const operator = OPERATOR_LABELS[rule.operator] && typed ? OPERATOR_LABELS[rule.operator]! : optionLabel(operatorsFor(rule.category), rule.operator);
+  const field = rule.category === "contactField" ? optionLabel(CONTACT_FIELD_OPTIONS, rule.field) : typed && fieldLabel ? fieldLabel : rule.field;
   const value =
     rule.category === "weekday"
       ? optionLabel(WEEKDAY_OPTIONS, rule.value)
       : rule.category === "attendance"
         ? optionLabel(ATTENDANCE_OPTIONS, rule.value)
-        : rule.category === "customField"
+        : typed
           ? (typedValueText(rule) ?? rule.value)
           : rule.value;
 
@@ -163,6 +166,6 @@ export function describeRule(rule: ConditionRule, fieldLabel?: string): string {
 /** Las reglas en una frase: «Se cumple si Ciudad es una de Medellín o Bogotá y Ya compró es Sí». */
 export function conditionInWords(config: ConditionConfig, labelOf: (key: string) => string | undefined = () => undefined): string {
   if (config.rules.length === 0) return "";
-  const phrases = config.rules.map((rule) => describeRule(rule, rule.category === "customField" ? labelOf(rule.field) : undefined));
+  const phrases = config.rules.map((rule) => describeRule(rule, rule.category === "customField" || rule.category === "globalVariable" ? labelOf(rule.field) : undefined));
   return `Se cumple si ${phrases.join(config.match === "all" ? " y " : " o ")}.`;
 }

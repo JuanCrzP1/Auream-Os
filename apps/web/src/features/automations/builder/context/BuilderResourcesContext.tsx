@@ -11,6 +11,7 @@ import { testPaymentProof } from "@features/automations/builder/services/payment
 import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
 import { useProductCatalog } from "@shared/products/useProductCatalog";
 import { useContactFieldCatalog } from "@shared/contact-fields/useContactFieldCatalog";
+import { useBusinessData } from "@shared/business-data/useBusinessData";
 
 // ---------------------------------------------------------------------------
 // Recursos de la cuenta (datos y capacidades) para los editores de herramientas.
@@ -36,6 +37,8 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
   const { refresh: refreshProducts } = catalogOfProducts;
   const fields = useContactFieldCatalog();
   const { refresh: refreshFields, create: createField } = fields;
+  const business = useBusinessData();
+  const { refresh: refreshBusiness } = business;
 
   // Los píxeles se conectan en Meta Ads, los productos se crean en Ventas y los
   // campos en Configuración, que los bloques abren en otra pestaña: al volver
@@ -46,10 +49,11 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       void refreshPixels();
       void refreshProducts();
       void refreshFields();
+      void refreshBusiness();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refreshPixels, refreshProducts, refreshFields]);
+  }, [refreshPixels, refreshProducts, refreshFields, refreshBusiness]);
 
   const resources = useMemo<ToolResources>(
     () => ({
@@ -82,6 +86,7 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
         canManage: fields.data?.canManage ?? false,
         status: fields.status
       },
+      businessData: business.list,
       // Crea en el catálogo (el mismo de Configuración › Campos del cliente) y lo recarga.
       createContactField: async (request) => {
         try {
@@ -91,7 +96,7 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
         }
       }
     }),
-    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, catalogOfProducts.products, catalogOfProducts.status, fields.fields, fields.data, fields.status, createField]
+    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, catalogOfProducts.products, catalogOfProducts.status, fields.fields, fields.data, fields.status, createField, business.list]
   );
 
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;

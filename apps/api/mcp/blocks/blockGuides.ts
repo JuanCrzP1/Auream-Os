@@ -16,7 +16,7 @@ export interface BlockGuide {
   readonly example: Readonly<Record<string, unknown>>;
 }
 
-export const VARIABLES_NOTE = `Los textos admiten variables entre llaves: ${BUILT_IN_VARIABLES.map((v) => `{${v.name}}`).join(", ")}, los campos personalizados del contacto ({ciudad}) y los guardados por otros bloques ({ia.respuesta}). Con valor por defecto: {first_name|amigo}.`;
+export const VARIABLES_NOTE = `Los textos admiten variables entre llaves: ${BUILT_IN_VARIABLES.map((v) => `{${v.name}}`).join(", ")}, los campos personalizados del contacto ({ciudad}), los guardados por otros bloques ({ia.respuesta}) y los Datos del negocio de la cuenta ({g_horario}; de list_flow_resources, solo se leen). Con valor por defecto: {first_name|amigo}.`;
 
 const conditionCategories = RULE_CATEGORIES.map((category) => `${category} (${ruleOperators(category).join("/")})`).join("; ");
 
@@ -71,7 +71,7 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
     purpose: "Evalúa reglas y sigue por «se cumple» o «no se cumple».",
     fields: {
       match: "'all' (todas) | 'any' (cualquiera).",
-      rules: `[{category, operator, field?, value?}]. Categorías (operadores): ${conditionCategories}. «field» para contactField (name/email/phone), customField y globalVariable. «value»: etiqueta, día (monday…sunday), hora HH:MM, fecha AAAA-MM-DD o texto. customField con tipo: is_one_of/is_none_of (opciones de la lista, una por línea en «value»), between («desde\\nhasta»), anniversary_today (sin valor: hoy es su día y mes), within_next_days/at_least_days_ago (N días), before_date/after_date (AAAA-MM-DD). Un sí o no se compara con «Sí»/«No».`
+      rules: `[{category, operator, field?, value?}]. Categorías (operadores): ${conditionCategories}. «field» para contactField (name/email/phone), customField y globalVariable (la clave g_… de un dato del negocio, con su tipo como customField). «value»: etiqueta, día (monday…sunday), hora HH:MM, fecha AAAA-MM-DD o texto. customField con tipo: is_one_of/is_none_of (opciones de la lista, una por línea en «value»), between («desde\\nhasta»), anniversary_today (sin valor: hoy es su día y mes), within_next_days/at_least_days_ago (N días), before_date/after_date (AAAA-MM-DD). Un sí o no se compara con «Sí»/«No».`
     },
     outputs: "«true» (se cumple) y «false» (no se cumple).",
     example: { match: "all", rules: [{ category: "tag", operator: "equal", value: "VIP" }] }

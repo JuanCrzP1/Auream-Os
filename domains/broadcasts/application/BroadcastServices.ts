@@ -148,7 +148,8 @@ export class BroadcastServices {
     await this.requireFlows(actor.tenantId, [content]);
     const target = { contactId: null, name: null, phone, connectionId };
     if (content.kind === "flow") return this.engine.sender.sendFlow(actor.tenantId, target, content.automationId);
-    return this.engine.sender.sendMessage(actor.tenantId, target, { text: personalize(content.text, { name: null, phone }, input["optOutFooter"] !== false), media: content.media });
+    const business = (await this.engine.business?.(actor.tenantId)) ?? {};
+    return this.engine.sender.sendMessage(actor.tenantId, target, { text: personalize(content.text, { name: null, phone }, input["optOutFooter"] !== false, business), media: content.media });
   }
 
   private async summary(tenantId: string, id: string): Promise<BroadcastSummary> {

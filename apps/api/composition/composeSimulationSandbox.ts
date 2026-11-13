@@ -1,4 +1,5 @@
 import type { FlowSnapshot } from "../../../contracts/FlowSnapshot";
+import type { BusinessDataReader } from "../../../flow-engine/ports/BusinessDataReader";
 import type { InboundEnvelope, Session } from "../../../contracts/RuntimeContracts";
 import type { SimulationOptions, SimulationPersona } from "../../../contracts/SimulationContracts";
 import { AnalyticsService } from "../../../domains/analytics/application/AnalyticsService";
@@ -50,6 +51,8 @@ export interface SimulationSandboxDependencies {
   readonly sales: SalesLedger;
   /** Campos del cliente (su tipo): repreguntar y llenar la ficha del cliente de prueba como un flujo real. */
   readonly fields?: ContactFieldCatalog;
+  /** Datos del negocio reales de la cuenta (solo se leen): el laboratorio dice lo mismo que el flujo real. */
+  readonly business?: BusinessDataReader;
 }
 
 class TurnSandbox implements SimulationSandbox {
@@ -87,7 +90,7 @@ class TurnSandbox implements SimulationSandbox {
     const timezone = await this.deps.timezoneOf(this.tenantId);
     const tenants = new StaticTenantResolver({ [this.tenantId]: { tenantId: this.tenantId, tenantKey: this.tenantId, timezone, limits: SIMULATION_LIMITS } });
 
-    const result = await new ExecutionOrchestrator(tenants, registry, sessionService, loop).handle(envelope);
+    const result = await new ExecutionOrchestrator(tenants, registry, sessionService, loop, this.deps.business).handle(envelope);
     if (this.deps.fields) await keepTypedFields(this.deps.fields, this.tenantId, contacts, envelope, result.contextPatch ?? {});
     const after = (await sessions.find(sessionIdFor(this.tenantId, envelope.conversationKey))) ?? null;
     return { result, session: after, persona: contacts.current(), records: journal.entries(), counters: roundRobin.snapshot() };

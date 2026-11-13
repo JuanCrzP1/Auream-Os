@@ -1,4 +1,5 @@
 import type { HelpServices } from "../../../domains/help/application/HelpServices";
+import type { BusinessDataReader } from "../../../flow-engine/ports/BusinessDataReader";
 import { helpTools } from "./tools/helpTools";
 import type { ProductServices } from "../../../domains/products/application/ProductServices";
 import { randomBytes, randomUUID } from "node:crypto";
@@ -94,6 +95,10 @@ export interface McpDependencies {
   readonly groups?: GroupToolServices;
   /** Respuestas rápidas: verlas, organizarlas y enviarlas a un chat. */
   readonly quickReplies?: Pick<QuickReplyServices, "list" | "create" | "update" | "remove" | "markUsed">;
+  /** Datos del negocio (`{g_…}`): una respuesta rápida enviada por un agente los lleva puestos, como en el chat. */
+  readonly businessValues?: BusinessDataReader;
+  /** Los Datos del negocio de la cuenta, para configurar bloques (`list_flow_resources`). */
+  readonly businessData?: { list(tenantId: string): Promise<ReadonlyArray<{ key: string; label: string; type: string; value: string }>> };
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "createLabel" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list" | "triggers">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
@@ -120,7 +125,8 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
       builder: deps.builder,
       editing,
       ...(deps.integrations ? { integrations: deps.integrations } : {}),
-      ...(deps.products ? { products: deps.products } : {})
+      ...(deps.products ? { products: deps.products } : {}),
+      ...(deps.businessData ? { business: deps.businessData } : {})
     }),
     ...flowEditTools(editing),
     ...contactTools(deps.contacts),
@@ -134,7 +140,7 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     ...(deps.otherExpenses ? otherExpenseTools(deps.otherExpenses) : []),
     ...(deps.broadcasts ? broadcastTools(deps.broadcasts.broadcasts, deps.broadcasts.audiences) : []),
     ...(deps.groups ? groupTools(deps.groups) : []),
-    ...(deps.quickReplies ? quickReplyTools(deps.quickReplies, deps.messaging?.conversations ?? null) : []),
+    ...(deps.quickReplies ? quickReplyTools(deps.quickReplies, deps.messaging?.conversations ?? null, deps.businessValues ?? null) : []),
     ...(deps.help ? helpTools(deps.help) : [])
   ];
   return {

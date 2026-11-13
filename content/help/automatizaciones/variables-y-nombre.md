@@ -5,7 +5,7 @@ summary: Cómo usar {first_name} y los datos que guarda el flujo en tus mensajes
 order: 6
 updated: 2026-11-13
 keywords: variables, nombre, first_name, personalizar
-related: primer-flujo, primera-difusion, campos-del-cliente
+related: primer-flujo, primera-difusion, campos-del-cliente, datos-del-negocio
 ---
 
 Escribe una variable entre llaves y Auream la reemplaza para cada cliente.

@@ -24,6 +24,7 @@ import {
 import { conditionalTool } from "./definition";
 import { ConditionalIcon } from "./ConditionalIcon";
 import { CustomFieldRule } from "./CustomFieldRule";
+import { BusinessDataRule } from "./BusinessDataRule";
 import { findField } from "../_kit/FieldPicker";
 
 function RuleValue({
@@ -122,6 +123,8 @@ export function ConditionEditor({ draft, onChange, resources }: ToolEditorProps)
                     />
                     {rule.category === "customField" ? (
                       <CustomFieldRule rule={rule} index={index} resources={resources} onPatch={(patch) => patchRule(rule.id, patch)} />
+                    ) : rule.category === "globalVariable" ? (
+                      <BusinessDataRule rule={rule} index={index} resources={resources} onPatch={(patch) => patchRule(rule.id, patch)} />
                     ) : (
                       <div className="kit-row">
                         {categoryHasField(rule.category) ? (
@@ -158,7 +161,7 @@ export function ConditionEditor({ draft, onChange, resources }: ToolEditorProps)
               ))}
             </ul>
             <AddButton label="Añadir regla" onClick={addRule} />
-            <p className="cond-words" aria-live="polite">{conditionInWords(config, (key) => findField(resources?.contactFields, key)?.label)}</p>
+            <p className="cond-words" aria-live="polite">{conditionInWords(config, (key) => findField(resources?.contactFields, key)?.label ?? resources?.businessData?.find((datum) => datum.key === key)?.label)}</p>
           </>
         )}
       </CardSection>

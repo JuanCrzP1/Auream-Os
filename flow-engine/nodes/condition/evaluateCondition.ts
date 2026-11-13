@@ -7,10 +7,10 @@ import { compareTypedField } from "./typedFieldRules";
 // los hechos disponibles, y devuelve si se cumple y el detalle por regla.
 //
 // NO SE INVENTAN DATOS. Lo que la plataforma aún no tiene (estado de la
-// atención y asesor asignado llegan con Conversaciones; variables globales
-// con los ajustes de cuenta) se reporta como «no disponible»: la regla cuenta
-// como NO cumplida y queda registrado, en vez de suponer un valor. Las
-// etiquetas vienen del contacto; si no se pudieron leer, también.
+// atención y asesor asignado llegan con Conversaciones) se reporta como «no
+// disponible»: la regla cuenta como NO cumplida y queda registrado, en vez de
+// suponer un valor. Las etiquetas vienen del contacto y las variables
+// globales de Datos del negocio; si no se pudieron leer, también.
 // ---------------------------------------------------------------------------
 
 /** Lo que el Condicional puede consultar sobre el contacto, la conversación y el momento. */
@@ -27,10 +27,12 @@ export interface ConditionFacts {
   customField(name: string): unknown;
   /** Etiquetas del contacto (por nombre), o `undefined` si no se pudieron leer. */
   readonly tags?: ReadonlyArray<string>;
+  /** Datos del negocio (`g_promo_activa`), con su tipo, o `undefined` si el motor no los conoce. */
+  readonly business?: Readonly<Record<string, unknown>>;
 }
 
 /** Categorías cuyos datos todavía no existen en la plataforma. */
-const UNAVAILABLE_CATEGORIES: ReadonlySet<string> = new Set(["attendance", "attendant", "globalVariable"]);
+const UNAVAILABLE_CATEGORIES: ReadonlySet<string> = new Set(["attendance", "attendant"]);
 
 export interface RuleEvaluation {
   readonly ruleId: string;
@@ -145,7 +147,8 @@ function compareField(actual: unknown, operator: string, expected: string): bool
 }
 
 function evaluateRule(rule: ConditionRule, facts: ConditionFacts): RuleEvaluation {
-  if (UNAVAILABLE_CATEGORIES.has(rule.category) || (rule.category === "tag" && facts.tags === undefined)) {
+  const unknown = (rule.category === "tag" && facts.tags === undefined) || (rule.category === "globalVariable" && facts.business === undefined);
+  if (UNAVAILABLE_CATEGORIES.has(rule.category) || unknown) {
     return { ruleId: rule.id, met: false, unavailable: true };
   }
 
@@ -172,8 +175,10 @@ function evaluateRule(rule: ConditionRule, facts: ConditionFacts): RuleEvaluatio
       }
       case "contactField":
         return compareField(facts.contactField(rule.field), rule.operator, rule.value);
-      case "customField": {
-        const actual = facts.customField(rule.field);
+      case "customField":
+      case "globalVariable": {
+        // Un dato del negocio se compara con su tipo, igual que un campo del cliente.
+        const actual = rule.category === "customField" ? facts.customField(rule.field) : facts.business?.[rule.field];
         const typed = compareTypedField(actual, rule.operator, ruleValues(rule), sameValue, zoned(facts.now, facts.timezone).date);
         return typed ?? compareField(actual, rule.operator, rule.value);
       }

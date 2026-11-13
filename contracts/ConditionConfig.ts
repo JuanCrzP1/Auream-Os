@@ -101,6 +101,7 @@ export function ruleOperators(category: RuleCategory): ReadonlyArray<string> {
     case "messageWindow":
       return ["open", "closed"];
     case "customField":
+    case "globalVariable":
       return CUSTOM_FIELD_OPERATORS;
     default:
       return FIELD_OPERATORS;

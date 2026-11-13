@@ -6,6 +6,7 @@ import type { QuickReply } from "@contracts/QuickReplyContracts";
 import { fetchFlowOptions, type FlowOption } from "@shared/automations/flowOptions";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { markQuickReplyUsed } from "@shared/quick-replies/quickRepliesApi";
+import { useBusinessValues } from "@shared/business-data/useBusinessData";
 import { CountryDialPicker } from "@shared/ui/country-dial/CountryDialPicker";
 import { applyQuickReply, toParts } from "../composer/draft";
 
@@ -44,6 +45,7 @@ export function NewChatDialog({
   const [replyId, setReplyId] = useState(quickReplies[0]?.id ?? "");
   const [flows, setFlows] = useState<FlowOption[] | null>(null);
   const [flowId, setFlowId] = useState("");
+  const business = useBusinessValues();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +71,7 @@ export function NewChatDialog({
     try {
       if (kind === "flow") await onStart({ ...base, automationId: flowId });
       else if (kind === "quick" && reply) {
-        const applied = applyQuickReply(reply, name.trim() || null);
+        const applied = applyQuickReply(reply, name.trim() || null, business);
         await onStart({ ...base, message: { parts: toParts(applied.pieces, applied.text ?? "") } });
         markQuickReplyUsed(reply.id);
       } else await onStart({ ...base, message: { text: text.trim() } });

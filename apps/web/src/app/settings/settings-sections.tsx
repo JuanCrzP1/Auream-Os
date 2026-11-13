@@ -16,6 +16,7 @@ export const SETTINGS_ROUTES = {
   billing: "/settings/billing",
   security: "/settings/security",
   "contact-fields": "/settings/contact-fields",
+  "business-data": "/settings/business-data",
   "quick-replies": "/settings/quick-replies"
 } as const;
 
@@ -49,6 +50,12 @@ const Icons = {
       <path d="M5.5 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 14h3" />
     </>
   ),
+  businessData: icon(
+    <>
+      <path d="M4 20V9l8-5 8 5v11" />
+      <path d="M9 20v-5h6v5M4 20h16M9.5 10.5h5" />
+    </>
+  ),
   quickReplies: icon(<path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" />),
   security: icon(<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3zM9.5 12l2 2 3.5-4" />)
 };
@@ -79,6 +86,13 @@ export const SETTINGS_GROUPS: ReadonlyArray<SettingsNavGroup> = [
         path: SETTINGS_ROUTES["contact-fields"],
         icon: Icons.contactFields,
         description: "Lo que Auream sabe de cada cliente: de dónde sale, en cuántos está y qué flujos lo usan."
+      },
+      {
+        id: "business-data",
+        label: "Datos del negocio",
+        path: SETTINGS_ROUTES["business-data"],
+        icon: Icons.businessData,
+        description: "Lo que repites en tus mensajes (Pago Móvil, horario, dirección, enlaces), escrito una vez. Lo cambias aquí y cambia en todos tus flujos, difusiones y respuestas rápidas."
       }
     ]
   },

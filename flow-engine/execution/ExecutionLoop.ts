@@ -58,7 +58,7 @@ export class ExecutionLoop {
     snapshot: FlowSnapshot,
     initialSession: Session,
     envelope: InboundEnvelope,
-    options: { readonly timezone?: string } = {}
+    options: { readonly timezone?: string; readonly business?: Readonly<Record<string, string | number | boolean>> } = {}
   ): Promise<FlowRunResult> {
     let session = initialSession;
     const now = this.clock().toISOString();
@@ -126,6 +126,7 @@ export class ExecutionLoop {
         isWaitingInput: session.status === "waiting_input",
         now,
         timezone,
+        ...(options.business ? { business: options.business } : {}),
         // El despertador es solo para el bloque que lo pidió (el primero del turno).
         ...(hop === 0 && (timer || resumeOverdue) ? { timer: timer ? timer.reason : ("resume" as const) } : {}),
         inlinePauseUsedMs: pausedMs(aggregate.outputMessages)

@@ -73,7 +73,8 @@ export class BroadcastDispatcher {
     const content = broadcast.variants[recipient.variant] ?? broadcast.variants[0]!;
     try {
       if (content.kind === "flow") return await this.engine.sender.sendFlow(broadcast.tenantId, recipient, content.automationId);
-      const text = personalize(content.text, recipient, broadcast.settings.optOutFooter);
+      const business = (await this.engine.business?.(broadcast.tenantId)) ?? {};
+      const text = personalize(content.text, recipient, broadcast.settings.optOutFooter, business);
       return await this.engine.sender.sendMessage(broadcast.tenantId, recipient, { text, media: content.media });
     } catch (error) {
       return { ok: false, providerMessageId: null, error: error instanceof Error ? error.message.slice(0, 300) : "No se pudo enviar." };

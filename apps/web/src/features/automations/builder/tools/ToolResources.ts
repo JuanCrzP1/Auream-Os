@@ -7,6 +7,7 @@ import type { PaymentProofTestResult } from "@contracts/PaymentProofTestContract
 import type { PixelTestRequest, PixelTestResult } from "@contracts/PixelTestContracts";
 import type { ProductSummary } from "@contracts/SalesContracts";
 import type { ContactFieldDefinition, ContactFieldSummary, SaveContactFieldRequest } from "@contracts/ContactFieldContracts";
+import type { BusinessDatum } from "@contracts/BusinessDataContracts";
 
 // ---------------------------------------------------------------------------
 // Lo que un editor puede usar de la cuenta al configurar:
@@ -100,6 +101,8 @@ export interface ToolResources extends ToolCapabilities {
   readonly productsStatus?: ToolAiCredentialsStatus;
   /** Campos del cliente: se eligen de una lista en Esperar respuesta, Menú, Integración, IA y Condicional. */
   readonly contactFields?: ToolContactFields;
+  /** Datos del negocio (`{g_…}`): la regla «Variable global» del Condicional los elige de una lista. */
+  readonly businessData?: ReadonlyArray<BusinessDatum>;
 }
 
 export const EMPTY_TOOL_RESOURCES: ToolResources = { labels: [] };

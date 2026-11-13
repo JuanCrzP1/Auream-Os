@@ -4,6 +4,7 @@ import { MAX_AGENT_MESSAGE_LENGTH, type ConversationMessage, type SendAgentMessa
 import type { QuickReply } from "@contracts/QuickReplyContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { markQuickReplyUsed } from "@shared/quick-replies/quickRepliesApi";
+import { useBusinessValues } from "@shared/business-data/useBusinessData";
 import type { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
 import { ComposerTools } from "./ComposerTools";
 import { applyQuickReply, toParts } from "./draft";
@@ -54,6 +55,8 @@ export function Composer({
   const input = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<QuickReplyPickerHandle>(null);
   const draft = useDraftPieces(onError);
+  // Los Datos del negocio (`{g_…}`) de las respuestas rápidas salen ya puestos.
+  const business = useBusinessValues();
 
   const submit = async (request: SendAgentMessageRequest) => {
     setSending(true);
@@ -105,7 +108,7 @@ export function Composer({
   );
 
   const pickQuickReply = (reply: QuickReply) => {
-    const applied = applyQuickReply(reply, contactName);
+    const applied = applyQuickReply(reply, contactName, business);
     markQuickReplyUsed(reply.id);
     setPopover(null);
     setSearch("");

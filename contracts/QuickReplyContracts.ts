@@ -9,6 +9,8 @@
 // ---------------------------------------------------------------------------
 
 import type { AgentMessagePart } from "./ConversationContracts";
+import { fillBusinessData } from "./BusinessDataContracts";
+import type { ContactFieldValue } from "./ContactContracts";
 import type { MediaKind } from "./MediaContracts";
 
 export interface QuickReplyMedia {
@@ -84,11 +86,19 @@ export function fillQuickReplyName(text: string, contactName: string | null): st
   return first ? text.replace(/\{\s*nombre\s*\}/gi, first) : text.replace(/ ?\{\s*nombre\s*\}/gi, "");
 }
 
-/** Lo que sale al chat: las piezas en orden, con `{nombre}` ya puesto. */
-export function quickReplyParts(reply: Pick<QuickReply, "pieces">, contactName: string | null): AgentMessagePart[] {
+/**
+ * Lo que sale al chat: las piezas en orden, con `{nombre}` y los Datos del
+ * negocio (`{g_horario}`) ya puestos.
+ */
+export function quickReplyParts(
+  reply: Pick<QuickReply, "pieces">,
+  contactName: string | null,
+  business: Readonly<Record<string, ContactFieldValue>> = {}
+): AgentMessagePart[] {
+  const fill = (text: string) => fillBusinessData(fillQuickReplyName(text, contactName), business);
   return reply.pieces.map((piece): AgentMessagePart =>
     piece.kind === "text"
-      ? { kind: "text", text: fillQuickReplyName(piece.text, contactName) }
-      : { kind: "media", media: piece.media, ...(piece.caption ? { caption: fillQuickReplyName(piece.caption, contactName) } : {}) }
+      ? { kind: "text", text: fill(piece.text) }
+      : { kind: "media", media: piece.media, ...(piece.caption ? { caption: fill(piece.caption) } : {}) }
   );
 }

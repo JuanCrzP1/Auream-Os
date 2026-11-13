@@ -37,6 +37,7 @@ import { composeHelpServices } from "../composition/composeHelpServices";
 import { composeNotificationServices } from "../composition/composeNotificationServices";
 import { composeQuickReplyServices } from "../composition/composeQuickReplyServices";
 import { composeContactFieldServices, contactFieldCatalog } from "../composition/composeContactFieldServices";
+import { composeBusinessDataServices, composeBusinessValues } from "../composition/composeBusinessDataServices";
 import { SqlContactFieldRepository } from "../../../infrastructure/persistence/sql/SqlContactFields";
 import { composeContactNoteServices } from "../composition/composeContactNoteServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
@@ -96,7 +97,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const sales = composeSalesServices(config, tenancy.sqlClient, crmEvents);
   // El laboratorio usa el tipo real de cada campo (solo lectura; no depende de los flujos).
   const fieldCatalog = contactFieldCatalog(new SqlContactFieldRepository(tenancy.sqlClient));
-  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview, fieldCatalog);
+  // Datos del negocio (`{g_…}`): el laboratorio y los mensajes reales leen los mismos valores.
+  const businessValues = composeBusinessValues(tenancy.sqlClient);
+  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview, fieldCatalog, businessValues);
   const contactsServices = composeContactsServices(tenancy.sqlClient, {
     // Un cliente está en una sola etapa por embudo, venga la etiqueta de donde venga.
     groups: new StageLabelRules(new SqlCrmPipelineRepository(tenancy.sqlClient)),
@@ -154,6 +157,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
     contactFields: contactFields.sync,
     fieldCatalog: contactFields.catalog,
+    businessValues,
     sales: sales.ledger,
     inboundListeners,
     dealOwners: crm.ownerClaims,
@@ -180,6 +184,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const broadcasts = composeBroadcastServices({
     config,
     sql: tenancy.sqlClient,
+    businessValues,
     scheduler: scheduling.scheduler,
     outreach: messagingServices.outreach,
     connections: connectionsServices,
@@ -205,6 +210,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const mediaServices = composeMediaServices(config, tenancy.sqlClient, rateLimiter);
   const accountServices = composeAccountServices(config, tenancy.sqlClient, mediaServices?.storage ?? null, rateLimiter);
   const team = composeTeamServices(tenancy.sqlClient);
+
+  // Datos del negocio: la pantalla (dónde se usa cada dato) y el MCP.
+  const businessData = composeBusinessDataServices({ sql: tenancy.sqlClient, values: businessValues, automations: services.automationRepository, workspaces: services.workspaceRepository });
 
   // Ayuda: artículos del repositorio (también para el MCP y llms.txt), tutoriales y soporte.
   const help = composeHelpServices(tenancy.sqlClient);
@@ -243,6 +251,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
     quickReplyServices: quickReplies,
     contactFieldServices: { fields: contactFields.services, values: contactFields.values, tidy: contactFields.tidy, merge: contactFields.merge },
+    businessDataServices: businessData,
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
     salesLineServices: salesLines.lines,
@@ -266,6 +275,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       broadcasts: { broadcasts: broadcasts.broadcasts, audiences: broadcasts.audiences },
       groups: { campaigns: groups.campaigns, groups: groups.groups, posts: groups.posts },
       quickReplies,
+      businessValues,
+      businessData: { list: async (tenantId) => (await businessData.list(tenantId, false)).data },
       help: help.help,
       // Cada acción de un agente queda en el registro (sin sus datos).
       onToolCall: (access, report) => logger.info("mcp.tool_call", { tenantId: access.tenantId, credentialId: access.credentialId, ...report })

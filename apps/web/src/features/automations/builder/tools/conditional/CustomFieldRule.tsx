@@ -15,10 +15,11 @@ import { operatorsFor } from "./conditionConfig";
 // ---------------------------------------------------------------------------
 
 /** Qué forma tiene el valor de un operador: si cambia, el valor viejo no sirve. */
-const shapeOf = (operator: string) =>
+export const shapeOf = (operator: string) =>
   operator === "is_one_of" || operator === "is_none_of" ? "options" : operator === "between" ? "range" : operator.endsWith("_days") || operator === "at_least_days_ago" ? "days" : operator.endsWith("_date") ? "date" : "text";
 
-function TypedValue({ rule, field, label, onChange }: { rule: ConditionRule; field: ContactFieldSummary | undefined; label: string; onChange: (value: string) => void }) {
+/** El valor de una regla con tipo (campo del cliente o dato del negocio): opciones, rango, días, fecha o Sí / No. */
+export function TypedValue({ rule, field, label, onChange }: { rule: ConditionRule; field: Pick<ContactFieldSummary, "type" | "options"> | undefined; label: string; onChange: (value: string) => void }) {
   if (!operatorNeedsValue(rule)) return null;
   const values = ruleValues(rule);
   const shape = shapeOf(rule.operator);

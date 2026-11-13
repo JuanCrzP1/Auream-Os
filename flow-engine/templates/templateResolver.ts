@@ -1,6 +1,7 @@
 import { adVariable } from "../../contracts/AdOrigin";
 import type { ContactProfile } from "../../contracts/ContactContracts";
 import type { RuntimeInput } from "../../contracts/RuntimeContracts";
+import { isBusinessKey } from "../../contracts/BusinessDataContracts";
 import type { VariableResolver } from "../../contracts/TemplateVariables";
 import { customFieldValue, hasCustomField } from "../values/customFieldValue";
 
@@ -16,6 +17,8 @@ import { customFieldValue, hasCustomField } from "../values/customFieldValue";
 //   4. El anuncio de clic a WhatsApp por el que entró el contacto, con los
 //      nombres de Leona: `{source_id}`, `{source_url}`, `{media_url}`,
 //      `{thumbnail_url}` y `{ctwa_clid}` (el Pixel lo usa para atribuir).
+//   0. Los Datos del negocio (`{g_horario}`): solo de Configuración, nunca de
+//      la conversación ni de la ficha (un flujo no los puede cambiar).
 //   5. El reloj, en la zona del negocio: `{fecha}` (09/11/2026) y `{hora}`
 //      (14:35); `{data}` es la fecha con el nombre de Leona. Van al final: un
 //      campo que un flujo ya llame «fecha» sigue valiendo lo suyo.
@@ -59,6 +62,7 @@ export function templateResolver(input: RuntimeInput, profile: ContactProfile | 
   const clock = clockVariables(input);
 
   return (name) => {
+    if (isBusinessKey(name)) return input.business?.[name];
     if (name in builtIns && builtIns[name] !== undefined && builtIns[name] !== null) return builtIns[name];
     // Lo que el cliente dijo en esta conversación manda; si no, su ficha.
     if (hasCustomField(name, context, profile)) return customFieldValue(name, context, profile);

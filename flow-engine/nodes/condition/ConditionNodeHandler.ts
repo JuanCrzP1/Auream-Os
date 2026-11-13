@@ -34,7 +34,8 @@ function factsFrom(input: RuntimeInput, profile: ContactProfile | null): Conditi
     lastInboundAt: typeof inboundText === "string" ? input.envelope.receivedAt : null,
     contactField: (name) => contact[name],
     customField: (name) => customFieldValue(name, context, profile),
-    ...(profile ? { tags: profile.tags } : {})
+    ...(profile ? { tags: profile.tags } : {}),
+    ...(input.business ? { business: input.business } : {})
   };
 }
 

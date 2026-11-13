@@ -150,6 +150,13 @@ export interface RuntimeInput {
   /** Zona horaria IANA del negocio (ver `TenantContext.timezone`). */
   readonly timezone: string;
   /**
+   * Los Datos del negocio de la cuenta (`{g_horario}`), con su tipo, leídos
+   * una vez por turno. Solo lectura: ningún bloque los cambia. Ausente: el
+   * motor no los conoce (los textos quedan con su valor por defecto y la
+   * regla «Variable global» cuenta como no disponible).
+   */
+  readonly business?: Readonly<Record<string, string | number | boolean>>;
+  /**
    * El bloque se ejecuta porque venció su despertador (FASE C6), no por un
    * mensaje: el Programador sigue, una espera sale por «Tiempo agotado», un
    * Mensaje retoma tras una pausa larga. Solo llega al bloque que lo pidió.

@@ -17,6 +17,8 @@ export interface FlowReadServices {
   readonly editing: FlowEditingService;
   readonly integrations?: Pick<IntegrationsServices, "aiCredentials" | "pixelConnections">;
   readonly products?: Pick<ProductServices, "list">;
+  /** Datos del negocio (`{g_…}`): se usan en los textos y en la regla «Variable global» del Condicional. */
+  readonly business?: { list(tenantId: string): Promise<ReadonlyArray<{ key: string; label: string; type: string; value: string }>> };
 }
 
 const PALETTE = BLOCK_CATALOG.filter((block) => block.availableInPalette);
@@ -74,7 +76,7 @@ export function flowTools(services: FlowReadServices): McpTool[] {
     {
       name: "list_flow_resources",
       title: "Recursos para configurar bloques",
-      description: "Las conexiones de IA (para «Extensión IA»: credentialId), los píxeles de Meta (para «Pixel»: connectionId) y los productos activos (para «Registrar venta»: productId, con su precio por país) de la cuenta. Sin claves ni tokens.",
+      description: "Las conexiones de IA (para «Extensión IA»: credentialId), los píxeles de Meta (para «Pixel»: connectionId) los productos activos (para «Registrar venta»: productId, con su precio por país) y los Datos del negocio (businessData: {g_clave} en los textos y «globalVariable» en el Condicional; los flujos no los cambian) de la cuenta. Sin claves ni tokens.",
       scope: "flows.read",
       readOnly: true,
       inputSchema: { type: "object", properties: {} },
@@ -85,7 +87,8 @@ export function flowTools(services: FlowReadServices): McpTool[] {
           ? (await services.products.list(tenantId, false)).products
               .filter((product) => product.status === "active")
               .map((product) => ({ id: product.id, name: product.name, kind: product.kind, prices: product.prices }))
-          : []
+          : [],
+        businessData: services.business ? (await services.business.list(tenantId)).map((datum) => ({ key: datum.key, label: datum.label, type: datum.type, value: datum.value })) : []
       })
     }
   ];

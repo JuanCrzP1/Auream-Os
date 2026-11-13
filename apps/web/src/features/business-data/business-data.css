@@ -1,0 +1,67 @@
+/* Configuración › Datos › Datos del negocio: la barra, la tabla, la tarjeta de
+ * precios, el detalle con «Así lo ve tu cliente» y los diálogos. Solo tokens
+ * del tema (claro y oscuro), con el mismo lenguaje de Campos del cliente. */
+.bd, .bd-drawer, .bd-dialog {
+  --bd-line: color-mix(in srgb, var(--primary) 16%, transparent);
+  --bd-soft: color-mix(in srgb, var(--primary) 8%, transparent);
+  --bd-ink: color-mix(in srgb, var(--primary-hover) 80%, var(--text));
+}
+.bd code, .bd-drawer code, .bd-dialog code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--bd-ink); }
+
+.bd__frame { display: grid; gap: 18px; container: bd / inline-size; }
+.bd-loading { height: 260px; border-radius: 20px; background: linear-gradient(90deg, var(--surface) 0%, var(--surface-alt) 50%, var(--surface) 100%); background-size: 200% 100%; animation: bd-shimmer 1.2s linear infinite; }
+@keyframes bd-shimmer { to { background-position: -200% 0; } }
+
+.bd__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.bd__who { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: 0.8rem; }
+.bd__who svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.bd-card { border: 1px solid var(--bd-line); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.bd-card__head { display: grid; gap: 2px; padding: 18px 20px 12px; }
+.bd-card h2 { margin: 0; color: var(--text); font-size: 1rem; font-weight: 800; }
+.bd-card h2 span { margin-left: 6px; color: var(--muted); font-weight: 700; }
+.bd-card__head p { margin: 0; color: var(--muted); font-size: 0.82rem; }
+
+.bd-table__head, .bd-row { display: grid; grid-template-columns: 2fr 2.4fr 0.9fr 1.7fr 28px; gap: 12px; align-items: center; padding: 0 20px; }
+.bd-table__head { padding-block: 10px; border-block: 1px solid var(--bd-soft); background: color-mix(in srgb, var(--primary) 3%, var(--surface)); color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.bd-table__rows { margin: 0; padding: 0; list-style: none; }
+.bd-table__rows li + li .bd-row { border-top: 1px solid var(--bd-soft); }
+.bd-row { box-sizing: border-box; width: 100%; padding-block: 13px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background var(--speed-fast) ease; }
+.bd-row:hover, .bd-row:focus-visible { background: color-mix(in srgb, var(--primary) 6%, transparent); outline: none; }
+.bd-row__name { display: grid; gap: 2px; min-width: 0; }
+.bd-row__name strong { overflow: hidden; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+.bd-row__name code { font-size: 0.78rem; }
+.bd-row__value { overflow: hidden; color: var(--text); font-size: 0.84rem; text-overflow: ellipsis; white-space: nowrap; }
+.bd-row__uses { color: var(--text); font-size: 0.82rem; }
+.bd-row__uses.is-idle { color: var(--muted); }
+.bd-row__chevron { color: var(--muted); font-size: 1.2rem; text-align: right; }
+
+/* En pantallas angostas cada dato es una tarjeta: nombre y valor arriba, tipo y usos abajo. */
+@container bd (max-width: 640px) {
+  .bd-table__head { display: none; }
+  .bd-row { grid-template-columns: 1fr auto; grid-template-areas: "name chevron" "value value" "type uses"; row-gap: 6px; }
+  .bd-row__name { grid-area: name; }
+  .bd-row__value { grid-area: value; white-space: normal; }
+  .bd-row > span:nth-child(3) { grid-area: type; }
+  .bd-row__uses { grid-area: uses; text-align: right; }
+  .bd-row__chevron { grid-area: chevron; }
+}
+
+.bd-prices { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 20px; border: 1px dashed var(--bd-line); border-radius: 20px; background: color-mix(in srgb, var(--primary) 3%, var(--surface)); }
+.bd-prices__icon { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 12px; background: var(--bd-soft); color: var(--primary); }
+.bd-prices__icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bd-prices__text { display: grid; flex: 1 1 320px; gap: 2px; color: var(--text); font-size: 0.9rem; }
+.bd-prices__text span { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+.bd-soft-btn { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border: 1px solid var(--bd-line); border-radius: 12px; background: var(--surface-alt); color: var(--text); font: 700 0.85rem var(--font-body); text-decoration: none; }
+.bd-soft-btn:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: var(--primary); }
+
+/* Diálogos */
+.bd-dialog { width: min(540px, calc(100vw - 32px)); }
+.bd-dialog__key, .bd-dialog__hint { color: var(--muted); font-size: 0.78rem; font-weight: 500; line-height: 1.45; }
+.bd-dialog__optional { color: var(--muted); font-style: normal; font-weight: 500; }
+.bd-dialog__risk { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--rose) 28%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--rose) 6%, transparent); color: var(--text); font-size: 0.85rem; }
+.bd-dialog__risk > span { color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+.bd-value { min-height: 76px; resize: vertical; line-height: 1.45; }
+.bd-yesno { display: inline-flex; gap: 6px; padding: 4px; border-radius: 12px; background: var(--chip-bg); }
+.bd-yesno button { min-width: 64px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: 700 0.85rem var(--font-body); cursor: pointer; }
+.bd-yesno button.is-on { background: var(--surface); box-shadow: 0 2px 8px rgb(30 21 48 / 8%); color: var(--primary); }

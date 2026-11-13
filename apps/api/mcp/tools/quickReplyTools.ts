@@ -11,7 +11,7 @@ import { requiredText, stringListArg, textArg, type ToolArgs } from "./toolArgs"
 //   · organizarlas: «Respuestas rápidas: ver y editar» (`conversations.manage`,
 //     como en Configuración de la web)
 //   · enviarlas a un chat: «Conversaciones: ver y responder» (`conversations.write`),
-//     con `{nombre}` puesto igual que en el chat de la web (`quickReplyParts`).
+//     con `{nombre}` y `{g_…}` puestos igual que en el chat de la web (`quickReplyParts`).
 // Los archivos de una respuesta se suben desde la web; por aquí se escriben textos.
 // ---------------------------------------------------------------------------
 
@@ -49,7 +49,10 @@ async function findReply(replies: Replies, tenantId: string, args: ToolArgs): Pr
 
 const textPieces = (texts: ReadonlyArray<string>): QuickReplyPiece[] => texts.map((text) => ({ kind: "text", text }));
 
-export function quickReplyTools(replies: Replies, inbox: Inbox | null): McpTool[] {
+/** Los Datos del negocio de la cuenta (`{g_…}`). */
+type Business = { values(tenantId: string): Promise<Readonly<Record<string, string | number | boolean>>> };
+
+export function quickReplyTools(replies: Replies, inbox: Inbox | null, business: Business | null = null): McpTool[] {
   const tools: McpTool[] = [
     {
       name: "list_quick_replies",
@@ -109,7 +112,7 @@ export function quickReplyTools(replies: Replies, inbox: Inbox | null): McpTool[
   tools.push({
     name: "send_quick_reply",
     title: "Enviar una respuesta rápida a un chat",
-    description: "Envía al cliente, por WhatsApp y como asesor, todas las piezas de una respuesta rápida en orden, con `{nombre}` puesto. El bot de ese chat queda en pausa (atiende un asesor). Confirma con la persona antes: no se puede deshacer.",
+    description: "Envía al cliente, por WhatsApp y como asesor, todas las piezas de una respuesta rápida en orden, con `{nombre}` y los Datos del negocio (`{g_…}`) puestos. El bot de ese chat queda en pausa (atiende un asesor). Confirma con la persona antes: no se puede deshacer.",
     scope: "conversations.write",
     readOnly: false,
     inputSchema: { type: "object", properties: { conversation_id: { type: "string", description: "Id del chat (de list_conversations)." }, ...replyRef }, required: ["conversation_id"] },
@@ -117,7 +120,8 @@ export function quickReplyTools(replies: Replies, inbox: Inbox | null): McpTool[
       const reply = await findReply(replies, tenantId, args);
       const conversationId = requiredText(args, "conversation_id");
       const chat = await inbox.get(tenantId, conversationId);
-      const sent = await inbox.sendAgentMessage(tenantId, conversationId, { parts: quickReplyParts(reply, chat.contactName) }, { id: `mcp:${credentialId}`, name: `${credentialName} (agente IA)` });
+      const values = business ? await business.values(tenantId) : {};
+      const sent = await inbox.sendAgentMessage(tenantId, conversationId, { parts: quickReplyParts(reply, chat.contactName, values) }, { id: `mcp:${credentialId}`, name: `${credentialName} (agente IA)` });
       await replies.markUsed(tenantId, reply.id);
       return { sent: reply.pieces.length, shortcut: reply.shortcut, conversation: sent };
     }

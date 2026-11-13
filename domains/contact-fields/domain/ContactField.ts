@@ -45,6 +45,8 @@ function requireKey(value: unknown, label: string): string {
     throw new ValidationError("La clave solo admite letras, números, «_», «-» y «.», y debe empezar con una letra.");
   }
   if (RESERVED_FIELD_KEYS.has(key.toLowerCase())) throw new ValidationError(`«{${key}}» ya lo llena Auream: elige otro nombre.`);
+  // `{g_…}` son los Datos del negocio: un campo con ese nombre nunca se leería.
+  if (key.toLowerCase().startsWith("g_")) throw new ValidationError("Las claves que empiezan por «g_» son de Datos del negocio: elige otro nombre.");
   return key;
 }
 

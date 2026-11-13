@@ -1,4 +1,5 @@
 import type { Random } from "../domain/Pace";
+import type { BusinessValues } from "../domain/Personalize";
 import type {
   AudienceSource,
   BroadcastRepository,
@@ -28,4 +29,6 @@ export interface BroadcastEngine {
   readonly now: () => Date;
   readonly random: Random;
   readonly newId: () => string;
+  /** Datos del negocio (`{g_horario}`) para el texto. Ausente: quedan con su valor por defecto. */
+  readonly business?: (tenantId: string) => Promise<BusinessValues>;
 }

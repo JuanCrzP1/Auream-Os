@@ -1,9 +1,10 @@
+import { isBusinessKey } from "../../../contracts/BusinessDataContracts";
 import { renderTemplate } from "../../../contracts/TemplateVariables";
 
 // ---------------------------------------------------------------------------
 // El texto de cada persona: `{first_name}` con su nombre (o nada, sin dejar un
-// hueco: «Hola 👋»), y el pie para darse de baja. Y lo contrario: reconocer
-// cuando alguien pide no recibir más.
+// hueco: «Hola 👋»), los Datos del negocio (`{g_horario}`) y el pie para darse
+// de baja. Y lo contrario: reconocer cuando alguien pide no recibir más.
 // ---------------------------------------------------------------------------
 
 export const OPT_OUT_FOOTER = "Para no recibir más mensajes, responde SALIR.";
@@ -13,11 +14,14 @@ export interface Person {
   readonly phone: string;
 }
 
-export function personalize(text: string, person: Person, footer: boolean): string {
+/** Los Datos del negocio de la cuenta, con su tipo. */
+export type BusinessValues = Readonly<Record<string, string | number | boolean>>;
+
+export function personalize(text: string, person: Person, footer: boolean, business: BusinessValues = {}): string {
   const full = (person.name ?? "").trim();
   const first = full.split(/\s+/)[0] ?? "";
   const values: Record<string, string> = { first_name: first, nombre: first, full_name: full, phone: person.phone };
-  const rendered = renderTemplate(text, (name) => values[name]).text
+  const rendered = renderTemplate(text, (name) => (isBusinessKey(name) ? business[name] : values[name])).text
     .replace(/[ \t]{2,}/g, " ")
     .replace(/ +([,.!?;:])/g, "$1")
     .replace(/[ \t]+\n/g, "\n")
