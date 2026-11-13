@@ -96,15 +96,19 @@ export class AdConnectionServices {
   }
 
   private async connect(tenantId: string, userId: string, token: string, expiresAt: string | null, method: "oauth" | "token"): Promise<void> {
-    let user: { id: string; name: string };
+    // Primero las cuentas publicitarias: es lo único que Auream necesita. El
+    // nombre de quien conecta es un adorno; si Meta no lo da, queda «Meta».
     let accounts;
     try {
-      user = await this.provider.me(token);
       accounts = await this.provider.listAccounts(token);
     } catch (error) {
-      if (error instanceof AdsProviderError) throw new ValidationError(method === "token" ? (TOKEN_PROBLEMS[error.reason ?? ""] ?? error.message) : error.message);
+      if (error instanceof AdsProviderError) throw new ValidationError(explain(error, method));
       throw error;
     }
+    const user = await this.provider.me(token).catch((error: unknown) => {
+      if (error instanceof AdsProviderError && error.reason !== "token") return { id: null, name: "Meta" };
+      throw error instanceof AdsProviderError ? new ValidationError(explain(error, method)) : error;
+    });
     if (accounts.length === 0) throw new ValidationError(method === "token" ? TOKEN_WITHOUT_ACCOUNTS : "Ese usuario de Meta no tiene cuentas publicitarias (o no aceptó el permiso ads_read).");
     await this.repository.saveConnection({
       tenantId,
@@ -125,11 +129,15 @@ export class AdConnectionServices {
   }
 }
 
-/** Al pegar un token: qué está mal y cómo arreglarlo (lo que dice Meta no le sirve a un cliente). */
+/** Al pegar un token: qué está mal y cómo arreglarlo, y lo que dijo Meta para ver la causa real. */
 const TOKEN_PROBLEMS: Readonly<Record<string, string>> = {
   token: "Meta no acepta ese token: puede estar mal copiado, vencido o revocado. Genera uno nuevo en tu Business Manager y pégalo completo.",
-  permission: "A ese token le falta el permiso ads_read. Genéralo de nuevo y marca ads_read en la lista de permisos."
+  permission: "Meta no dejó leer tus cuentas publicitarias con ese token. Revisa que tenga ads_read y que el usuario del sistema tenga asignada la cuenta publicitaria."
 };
+function explain(error: AdsProviderError, method: "oauth" | "token"): string {
+  const advice = method === "token" ? (TOKEN_PROBLEMS[error.reason ?? ""] ?? error.message) : error.message;
+  return error.detail ? `${advice} Meta dice: «${error.detail}».` : advice;
+}
 const TOKEN_WITHOUT_ACCOUNTS =
   "Ese token no ve ninguna cuenta publicitaria. En tu Business Manager, asígnale al usuario del sistema tu cuenta publicitaria (con permiso para ver el rendimiento) y vuelve a pegarlo.";
 

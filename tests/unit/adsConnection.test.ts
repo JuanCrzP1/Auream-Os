@@ -72,12 +72,26 @@ describe("AdConnectionServices", () => {
     await expect(world([]).connectionServices.connectWithToken(world().actor, "EAAB" + "x".repeat(30))).rejects.toThrow("asígnale al usuario del sistema tu cuenta publicitaria");
     // Al pegar un token, lo que dice Meta se traduce en qué arreglar.
     const w = world();
-    w.provider.me.mockRejectedValueOnce(new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true, "token"));
+    w.provider.listAccounts.mockRejectedValueOnce(new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true, "token"));
     await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("mal copiado, vencido o revocado");
-    w.provider.listAccounts.mockRejectedValueOnce(new AdsProviderError("Falta el permiso ads_read.", true, "permission"));
-    await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("marca ads_read");
-    w.provider.me.mockRejectedValueOnce(new AdsProviderError("Meta está limitando las consultas; se reintenta más tarde."));
+    w.provider.listAccounts.mockRejectedValueOnce(new AdsProviderError("Sin permiso.", true, "permission", "(#200) Missing ads_read · código 200"));
+    // El consejo y, para ver la causa real, lo que dijo Meta con su código.
+    await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("tenga ads_read y que el usuario del sistema tenga asignada la cuenta publicitaria. Meta dice: «(#200) Missing ads_read · código 200».");
+    w.provider.listAccounts.mockRejectedValueOnce(new AdsProviderError("Meta está limitando las consultas; se reintenta más tarde."));
     await expect(w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("limitando las consultas");
+    expect(w.getConnection()).toBeNull();
+  });
+
+  it("si Meta no da el nombre de quien conecta, igual conecta (lo que importa son las cuentas); un token que no sirve no", async () => {
+    const w = world();
+    w.provider.me.mockRejectedValueOnce(new AdsProviderError("Sin permiso.", true, "permission", "(#10) Application does not have permission for this action · código 10"));
+    const status = await w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30));
+    expect(w.getConnection()).toMatchObject({ metaUserId: null, metaUserName: "Meta" });
+    expect(status).toMatchObject({ connection: { connected: true, userName: "Meta" }, accounts: [{ externalId: "act_1", enabled: true }] });
+    const other = world();
+    other.provider.me.mockRejectedValueOnce(new AdsProviderError("Vencido.", true, "token"));
+    await expect(other.connectionServices.connectWithToken(other.actor, "EAAB" + "x".repeat(30))).rejects.toThrow("mal copiado, vencido o revocado");
+    expect(other.getConnection()).toBeNull();
   });
 
   it("sin app de Meta no hay inicio de sesión; sincronizar a mano pide esperar 5 minutos entre una y otra", async () => {

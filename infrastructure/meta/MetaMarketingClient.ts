@@ -138,9 +138,10 @@ export class MetaMarketingClient implements AdsProvider {
     return rows;
   }
 
-  private async request(path: string, token: string | null, query: Record<string, string>): Promise<Record<string, unknown>> {
+  private async request(path: string, token: string | null, query: Record<string, string>, sign = true): Promise<Record<string, unknown>> {
     const params = new URLSearchParams(query);
-    if (token && this.app && !token.includes("|")) params.set("appsecret_proof", createHmac("sha256", this.app.appSecret).update(token).digest("hex"));
+    const signed = sign && Boolean(token && this.app && !token.includes("|"));
+    if (signed) params.set("appsecret_proof", createHmac("sha256", this.app!.appSecret).update(token!).digest("hex"));
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     let response: Response;
     try {
@@ -150,10 +151,27 @@ export class MetaMarketingClient implements AdsProvider {
     }
     const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
     if (response.ok) return body;
-    const error = (body["error"] ?? {}) as { code?: number; message?: string; error_user_msg?: string };
-    if (error.code === 190 || response.status === 401) throw new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true, "token");
-    if (error.code === 200 || error.code === 10) throw new AdsProviderError("Falta el permiso ads_read para leer los anuncios. Vuelve a conectar y acéptalo.", true, "permission");
-    if (error.code === 4 || error.code === 17 || error.code === 613 || error.code === 80004) throw new AdsProviderError("Meta está limitando las consultas; se reintenta más tarde.");
-    throw new AdsProviderError(`Meta respondió ${response.status}: ${scrub(error.error_user_msg || error.message || "error desconocido")}`);
+    const error = (body["error"] ?? {}) as MetaError;
+    // Un token pegado de la app del propio cliente no se firma con el secreto de
+    // Auream: Meta lo rechaza («appsecret_proof» inválido). Se repite sin firma.
+    if (signed && error.code === 100 && /appsecret_proof/i.test(error.message ?? "")) return this.request(path, token, query, false);
+    const detail = describe(error, response.status);
+    if (error.code === 190 || response.status === 401) throw new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true, "token", detail);
+    if (error.code === 200 || error.code === 10) throw new AdsProviderError("Meta no dio permiso para leer los anuncios. Vuelve a conectar y acéptalo.", true, "permission", detail);
+    if (error.code === 4 || error.code === 17 || error.code === 613 || error.code === 80004) throw new AdsProviderError("Meta está limitando las consultas; se reintenta más tarde.", false, null, detail);
+    throw new AdsProviderError(`Meta respondió ${response.status}: ${scrub(error.error_user_msg || error.message || "error desconocido")}`, false, null, detail);
   }
+}
+
+interface MetaError {
+  readonly code?: number;
+  readonly error_subcode?: number;
+  readonly message?: string;
+  readonly error_user_msg?: string;
+}
+
+/** Lo que dijo Meta, tal cual y sin el token: «(#10) … · código 10/2069007». */
+function describe(error: MetaError, status: number): string {
+  const code = error.code === undefined ? `HTTP ${status}` : `código ${error.code}${error.error_subcode ? `/${error.error_subcode}` : ""}`;
+  return `${scrub(error.error_user_msg || error.message || "sin mensaje")} · ${code}`;
 }

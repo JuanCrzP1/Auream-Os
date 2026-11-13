@@ -58,6 +58,26 @@ describe("MetaMarketingClient", () => {
     await expect(leaky).rejects.not.toThrow(TOKEN);
   });
 
+  it("cada error lleva lo que dijo Meta con su código (para ver la causa real), sin el token", async () => {
+    const client = (body: unknown) => new MetaMarketingClient(null, "v23.0", vi.fn().mockResolvedValue(json(400, body)));
+    await expect(client({ error: { code: 10, error_subcode: 2069007, message: `(#10) Application does not have permission for this action ${TOKEN}` } }).me(TOKEN))
+      .rejects.toMatchObject({ reason: "permission", detail: "(#10) Application does not have permission for this action [token oculto] · código 10/2069007" });
+    await expect(client({}).me(TOKEN)).rejects.toMatchObject({ detail: "sin mensaje · HTTP 400" });
+  });
+
+  it("un token pegado de otra app: si Meta rechaza la firma de Auream, repite sin firma; cualquier otro error no se repite", async () => {
+    const app = { appId: "123", appSecret: "secreto-de-la-app-123" };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(json(400, { error: { code: 100, message: "Invalid appsecret_proof provided in the API argument" } }))
+      .mockResolvedValueOnce(json(200, { id: "1", name: "Auream" }));
+    expect(await new MetaMarketingClient(app, "v23.0", fetchMock).me(TOKEN)).toEqual({ id: "1", name: "Auream" });
+    expect(String(fetchMock.mock.calls[0]![0])).toContain("appsecret_proof=");
+    expect(String(fetchMock.mock.calls[1]![0])).not.toContain("appsecret_proof");
+    const once = vi.fn().mockResolvedValue(json(400, { error: { code: 100, message: "Unsupported get request" } }));
+    await expect(new MetaMarketingClient(app, "v23.0", once).me(TOKEN)).rejects.toThrow("Unsupported get request");
+    expect(once).toHaveBeenCalledTimes(1);
+  });
+
   it("el botón solo existe con la configuración del inicio de sesión: sin app, o con app pero sin configuración, no hay enlace", () => {
     expect(new MetaMarketingClient(null).authorizeUrl("s", "https://x/cb")).toBeNull();
     expect(new MetaMarketingClient({ appId: "123", appSecret: "s".repeat(20) }).authorizeUrl("estado", "https://x/cb")).toBeNull();

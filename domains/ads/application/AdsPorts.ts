@@ -6,18 +6,19 @@ import type { AdAccount, AdDailyInsight, AdEntity, MetaConnection, ProviderAdAcc
 // proveedor (TikTok, Google) sería otro adaptador del mismo puerto.
 // ---------------------------------------------------------------------------
 
-/** Un fallo de Meta ya explicado en español. `reconnect`: el token ya no sirve. */
 /**
  * Un error de Meta, ya en español. `reconnect`: hace falta otro permiso.
- * `reason`: el token no sirve (mal copiado, vencido o revocado) o le falta el
- * permiso de leer anuncios; quien conecta con un token recibe instrucciones
- * concretas para arreglarlo.
+ * `reason`: el token no sirve (mal copiado, vencido o revocado) o Meta negó
+ * un permiso; quien conecta con un token recibe instrucciones concretas.
+ * `detail`: lo que dijo Meta tal cual (con su código, sin el token), para
+ * que se vea en pantalla y en los registros la causa real.
  */
 export class AdsProviderError extends Error {
   public constructor(
     message: string,
     public readonly reconnect = false,
-    public readonly reason: "token" | "permission" | null = null
+    public readonly reason: "token" | "permission" | null = null,
+    public readonly detail: string | null = null
   ) {
     super(message);
   }
