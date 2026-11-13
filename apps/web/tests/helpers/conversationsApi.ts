@@ -9,7 +9,7 @@ import type { QuickReply } from "@contracts/QuickReplyContracts";
 // aviso de entregado/leído mientras el chat está abierto).
 // ---------------------------------------------------------------------------
 
-const reply = (status: number, body?: unknown) =>
+export const reply = (status: number, body?: unknown) =>
   ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body ?? {}) }) as unknown as Response;
 
 export const NOW = new Date().toISOString();
@@ -18,7 +18,8 @@ export const PAGO = { id: "l-pago", name: "Pagó", color: "#16a34a" };
 export const CHAT: ConversationSummary = {
   id: "c1", connectionId: "w1", connectionName: "venta", contactId: "k1", contactName: "Laura Gómez", phone: "573001112233",
   botEnabled: true, unreadCount: 2, lastMessageText: "Te envío info", lastMessageAuthor: "bot", lastMessageAt: NOW, activeFlowName: "Ventas",
-  labels: [VIP], connectionDeleted: false, status: "bot", assigneeId: null, assigneeName: null, awaitingSince: null, createdAt: NOW, fromAd: false
+  labels: [VIP], connectionDeleted: false, status: "bot", assigneeId: null, assigneeName: null, awaitingSince: null, createdAt: NOW, fromAd: false,
+  nextScheduledAt: null, scheduledIssue: false
 };
 export const ME = { userId: "u-me", name: "Camilo", photoUrl: null };
 export const ANA = { userId: "u-ana", name: "Ana Ruiz", photoUrl: null };
@@ -48,7 +49,9 @@ export const QUICK_REPLIES: QuickReply[] = [
 ];
 
 export function stubConversationsApi(
-  options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[]; chat?: Partial<ConversationSummary>; connections?: unknown[]; canRecordSales?: boolean; ad?: unknown } = {}
+  options: { paged?: boolean; deleted?: boolean; canManage?: boolean; messages?: ConversationMessage[]; chat?: Partial<ConversationSummary>; connections?: unknown[]; canRecordSales?: boolean; ad?: unknown;
+    /** Rutas de otra parte de la pantalla (p. ej. los programados), con su propio estado. */
+    routes?: (url: URL, method: string, body: Record<string, unknown>) => Response | null } = {}
 ) {
   let chat: ConversationSummary = { ...CHAT, connectionDeleted: options.deleted ?? false, ...options.chat };
   const listCalls: URLSearchParams[] = [];
@@ -178,7 +181,7 @@ export function stubConversationsApi(
       chat = { ...chat, botEnabled: true, status: "bot" };
       return reply(200, { flowName: "Ventas", sent: 2, failed: 0 });
     }
-    return reply(404, { message: "no" });
+    return options.routes?.(url, method, body) ?? reply(404, { message: "no" });
   });
   vi.stubGlobal("fetch", fetchMock);
   return { fetchMock, messages, upsert, listCalls, liveCalls, last: () => listCalls.at(-1)! };

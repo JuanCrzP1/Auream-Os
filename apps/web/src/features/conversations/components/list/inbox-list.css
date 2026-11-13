@@ -147,3 +147,21 @@
   line-height: 1.5;
   white-space: nowrap;
 }
+
+/* Tiene un mensaje programado (lila) o uno que no salió (rojo suave). */
+.row-scheduled {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.row-scheduled.is-issue {
+  background: color-mix(in srgb, var(--wa-danger) 12%, transparent);
+  color: var(--wa-danger);
+}

@@ -6,12 +6,18 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel,
+  busyLabel = "Eliminando…",
+  cancelLabel = "Cancelar",
   onConfirm,
   onClose
 }: {
   readonly title: string;
   readonly message: string;
   readonly confirmLabel: string;
+  /** Mientras se confirma (por defecto «Eliminando…»). */
+  readonly busyLabel?: string;
+  /** El botón para no hacerlo (por defecto «Cancelar»). */
+  readonly cancelLabel?: string;
   readonly onConfirm: () => Promise<unknown>;
   readonly onClose: () => void;
 }) {
@@ -38,9 +44,9 @@ export function ConfirmDialog({
         <p className="ui-muted">{message}</p>
         {error ? <p className="ui-error" role="alert">{error}</p> : null}
         <div className="ui-dialog__footer">
-          <button type="button" className="ui-btn ui-btn--ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button type="button" className="ui-btn ui-btn--ghost" onClick={onClose} disabled={busy}>{cancelLabel}</button>
           <button type="button" className="ui-btn ui-btn--danger" onClick={() => void confirm()} disabled={busy}>
-            {busy ? "Eliminando…" : confirmLabel}
+            {busy ? busyLabel : confirmLabel}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { ChatAdOriginService } from "../../../domains/conversations/application/ChatAdOriginService";
 import { SqlChatAdOrigin } from "../../../infrastructure/persistence/sql/SqlChatAdOrigin";
+import { composeScheduledMessages, type ScheduledMessages } from "./composeScheduledMessages";
 import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import { ContactAvatarService } from "../../../domains/contacts/application/ContactAvatarService";
 import { SqlContactAvatarStore } from "../../../infrastructure/persistence/sql/SqlContactAvatarStore";
@@ -74,6 +75,8 @@ export interface MessagingServices {
   readonly outreach: OutreachService;
   /** De qué anuncio llegó el cliente de un chat. */
   readonly adOrigin: ChatAdOriginService;
+  /** Mensajes programados de los chats (y su manejador en la cola). */
+  readonly scheduled: ScheduledMessages;
 }
 
 /** Oye cada mensaje entrante ya guardado (p. ej. Difusiones: «SALIR»). Nunca debe lanzar. */
@@ -125,9 +128,10 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     sales: deps.sales
   });
 
+  // La zona horaria de cada empresa (la de Empresa; si no eligió una, la de la plataforma).
+  const tenants = new SqlTenantResolver(deps.sql, deps.config.defaultTimezone);
   const engine = new ExecutionOrchestrator(
-    // La zona horaria de cada empresa (la de Empresa; si no eligió una, la de la plataforma).
-    new SqlTenantResolver(deps.sql, deps.config.defaultTimezone),
+    tenants,
     new SavedFlowRegistry(deps.workspaces),
     sessions,
     new ExecutionLoop(sessions, new ContextService(), nodeRuntime, new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService()))
@@ -172,6 +176,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
     },
     timers: new FlowTimerService(lock, recorder, turn),
     adOrigin: new ChatAdOriginService(new SqlChatAdOrigin(deps.sql)),
+    scheduled: composeScheduledMessages({ sql: deps.sql, scheduler: deps.scheduler, chats: conversations, sender: delivery, recorder, tenants }),
     flows: new StartFlowForContactService(recorder, launcher),
     avatars: new ContactAvatarService(new SqlContactAvatarStore(deps.sql)),
     outreach: new OutreachService(recorder, delivery, launcher),

@@ -7,16 +7,18 @@ import type { useQuickReplies } from "@shared/quick-replies/useQuickReplies";
 import { ChatHeader } from "./header/ChatHeader";
 import { chatActions } from "./chatActions";
 import { ChatThread } from "./ChatThread";
+import { ChatThreadFooter } from "./ChatThreadFooter";
+import { useScheduledMessages } from "./scheduled/useScheduledMessages";
 import { Composer } from "./composer/Composer";
 import { ContactInfoPanel } from "./ContactInfoPanel";
 import { ChatDialogs, type ChatDialog } from "./dialogs/ChatDialogs";
 import { displayName } from "./displayName";
 
 // ---------------------------------------------------------------------------
-// Un chat abierto, al estilo WhatsApp iOS: la cabecera (`ChatHeader`), el
-// hilo (`ChatThread`) y la barra para responder (`Composer`: respuestas
-// rápidas, archivos, emojis, notas de voz y citas). A la derecha, «Info. del
-// contacto». Aquí solo se coordina: avisos, la cita en curso y los diálogos.
+// Un chat abierto, al estilo WhatsApp iOS: la cabecera, el hilo (al final,
+// los programados) y la barra para responder (respuestas rápidas, archivos,
+// emojis, voz, citas y programar). A la derecha, «Info. del contacto». Aquí
+// solo se coordina: avisos, la cita en curso y los diálogos.
 // ---------------------------------------------------------------------------
 
 type Notice = { readonly kind: "error" | "info"; readonly text: string } | null;
@@ -56,6 +58,7 @@ export function ChatView({
   readonly saleProducts: ReadonlyArray<ProductSummary> | null;
 }) {
   const thread = useConversationThread(conversationId);
+  const scheduled = useScheduledMessages(conversationId, `${thread.conversation?.nextScheduledAt}|${thread.conversation?.scheduledIssue}`);
   const [notice, setNotice] = useState<Notice>(null);
   const [dialog, setDialog] = useState<ChatDialog>(null);
   const [replyTo, setReplyTo] = useState<ConversationMessage | null>(null);
@@ -63,11 +66,11 @@ export function ChatView({
   const stick = useRef(true);
   const lastId = thread.messages.at(-1)?.id;
 
-  // Baja al último mensaje si el usuario ya estaba abajo (no lo arrastra si lee lo anterior).
+  // Baja al último mensaje (o programado) si el usuario ya estaba abajo (no lo arrastra si lee lo anterior).
   useLayoutEffect(() => {
     const element = scroller.current;
     if (element && stick.current) element.scrollTop = element.scrollHeight;
-  }, [lastId, thread.status]);
+  }, [lastId, thread.status, scheduled.messages.length]);
 
   useEffect(() => {
     setNotice(null);
@@ -126,19 +129,17 @@ export function ChatView({
           onReply={setReplyTo}
           onReact={(message, emoji) => react(message.id, emoji)}
           footer={
-            !conversation.botEnabled && live ? (
-              <div className="ios-system ios-system--note">
-                <span>Atiendes este chat: el bot no responderá hasta que lo actives.</span>
-                <button type="button" className="ios-link-btn" onClick={toggleBot}>
-                  Activar bot
-                </button>
-              </div>
-            ) : null
+            <ChatThreadFooter
+              scheduled={scheduled}
+              canWrite={canWrite && live}
+              botPaused={!conversation.botEnabled && live}
+              onToggleBot={toggleBot}
+              onSent={thread.refresh}
+              onError={(text) => setNotice({ kind: "error", text })}
+            />
           }
         />
-
         {notice ? <p className={`ios-notice ios-notice--${notice.kind}`} role={notice.kind === "error" ? "alert" : "status"}>{notice.text}</p> : null}
-
         {live ? (
           <Composer
             key={conversationId}
@@ -151,6 +152,7 @@ export function ChatView({
               await thread.send(request);
             }}
             onError={(text) => setNotice(text ? { kind: "error", text } : null)}
+            schedule={canWrite && scheduled.timeZone ? { timeZone: scheduled.timeZone, onSchedule: async (request) => { stick.current = true; await scheduled.schedule(request); } } : null}
           />
         ) : (
           <footer className="ios-composer ios-composer--closed" role="note">

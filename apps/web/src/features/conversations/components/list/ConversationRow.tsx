@@ -35,14 +35,15 @@ export function ConversationRow({
     : conversation.status === "attending" ? { tone: "attending", text: assignee ?? "En atención" }
     : conversation.status === "resolved" ? { tone: "resolved", text: "Resuelto" }
     : null;
-  const extra = attention || wait || conversation.fromAd || conversation.labels.length || showConnection || conversation.connectionDeleted;
+  const scheduled = scheduledChip(conversation);
+  const extra = attention || wait || conversation.fromAd || scheduled || conversation.labels.length || showConnection || conversation.connectionDeleted;
 
   return (
     <button
       type="button"
       className={`ios-row${selected ? " is-selected" : ""}`}
       aria-current={selected ? "true" : undefined}
-      aria-label={`${name}${conversation.unreadCount ? `, ${conversation.unreadCount} sin leer` : ""}${wait ? `, espera hace ${wait.text}` : ""}${conversation.fromAd ? ", llegó por un anuncio" : ""}`}
+      aria-label={`${name}${conversation.unreadCount ? `, ${conversation.unreadCount} sin leer` : ""}${wait ? `, espera hace ${wait.text}` : ""}${conversation.fromAd ? ", llegó por un anuncio" : ""}${scheduled ? `, ${scheduled.spoken}` : ""}`}
       onClick={onSelect}
     >
       <Avatar name={conversation.contactName} phone={conversation.phone} photoUrl={conversation.contactAvatarUrl} size={40} />
@@ -63,6 +64,7 @@ export function ConversationRow({
             {attention ? <span className={`row-attention row-attention--${attention.tone}`}>{attention.text}</span> : null}
             {wait ? <span className={`row-wait${wait.urgent ? " is-urgent" : ""}`} title="Lo que lleva el cliente esperando respuesta">⏱ {wait.text}</span> : null}
             {conversation.fromAd ? <span className="row-ad" title="Llegó por un anuncio de Meta">Anuncio</span> : null}
+            {scheduled ? <span className={`row-scheduled${scheduled.issue ? " is-issue" : ""}`} title={scheduled.title}>{scheduled.issue ? "⚠" : "🕘"} {scheduled.text}</span> : null}
             <ChatLabels labels={conversation.labels} />
             {conversation.connectionDeleted ? (
               <span className="ios-row__connection is-deleted">{conversation.connectionName} · eliminado</span>
@@ -74,4 +76,13 @@ export function ConversationRow({
       </span>
     </button>
   );
+}
+
+const SCHEDULED_TIME = new Intl.DateTimeFormat("es", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
+
+/** Un programado que no salió (avisa) o el próximo que saldrá. */
+function scheduledChip(conversation: ConversationSummary): { readonly text: string; readonly title: string; readonly spoken: string; readonly issue: boolean } | null {
+  if (conversation.scheduledIssue) return { text: "No salió", title: "Un mensaje programado no se envió: ábrelo para reintentar o descartarlo", spoken: "un mensaje programado no salió", issue: true };
+  if (conversation.nextScheduledAt) return { text: "Programado", title: `Próximo mensaje programado: ${SCHEDULED_TIME.format(new Date(conversation.nextScheduledAt))}`, spoken: "tiene un mensaje programado", issue: false };
+  return null;
 }

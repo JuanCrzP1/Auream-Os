@@ -1,0 +1,96 @@
+/* Mensajes programados: el popover «Programar envío» del compositor, el
+   selector de hora, las burbujas punteadas al final del hilo y el diálogo
+   para editar. Lila de la marca; rojo suave lo que no salió. */
+
+/* ---- Popover del compositor ---- */
+.schedule-popover { left: auto; right: 12px; width: min(380px, calc(100% - 24px)); max-height: min(560px, 75vh); padding: 14px; gap: 12px; overflow-y: auto; }
+.schedule-popover__header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.schedule-popover__zone { color: var(--wa-secondary); font-size: 0.76rem; }
+.schedule-popover__footer { display: flex; justify-content: flex-end; }
+
+/* ---- Selector de hora ---- */
+.when-picker { display: flex; flex-direction: column; gap: 12px; }
+.when-picker__presets { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--wa-separator); border-radius: 12px; }
+
+.when-picker__preset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--wa-separator);
+  background: transparent;
+  color: var(--wa-text);
+  font: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.when-picker__preset:last-child { border-bottom: 0; }
+.when-picker__preset:hover { background: var(--wa-row-hover); }
+.when-picker__preset.is-selected { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); font-weight: 600; }
+.when-picker__detail { color: var(--wa-secondary); font-size: 0.8rem; font-weight: 400; white-space: nowrap; }
+
+.when-picker__custom { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; border: 0; }
+.when-picker__custom legend { margin-bottom: 6px; padding: 0; color: var(--wa-secondary); font-size: 0.78rem; font-weight: 600; }
+.when-picker__custom .ui-input { flex: 1 1 130px; min-width: 0; }
+
+.when-picker__check { display: flex; align-items: flex-start; gap: 8px; color: var(--wa-text); font-size: 0.86rem; cursor: pointer; }
+.when-picker__check input { margin-top: 3px; accent-color: var(--primary); }
+.when-picker__check small { display: block; margin-top: 2px; color: var(--wa-secondary); font-size: 0.76rem; }
+
+/* ---- Burbujas al final del hilo ---- */
+.scheduled-list { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-top: 8px; }
+
+.scheduled {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: min(65%, 480px);
+  padding: 6px 9px 7px;
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 55%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--wa-out-bg) 55%, transparent);
+  color: var(--wa-bubble-text);
+  font-size: 0.875rem;
+  line-height: 1.36;
+}
+
+.scheduled.is-failed { border-color: color-mix(in srgb, var(--wa-danger) 60%, transparent); }
+.scheduled.is-skipped { border-color: var(--wa-separator); opacity: 0.85; }
+.scheduled[aria-busy="true"] { opacity: 0.6; }
+.scheduled__text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.scheduled__file { margin: 0; color: var(--wa-secondary); font-size: 0.82rem; }
+.scheduled__meta { margin: 2px 0 0; color: var(--wa-meta); font-size: 0.74rem; }
+.scheduled.is-failed .scheduled__meta { color: var(--wa-danger); }
+.scheduled__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 12px; }
+
+.scheduled__actions button {
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.scheduled__actions button:hover:not(:disabled) { text-decoration: underline; }
+.scheduled__actions button:disabled { opacity: 0.5; cursor: default; }
+
+/* ---- Editar ---- */
+.scheduled-edit { width: min(460px, calc(100vw - 32px)); }
+.scheduled-edit form { display: flex; flex-direction: column; gap: 12px; }
+.scheduled-edit h2 { margin: 0; }
+.scheduled-edit .ui-muted { margin: -6px 0 0; }
+.scheduled-edit__parts { display: flex; flex-direction: column; gap: 8px; }
+.scheduled-edit__parts textarea { resize: vertical; }
+.scheduled-edit__file { color: var(--wa-secondary); font-size: 0.84rem; }
+
+@media (max-width: 720px) {
+  .schedule-popover { right: 8px; width: calc(100% - 16px); }
+  .scheduled { max-width: 85%; }
+}

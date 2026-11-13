@@ -14,6 +14,7 @@ import type {
 import type { MessagingServices } from "../composition/composeMessagingServices";
 import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
+import { routeScheduledMessagesRequest } from "./routeScheduledMessagesRequest";
 
 // ---------------------------------------------------------------------------
 // routeConversationsRequest — `/conversations`: la bandeja.
@@ -40,6 +41,7 @@ import { sendJson } from "../http/sendJson";
 //   PUT    /conversations/:id/labels          etiquetas del cliente { labelIds }
 //   POST   /conversations/:id/flows           enviar un flujo a mano
 //   GET    /conversations/:id/ad              el anuncio por el que llegó el cliente
+//   …/conversations/:id/scheduled              mensajes programados (`routeScheduledMessagesRequest`)
 //
 // Ver exige conversations.read; eliminar, conversations.manage; todo lo
 // demás, conversations.write. Marcar como leído es lectura: no cambia nada
@@ -68,6 +70,7 @@ export async function routeConversationsRequest(
 ): Promise<boolean> {
   const path = url.pathname;
   if (path !== "/conversations" && !path.startsWith("/conversations/")) return false;
+  if (await routeScheduledMessagesRequest(request, response, url, services.scheduled.service, context)) return true;
 
   const { tenantId } = context;
   const method = request.method ?? "GET";

@@ -115,3 +115,17 @@ Web:
 - **El detalle.** `GET /conversations/:id/ad` (`conversations.read`) → `ChatAdOriginService` + `SqlChatAdOrigin`: lo que trajo el mensaje y, si el anuncio está sincronizado de una cuenta de Meta conectada (la misma regla que «por anuncio» en el Dashboard), su nombre, campaña, estado y miniatura oficial. Se pide solo al abrir Info. del contacto (`AdOriginSection`).
 - **Seguridad.** Los datos del anuncio vienen dentro del mensaje y un cliente con una app modificada puede inventarlos. Solo pasan enlaces `https://`, que se abren con `noopener noreferrer`; la miniatura va sin referer. El código de clic (`ctwa_clid`) nunca sale. `connected: false` avisa que el anuncio no es de tus cuentas.
 
+### Programar mensajes
+
+- **Dónde vive.** Tabla propia `scheduled_messages` (`046_scheduled_messages.sql`): las piezas (igual que una respuesta del asesor), `send_at`, `cancel_if_replied`, `armed_at` (cuándo se programó o editó), el autor y cómo terminó. La cola genérica (`scheduled_tasks`, ver [`task-queue.md`](task-queue.md)) solo **despierta a la hora**: tarea `chat.scheduled_message` con clave `id + hora`. Si lo reprograman se arma otra; la vieja suena y no hace nada porque el despachador mira la hora guardada. Las tareas se borran a los 7 días y no saben de chats: por eso la tabla aparte.
+- **La hora es la del negocio.** La web manda `{ date, time }` y el servidor la lee en la zona de Empresa (`resolveSendAt`, con `zonedToInstant`). Va de 1 minuto a 90 días, con hasta 20 pendientes por chat. La web hace la misma revisión antes (`scheduleModel.whenProblem`).
+- **Enviar** (`ScheduledMessageDispatcher`). Lo toma de forma atómica (`pending → sending`, un `update … where status = any(…)`) y lo envía por el número del chat con `toOutbound`. Queda en el hilo como mensaje del asesor que lo programó (`recordOutbound`). **No toma el chat ni pausa el bot**: un recordatorio no cambia quién atiende.
+  - Si **nada** salió (número desconectado), queda `failed` con el motivo, sin ensuciar el hilo.
+  - Si falla **antes** de enviar (base caída), vuelve a como estaba y la cola reintenta.
+  - Si falla **durante** el envío, queda `failed` («revisa el chat antes de reintentar») en vez de arriesgar un duplicado.
+  - Un `sending` de más de 2 minutos se marca fallido.
+- **«No enviar si el cliente responde antes».** Se revisa al momento de enviar: si el último mensaje del cliente es posterior a `armed_at`, queda `skipped`. No hace falta escuchar los mensajes entrantes. «Enviar ahora», «Reintentar» y «Enviar igual» lo ignoran.
+- **API.** `GET|POST /conversations/:id/scheduled`, `PATCH|DELETE …/:sid` y `POST …/:sid/send` (`routeScheduledMessagesRequest`). Ver necesita `conversations.read` y cambiar, `conversations.write`. Cada respuesta trae los abiertos del chat con la zona del negocio. Un id de otro chat u otra cuenta «no existe».
+- **Bandeja.** El resumen trae `nextScheduledAt` (el próximo pendiente) y `scheduledIssue` (alguno no salió), que dan la marca «Programado» / «No salió» en la fila y el filtro `scheduled` («Con programados»). El chat abierto vuelve a pedir sus programados cuando esos dos cambian en el chat en vivo: cuando uno sale, desaparece la burbuja y aparece en el hilo sin recargar.
+- **Web.** ⏰ junto a enviar (`SchedulePopover`, `WhenPicker`) con atajos en la hora del negocio. Las burbujas punteadas al final del hilo (`ScheduledBubbles`) ofrecen enviar ahora, editar (`EditScheduledDialog`) y cancelar con confirmación; las que no salieron, reintentar y descartar.
+

@@ -46,7 +46,8 @@ export const STATUS_OPTIONS: ReadonlyArray<{ readonly value: ConversationFilter;
   { value: "mine", label: "Mis chats" },
   { value: "unread", label: "No leídos" },
   { value: "unanswered", label: "Sin responder" },
-  { value: "from_ad", label: "Por anuncio" }
+  { value: "from_ad", label: "Por anuncio" },
+  { value: "scheduled", label: "Con programados" }
 ];
 
 export const DATE_OPTIONS: ReadonlyArray<{ readonly value: DatePreset; readonly label: string }> = [

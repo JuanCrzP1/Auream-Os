@@ -186,6 +186,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   });
   const runner = scheduling.attachHandlers([
     new FlowTimerTaskHandler(messagingServices.timers),
+    messagingServices.scheduled.handler,
     ...(ads.syncHandler ? [ads.syncHandler] : []),
     ...broadcasts.handlers,
     ...groups.handlers

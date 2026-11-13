@@ -30,7 +30,16 @@ const conversations = {
   conversations: { remove: vi.fn(async () => undefined) },
   attention: { take: vi.fn(async () => ({ id: "c1" })), resolve: vi.fn(async () => ({ id: "c1" })), agents: vi.fn(async () => []) },
   newChats: { start: vi.fn(async () => ({ id: "c2" })) },
-  adOrigin: { get: vi.fn(async () => ({ ad: null })) }
+  adOrigin: { get: vi.fn(async () => ({ ad: null })) },
+  scheduled: {
+    service: {
+      list: vi.fn(async () => ({ messages: [], timeZone: "America/Bogota" })),
+      schedule: vi.fn(async () => ({ messages: [], timeZone: "America/Bogota" })),
+      update: vi.fn(async () => ({ messages: [], timeZone: "America/Bogota" })),
+      sendNow: vi.fn(async () => ({ messages: [], timeZone: "America/Bogota" })),
+      cancel: vi.fn(async () => ({ messages: [], timeZone: "America/Bogota" }))
+    }
+  }
 } as unknown as MessagingServices;
 
 async function call(role: keyof typeof ROLE_SCOPES, method: string, path: string, body?: unknown) {
@@ -49,6 +58,22 @@ describe("Herramientas del chat por HTTP", () => {
     expect(await call("operator", "GET", "/conversations/c1/ad")).toBe(200);
     expect((conversations as unknown as { adOrigin: { get: ReturnType<typeof vi.fn> } }).adOrigin.get).toHaveBeenCalledWith("tenant-a", "c1");
     expect(await call("api_client", "GET", "/conversations/c1/ad")).toBe(403);
+  });
+
+  it("mensajes programados: el equipo los ve; quien atiende programa, edita, envía y cancela a su nombre; solo lectura no", async () => {
+    const scheduled = (conversations as unknown as { scheduled: { service: Record<string, ReturnType<typeof vi.fn>> } }).scheduled.service;
+    expect(await call("viewer", "GET", "/conversations/c1/scheduled")).toBe(200);
+    expect(await call("viewer", "POST", "/conversations/c1/scheduled", { parts: [] })).toBe(403);
+    expect(await call("viewer", "DELETE", "/conversations/c1/scheduled/s1")).toBe(403);
+    expect(await call("viewer", "POST", "/conversations/c1/scheduled/s1/send")).toBe(403);
+    expect(await call("operator", "POST", "/conversations/c1/scheduled", { date: "2026-11-13", time: "09:00" })).toBe(201);
+    expect(scheduled["schedule"]).toHaveBeenCalledWith("tenant-a", "c1", { date: "2026-11-13", time: "09:00" }, "user-a");
+    expect(await call("operator", "PATCH", "/conversations/c1/scheduled/s1", { time: "10:00" })).toBe(200);
+    expect(await call("operator", "POST", "/conversations/c1/scheduled/s1/send")).toBe(200);
+    expect(await call("operator", "DELETE", "/conversations/c1/scheduled/s1")).toBe(200);
+    expect(scheduled["cancel"]).toHaveBeenCalledWith("tenant-a", "c1", "s1");
+    expect(await call("operator", "PUT", "/conversations/c1/scheduled/s1")).toBe(405);
+    expect(await call("api_client", "GET", "/conversations/c1/scheduled")).toBe(403);
   });
 
   it("tomar, resolver y chat nuevo: quien atiende sí, solo lectura no", async () => {

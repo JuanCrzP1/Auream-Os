@@ -13,16 +13,18 @@ import { useDraftPieces } from "./useDraftPieces";
 import { useVoiceRecorder } from "./useVoiceRecorder";
 import { SendOrRecordButton, VoiceRecordingBar } from "./VoiceRecordingBar";
 import { EmojiPicker } from "./EmojiPicker";
+import { SchedulePopover, ScheduleToggle, type ComposerSchedule } from "../scheduled/SchedulePopover";
+import type { ScheduleChoice } from "../scheduled/WhenPicker";
 
 // ---------------------------------------------------------------------------
 // La barra para responder: respuestas rápidas (⚡ o «/» al empezar), adjuntar
 // archivos, emojis, el texto y, sin texto, grabar una nota de voz (como
 // WhatsApp). Lo que está en espera (archivos, piezas de una respuesta
 // rápida) sale antes del texto, en orden; si se cita un mensaje, lo cita el
-// primero.
+// primero. Con algo escrito, ⏰ lo programa para que salga solo a una hora.
 // ---------------------------------------------------------------------------
 
-type Popover = { readonly kind: "quick"; readonly fromSlash: boolean } | { readonly kind: "emoji" } | null;
+type Popover = { readonly kind: "quick"; readonly fromSlash: boolean } | { readonly kind: "emoji" } | { readonly kind: "schedule" } | null;
 
 /** «/salu» solo en el cuadro: está buscando una respuesta rápida. */
 const slashQuery = (text: string) => (/^\/[^\n]{0,40}$/.test(text) ? text.slice(1) : null);
@@ -33,7 +35,8 @@ export function Composer({
   replyTo,
   onCancelReply,
   onSend,
-  onError
+  onError,
+  schedule
 }: {
   readonly contactName: string | null;
   readonly quickReplies: ReturnType<typeof useQuickReplies>;
@@ -41,6 +44,8 @@ export function Composer({
   readonly onCancelReply: () => void;
   readonly onSend: (request: SendAgentMessageRequest) => Promise<void>;
   readonly onError: (message: string | null) => void;
+  /** Sin esto (aún no se sabe la zona del negocio), no se ofrece programar. */
+  readonly schedule?: ComposerSchedule | null;
 }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -75,6 +80,14 @@ export function Composer({
       onCancelReply();
       input.current?.focus();
     }
+  };
+
+  const scheduleDraft = async (choice: ScheduleChoice) => {
+    await schedule?.onSchedule({ parts: toParts(draft.pieces, text), ...choice.when, cancelIfReplied: choice.cancelIfReplied });
+    setText("");
+    draft.clear();
+    onCancelReply();
+    setPopover(null);
   };
 
   // La nota de voz sale apenas se suelta (como WhatsApp), con la cita que haya en ese momento.
@@ -140,6 +153,7 @@ export function Composer({
         />
       ) : null}
       {popover?.kind === "emoji" ? <EmojiPicker onPick={insertEmoji} onClose={() => setPopover(null)} /> : null}
+      {popover?.kind === "schedule" && schedule ? <SchedulePopover timeZone={schedule.timeZone} onSchedule={scheduleDraft} onClose={() => setPopover(null)} /> : null}
 
       <PendingPieces replyTo={replyTo} pieces={draft.pieces} onCancelReply={onCancelReply} onRemove={draft.remove} />
 
@@ -148,7 +162,7 @@ export function Composer({
       ) : (
         <div className="chat-composer__row">
           <ComposerTools
-            popover={popover?.kind ?? null}
+            popover={popover?.kind === "schedule" ? null : (popover?.kind ?? null)}
             onQuick={() => setPopover(popover?.kind === "quick" ? null : { kind: "quick", fromSlash: false })}
             onEmoji={() => setPopover(popover?.kind === "emoji" ? null : { kind: "emoji" })}
             onFiles={(files) => files.forEach((file) => void draft.attach(file))}
@@ -173,6 +187,7 @@ export function Composer({
               }
             }}
           />
+          {schedule && !empty ? <ScheduleToggle open={popover?.kind === "schedule"} disabled={sending || draft.uploading} onToggle={() => setPopover(popover?.kind === "schedule" ? null : { kind: "schedule" })} /> : null}
           <SendOrRecordButton empty={empty} busy={sending || draft.uploading} onSend={() => void send()} onRecord={() => void recorder.start()} />
         </div>
       )}

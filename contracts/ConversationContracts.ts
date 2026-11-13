@@ -129,6 +129,10 @@ export interface ConversationSummary {
   readonly createdAt: string;
   /** El cliente llegó por un anuncio de clic a WhatsApp (el detalle: `GET /conversations/:id/ad`). */
   readonly fromAd: boolean;
+  /** El próximo mensaje programado pendiente (`null`: ninguno). */
+  readonly nextScheduledAt: string | null;
+  /** Algún mensaje programado no salió (falló u omitido) y nadie lo ha revisado. */
+  readonly scheduledIssue: boolean;
 }
 
 /**
@@ -141,9 +145,10 @@ export interface ConversationSummary {
  *   unanswered   el cliente espera respuesta (su último mensaje no se contestó)
  *   mine         los que atiende quien mira
  *   from_ad      el cliente llegó por un anuncio
+ *   scheduled    tiene mensajes programados (pendientes o que no salieron)
  */
-export type ConversationFilter = "all" | "unread" | "unanswered" | "mine" | "bot_active" | "bot_paused" | "from_ad";
-export const CONVERSATION_FILTERS: ReadonlyArray<ConversationFilter> = ["all", "unread", "unanswered", "mine", "bot_active", "bot_paused", "from_ad"];
+export type ConversationFilter = "all" | "unread" | "unanswered" | "mine" | "bot_active" | "bot_paused" | "from_ad" | "scheduled";
+export const CONVERSATION_FILTERS: ReadonlyArray<ConversationFilter> = ["all", "unread", "unanswered", "mine", "bot_active", "bot_paused", "from_ad", "scheduled"];
 
 /**
  * Filtros de la bandeja (query string de `GET /conversations`).
