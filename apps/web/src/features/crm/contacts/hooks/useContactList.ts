@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ContactSummary } from "@contracts/ContactContracts";
+import type { FieldFilter } from "@contracts/ContactFieldFilters";
 import { fetchContacts } from "../services/contactsApi";
 
 const PAGE_SIZE = 25;
 const SEARCH_DELAY_MS = 300;
 
 /**
- * useContactList — lista paginada de contactos con búsqueda y filtro por
- * etiqueta. La búsqueda espera a que se deje de escribir; una respuesta vieja
+ * useContactList — lista paginada de contactos con búsqueda y filtros por
+ * etiqueta y por Campos del cliente. La búsqueda espera a que se deje de escribir; una respuesta vieja
  * nunca pisa a una más nueva.
  */
 export function useContactList() {
   const [search, setSearch] = useState("");
   const [labelId, setLabelId] = useState<string | null>(null);
+  const [fields, setFields] = useState<ReadonlyArray<FieldFilter>>([]);
   const [page, setPage] = useState(1);
   const [contacts, setContacts] = useState<ContactSummary[]>([]);
   const [hasMore, setHasMore] = useState(false);
@@ -23,7 +25,7 @@ export function useContactList() {
     const request = ++latest.current;
     setStatus("loading");
     try {
-      const result = await fetchContacts({ search, ...(labelId ? { labelId } : {}), page, limit: PAGE_SIZE });
+      const result = await fetchContacts({ search, ...(labelId ? { labelId } : {}), ...(fields.length > 0 ? { fields } : {}), page, limit: PAGE_SIZE });
       if (request !== latest.current) return;
       setContacts([...result.contacts]);
       setHasMore(result.hasMore);
@@ -31,7 +33,7 @@ export function useContactList() {
     } catch {
       if (request === latest.current) setStatus("error");
     }
-  }, [search, labelId, page]);
+  }, [search, labelId, fields, page]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void load(), search ? SEARCH_DELAY_MS : 0);
@@ -44,7 +46,13 @@ export function useContactList() {
     status,
     search,
     labelId,
+    fields,
     page,
+    /** Filtros por Campo del cliente (ciudad, ya compró…). */
+    setFields: (value: ReadonlyArray<FieldFilter>) => {
+      setFields(value);
+      setPage(1);
+    },
     setSearch: (value: string) => {
       setSearch(value);
       setPage(1);

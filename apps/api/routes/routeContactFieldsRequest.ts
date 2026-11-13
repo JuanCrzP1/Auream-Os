@@ -8,6 +8,7 @@ import { ContactPermissions } from "../../../platform/authorization/permissions/
 import type { RequestContext } from "../../../platform/identity/contracts/RequestContext";
 import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
+import { routeContactFieldToolsRequest, type ContactFieldToolRoutes } from "./routeContactFieldToolsRequest";
 
 // ---------------------------------------------------------------------------
 // Campos del cliente (Configuración › Datos › Campos del cliente) y la ficha.
@@ -25,7 +26,7 @@ import { sendJson } from "../http/sendJson";
 // también); los organizan dueños y administradores.
 // ---------------------------------------------------------------------------
 
-export interface ContactFieldRoutes {
+export interface ContactFieldRoutes extends ContactFieldToolRoutes {
   readonly fields: ContactFieldServices;
   readonly values: ContactFieldValueServices;
 }
@@ -42,6 +43,8 @@ export async function routeContactFieldsRequest(
 ): Promise<boolean> {
   const path = url.pathname;
   if (path !== "/contact-fields" && !path.startsWith("/contact-fields/")) return false;
+  // Ordenar, unir, deshacer y lo que vende: `routeContactFieldToolsRequest`.
+  if (await routeContactFieldToolsRequest(request, response, url, services, context)) return true;
   if (!services) {
     sendJson(response, 503, { message: "Los campos del cliente no están disponibles en este servidor." });
     return true;

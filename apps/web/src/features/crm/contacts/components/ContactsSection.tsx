@@ -8,6 +8,7 @@ import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
 import { useContactList } from "../hooks/useContactList";
 import { ContactsTable } from "./ContactsTable";
 import { ContactDrawer } from "./ContactDrawer";
+import { FieldFilterEditor } from "@shared/contact-fields/FieldFilterEditor";
 import { useContactFieldCatalog } from "@shared/contact-fields/useContactFieldCatalog";
 import { NewContactDialog } from "./NewContactDialog";
 import { LabelsManager } from "./LabelsManager";
@@ -41,7 +42,7 @@ export function ContactsSection() {
     await Promise.all([list.reload(), catalog.refresh()]);
     setRetrying(false);
   };
-  const filtering = list.search.trim() !== "" || list.labelId !== null;
+  const filtering = list.search.trim() !== "" || list.labelId !== null || list.fields.length > 0;
 
   // Al cambiar etiquetas cambian los contadores del catálogo y las fichas.
   const afterLabelChange = () => void list.reload();
@@ -87,6 +88,7 @@ export function ContactsSection() {
               ))}
             </select>
           </div>
+          <FieldFilterEditor fields={fieldCatalog.fields} value={list.fields} onChange={list.setFields} />
 
           {list.status === "error" || retrying ? (
             <StateCard
@@ -104,7 +106,7 @@ export function ContactsSection() {
               role="status"
               icon={StateIcons.search}
               title="Sin resultados"
-              description="Ningún contacto coincide con la búsqueda. Prueba con otro nombre, teléfono o etiqueta."
+              description="Ningún contacto coincide con la búsqueda. Prueba con otro nombre, teléfono, etiqueta o filtro."
               actions={
                 <button
                   type="button"
@@ -112,6 +114,7 @@ export function ContactsSection() {
                   onClick={() => {
                     list.setSearch("");
                     list.setLabelId(null);
+                    list.setFields([]);
                   }}
                 >
                   Limpiar filtros

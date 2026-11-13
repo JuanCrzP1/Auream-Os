@@ -1,5 +1,6 @@
 import type { AudienceFilter } from "../../../contracts/BroadcastContracts";
 import type { AudienceSource, Candidate, OptOutStore } from "../../../domains/broadcasts/application/BroadcastPorts";
+import { fieldFilterSql } from "./fieldFilterSql";
 import type { SqlClient } from "./SqlClient";
 
 // ---------------------------------------------------------------------------
@@ -24,6 +25,9 @@ export class SqlBroadcastAudience implements AudienceSource, OptOutStore {
   public constructor(private readonly sql: SqlClient) {}
 
   public async resolve(tenantId: string, audience: AudienceFilter, connectionIds: ReadonlyArray<string>, limit: number) {
+    const params: unknown[] = [tenantId, connectionIds, audience.lastInboundDays, audience.labelIds, audience.excludeLabelIds, audience.excludeBoughtDays, limit];
+    // Por Campos del cliente: sobre la ficha del contacto del chat (un chat sin contacto no cumple ninguno).
+    const byFields = fieldFilterSql(audience.fields ?? [], "ct.custom_fields", params).map((condition) => `\n            and ${condition}`).join("");
     const result = await this.sql.query<Row>(
       `with chats as (
          select distinct on (coalesce(c.contact_id::text, c.phone))
@@ -41,7 +45,7 @@ export class SqlBroadcastAudience implements AudienceSource, OptOutStore {
                   where a.tenant_id = c.tenant_id and a.contact_id = c.contact_id and a.label_id = any($5::uuid[]))
             and ($6::int is null or not exists (select 1 from sales s
                   where s.tenant_id = c.tenant_id and s.contact_id = c.contact_id and s.status = 'approved'
-                    and s.sold_at >= now() - make_interval(days => $6::int)))
+                    and s.sold_at >= now() - make_interval(days => $6::int)))${byFields}
           order by coalesce(c.contact_id::text, c.phone), li.last_in desc
        )
        select ch.contact_id, ch.name, ch.phone, ch.connection_id,
@@ -49,7 +53,7 @@ export class SqlBroadcastAudience implements AudienceSource, OptOutStore {
          from chats ch
         order by ch.last_in desc
         limit $7`,
-      [tenantId, connectionIds, audience.lastInboundDays, audience.labelIds, audience.excludeLabelIds, audience.excludeBoughtDays, limit]
+      params
     );
     return {
       candidates: result.rows.filter((row) => !row.opted_out).map(toCandidate),

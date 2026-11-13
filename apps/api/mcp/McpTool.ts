@@ -15,7 +15,7 @@ export interface McpToolContext {
 /** Esquema JSON de la entrada (subconjunto: objeto con propiedades simples). */
 export interface McpInputSchema {
   readonly type: "object";
-  readonly properties: Readonly<Record<string, { readonly type: "string" | "number" | "integer" | "boolean" | "array" | "object"; readonly description: string; readonly items?: { readonly type: "string" }; readonly enum?: ReadonlyArray<string> }>>;
+  readonly properties: Readonly<Record<string, { readonly type: "string" | "number" | "integer" | "boolean" | "array" | "object"; readonly description: string; readonly items?: { readonly type: "string" | "object" }; readonly enum?: ReadonlyArray<string> }>>;
   readonly required?: ReadonlyArray<string>;
 }
 

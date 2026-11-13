@@ -1,4 +1,5 @@
 import type { ContactFieldValue } from "../../../contracts/ContactContracts";
+import { readFieldFilters } from "../../../contracts/ContactFieldFilters";
 import type { ContactRepository, ContactWithLabels, LabelRepository } from "./ContactRepository";
 import type { LabelChangeOrigin } from "./LabelHooks";
 import { CUSTOM_FIELD_KEY, isValidCustomFieldValue, normalizeEmail, normalizeExternalKey, type Contact } from "../domain/Contact";
@@ -15,12 +16,15 @@ const MAX_PAGE_SIZE = 100;
 export class ListContactsService {
   public constructor(private readonly contacts: ContactRepository) {}
 
-  public execute(tenantId: string, query: { search?: string; labelId?: string; page?: number; limit?: number }) {
+  public execute(tenantId: string, query: { search?: string; labelId?: string; fields?: unknown; page?: number; limit?: number }) {
+    const fields = readFieldFilters(query.fields);
+    if (!fields.ok) throw new ValidationError(fields.message);
     const page = Number.isInteger(query.page) && (query.page as number) > 0 ? (query.page as number) : 1;
     const limit = Number.isInteger(query.limit) ? Math.min(Math.max(query.limit as number, 1), MAX_PAGE_SIZE) : 25;
     return this.contacts.list(tenantId, {
       ...(query.search?.trim() ? { search: query.search.trim() } : {}),
       ...(query.labelId ? { labelId: query.labelId } : {}),
+      ...(fields.filters.length > 0 ? { fields: fields.filters } : {}),
       page,
       limit
     });

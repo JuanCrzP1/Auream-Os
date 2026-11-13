@@ -6,6 +6,8 @@ import type { PipelineSummary } from "@contracts/CrmContracts";
 import { fetchFlowOptions, type FlowOption } from "@shared/automations/flowOptions";
 import { fetchConnections } from "@shared/connections/connectionsApi";
 import { fetchLabels } from "@shared/labels/labelsApi";
+import { fetchContactFields } from "@shared/contact-fields/contactFieldsApi";
+import type { ContactFieldSummary } from "@contracts/ContactFieldContracts";
 import { broadcastsApi } from "../services/broadcastsApi";
 
 export interface WizardData {
@@ -14,12 +16,14 @@ export interface WizardData {
   readonly labels: ReadonlyArray<LabelSummary>;
   readonly pipelines: ReadonlyArray<PipelineSummary>;
   readonly audiences: ReadonlyArray<SavedAudience>;
+  /** Los Campos del cliente de la cuenta (para filtrar a quién le llega). */
+  readonly fields: ReadonlyArray<ContactFieldSummary>;
   readonly ready: boolean;
 }
 
-/** Flujos, números, etiquetas, embudos del CRM y audiencias guardadas. Lo que no cargue queda vacío. */
+/** Flujos, números, etiquetas, embudos del CRM, audiencias guardadas y Campos del cliente. Lo que no cargue queda vacío. */
 export function useWizardData() {
-  const [data, setData] = useState<WizardData>({ flows: [], connections: [], labels: [], pipelines: [], audiences: [], ready: false });
+  const [data, setData] = useState<WizardData>({ flows: [], connections: [], labels: [], pipelines: [], audiences: [], fields: [], ready: false });
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
@@ -29,9 +33,10 @@ export function useWizardData() {
       fetchConnections().catch(() => []),
       fetchLabels().catch(() => []),
       broadcastsApi.pipelines().then((r) => r.pipelines).catch(() => []),
-      broadcastsApi.audiences().catch(() => [])
-    ]).then(([flows, connections, labels, pipelines, audiences]) => {
-      if (!cancelled) setData({ flows, connections, labels, pipelines, audiences, ready: true });
+      broadcastsApi.audiences().catch(() => []),
+      fetchContactFields().then((r) => r.fields).catch(() => [])
+    ]).then(([flows, connections, labels, pipelines, audiences, fields]) => {
+      if (!cancelled) setData({ flows, connections, labels, pipelines, audiences, fields, ready: true });
     });
     return () => {
       cancelled = true;

@@ -4,6 +4,8 @@ import type { IncomingMessage } from "node:http";
 import { routeContactFieldsRequest, type ContactFieldRoutes } from "../../apps/api/routes/routeContactFieldsRequest.js";
 import { ContactFieldValueServices } from "../../domains/contact-fields/application/ContactFieldValueServices.js";
 import { ContactFieldServices } from "../../domains/contact-fields/application/ContactFieldServices.js";
+import { ContactFieldMergeServices } from "../../domains/contact-fields/application/ContactFieldMergeServices.js";
+import { ContactFieldTidyServices } from "../../domains/contact-fields/application/ContactFieldTidyServices.js";
 import { InMemoryContactFieldRepository, InMemoryContactFieldValues, InMemoryFieldOrigins, observedFrom } from "../../infrastructure/persistence/memory/InMemoryContactFields.js";
 import { AccessError } from "../../platform/authorization/domain/AccessError.js";
 import { ROLE_SCOPES } from "../../platform/authorization/roles/RoleDefinitions.js";
@@ -37,9 +39,16 @@ function services(): ContactFieldRoutes {
   const values = new InMemoryContactFieldValues(seen, 20);
   values.seedContact("tenant-a", LAURA, { ciudad: "Medellín", nota_interna: "x" });
   const flows = { drafts: async () => [] };
+  const id = () => `aaaaaaaa-0000-4000-8000-00000000000${++n}`;
+  // Las herramientas con dobles: aquí se prueba quién puede, no el SQL (eso es de la prueba de integración).
+  const insights = { values: async () => ({ filled: 0, distinct: 0, top: [] }), conflicts: async () => 0, salesByValue: async () => [] };
+  const operations = { tidy: async () => 3, merge: async () => 2, attachFlows: async () => undefined, recent: async () => [], find: async () => null, undo: async () => 0 };
+  const rewriter = { rename: async () => ({ changes: [], skipped: [] }), restore: async () => ({ skipped: 0 }) };
   return {
-    fields: new ContactFieldServices(repository, values, flows, () => `aaaaaaaa-0000-4000-8000-00000000000${++n}`),
-    values: new ContactFieldValueServices(repository, values, new InMemoryFieldOrigins(), flows, { names: async () => new Map([["user-a", "Ana"]]) })
+    fields: new ContactFieldServices(repository, values, flows, id),
+    values: new ContactFieldValueServices(repository, values, new InMemoryFieldOrigins(), flows, { names: async () => new Map([["user-a", "Ana"]]) }),
+    tidy: new ContactFieldTidyServices(repository, insights, operations, id),
+    merge: new ContactFieldMergeServices(repository, values, insights, operations, flows, rewriter, id)
   };
 }
 
@@ -91,6 +100,26 @@ describe("/contact-fields", () => {
     await expect(run(fields, "PATCH", `/contact-fields/values/${LAURA}`, "operator", "tenant-a", { changes: { presupuesto: "mucho" } })).rejects.toThrow("debe ser un número");
     await expect(run(fields, "PATCH", `/contact-fields/values/${LAURA}`, "operator", "tenant-a", { changes: { nota_interna: "y" } })).rejects.toThrow("no es un campo");
     await expect(run(fields, "GET", `/contact-fields/values/${LAURA}`, "tenant_owner", "tenant-b")).rejects.toThrow("no existe");
+  });
+
+  it("ordenar, unir y deshacer son de dueños y administradores; lo que vende pide ver contactos Y ventas", async () => {
+    const fields = services();
+    const id = (await run(fields, "POST", "/contact-fields", "tenant_owner", "tenant-a", { label: "Ciudad", type: "text" })).body.id as string;
+    const tidy = { assignments: [{ values: ["medellin"], to: "Medellín" }, { values: ["bogota"], to: "Bogotá" }] };
+    const merge = { keep: "respuesta", merge: ["resposta"] };
+
+    expect((await run(fields, "GET", `/contact-fields/${id}/values`, "tenant_admin")).status).toBe(200);
+    expect(await run(fields, "POST", `/contact-fields/${id}/tidy`, "tenant_admin", "tenant-a", tidy)).toMatchObject({ status: 200, body: { operation: { kind: "tidy", contacts: 3 } } });
+    expect((await run(fields, "POST", "/contact-fields/merge/preview", "tenant_owner", "tenant-a", merge)).status).toBe(200);
+    expect(await run(fields, "POST", "/contact-fields/merge", "tenant_owner", "tenant-a", merge)).toMatchObject({ status: 200, body: { operation: { kind: "merge", contacts: 2 } } });
+    for (const [method, path, body] of [["GET", `/contact-fields/${id}/values`, undefined], ["POST", `/contact-fields/${id}/tidy`, tidy], ["POST", "/contact-fields/merge/preview", merge], ["POST", "/contact-fields/merge", merge], ["POST", "/contact-fields/operations/aaaaaaaa-0000-4000-8000-000000000099/undo", {}]] as const) {
+      await expect(run(fields, method, path, "operator", "tenant-a", body)).rejects.toBeInstanceOf(AccessError);
+    }
+    await expect(run(fields, "POST", "/contact-fields/operations/aaaaaaaa-0000-4000-8000-000000000099/undo", "tenant_owner", "tenant-a", {})).rejects.toThrow("no existe");
+    await expect(run(fields, "POST", `/contact-fields/${id}/tidy`, "tenant_owner", "tenant-b", tidy)).rejects.toThrow("ya no existe");
+
+    expect(await run(fields, "GET", `/contact-fields/${id}/sales?days=7`, "operator")).toMatchObject({ status: 200, body: { days: 7, currencies: [] } });
+    await expect(run(fields, "GET", `/contact-fields/${id}/sales`, "api_client")).rejects.toBeInstanceOf(AccessError);
   });
 
   it("sin el módulo responde 503 y no toma otras rutas", async () => {

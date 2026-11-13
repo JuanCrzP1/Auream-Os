@@ -48,7 +48,7 @@ export function suggestType(observed: ObservedValues): { readonly type: ContactF
 }
 
 /** Distancia de edición (pocas letras de diferencia = probablemente el mismo dato). */
-function distance(a: string, b: string): number {
+export function distance(a: string, b: string): number {
   const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
   for (let i = 1; i <= a.length; i += 1) {
     let diagonal = previous[0]!;

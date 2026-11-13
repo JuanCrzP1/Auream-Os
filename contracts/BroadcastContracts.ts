@@ -1,3 +1,4 @@
+import type { FieldFilter } from "./ContactFieldFilters";
 // ---------------------------------------------------------------------------
 // Difusiones: un flujo o un mensaje a muchos clientes que ya escribieron, por
 // los números de la cuenta, a un ritmo que cuida cada número. Contrato único
@@ -47,6 +48,8 @@ export interface AudienceFilter {
   readonly lastInboundDays: number | null;
   /** Sin compras aprobadas en los últimos N días. `null`: no excluye. */
   readonly excludeBoughtDays: number | null;
+  /** Por sus Campos del cliente (ciudad, ya compró, presupuesto…): se cumplen todos. Ausente: sin filtro. */
+  readonly fields?: ReadonlyArray<FieldFilter>;
 }
 
 export const EMPTY_AUDIENCE: AudienceFilter = { labelIds: [], excludeLabelIds: [], countries: [], lastInboundDays: null, excludeBoughtDays: null };

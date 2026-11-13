@@ -1,6 +1,7 @@
 import "./list/fields-list.css";
 import { useState } from "react";
 import type { ContactFieldSummary } from "@contracts/ContactFieldContracts";
+import type { FieldOperationResponse } from "@contracts/ContactFieldToolsContracts";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
 import { DiscoveryView } from "./discovery/DiscoveryView";
@@ -10,9 +11,18 @@ import { NewFieldDialog } from "@shared/contact-fields/NewFieldDialog";
 import { useContactFieldCatalog } from "@shared/contact-fields/useContactFieldCatalog";
 import { FieldsTable } from "./list/FieldsTable";
 import { PendingCard } from "./list/PendingCard";
+import { MergeDialog } from "./tools/MergeDialog";
+import { TidyDialog } from "./tools/TidyDialog";
+import { UndoBanner } from "./tools/UndoBanner";
 import { SystemFields } from "./list/SystemFields";
 
-type Dialog = { readonly kind: "new" } | { readonly kind: "field"; readonly id: string } | { readonly kind: "delete"; readonly field: ContactFieldSummary } | null;
+type Dialog =
+  | { readonly kind: "new" }
+  | { readonly kind: "field"; readonly id: string }
+  | { readonly kind: "delete"; readonly field: ContactFieldSummary }
+  | { readonly kind: "tidy"; readonly fieldId: string }
+  | { readonly kind: "merge"; readonly keys: ReadonlyArray<string> }
+  | null;
 
 /**
  * Configuración › Datos › Campos del cliente: los datos que la cuenta guarda
@@ -21,7 +31,13 @@ type Dialog = { readonly kind: "new" } | { readonly kind: "field"; readonly id: 
  * flujos ya guardan. Dueños y administradores los organizan; el resto los ve.
  */
 export function ContactFieldsSettings() {
-  const { data, status, reload, create, adopt, update, remove } = useContactFieldCatalog();
+  const { data, status, reload, refresh, create, adopt, update, remove } = useContactFieldCatalog();
+  const [skipped, setSkipped] = useState<ReadonlyArray<string>>([]);
+  // Tras ordenar o unir: la lista se vuelve a pedir (trae el «Deshacer») y se avisa de los flujos que no se pudieron tocar.
+  const afterOperation = (result: FieldOperationResponse) => {
+    setSkipped(result.flowsSkipped);
+    void refresh();
+  };
   const [dialog, setDialog] = useState<Dialog>(null);
   const [reviewing, setReviewing] = useState<boolean | null>(null);
 
@@ -51,7 +67,21 @@ export function ContactFieldsSettings() {
           <DiscoveryView total={data.totalContacts} onAdopt={adopt} onClose={() => setReviewing(false)} />
         ) : (
           <>
-            {data.canManage && data.undefinedKeys > 0 ? <PendingCard pending={data.undefinedKeys} onReview={() => setReviewing(true)} /> : null}
+            {data.canManage ? <UndoBanner operations={data.suggestions?.operations ?? []} onUndone={refresh} /> : null}
+            {skipped.length > 0 ? (
+              <p className="ui-error" role="alert">
+                {skipped.length === 1 ? `El flujo «${skipped[0]}» no se pudo actualizar` : `Estos flujos no se pudieron actualizar: ${skipped.map((name) => `«${name}»`).join(", ")}`} (alguien lo estaba editando). Ábrelo y cambia la clave en sus bloques.
+              </p>
+            ) : null}
+            {data.canManage ? (
+              <PendingCard
+                pending={data.undefinedKeys}
+                suggestions={data.suggestions}
+                onReview={() => setReviewing(true)}
+                onMerge={(keys) => setDialog({ kind: "merge", keys })}
+                onTidy={(fieldId) => setDialog({ kind: "tidy", fieldId })}
+              />
+            ) : null}
             {data.fields.length === 0 ? (
               <StateCard
                 icon={StateIcons.sparkles}
@@ -76,9 +106,14 @@ export function ContactFieldsSettings() {
           canManage={data.canManage}
           onSave={(changes) => update(open.id, changes)}
           onDelete={() => setDialog({ kind: "delete", field: open })}
+          onTidy={() => setDialog({ kind: "tidy", fieldId: open.id })}
+          onMerge={(other) => setDialog({ kind: "merge", keys: [open.key, other] })}
+          otherKeys={data.fields.filter((field) => field.id !== open.id).map((field) => field.key)}
           onClose={() => setDialog(null)}
         />
       ) : null}
+      {dialog?.kind === "tidy" ? <TidyDialog fieldId={dialog.fieldId} onDone={afterOperation} onClose={() => setDialog(null)} /> : null}
+      {dialog?.kind === "merge" ? <MergeDialog keys={dialog.keys} onDone={afterOperation} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "delete" ? <DeleteFieldDialog field={dialog.field} onConfirm={(confirm) => remove(dialog.field.id, confirm)} onClose={() => setDialog(null)} /> : null}
     </section>
   );

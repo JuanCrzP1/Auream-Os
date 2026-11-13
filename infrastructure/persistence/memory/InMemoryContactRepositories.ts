@@ -1,4 +1,5 @@
 import type { AdOrigin } from "../../../contracts/AdOrigin";
+import { matchesFieldFilters } from "../../../contracts/ContactFieldFilters";
 import type { ContactQuery, ContactRepository, ContactWithLabels, LabelRepository } from "../../../domains/contacts/application/ContactRepository";
 import type { Contact } from "../../../domains/contacts/domain/Contact";
 import { labelKey, type Label } from "../../../domains/contacts/domain/Label";
@@ -33,6 +34,7 @@ export class InMemoryContactRepository implements ContactRepository {
       .filter((contact) => contact.tenantId === tenantId)
       .filter((contact) => !term || [contact.name, contact.phone, contact.email].some((value) => value?.toLowerCase().includes(term)))
       .filter((contact) => !query.labelId || (this.store.assignments.get(contact.id)?.has(query.labelId) ?? false))
+      .filter((contact) => matchesFieldFilters(contact.customFields, query.fields ?? []))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     const start = (query.page - 1) * query.limit;
     return { items: all.slice(start, start + query.limit).map((contact) => this.withLabels(contact)), hasMore: all.length > start + query.limit };

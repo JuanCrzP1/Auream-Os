@@ -1,0 +1,16 @@
+/* Filtrar por Campos del cliente (Difusiones y el CRM). Solo tokens del tema. */
+.ff { display: grid; gap: 8px; }
+.ff-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.ff-row .ui-input { width: auto; }
+.ff-row__field { flex: 0 1 180px; font-weight: 700; }
+.ff-row__op { flex: 0 1 150px; }
+.ff-row > input.ui-input { flex: 1 1 180px; }
+.ff-row__remove { margin-left: auto; width: 30px; height: 30px; border: 0; border-radius: 10px; background: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+.ff-row__remove:hover { background: color-mix(in srgb, var(--rose) 10%, transparent); color: var(--text); }
+.ff-options { display: flex; flex: 1 1 200px; flex-wrap: wrap; gap: 6px; }
+.ff-option { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-alt); color: var(--text); font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.ff-option[aria-pressed="true"] { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.ff-range { display: flex; flex: 1 1 220px; align-items: center; gap: 6px; color: var(--muted); font-size: 0.8rem; }
+.ff-range .ui-input { flex: 1 1 100px; min-width: 0; }
+.ff-add { justify-self: start; padding: 7px 12px; border: 1px dashed color-mix(in srgb, var(--primary) 40%, transparent); border-radius: 12px; background: none; color: var(--primary); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+.ff-add:hover { background: color-mix(in srgb, var(--primary) 6%, transparent); }

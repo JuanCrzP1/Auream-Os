@@ -61,6 +61,8 @@ Cada herramienta aparece solo si la credencial tiene permiso en su área.
 
 ## Tareas completas
 
+- **Una difusión solo para ciertos clientes por sus datos:** en `preview_broadcast_audience` y `create_broadcast` usa `field_filters` con los Campos del cliente (hasta 5, se cumplen todos). Ejemplo: `[{"key":"ciudad","op":"in","values":["Medellín"]},{"key":"ya_compro","op":"yes"}]`. `op`: `in` (es una de), `yes`/`no`, `between` (`min`/`max`: números o fechas AAAA-MM-DD), `filled`/`empty` (tiene o no el dato). Primero mira con la vista previa a cuántos les llega.
+
 - **Que un flujo registre sus ventas:** `list_products` (si no existe, pide nombre y precio y usa `create_product`) → `get_flow` → `add_block` de tipo `record-sale` con `after_block_id` = el bloque tras el pago confirmado (la salida «válido» del Comprobante o la etiqueta de pagado; se inserta en medio y conserva lo que seguía), con el producto, `amountMode: variable`, el monto `{comprobante.valor}`, la moneda `{comprobante.moneda}` y la referencia `{comprobante.referencia}` → `get_flow` para revisar.
 - **Que un flujo arranque en un número:** `list_connections` → `list_flows` → `list_triggers` (para no chocar con uno igual) → confirma con la persona → `create_trigger`.
 - **¿Cómo va una parte del negocio?:** `list_sales_lines` → `dashboard_sales` con su `line_id` (y `currency`, p. ej. `VES`). Si no existe la línea, propón crearla con `create_sales_line` (productos de `list_products`, campañas de `dashboard_ads`).

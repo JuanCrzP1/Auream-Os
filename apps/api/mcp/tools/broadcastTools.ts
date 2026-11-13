@@ -27,7 +27,12 @@ const audienceFields: McpInputSchema["properties"] = {
   exclude_label_ids: { type: "array", items: { type: "string" }, description: "Sin quien tenga alguna de estas etiquetas." },
   countries: { type: "array", items: { type: "string" }, description: "Países por el prefijo del teléfono (ISO: CO, VE, MX…). Vacío: todos." },
   last_inbound_days: { type: "integer", description: "Solo quien escribió en los últimos N días." },
-  exclude_bought_days: { type: "integer", description: "Sin quien compró en los últimos N días." }
+  exclude_bought_days: { type: "integer", description: "Sin quien compró en los últimos N días." },
+  field_filters: {
+    type: "array",
+    items: { type: "object" },
+    description: "Por Campos del cliente (hasta 5, se cumplen todos). Cada uno: {key, op, values?, min?, max?}. op: 'in' (values: es una de), 'yes'/'no' (sí o no), 'between' (min/max: números o fechas AAAA-MM-DD), 'filled'/'empty' (tiene o no el dato). Ej.: [{key:'ciudad', op:'in', values:['Medellín']}, {key:'ya_compro', op:'yes'}]."
+  }
 };
 
 const audienceOf = (args: ToolArgs) => ({
@@ -35,7 +40,8 @@ const audienceOf = (args: ToolArgs) => ({
   excludeLabelIds: stringListArg(args, "exclude_label_ids") ?? [],
   countries: stringListArg(args, "countries") ?? [],
   lastInboundDays: numberArg(args, "last_inbound_days") ?? null,
-  excludeBoughtDays: numberArg(args, "exclude_bought_days") ?? null
+  excludeBoughtDays: numberArg(args, "exclude_bought_days") ?? null,
+  ...(Array.isArray(args["field_filters"]) ? { fields: args["field_filters"] } : {})
 });
 
 /** Lo que se envía: textos (1 a 3 versiones al azar) o flujos (1 a 3). */

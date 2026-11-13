@@ -101,6 +101,8 @@ export interface ContactFieldsResponse {
   /** Datos que tus flujos o integraciones guardan y aún no son campos (para «el primer día»). */
   readonly undefinedKeys: number;
   readonly canManage: boolean;
+  /** Lo que conviene ordenar y lo que se puede deshacer (solo para quien organiza). */
+  readonly suggestions?: import("./ContactFieldToolsContracts").FieldSuggestions;
 }
 
 export interface SaveContactFieldRequest {

@@ -4,6 +4,7 @@ import { CONTACT_FIELD_LIMITS as LIMITS, CONTACT_FIELD_TYPE_LABEL, type ContactF
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { clients, count, filledPercent } from "../fieldText";
 import { TypeChip } from "@shared/contact-fields/TypeChip";
+import { FieldSalesCard } from "../tools/FieldSalesCard";
 import { FieldUses } from "./FieldUses";
 import { OptionsEditor } from "@shared/contact-fields/OptionsEditor";
 import { TypePicker } from "@shared/contact-fields/TypePicker";
@@ -20,6 +21,9 @@ export function FieldDrawer({
   canManage,
   onSave,
   onDelete,
+  onTidy,
+  onMerge,
+  otherKeys,
   onClose
 }: {
   readonly field: ContactFieldSummary;
@@ -27,6 +31,11 @@ export function FieldDrawer({
   readonly canManage: boolean;
   readonly onSave: (changes: Partial<SaveContactFieldRequest>) => Promise<unknown>;
   readonly onDelete: () => void;
+  /** Ordenar los valores escritos de varias formas (texto o lista). */
+  readonly onTidy: () => void;
+  /** Unir con otro campo que guarda lo mismo. */
+  readonly onMerge: (otherKey: string) => void;
+  readonly otherKeys: ReadonlyArray<string>;
   readonly onClose: () => void;
 }) {
   const titleId = useId();
@@ -75,6 +84,7 @@ export function FieldDrawer({
         </header>
 
         <div className="cf-drawer__body">
+          <FieldSalesCard fieldId={field.id} label={field.label} />
           {canManage ? (
             <section className="cf-drawer__section" aria-label="Datos del campo">
               <label className="ui-field">
@@ -117,6 +127,20 @@ export function FieldDrawer({
               {count(field.filled)} de {clients(total)} ({percent} %)
             </p>
           </section>
+          {canManage ? (
+            <section className="cf-drawer__section" aria-label="Ordenar">
+              <h3>Ordenar</h3>
+              <div className="cf-drawer__tools">
+                {field.type === "text" || field.type === "list" ? <button type="button" className="cf-soft-btn" onClick={onTidy}>Ordenar valores</button> : null}
+                {otherKeys.length > 0 ? (
+                  <select className="ui-input" aria-label="Unir con otro campo" value="" onChange={(event) => event.target.value && onMerge(event.target.value)}>
+                    <option value="">Unir con otro campo…</option>
+                    {otherKeys.map((key) => <option key={key} value={key}>{`{${key}}`}</option>)}
+                  </select>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
           {error ? <p className="ui-error" role="alert">{error}</p> : null}
         </div>
 

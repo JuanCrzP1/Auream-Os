@@ -1,4 +1,5 @@
 import { readAdOrigin, type AdOrigin } from "../../../contracts/AdOrigin";
+import { fieldFilterSql } from "./fieldFilterSql";
 import type { ContactQuery, ContactRepository, ContactWithLabels, LabelRepository } from "../../../domains/contacts/application/ContactRepository";
 import type { Contact } from "../../../domains/contacts/domain/Contact";
 import type { Label } from "../../../domains/contacts/domain/Label";
@@ -88,6 +89,7 @@ export class SqlContactRepository implements ContactRepository {
       params.push(query.labelId);
       where.push(`exists (select 1 from contact_label_assignments x where x.contact_id = c.id and x.label_id = $${params.length})`);
     }
+    where.push(...fieldFilterSql(query.fields ?? [], "c.custom_fields", params));
     params.push(query.limit + 1, (query.page - 1) * query.limit);
 
     const result = await this.sql.query<ContactRow>(

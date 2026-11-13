@@ -4,7 +4,7 @@ module: crm
 summary: Ponle nombre y tipo a los datos que guardan tus flujos (ciudad, presupuesto, cumpleaños) para verlos en la ficha y usarlos sin errores.
 order: 4
 updated: 2026-11-13
-keywords: campos, campos personalizados, datos del cliente, ficha, variables, ciudad, tipo, lista
+keywords: campos, campos personalizados, datos del cliente, ficha, variables, ciudad, tipo, lista, ordenar valores, unir campos, deshacer, filtrar, lo que vende
 related: variables-y-nombre, primer-flujo, embudo-y-etapas
 ---
 
@@ -70,6 +70,38 @@ En el CRM, la ficha de cada cliente muestra sus campos en su forma: una lista se
 - Toca un campo para ver su detalle. Puedes cambiar el nombre, el tipo y las opciones. **La clave no cambia**, porque tus flujos la usan.
 - Si cambias el tipo, los datos que ya existen se quedan como están; lo nuevo se guarda con el tipo nuevo.
 - **Borrar** quita el campo y su dato de todos los clientes, y no se puede deshacer. Si tiene datos o bloques que lo usan, te pide escribir su clave para confirmar. Los bloques siguen funcionando en la conversación, pero lo que guarden ya no queda en la ficha.
+
+## Ordenar valores escritos de varias formas
+
+Si tus clientes escribieron «medellin», «Medellín» y «MDE», Auream te lo avisa en **Por ordenar**.
+
+1. Toca **Ordenar valores** (también está en el detalle del campo).
+2. Revisa los grupos: para cada uno eliges a qué opción pasa, **Dejar como está** o **Dejar sin dato**. Auream solo propone lo evidente; lo demás lo decides tú.
+3. Confirma. El campo queda como lista con esas opciones.
+
+## Unir campos que guardan lo mismo
+
+Si dos claves guardan el mismo dato (`respuesta` y `resposta`), Auream te propone unirlas.
+
+1. Toca **Revisar y unir** y elige con cuál te quedas.
+2. Mira qué bloques cambian: pasan a usar la clave que queda, solos.
+3. Confirma. Si un cliente tenía los dos datos, queda el más reciente.
+
+> **Importante:** si alguien tiene un flujo abierto en el editor, ese flujo no se toca: Auream te dice cuál es para que cambies la clave a mano.
+
+## Deshacer
+
+Ordenar y unir se pueden **deshacer durante 7 días**, desde la parte de arriba de Campos del cliente. Vuelve todo lo que siga como quedó: si el dato de un cliente o un bloque cambió después, eso no se toca.
+
+## Lo que vende cada valor
+
+En el detalle de un campo ves cuánto vendieron los clientes de cada valor (por ejemplo, cada ciudad) en los últimos 7, 30 o 90 días. Cuenta las ventas aprobadas, y cada moneda va aparte. Lo ve quien puede ver Ventas.
+
+## Filtrar por campos
+
+- **En Difusiones,** en «¿A quién?», toca **+ Filtrar por campo**: por ejemplo «Ciudad es una de Medellín» y «Ya compró es Sí». El número de personas cambia en vivo.
+- **En el CRM,** en Contactos, el mismo filtro deja solo los clientes que lo cumplen.
+- Puedes combinar hasta 5 filtros; se cumplen todos a la vez.
 
 ## Quién puede
 

@@ -13,7 +13,10 @@ import { CONTACT_FIELD_KEY_PATTERN } from "../../../contracts/ContactContracts";
 import { NotFoundError } from "../../../platform/observability/errors/NotFoundError";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 import { labelFromKey, requireFieldChanges, requireNewField } from "../domain/ContactField";
-import { looksAlike, suggestType } from "../domain/fieldDiscovery";
+import { looksAlike, suggestType, type ObservedValues } from "../domain/fieldDiscovery";
+import { fieldSuggestions } from "../domain/fieldSuggestions";
+import { FIELD_OPERATION_UNDO_DAYS } from "../../../contracts/ContactFieldToolsContracts";
+import type { FieldOperations } from "./ContactFieldToolPorts";
 import { flowKeys, isTechnicalKey, usesOf, type KeyUse } from "../domain/fieldUses";
 import type { ContactFieldRepository, ContactFieldValues, FlowDrafts } from "./ContactFieldPorts";
 
@@ -35,20 +38,26 @@ export class ContactFieldServices {
     private readonly repository: ContactFieldRepository,
     private readonly values: ContactFieldValues,
     private readonly flows: FlowDrafts,
-    private readonly newId: () => string = randomUUID
+    private readonly newId: () => string = randomUUID,
+    /** Lo hecho en los últimos días que aún se puede deshacer. Ausente: no se ofrece. */
+    private readonly operations?: Pick<FieldOperations, "recent">
   ) {}
 
   public async list(tenantId: string, canManage: boolean): Promise<ContactFieldsResponse> {
     const [definitions, uses, totalContacts] = await Promise.all([this.repository.list(tenantId), this.uses(tenantId), this.values.totalContacts(tenantId)]);
     const counts = await this.values.filledCounts(tenantId, definitions.map((field) => field.key));
     const fields: ContactFieldSummary[] = definitions.map((field) => ({ ...field, filled: counts.get(field.key) ?? 0, uses: usesOf(uses.uses, field.key) }));
-    const pending = (await this.discoverFrom(tenantId, definitions, uses)).filter((field) => !field.technical).length;
-    return { fields, system: SYSTEM_CONTACT_FIELDS, totalContacts, undefinedKeys: pending, canManage };
+    const observed = await this.values.observed(tenantId);
+    const loose = this.discoverFrom(observed, definitions, uses).filter((field) => !field.technical);
+    const response = { fields, system: SYSTEM_CONTACT_FIELDS, totalContacts, undefinedKeys: loose.length, canManage };
+    if (!canManage) return response;
+    const recent = (await this.operations?.recent(tenantId, new Date(Date.now() - FIELD_OPERATION_UNDO_DAYS * 86_400_000))) ?? [];
+    return { ...response, suggestions: fieldSuggestions(definitions, observed, loose.map((field) => field.key), recent) };
   }
 
   public async discover(tenantId: string): Promise<DiscoveryResponse> {
-    const [definitions, uses] = await Promise.all([this.repository.list(tenantId), this.uses(tenantId)]);
-    return { suggestions: await this.discoverFrom(tenantId, definitions, uses) };
+    const [definitions, uses, observed] = await Promise.all([this.repository.list(tenantId), this.uses(tenantId), this.values.observed(tenantId)]);
+    return { suggestions: this.discoverFrom(observed, definitions, uses) };
   }
 
   public async create(tenantId: string, input: FieldInput): Promise<ContactFieldDefinition> {
@@ -111,12 +120,11 @@ export class ContactFieldServices {
   }
 
   /** Los datos que ya se guardan (en clientes o por bloques) y aún no son campos. */
-  private async discoverFrom(
-    tenantId: string,
+  private discoverFrom(
+    observed: ReadonlyMap<string, ObservedValues>,
     definitions: ReadonlyArray<ContactFieldDefinition>,
     flows: { readonly uses: ReadonlyArray<KeyUse>; readonly technical: ReadonlySet<string> }
-  ): Promise<DiscoveredField[]> {
-    const observed = await this.values.observed(tenantId);
+  ): DiscoveredField[] {
     const defined = new Set(definitions.map((field) => field.key));
     const filledByFlows = flows.uses.filter((entry) => entry.use.role === "fills").map((entry) => entry.key);
     const keys = [...new Set([...observed.keys(), ...filledByFlows])].filter(

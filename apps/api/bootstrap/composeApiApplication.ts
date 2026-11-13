@@ -139,7 +139,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   // Difusiones oye los mensajes entrantes («SALIR»), pero se arma después de Mensajería.
   const inboundListeners: { current: InboundListener[] } = { current: [] };
   // Campos del cliente: el catálogo y el paso de los datos de los flujos al cliente.
-  const contactFields = composeContactFieldServices({ sql: tenancy.sqlClient, automations: services.automationRepository, workspaces: services.workspaceRepository });
+  const contactFields = composeContactFieldServices({ sql: tenancy.sqlClient, automations: services.automationRepository, workspaces: services.workspaceRepository, saveDraft: services.saveDraftService });
   const messagingServices = composeMessagingServices({
     config,
     sql: tenancy.sqlClient,
@@ -242,7 +242,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     helpServices: { ...help, docsBase: config.helpDocsBase },
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
     quickReplyServices: quickReplies,
-    contactFieldServices: { fields: contactFields.services, values: contactFields.values },
+    contactFieldServices: { fields: contactFields.services, values: contactFields.values, tidy: contactFields.tidy, merge: contactFields.merge },
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
     salesLineServices: salesLines.lines,

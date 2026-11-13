@@ -5,12 +5,15 @@ import type {
   CreateContactRequest,
   UpdateContactRequest
 } from "@contracts/ContactContracts";
+import type { FieldFilter } from "@contracts/ContactFieldFilters";
 
 // Contactos de la cuenta activa. El tenant lo resuelve el servidor.
 
 export interface ContactListQuery {
   readonly search?: string;
   readonly labelId?: string;
+  /** Por Campos del cliente (se cumplen todos). */
+  readonly fields?: ReadonlyArray<FieldFilter>;
   readonly page?: number;
   readonly limit?: number;
 }
@@ -19,6 +22,7 @@ export function fetchContacts(query: ContactListQuery): Promise<ContactListRespo
   const params = new URLSearchParams();
   if (query.search?.trim()) params.set("search", query.search.trim());
   if (query.labelId) params.set("labelId", query.labelId);
+  if (query.fields?.length) params.set("fields", JSON.stringify(query.fields));
   params.set("page", String(query.page ?? 1));
   params.set("limit", String(query.limit ?? 25));
   return builderApiClient.get<ContactListResponse>(`/contacts?${params.toString()}`);

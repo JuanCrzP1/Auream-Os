@@ -76,6 +76,8 @@ export async function routeContactsRequest(
     const result = await services.listContacts.execute(tenantId, {
       search: url.searchParams.get("search") ?? undefined,
       labelId: url.searchParams.get("labelId") ?? undefined,
+      // Filtros por Campo del cliente, como JSON: `fields=[{"key":"ciudad","op":"in","values":["Medellín"]}]`.
+      fields: parseFieldsParam(url.searchParams.get("fields")),
       page,
       limit
     });
@@ -122,4 +124,14 @@ export async function routeContactsRequest(
   }
 
   return false;
+}
+
+/** El parámetro `fields` (JSON). Lo que no sea JSON se pasa tal cual para que la validación lo rechace con su mensaje. */
+function parseFieldsParam(raw: string | null): unknown {
+  if (!raw) return undefined;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
 }

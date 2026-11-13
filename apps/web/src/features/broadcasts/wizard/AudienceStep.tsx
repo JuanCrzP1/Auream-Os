@@ -3,6 +3,7 @@ import "./audience-step.css";
 import { useState } from "react";
 import type { AudienceFilter } from "@contracts/BroadcastContracts";
 import { COUNTRIES } from "@contracts/Countries";
+import { FieldFilterEditor } from "@shared/contact-fields/FieldFilterEditor";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { broadcastsApi } from "../services/broadcastsApi";
 import type { BroadcastDraft } from "./broadcastDraft";
@@ -85,6 +86,22 @@ export function AudienceStep({ draft, update, data }: {
         </div>
         <span className="bc-hint">Sin elegir, todos los países.</span>
       </div>
+
+      {data.fields.length > 0 ? (
+        <div className="bc-group">
+          <span className="bc-group__label">Por sus datos (Campos del cliente)</span>
+          <FieldFilterEditor
+            fields={data.fields}
+            value={audience.fields ?? []}
+            onChange={(fields) => {
+              // Sin filtros la audiencia queda igual que antes de existir los campos (y las guardadas siguen coincidiendo).
+              const { fields: _previous, ...rest } = audience;
+              update({ audience: fields.length > 0 ? { ...rest, fields } : rest });
+            }}
+          />
+          <span className="bc-hint">Ej.: Ciudad es una de Medellín y Ya compró es Sí. Se cumplen todos.</span>
+        </div>
+      ) : null}
 
       <div className="bc-save-audience">
         <input className="ui-input" placeholder="Nombre, ej. Interesados Colombia" value={name} maxLength={60} aria-label="Nombre de la audiencia" onChange={(event) => setName(event.target.value)} />

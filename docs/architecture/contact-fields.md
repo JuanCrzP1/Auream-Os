@@ -83,8 +83,25 @@ Se leen los borradores de los flujos no archivados (lo guardado es lo que corre)
 - **Origen** (`contact_field_origins`, migración 050): una fila por cliente y clave con el último origen: `flow` (con `flow_key`, lo anota `ContactFieldSync`) o `team` (con `actor_id`). El bloque y la persona se buscan **al leer**: el bloque que llena esa clave en ese flujo (si es uno solo), con su nombre de hoy, y el verbo de su tipo («Lo respondió en», «Lo eligió en», «Lo trajo»). Borrar el campo o el dato borra su origen.
 - **CRM:** cada campo en la forma de su tipo; los datos sueltos que guardó un flujo, aparte, con «Convertir en campo» (dueños y administradores; `NewFieldDialog` con `fixedKey`). El catálogo se carga una vez por página.
 
-## Lo que sigue (fase 2b)
+## Ordenar, unir y deshacer (fase 2b)
 
-- Unir claves parecidas y agrupar valores escritos de varias formas, siempre con confirmación y para deshacer.
-- «Lo que vende cada valor» (ventas por ciudad, por producto de interés).
-- Filtrar difusiones y el CRM por campos.
+Contrato: `contracts/ContactFieldToolsContracts.ts`. Rutas: `routeContactFieldToolsRequest.ts` (todas `contacts.manage`, salvo lo que vende).
+
+- **Sugerencias** (`domain/fieldSuggestions.ts`, van en `GET /contact-fields` como `suggestions`, solo para quien organiza): campos de lista con valores fuera de sus opciones, campos de texto que en realidad son una lista (`suggestType`), grupos de claves parecidas (`looksAlike`, transitivo) y las operaciones que aún se pueden deshacer. Solo sugieren.
+- **Ordenar valores** (`GET /contact-fields/:id/values`, `POST …/tidy`; `domain/fieldTidy.ts`): se leen hasta 200 valores distintos y se agrupan. Solo se propone lo que se puede sostener: la misma palabra sin tildes ni signos, una o dos letras de diferencia o el comienzo de una opción → esa opción; un grupo nuevo que se repite (≥ 3 clientes y ≥ 2 %) → opción nueva; lo demás queda «como está». La persona confirma `assignments` (`to: null` = sin dato). El campo queda como lista con las opciones resultantes.
+- **Unir campos** (`POST /contact-fields/merge/preview`, `POST /contact-fields/merge`; `domain/fieldMerge.ts`): varias claves pasan a una. Si un cliente tiene más de una gana **el dato más reciente** (por su origen; sin fecha, el de la clave que queda). Se borran las definiciones que sobran; si la clave que queda no era un campo, se crea heredando el tipo. **Primero los datos (una transacción) y después los flujos**: `renameFlowKeys` cambia la clave donde el bloque la guarda, donde la lee un Condicional y dentro de los textos (`{clave}`, `{clave|respaldo}`, `{{context.clave}}`), y se guarda por `SaveDraftService` (mismo candado de revisión). Un flujo que no se pudo guardar se reporta por su nombre (`flowsSkipped`): no se pisa el trabajo de quien lo edita.
+- **Deshacer** (`POST /contact-fields/operations/:id/undo`, hasta `FIELD_OPERATION_UNDO_DAYS` = 7): `contact_field_operations` guarda las definiciones como estaban y los bloques cambiados (antes y después); `contact_field_operation_values`, por cliente, su dato antes y después (migración 051). Se devuelve **solo lo que sigue como lo dejó la operación**: un cliente cuyo dato cambió después, o un bloque editado después, no se toca (la comparación de bloques es canónica: la base reordena las claves del JSON). Lo que ya no se puede deshacer se limpia a los 30 días, al hacer la siguiente operación.
+- **Lo que vende cada valor** (`GET /contact-fields/:id/sales?days=7|30|90`, pide `contacts.read` y `sales.read`): ventas aprobadas por valor del campo, **sin mezclar monedas** (una entrada por moneda; no depende del conversor del Dashboard). Una venta anotada a mano solo con el teléfono es del cliente de ese teléfono (misma regla que el Dashboard y Grupos). Los 6 valores que más venden, el resto junto, y «sin dato» aparte.
+
+## Filtrar por campos (fase 2b)
+
+`contracts/ContactFieldFilters.ts`: UNA forma (`in`, `yes`/`no`, `between` de números o fechas, `filled`/`empty`; hasta 5, se cumplen todos) y UNA regla en dos implementaciones que se prueban juntas: `matchesFieldFilters` (memoria) y `fieldFilterSql` (PostgreSQL; clave y valores siempre como parámetros).
+
+- **Difusiones:** `AudienceFilter.fields` (opcional: una audiencia guardada sin él sigue igual). Se evalúa sobre la ficha del contacto del chat; el número «le llega a» cambia en vivo. También por MCP (`field_filters`).
+- **CRM:** `GET /contacts?fields=<JSON>`.
+- **Web:** `shared/contact-fields/FieldFilterEditor.tsx` (hacia afuera solo salen filtros completos).
+
+## Lo que sigue
+
+- Datos del negocio (variables globales `g_`) y mejoras de Etiquetas (diseños aprobados).
+- «Lo que vende» con conversión de moneda si hace falta comparar países.

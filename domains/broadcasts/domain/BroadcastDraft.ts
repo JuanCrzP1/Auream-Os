@@ -9,6 +9,7 @@ import {
   type FollowUpSettings
 } from "../../../contracts/BroadcastContracts";
 import { COUNTRY_CODES_ISO } from "../../../contracts/Countries";
+import { readFieldFilters } from "../../../contracts/ContactFieldFilters";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 
 // ---------------------------------------------------------------------------
@@ -60,12 +61,15 @@ export function requireAudience(value: unknown): AudienceFilter {
   const input = isRecord(value) ? value : {};
   const countries = ids(input["countries"], "Países").map((code) => code.toUpperCase());
   if (countries.some((code) => !COUNTRY_CODES_ISO.includes(code))) throw new ValidationError("Hay un país que no reconocemos.");
+  const fields = readFieldFilters(input["fields"]);
+  if (!fields.ok) throw new ValidationError(fields.message);
   return {
     labelIds: ids(input["labelIds"], "Etiquetas"),
     excludeLabelIds: ids(input["excludeLabelIds"], "Etiquetas excluidas"),
     countries,
     lastInboundDays: optionalDays(input["lastInboundDays"], "Escribió en los últimos días"),
-    excludeBoughtDays: optionalDays(input["excludeBoughtDays"], "Sin compras en los últimos días")
+    excludeBoughtDays: optionalDays(input["excludeBoughtDays"], "Sin compras en los últimos días"),
+    ...(fields.filters.length > 0 ? { fields: fields.filters } : {})
   };
 }
 

@@ -21,6 +21,9 @@
 .cf-drawer__fill { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--text); font-size: 0.85rem; }
 .cf-drawer__fill .cf-bar { flex: 0 0 120px; }
 
+.cf-drawer__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cf-drawer__tools .ui-input { flex: 1 1 180px; width: auto; }
+
 .cf-drawer__footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--line); }
 .cf-drawer__delete { padding: 9px 4px; border: 0; background: none; color: color-mix(in srgb, var(--rose) 80%, var(--text)); font: 700 0.85rem var(--font-body); cursor: pointer; }
 .cf-drawer__delete:hover { text-decoration: underline; }

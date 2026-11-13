@@ -8,6 +8,7 @@ import {
   type SaveContactFieldRequest
 } from "@contracts/ContactFieldContracts";
 import type { ContactFieldValuesResponse, SaveContactFieldValuesRequest } from "@contracts/ContactFieldValueContracts";
+import type { FieldOperationResponse, FieldSalesResponse, FieldValuesResponse, MergeFieldsRequest, MergePreview, TidyFieldRequest, UndoOperationResponse } from "@contracts/ContactFieldToolsContracts";
 
 // Campos del cliente de la cuenta activa (`/contact-fields`): el catálogo y la
 // ficha de cada cliente. Lo comparten Configuración, el editor y el CRM.
@@ -50,4 +51,32 @@ export function fetchContactFieldValues(contactId: string): Promise<ContactField
 /** Guarda solo lo que cambió (`null` lo deja sin dato). */
 export function saveContactFieldValues(contactId: string, request: SaveContactFieldValuesRequest): Promise<ContactFieldValuesResponse> {
   return builderApiClient.patch<ContactFieldValuesResponse>(values(contactId), request);
+}
+
+// --- Herramientas del catálogo (dueños y administradores) ---------------------
+
+/** Los valores escritos de un campo y cómo proponemos agruparlos. */
+export function fetchFieldValues(id: string): Promise<FieldValuesResponse> {
+  return builderApiClient.get<FieldValuesResponse>(`${one(id)}/values`);
+}
+
+export function tidyField(id: string, request: TidyFieldRequest): Promise<FieldOperationResponse> {
+  return builderApiClient.post<FieldOperationResponse>(`${one(id)}/tidy`, request);
+}
+
+export function previewFieldMerge(request: MergeFieldsRequest): Promise<MergePreview> {
+  return builderApiClient.post<MergePreview>("/contact-fields/merge/preview", request);
+}
+
+export function mergeFields(request: MergeFieldsRequest): Promise<FieldOperationResponse> {
+  return builderApiClient.post<FieldOperationResponse>("/contact-fields/merge", request);
+}
+
+export function undoFieldOperation(operationId: string): Promise<UndoOperationResponse> {
+  return builderApiClient.post<UndoOperationResponse>(`/contact-fields/operations/${encodeURIComponent(operationId)}/undo`);
+}
+
+/** Lo que vendieron los clientes de cada valor (pide ver ventas). */
+export function fetchFieldSales(id: string, days: number): Promise<FieldSalesResponse> {
+  return builderApiClient.get<FieldSalesResponse>(`${one(id)}/sales?days=${days}`);
 }

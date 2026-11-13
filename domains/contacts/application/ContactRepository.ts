@@ -1,3 +1,4 @@
+import type { FieldFilter } from "../../../contracts/ContactFieldFilters";
 import type { AdOrigin } from "../../../contracts/AdOrigin";
 import type { Contact } from "../domain/Contact";
 import type { Label } from "../domain/Label";
@@ -8,6 +9,8 @@ export interface ContactQuery {
   readonly search?: string;
   /** Solo contactos con esta etiqueta. */
   readonly labelId?: string;
+  /** Por sus Campos del cliente (se cumplen todos). */
+  readonly fields?: ReadonlyArray<FieldFilter>;
   readonly page: number;
   readonly limit: number;
 }
