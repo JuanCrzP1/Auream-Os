@@ -2,6 +2,7 @@ import "./ai-editor.css";
 import type { ToolEditorProps } from "../ToolUi";
 import { SwitchField } from "../_kit/Switch";
 import { AddButton, InlineInput, ListCard, Notice, TextAreaField, TextField, VariableHint } from "../_kit/fields";
+import { FieldPicker } from "../_kit/FieldPicker";
 import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import { CardSection, Counter, EmptyState, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { createLocalId } from "../_kit/createLocalId";
@@ -58,20 +59,20 @@ export function AiEditor({ draft, onChange, resources }: ToolEditorProps) {
       </CardSection>
 
       <CardSection step={3} title="Respuesta" description="Dónde queda lo que responde la IA.">
-        <div className="kit-grid">
-          <TextField
-            label="Guardar respuesta en"
-            value={config.responseVariable}
-            monospace
-            onChange={(responseVariable) => update({ responseVariable: responseVariable.trim() })}
-          />
-          <TextField
-            label="Guardar error en"
-            value={config.errorVariable}
-            monospace
-            onChange={(errorVariable) => update({ errorVariable: errorVariable.trim() })}
-          />
-        </div>
+        <FieldPicker
+          label="Guardar respuesta en"
+          value={config.responseVariable}
+          contactFields={resources?.contactFields}
+          {...(resources?.createContactField ? { createField: resources.createContactField } : {})}
+          onChange={(responseVariable) => update({ responseVariable })}
+        />
+        <TextField
+          label="Guardar error en"
+          hint="Dato técnico: queda solo en la conversación."
+          value={config.errorVariable}
+          monospace
+          onChange={(errorVariable) => update({ errorVariable: errorVariable.trim() })}
+        />
         <SwitchField
           label="Enviar la respuesta al cliente"
           hint="Apágalo si solo quieres clasificar o guardar."

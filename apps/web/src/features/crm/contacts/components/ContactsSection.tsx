@@ -8,6 +8,7 @@ import { useLabelCatalog } from "@shared/labels/useLabelCatalog";
 import { useContactList } from "../hooks/useContactList";
 import { ContactsTable } from "./ContactsTable";
 import { ContactDrawer } from "./ContactDrawer";
+import { useContactFieldCatalog } from "@shared/contact-fields/useContactFieldCatalog";
 import { NewContactDialog } from "./NewContactDialog";
 import { LabelsManager } from "./LabelsManager";
 import { ContactsTableSkeleton } from "./ContactsTableSkeleton";
@@ -30,6 +31,8 @@ export function ContactsSection() {
   const [creating, setCreating] = useState(false);
   const list = useContactList();
   const catalog = useLabelCatalog();
+  // Los Campos del cliente: una sola carga para la página (la ficha de cada cliente los usa).
+  const fieldCatalog = useContactFieldCatalog();
   // Mientras se reintenta se mantiene el aviso (con el botón ocupado) en vez
   // de saltar a la carga y volver al aviso si falla otra vez.
   const [retrying, setRetrying] = useState(false);
@@ -159,6 +162,7 @@ export function ContactsSection() {
         <ContactDrawer
           contact={open}
           catalog={catalog.labels}
+          fields={fieldCatalog}
           onSaved={(saved) => {
             list.replace(saved);
             void catalog.refresh();

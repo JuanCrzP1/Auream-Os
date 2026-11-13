@@ -36,7 +36,8 @@ import { composeGroupServices } from "../composition/composeGroupServices";
 import { composeHelpServices } from "../composition/composeHelpServices";
 import { composeNotificationServices } from "../composition/composeNotificationServices";
 import { composeQuickReplyServices } from "../composition/composeQuickReplyServices";
-import { composeContactFieldServices } from "../composition/composeContactFieldServices";
+import { composeContactFieldServices, contactFieldCatalog } from "../composition/composeContactFieldServices";
+import { SqlContactFieldRepository } from "../../../infrastructure/persistence/sql/SqlContactFields";
 import { composeContactNoteServices } from "../composition/composeContactNoteServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
@@ -93,7 +94,9 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     logger.warn("crm.event_failed", { ...context, error: error instanceof Error ? error.message : String(error) });
   // Ventas y Productos: el bloque Registrar venta guarda en los flujos reales y calcula sin guardar en la simulación.
   const sales = composeSalesServices(config, tenancy.sqlClient, crmEvents);
-  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview);
+  // El laboratorio usa el tipo real de cada campo (solo lectura; no depende de los flujos).
+  const fieldCatalog = contactFieldCatalog(new SqlContactFieldRepository(tenancy.sqlClient));
+  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview, fieldCatalog);
   const contactsServices = composeContactsServices(tenancy.sqlClient, {
     // Un cliente está en una sola etapa por embudo, venga la etiqueta de donde venga.
     groups: new StageLabelRules(new SqlCrmPipelineRepository(tenancy.sqlClient)),
@@ -150,6 +153,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     scheduler: scheduling.scheduler,
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
     contactFields: contactFields.sync,
+    fieldCatalog: contactFields.catalog,
     sales: sales.ledger,
     inboundListeners,
     dealOwners: crm.ownerClaims,
@@ -238,7 +242,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     helpServices: { ...help, docsBase: config.helpDocsBase },
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
     quickReplyServices: quickReplies,
-    contactFieldServices: contactFields.services,
+    contactFieldServices: { fields: contactFields.services, values: contactFields.values },
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
     salesLineServices: salesLines.lines,

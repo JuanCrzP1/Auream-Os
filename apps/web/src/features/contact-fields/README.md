@@ -9,9 +9,9 @@ features/contact-fields/
 ├── list/       la tabla «Tuyos» (tarjetas en angosto), «por ordenar», los del sistema y el chip de tipo
 ├── field/      nuevo campo, el detalle (panel con encabezado oscuro), borrar escribiendo la clave, opciones y tipos
 ├── discovery/  el primer día: convertir en campos lo que tus flujos ya guardan
-├── services/   contactFieldsApi (/contact-fields) y useContactFields
-└── fieldText.ts  textos puros (porcentaje, «lo usan», tipos, opciones sin repetir)
+└── fieldText.ts  textos puros (porcentaje, «lo usan»)
 ```
+Lo que comparten Configuración, el editor de flujos y la ficha del CRM vive en `shared/contact-fields/`: la API (`/contact-fields` y la ficha `/contact-fields/values/:id`), el catálogo único (`useContactFieldCatalog`), «Nuevo campo» (también para convertir una clave que ya existe), el chip y el selector de tipo, las opciones de una lista y sus textos (`fieldTypes.ts`). En el editor, cada bloque elige el campo con `builder/tools/_kit/FieldPicker.tsx`; en el CRM, la ficha está en `crm/contacts/components/fields/`.
 - Cada componente importa su propio CSS. Archivos de hasta 200 líneas. La sección mide su ancho (container `cf`); los diálogos van fuera del marco medido para que su `position: fixed` no quede atrapado.
 - La clave se arma con `keyFromLabel` del contrato: la misma regla que el servidor.
 

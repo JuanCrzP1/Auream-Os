@@ -34,7 +34,9 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
     fields: {
       waitIndefinitely: "true: espera sin límite. false: usa «timeout».",
       timeout: "{amount (entero > 0), unit:'minutes'|'hours'} — cuánto esperar como máximo.",
-      targetKey: "Campo donde guardar la respuesta (letras, números, _ o -), p. ej. 'nombre'. Luego se usa como {nombre}.",
+      targetKey: "Campo donde guardar la respuesta (letras, números, _ o -), p. ej. 'nombre'. Luego se usa como {nombre}. Si es un Campo del cliente, la respuesta queda también en su ficha, convertida a su tipo.",
+      onMismatch: "'retry' (opcional): si targetKey es un Campo del cliente con tipo (lista, número, fecha, sí o no) y la respuesta no encaja, vuelve a preguntar hasta 2 veces; después sigue.",
+      retryMessage: "Texto al volver a preguntar (opcional; por defecto, uno según el tipo: «Elige una de estas: …»).",
       groupMessages: "true: junta varios mensajes seguidos del cliente en una sola respuesta.",
       replyToInbound: "true: responde citando el mensaje del cliente.",
       reaction: "Emoji con el que reaccionar a la respuesta (opcional)."
@@ -69,7 +71,7 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
     purpose: "Evalúa reglas y sigue por «se cumple» o «no se cumple».",
     fields: {
       match: "'all' (todas) | 'any' (cualquiera).",
-      rules: `[{category, operator, field?, value?}]. Categorías (operadores): ${conditionCategories}. «field» para contactField (name/email/phone), customField y globalVariable. «value»: etiqueta, día (monday…sunday), hora HH:MM, fecha AAAA-MM-DD o texto.`
+      rules: `[{category, operator, field?, value?}]. Categorías (operadores): ${conditionCategories}. «field» para contactField (name/email/phone), customField y globalVariable. «value»: etiqueta, día (monday…sunday), hora HH:MM, fecha AAAA-MM-DD o texto. customField con tipo: is_one_of/is_none_of (opciones de la lista, una por línea en «value»), between («desde\\nhasta»), anniversary_today (sin valor: hoy es su día y mes), within_next_days/at_least_days_ago (N días), before_date/after_date (AAAA-MM-DD). Un sí o no se compara con «Sí»/«No».`
     },
     outputs: "«true» (se cumple) y «false» (no se cumple).",
     example: { match: "all", rules: [{ category: "tag", operator: "equal", value: "VIP" }] }

@@ -1,9 +1,12 @@
 import { vi } from "vitest";
 import type { ContactSummary, LabelSummary } from "@contracts/ContactContracts";
+import type { ContactFieldSummary } from "@contracts/ContactFieldContracts";
+import type { FieldOrigin } from "@contracts/ContactFieldValueContracts";
 
 // ---------------------------------------------------------------------------
-// API falsa CON ESTADO de contactos y etiquetas: lo que la pantalla muestra
-// después de una acción sale de volver a pedirlo, igual que en producción.
+// API falsa CON ESTADO de contactos, etiquetas y la ficha (Campos del
+// cliente): lo que la pantalla muestra después de una acción sale de volver a
+// pedirlo, igual que en producción.
 // ---------------------------------------------------------------------------
 
 export const VIP: LabelSummary = { id: "l1", name: "VIP", color: "#ef4444" };
@@ -31,9 +34,12 @@ const reply = (status: number, body?: unknown) =>
     text: async () => JSON.stringify(body ?? {})
   }) as unknown as Response;
 
-export function stubContactsApi(seed: { contacts?: ContactSummary[]; labels?: LabelSummary[] } = {}) {
+export function stubContactsApi(
+  seed: { contacts?: ContactSummary[]; labels?: LabelSummary[]; fields?: ContactFieldSummary[]; origins?: Record<string, FieldOrigin>; canManageFields?: boolean } = {}
+) {
   let contacts = [...(seed.contacts ?? [])];
   let labels = [...(seed.labels ?? [])];
+  const fields = [...(seed.fields ?? [])];
 
   const withCounts = () => labels.map((label) => ({ ...label, contactCount: contacts.filter((c) => c.labels.some((l) => l.id === label.id)).length }));
 
@@ -43,6 +49,19 @@ export function stubContactsApi(seed: { contacts?: ContactSummary[]; labels?: La
     const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {};
     const path = url.pathname;
 
+    if (path === "/contact-fields" && method === "GET") return reply(200, { fields, system: [], totalContacts: contacts.length, undefinedKeys: 0, canManage: seed.canManageFields ?? true });
+    const values = /^\/contact-fields\/values\/([^/]+)$/.exec(path);
+    if (values && method === "GET") return reply(200, { values: contacts.find((c) => c.id === values[1])?.customFields ?? {}, origins: seed.origins ?? {}, canEdit: true });
+    if (values && method === "PATCH") {
+      const changes = body["changes"] as Record<string, string | number | boolean | null>;
+      contacts = contacts.map((c) => {
+        if (c.id !== values[1]) return c;
+        const next: Record<string, string | number | boolean> = { ...c.customFields };
+        for (const [key, value] of Object.entries(changes)) value === null ? delete next[key] : (next[key] = value);
+        return { ...c, customFields: next };
+      });
+      return reply(200, { values: contacts.find((c) => c.id === values[1])?.customFields ?? {}, origins: {}, canEdit: true });
+    }
     if (path.endsWith("/labels") && method === "GET") return reply(200, { labels: withCounts() });
     if (path.endsWith("/labels") && method === "POST") {
       const name = String(body["name"]).trim();

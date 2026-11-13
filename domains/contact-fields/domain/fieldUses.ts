@@ -80,7 +80,7 @@ export function flowKeys(draft: BuilderFlowSnapshot): FlowKeys {
   const uses: KeyUse[] = [];
   const technical = new Set<string>();
   for (const node of Object.values(draft.nodes)) {
-    const base = { flowKey: draft.flow.key, flowName: draft.flow.name, blockId: node.id, blockName: node.name };
+    const base = { flowKey: draft.flow.key, flowName: draft.flow.name, blockId: node.id, blockName: node.name, blockType: node.type };
     const filled = filledKeys(node.type, node.config);
     for (const key of filled.technical) technical.add(key);
     for (const key of new Set(filled.keys)) uses.push({ key, use: { ...base, role: "fills" } });

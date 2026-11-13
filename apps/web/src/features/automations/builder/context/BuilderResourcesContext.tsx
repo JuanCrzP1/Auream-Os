@@ -10,6 +10,7 @@ import { testPixelEvent } from "@features/automations/builder/services/pixelCapa
 import { testPaymentProof } from "@features/automations/builder/services/paymentProofCapabilities";
 import { usePixelConnections } from "@shared/pixel-connections/usePixelConnections";
 import { useProductCatalog } from "@shared/products/useProductCatalog";
+import { useContactFieldCatalog } from "@shared/contact-fields/useContactFieldCatalog";
 
 // ---------------------------------------------------------------------------
 // Recursos de la cuenta (datos y capacidades) para los editores de herramientas.
@@ -33,19 +34,22 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
   const { refresh: refreshPixels } = pixels;
   const catalogOfProducts = useProductCatalog();
   const { refresh: refreshProducts } = catalogOfProducts;
+  const fields = useContactFieldCatalog();
+  const { refresh: refreshFields, create: createField } = fields;
 
-  // Los píxeles se conectan en Meta Ads y los productos se crean en Ventas, que
-  // los bloques abren en otra pestaña: al volver al editor, las listas se ponen
-  // al día solas, sin recargar.
+  // Los píxeles se conectan en Meta Ads, los productos se crean en Ventas y los
+  // campos en Configuración, que los bloques abren en otra pestaña: al volver
+  // al editor, las listas se ponen al día solas, sin recargar.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
       void refreshPixels();
       void refreshProducts();
+      void refreshFields();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refreshPixels, refreshProducts]);
+  }, [refreshPixels, refreshProducts, refreshFields]);
 
   const resources = useMemo<ToolResources>(
     () => ({
@@ -71,9 +75,23 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       testPixel: testPixelEvent,
       testPaymentProof,
       products: catalogOfProducts.products,
-      productsStatus: catalogOfProducts.status
+      productsStatus: catalogOfProducts.status,
+      contactFields: {
+        fields: fields.fields,
+        totalContacts: fields.data?.totalContacts ?? 0,
+        canManage: fields.data?.canManage ?? false,
+        status: fields.status
+      },
+      // Crea en el catálogo (el mismo de Configuración › Campos del cliente) y lo recarga.
+      createContactField: async (request) => {
+        try {
+          return { ok: true, value: await createField(request) };
+        } catch (error) {
+          return { ok: false, message: apiErrorMessage(error, "No se pudo crear el campo. Inténtalo de nuevo.") };
+        }
+      }
     }),
-    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, catalogOfProducts.products, catalogOfProducts.status]
+    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, catalogOfProducts.products, catalogOfProducts.status, fields.fields, fields.data, fields.status, createField]
   );
 
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;

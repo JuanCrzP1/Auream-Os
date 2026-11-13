@@ -1,5 +1,6 @@
+import "./contact-fields.css";
 import type { ContactFieldType } from "@contracts/ContactFieldContracts";
-import { TYPE_CHOICES } from "../fieldText";
+import { TYPE_CHOICES } from "./fieldTypes";
 
 const ICON: Readonly<Record<ContactFieldType, string>> = {
   text: "M5 6h14M5 12h14M5 18h9",

@@ -1,5 +1,6 @@
 import type { ToolEditorProps } from "../ToolUi";
-import { AddButton, InlineInput, InlineSelect, RemoveButton, TextAreaField, VariableHint } from "../_kit/fields";
+import { AddButton, InlineInput, InlineSelect, ListCard, RemoveButton, TextAreaField, VariableHint } from "../_kit/fields";
+import { FieldPicker } from "../_kit/FieldPicker";
 import { CardSection, Counter, EmptyState, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { createLocalId } from "../_kit/createLocalId";
 import { removeById, replaceById } from "../_kit/read";
@@ -120,7 +121,7 @@ export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProp
       <CardSection
         step={hasBody ? 5 : 4}
         title="Guardar datos de la respuesta"
-        description="Copia valores de la respuesta a campos del contacto. Quedan disponibles como {campo} en los bloques siguientes."
+        description="Copia valores de la respuesta a la ficha del cliente. Quedan disponibles como {campo} en los bloques siguientes."
         aside={<Counter value={config.responseMappings.length} />}
       >
         {config.responseMappings.length === 0 ? (
@@ -133,27 +134,27 @@ export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProp
           <>
             <ul className="kit-list">
               {config.responseMappings.map((mapping, index) => (
-                <li key={mapping.id} className="kit-row">
+                <ListCard
+                  key={mapping.id}
+                  title={`Dato ${index + 1}`}
+                  removeLabel={`Quitar dato ${index + 1}`}
+                  onRemove={() => update({ responseMappings: removeById(config.responseMappings, mapping.id) })}
+                >
                   <InlineInput
                     value={mapping.path}
-                    placeholder="Ruta: lead.id"
+                    placeholder="Ruta en la respuesta: lead.id"
                     monospace
                     ariaLabel={`Ruta en la respuesta ${index + 1}`}
                     onChange={(path) => update({ responseMappings: replaceById(config.responseMappings, mapping.id, { path }) })}
                   />
-                  <span className="kit-arrow" aria-hidden="true">→</span>
-                  <InlineInput
+                  <FieldPicker
+                    label="Guardar en"
                     value={mapping.field}
-                    placeholder="Campo: id_crm"
-                    monospace
-                    ariaLabel={`Campo del contacto ${index + 1}`}
+                    contactFields={resources?.contactFields}
+                    {...(resources?.createContactField ? { createField: resources.createContactField } : {})}
                     onChange={(field) => update({ responseMappings: replaceById(config.responseMappings, mapping.id, { field }) })}
                   />
-                  <RemoveButton
-                    label={`Quitar dato ${index + 1}`}
-                    onClick={() => update({ responseMappings: removeById(config.responseMappings, mapping.id) })}
-                  />
-                </li>
+                </ListCard>
               ))}
             </ul>
             <AddButton label="Añadir dato" onClick={addMapping} />

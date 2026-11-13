@@ -13,7 +13,7 @@ import { ContactFieldsSettings } from "../../src/features/contact-fields/Contact
 // ---------------------------------------------------------------------------
 
 const reply = (status: number, body?: unknown) => ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body ?? {}) }) as unknown as Response;
-const use = (blockName: string, role: "fills" | "reads") => ({ flowKey: "ventas", flowName: "Ventas", blockId: blockName, blockName, role });
+const use = (blockName: string, role: "fills" | "reads") => ({ flowKey: "ventas", flowName: "Ventas", blockId: blockName, blockName, blockType: role === "fills" ? "question" : "message", role });
 
 const CIUDAD: ContactFieldSummary = {
   id: "f1", key: "ciudad", label: "Ciudad", type: "list", options: ["Medellín", "Bogotá"], createdAt: "", updatedAt: "",

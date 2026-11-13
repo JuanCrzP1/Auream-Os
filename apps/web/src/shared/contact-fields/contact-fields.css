@@ -1,0 +1,38 @@
+/* Campos del cliente, las piezas compartidas (Configuración, editor de flujos,
+ * ficha del CRM): el chip de tipo, los 5 tipos, las opciones de una lista y
+ * «Nuevo campo». Solo tokens del tema; funcionan fuera de la sección `.cf`. */
+.cf-type { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; }
+.cf-type--list { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--cf-ink, color-mix(in srgb, var(--primary-hover) 80%, var(--text))); }
+.cf-type--date { background: color-mix(in srgb, var(--teal) 16%, transparent); color: color-mix(in srgb, var(--teal) 55%, var(--text)); }
+.cf-type--number { background: color-mix(in srgb, var(--amber) 18%, transparent); color: color-mix(in srgb, var(--amber) 55%, var(--text)); }
+.cf-type--boolean { background: color-mix(in srgb, var(--status-success) 15%, transparent); color: color-mix(in srgb, var(--status-success) 55%, var(--text)); }
+.cf-type--text { background: var(--surface-alt); color: var(--muted); }
+
+.cf-dialog { width: min(520px, calc(100vw - 32px)); }
+.cf-dialog code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--cf-ink, var(--primary)); }
+.cf-dialog__key { color: var(--muted); font-size: 0.78rem; font-weight: 500; }
+.cf-dialog__key.is-error { color: color-mix(in srgb, var(--rose) 80%, var(--text)); }
+.cf-dialog__hint { color: var(--muted); font-size: 0.78rem; font-weight: 500; line-height: 1.45; }
+.cf-dialog__foot { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-alt); color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+
+
+.cf-types { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.cf-types__item { display: grid; justify-items: center; gap: 6px; padding: 12px 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-alt); color: var(--text); font: 700 0.78rem var(--font-body); cursor: pointer; transition: border-color var(--speed-fast) ease, box-shadow var(--speed-fast) ease; }
+.cf-types__item svg { width: 20px; height: 20px; fill: none; stroke: var(--primary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cf-types__item:hover:not(:disabled) { border-color: color-mix(in srgb, var(--primary) 40%, transparent); }
+.cf-types__item.is-on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 9%, var(--surface)); box-shadow: var(--glow-soft); }
+.cf-types__item:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.cf-types__item:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.cf-options { display: grid; gap: 8px; }
+.cf-options__list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.cf-option { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--text); font-size: 0.8rem; font-weight: 700; }
+.cf-option:not(:has(button)) { padding-right: 12px; }
+.cf-option button { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 1rem; line-height: 1; cursor: pointer; }
+.cf-option button:hover { background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--text); }
+.cf-options__add { display: flex; gap: 8px; }
+.cf-options__note { margin: 0; color: var(--muted); font-size: 0.76rem; font-weight: 500; }
+
+@media (max-width: 520px) {
+  .cf-types { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

@@ -1,5 +1,6 @@
-import type { ConditionConfig, ConditionRule } from "../../../contracts/ConditionConfig";
+import { ruleValues, type ConditionConfig, type ConditionRule } from "../../../contracts/ConditionConfig";
 import { parseFieldNumber, sameTypedValue } from "../../../contracts/FieldValues";
+import { compareTypedField } from "./typedFieldRules";
 
 // ---------------------------------------------------------------------------
 // Evaluación de las reglas del Condicional. Pura: recibe la configuración y
@@ -101,6 +102,12 @@ function toNumber(value: unknown): number | null {
   return parseFieldNumber(value.replace(/\s+/g, "")) ?? null;
 }
 
+/** ¿Es lo mismo? Con tipo cuando se puede («Sí» = sí); si no, como texto sin tildes ni mayúsculas. */
+function sameValue(actual: unknown, expected: string): boolean {
+  if (!hasValue(actual)) return false;
+  return sameTypedValue(actual, expected) ?? normalize(actual) === normalize(expected);
+}
+
 /** Operadores de campo (dato del contacto, campo personalizado). */
 function compareField(actual: unknown, operator: string, expected: string): boolean {
   if (operator === "has_value") return hasValue(actual);
@@ -165,8 +172,11 @@ function evaluateRule(rule: ConditionRule, facts: ConditionFacts): RuleEvaluatio
       }
       case "contactField":
         return compareField(facts.contactField(rule.field), rule.operator, rule.value);
-      case "customField":
-        return compareField(facts.customField(rule.field), rule.operator, rule.value);
+      case "customField": {
+        const actual = facts.customField(rule.field);
+        const typed = compareTypedField(actual, rule.operator, ruleValues(rule), sameValue, zoned(facts.now, facts.timezone).date);
+        return typed ?? compareField(actual, rule.operator, rule.value);
+      }
       default:
         return false;
     }

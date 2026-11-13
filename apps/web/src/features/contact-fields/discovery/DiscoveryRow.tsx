@@ -1,5 +1,6 @@
 import { CONTACT_FIELD_LIMITS as LIMITS, CONTACT_FIELD_TYPE_LABEL, type ContactFieldType, type DiscoveredField } from "@contracts/ContactFieldContracts";
-import { count, TYPE_CHOICES, usesSummary } from "../fieldText";
+import { TYPE_CHOICES } from "@shared/contact-fields/fieldTypes";
+import { count, usesSummary } from "../fieldText";
 
 /** Lo que quien revisa decide de cada dato: si se convierte, con qué nombre y de qué tipo. */
 export interface Choice {

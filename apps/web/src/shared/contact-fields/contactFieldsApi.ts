@@ -7,8 +7,10 @@ import {
   type DiscoveryResponse,
   type SaveContactFieldRequest
 } from "@contracts/ContactFieldContracts";
+import type { ContactFieldValuesResponse, SaveContactFieldValuesRequest } from "@contracts/ContactFieldValueContracts";
 
-// Campos del cliente de la cuenta activa (`/contact-fields`).
+// Campos del cliente de la cuenta activa (`/contact-fields`): el catálogo y la
+// ficha de cada cliente. Lo comparten Configuración, el editor y el CRM.
 
 const one = (id: string) => `/contact-fields/${encodeURIComponent(id)}`;
 
@@ -36,4 +38,16 @@ export function updateContactField(id: string, request: Partial<SaveContactField
 /** Borra el campo y su dato en todos los clientes: `confirm` es la clave escrita por quien borra. */
 export async function deleteContactField(id: string, confirm: string): Promise<void> {
   await builderApiClient.delete<unknown>(`${one(id)}?${CONTACT_FIELD_CONFIRM_PARAM}=${encodeURIComponent(confirm)}`);
+}
+
+const values = (contactId: string) => `/contact-fields/values/${encodeURIComponent(contactId)}`;
+
+/** La ficha de un cliente: sus datos y de dónde salió cada uno. */
+export function fetchContactFieldValues(contactId: string): Promise<ContactFieldValuesResponse> {
+  return builderApiClient.get<ContactFieldValuesResponse>(values(contactId));
+}
+
+/** Guarda solo lo que cambió (`null` lo deja sin dato). */
+export function saveContactFieldValues(contactId: string, request: SaveContactFieldValuesRequest): Promise<ContactFieldValuesResponse> {
+  return builderApiClient.patch<ContactFieldValuesResponse>(values(contactId), request);
 }

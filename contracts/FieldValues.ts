@@ -9,6 +9,15 @@
 // «13/11/1990» es `1990-11-13`. Puro: sin red ni base.
 // ---------------------------------------------------------------------------
 
+import type { ContactFieldType } from "./ContactFieldContracts";
+import { MAX_CONTACT_FIELD_TEXT, type ContactFieldValue } from "./ContactContracts";
+
+/** Lo que hace falta de un campo para leer un valor: su tipo y, si es lista, sus opciones. */
+export interface TypedField {
+  readonly type: ContactFieldType;
+  readonly options: ReadonlyArray<string>;
+}
+
 /** Sin tildes, sin mayúsculas, sin espacios de más. */
 const fold = (value: string) => value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
 
@@ -99,4 +108,49 @@ export function sameTypedValue(actual: unknown, expected: string): boolean | und
   const a = parseFieldDate(actual);
   const b = a === undefined ? undefined : parseFieldDate(expected);
   return a !== undefined && b !== undefined ? a === b : undefined;
+}
+
+/**
+ * Lo que se escribió, convertido al tipo del campo. `undefined` si no encaja
+ * (una opción que la lista no tiene, una fecha que no existe): así no se
+ * guarda basura en la ficha. La misma regla al guardar desde un flujo, al
+ * validar una respuesta y al editar la ficha.
+ */
+export function coerceFieldValue(field: TypedField, raw: unknown): ContactFieldValue | undefined {
+  if (raw === null || raw === undefined) return undefined;
+  const text = typeof raw === "string" ? raw.trim() : typeof raw === "number" || typeof raw === "boolean" ? String(raw) : "";
+  if (!text) return undefined;
+  switch (field.type) {
+    case "text":
+      return text.slice(0, MAX_CONTACT_FIELD_TEXT);
+    case "number":
+      return parseFieldNumber(typeof raw === "number" ? raw : text);
+    case "date":
+      return parseFieldDate(text);
+    case "boolean":
+      return parseYesNo(raw);
+    case "list":
+      return field.options.find((option) => foldAnswer(option) === foldAnswer(text));
+  }
+}
+
+/** «Medellín, Bogotá o Cali». */
+export function joinOptions(options: ReadonlyArray<string>): string {
+  return options.length <= 1 ? (options[0] ?? "") : `${options.slice(0, -1).join(", ")} o ${options[options.length - 1]}`;
+}
+
+/** Lo que se le escribe al cliente cuando su respuesta no encaja en el tipo («preguntar de nuevo»). */
+export function mismatchMessage(field: TypedField): string {
+  switch (field.type) {
+    case "list":
+      return `Elige una de estas: ${joinOptions(field.options)}.`;
+    case "number":
+      return "Escríbelo solo con números, por ejemplo 1.200.000.";
+    case "date":
+      return "Escribe la fecha así: 13/11/2026.";
+    case "boolean":
+      return "Responde sí o no, por favor.";
+    default:
+      return "";
+  }
 }

@@ -19,8 +19,8 @@ import { routeGroupLink } from "./routeGroupLink";
 import { routeHelpRequest, type HelpRoutes } from "./routeHelpRequest";
 import { routeNotificationsRequest } from "./routeNotificationsRequest";
 import { routeQuickRepliesRequest } from "./routeQuickRepliesRequest";
-import { routeContactFieldsRequest } from "./routeContactFieldsRequest";
-import type { ContactFieldServices } from "../../../domains/contact-fields/application/ContactFieldServices";
+import { routeContactFieldsRequest, type ContactFieldRoutes } from "./routeContactFieldsRequest";
+
 import { routeContactNotesRequest } from "./routeContactNotesRequest";
 import type { ContactNoteServices } from "../../../domains/contacts/application/ContactNoteServices";
 import type { QuickReplyServices } from "../../../domains/quick-replies/application/QuickReplyServices";
@@ -119,7 +119,8 @@ export interface ApiRouterDependencies {
   /** Respuestas rápidas del chat (`/quick-replies`). Ausente: responde 503. */
   readonly quickReplyServices?: QuickReplyServices;
   /** Campos del cliente (`/contact-fields`). Ausente: responde 503. */
-  readonly contactFieldServices?: ContactFieldServices;
+  /** Campos del cliente: el catálogo y la ficha de cada cliente. */
+  readonly contactFieldServices?: ContactFieldRoutes;
   /** Notas internas de los clientes (`/contacts/:id/notes`). Ausente: responde 503. */
   readonly contactNoteServices?: ContactNoteServices;
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };

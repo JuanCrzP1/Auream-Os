@@ -9,8 +9,8 @@ import {
 
 // La web arma la clave mientras escribes el nombre con la MISMA regla.
 export { foldFieldText as fold, keyFromLabel } from "../../../contracts/ContactFieldContracts";
-import { CONTACT_FIELD_KEY_PATTERN, MAX_CONTACT_FIELD_TEXT, type ContactFieldValue } from "../../../contracts/ContactContracts";
-import { foldAnswer, parseFieldDate, parseFieldNumber, parseYesNo } from "../../../contracts/FieldValues";
+import { CONTACT_FIELD_KEY_PATTERN } from "../../../contracts/ContactContracts";
+import { foldAnswer } from "../../../contracts/FieldValues";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 
 // ---------------------------------------------------------------------------
@@ -82,27 +82,5 @@ export function requireFieldChanges(current: FieldShape, input: { readonly label
 }
 
 // --- Convertir lo que guarda un bloque a su tipo ------------------------------
-// Las reglas de lectura son las de `contracts/FieldValues` (las mismas del motor y la web).
-
-/**
- * Lo que guardó un bloque, convertido al tipo del campo. `undefined` si no
- * encaja (una lista que no tiene esa opción, una fecha que no existe): así no
- * se guarda basura en el cliente.
- */
-export function coerceFieldValue(field: FieldShape, raw: unknown): ContactFieldValue | undefined {
-  if (raw === null || raw === undefined) return undefined;
-  const text = typeof raw === "string" ? raw.trim() : typeof raw === "number" || typeof raw === "boolean" ? String(raw) : "";
-  if (!text) return undefined;
-  switch (field.type) {
-    case "text":
-      return text.slice(0, MAX_CONTACT_FIELD_TEXT);
-    case "number":
-      return parseFieldNumber(typeof raw === "number" ? raw : text);
-    case "date":
-      return parseFieldDate(text);
-    case "boolean":
-      return parseYesNo(raw);
-    case "list":
-      return field.options.find((option) => foldAnswer(option) === foldAnswer(text));
-  }
-}
+// Vive en `contracts/FieldValues` (lo usan también el motor y la web).
+export { coerceFieldValue } from "../../../contracts/FieldValues";

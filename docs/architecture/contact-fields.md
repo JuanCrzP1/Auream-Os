@@ -8,7 +8,7 @@
 | Dominio | `domains/contact-fields` (`domain/`: reglas puras · `application/`: servicio y paso al cliente) |
 | Base | `infrastructure/persistence/sql/SqlContactFields.ts` · migración `049_contact_fields.sql` |
 | API | `apps/api/routes/routeContactFieldsRequest.ts` · `composition/composeContactFieldServices.ts`, `contactFieldTurns.ts` |
-| Web | `apps/web/src/features/contact-fields` |
+| Web | `apps/web/src/features/contact-fields` (Configuración) · `apps/web/src/shared/contact-fields` (catálogo, «Nuevo campo», tipos: lo comparten Configuración, el editor y el CRM) · `builder/tools/_kit/FieldPicker.tsx` (elegir el campo en un bloque) · `crm/contacts/components/fields` (la ficha) |
 
 ## Lo que da valor
 
@@ -69,10 +69,22 @@ Se leen los borradores de los flujos no archivados (lo guardado es lo que corre)
 
 `contacts.manage` es de dueños y administradores (`RoleDefinitions`). El Asesor y Solo lectura los ven; no los cambian.
 
-## Lo que sigue (fase 2)
+## Los campos en los bloques (fase 2a)
 
-- Elegir el campo de una lista en los bloques (Esperar respuesta, Menú, Integración, Condicional).
-- La ficha del cliente con los campos tipados.
-- Unir claves parecidas y agrupar valores escritos de varias formas, siempre con confirmación.
+- **Elegir el campo** (`FieldPicker`) en Esperar respuesta, Menú, Integración (cada dato de la respuesta), IA (la respuesta) y Condicional: se busca por nombre o clave, se ve su tipo y qué tan lleno está, se crea uno ahí mismo (dueños y administradores; el diálogo va por portal fuera del lienzo) o se deja **solo en esta conversación** (un dato de paso). Llegan por `ToolResources.contactFields` (una carga al abrir el editor, refresco al volver a la pestaña).
+- **Menú:** si el campo es una lista y alguna opción del menú no está entre sus opciones, se avisa (esa elección no llegaría a la ficha).
+- **Esperar respuesta → «Preguntar de nuevo»** (`onMismatch: "retry"`, `retryMessage?`): con un campo con tipo, si la respuesta no encaja (`coerceFieldValue`), el bloque vuelve a preguntar citando lo que escribió, con el mensaje según el tipo (`mismatchMessage`) o uno propio, y la espera empieza otra vez. Hasta `WAIT_RESPONSE_MAX_RETRIES` (2); después sigue y lo escrito queda solo en la conversación (`question_mismatch_kept`). Los intentos van en `__retry.<bloque>` (interno). El motor sabe el tipo por el puerto `ContactFieldCatalog` (producción y laboratorio: el catálogo real, solo lectura).
+- **Condicional con tipo** (`TYPED_FIELD_OPERATORS`, `operatorsForFieldType`): lista `is_one_of`/`is_none_of` (opciones una por línea), número `between`, fecha `anniversary_today` (día y mes de hoy en la zona del negocio; un 29/02 cuenta el 28 en años no bisiestos), `within_next_days`, `at_least_days_ago`, `before_date`, `after_date`. El editor ofrece los de cada tipo con su control (botones de opciones, Sí/No, «entre», días, calendario) y muestra la regla **en palabras**. La validación es la misma en editor y servidor (`contracts/blocks/validation/condition.ts`); el MCP las aprende de su guía.
+- **El laboratorio** repregunta y llena la ficha del cliente de prueba igual que un flujo real (`composeSimulationSandbox`).
+
+## La ficha del cliente (fase 2a)
+
+- `GET /contact-fields/values/:contactId` (contacts.read): sus datos (sin los internos `__`) y **de dónde salió** cada uno; `PATCH` (contacts.write: el Asesor también) con `{ changes }`: **solo lo que cambió**, `null` lo deja sin dato. Se mezcla con lo que hay: si un flujo guarda algo mientras la ficha está abierta, no se pisa. Cada valor se valida con su tipo; una clave que no es campo se rechaza.
+- **Origen** (`contact_field_origins`, migración 050): una fila por cliente y clave con el último origen: `flow` (con `flow_key`, lo anota `ContactFieldSync`) o `team` (con `actor_id`). El bloque y la persona se buscan **al leer**: el bloque que llena esa clave en ese flujo (si es uno solo), con su nombre de hoy, y el verbo de su tipo («Lo respondió en», «Lo eligió en», «Lo trajo»). Borrar el campo o el dato borra su origen.
+- **CRM:** cada campo en la forma de su tipo; los datos sueltos que guardó un flujo, aparte, con «Convertir en campo» (dueños y administradores; `NewFieldDialog` con `fixedKey`). El catálogo se carga una vez por página.
+
+## Lo que sigue (fase 2b)
+
+- Unir claves parecidas y agrupar valores escritos de varias formas, siempre con confirmación y para deshacer.
 - «Lo que vende cada valor» (ventas por ciudad, por producto de interés).
 - Filtrar difusiones y el CRM por campos.

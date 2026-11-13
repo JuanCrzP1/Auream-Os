@@ -1,6 +1,7 @@
+import "./contact-fields.css";
 import { useState } from "react";
 import { CONTACT_FIELD_LIMITS as LIMITS } from "@contracts/ContactFieldContracts";
-import { withOption } from "../fieldText";
+import { withOption } from "./fieldTypes";
 
 /** Las opciones de una lista: se agregan con Enter (o «Agregar») y se quitan con ×. Sin repetidas. */
 export function OptionsEditor({

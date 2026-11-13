@@ -6,11 +6,11 @@ import { StateIcons } from "@shared/ui/state/stateIcons";
 import { DiscoveryView } from "./discovery/DiscoveryView";
 import { DeleteFieldDialog } from "./field/DeleteFieldDialog";
 import { FieldDrawer } from "./field/FieldDrawer";
-import { NewFieldDialog } from "./field/NewFieldDialog";
+import { NewFieldDialog } from "@shared/contact-fields/NewFieldDialog";
+import { useContactFieldCatalog } from "@shared/contact-fields/useContactFieldCatalog";
 import { FieldsTable } from "./list/FieldsTable";
 import { PendingCard } from "./list/PendingCard";
 import { SystemFields } from "./list/SystemFields";
-import { useContactFields } from "./services/useContactFields";
 
 type Dialog = { readonly kind: "new" } | { readonly kind: "field"; readonly id: string } | { readonly kind: "delete"; readonly field: ContactFieldSummary } | null;
 
@@ -21,18 +21,17 @@ type Dialog = { readonly kind: "new" } | { readonly kind: "field"; readonly id: 
  * flujos ya guardan. Dueños y administradores los organizan; el resto los ve.
  */
 export function ContactFieldsSettings() {
-  const { state, reload, create, adopt, update, remove } = useContactFields();
+  const { data, status, reload, create, adopt, update, remove } = useContactFieldCatalog();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [reviewing, setReviewing] = useState<boolean | null>(null);
 
-  if (state.status === "loading") return <div className="cf-loading" aria-busy="true" aria-label="Cargando campos del cliente" />;
-  if (state.status === "error") {
+  if (!data && status === "loading") return <div className="cf-loading" aria-busy="true" aria-label="Cargando campos del cliente" />;
+  if (!data) {
     return (
       <StateCard role="alert" tone="warning" icon={StateIcons.offline} title="No pudimos cargar los campos del cliente" description="Revisa tu conexión e inténtalo de nuevo." actions={<RetryButton busy={false} onRetry={() => void reload()} />} />
     );
   }
 
-  const { data } = state;
   const firstDay = data.fields.length === 0 && data.undefinedKeys > 0 && data.canManage;
   const showDiscovery = reviewing ?? firstDay;
   const open = dialog?.kind === "field" ? data.fields.find((field) => field.id === dialog.id) : undefined;

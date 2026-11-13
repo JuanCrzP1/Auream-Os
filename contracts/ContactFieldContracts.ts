@@ -55,6 +55,8 @@ export interface FieldUse {
   readonly flowName: string;
   readonly blockId: string;
   readonly blockName: string;
+  /** El tipo del bloque (`question`, `menu`, `integration`, `ai`…): dice cómo se llenó («Lo respondió», «Lo eligió»). */
+  readonly blockType: string;
   /** fills: lo guarda (Esperar respuesta, Menú, Integración, IA) · reads: lo usa en un texto o una condición. */
   readonly role: "fills" | "reads";
 }

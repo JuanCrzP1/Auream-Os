@@ -18,7 +18,7 @@ export interface ObservedValues {
 const LIST_MAX_OPTIONS = 12;
 
 const every = (values: ReadonlyArray<string>, type: ContactFieldType) =>
-  values.length > 0 && values.every((value) => coerceFieldValue({ key: "x", label: "x", type, options: [] }, value) !== undefined);
+  values.length > 0 && values.every((value) => coerceFieldValue({ type, options: [] }, value) !== undefined);
 
 /** Las opciones de una lista: los valores escritos parecido se agrupan (gana la forma más usada). */
 export function groupedOptions(top: ObservedValues["top"]): string[] {

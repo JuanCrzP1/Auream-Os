@@ -24,6 +24,10 @@ import { SimulatedContactDirectory } from "../../../infrastructure/simulation/Si
 import { JournaledAiGateway, JournaledHttpRequester, SimulatedAiGateway, SimulatedConversionTracker, SimulatedHttpRequester } from "../../../infrastructure/simulation/SimulatedEffects";
 import { StaticTenantResolver } from "../../../platform/tenancy/application/TenantResolver";
 import { composeNodeRuntime } from "./composeNodeRuntime";
+import type { ContactFieldCatalog } from "../../../flow-engine/ports/ContactFieldCatalog";
+import { identityOf } from "../../../flow-engine/ports/ContactDirectory";
+import { coerceFieldValue } from "../../../contracts/FieldValues";
+import type { ContactFieldValue } from "../../../contracts/ContactContracts";
 
 // ---------------------------------------------------------------------------
 // El arenero del laboratorio de pruebas: el motor de flujos real, armado de
@@ -44,6 +48,8 @@ export interface SimulationSandboxDependencies {
   readonly timezoneOf: (tenantId: string) => Promise<string>;
   /** Registrar venta: calcula la venta con el catálogo de la cuenta SIN guardarla. */
   readonly sales: SalesLedger;
+  /** Campos del cliente (su tipo): repreguntar y llenar la ficha del cliente de prueba como un flujo real. */
+  readonly fields?: ContactFieldCatalog;
 }
 
 class TurnSandbox implements SimulationSandbox {
@@ -68,7 +74,8 @@ class TurnSandbox implements SimulationSandbox {
       media: new DisabledHttpRequester(),
       documents: new DisabledDocumentReader(),
       receipts: new InMemoryReceiptRegistry(),
-      sales: this.deps.sales
+      sales: this.deps.sales,
+      ...(this.deps.fields ? { fields: this.deps.fields } : {})
     });
 
     const sessions = new InMemorySessionRepository();
@@ -81,9 +88,30 @@ class TurnSandbox implements SimulationSandbox {
     const tenants = new StaticTenantResolver({ [this.tenantId]: { tenantId: this.tenantId, tenantKey: this.tenantId, timezone, limits: SIMULATION_LIMITS } });
 
     const result = await new ExecutionOrchestrator(tenants, registry, sessionService, loop).handle(envelope);
+    if (this.deps.fields) await keepTypedFields(this.deps.fields, this.tenantId, contacts, envelope, result.contextPatch ?? {});
     const after = (await sessions.find(sessionIdFor(this.tenantId, envelope.conversationKey))) ?? null;
     return { result, session: after, persona: contacts.current(), records: journal.entries(), counters: roundRobin.snapshot() };
   }
+}
+
+/** Lo que guardaron los bloques y es un campo queda en la ficha del cliente de prueba, convertido (como `ContactFieldSync`). */
+async function keepTypedFields(
+  fields: ContactFieldCatalog,
+  tenantId: string,
+  contacts: SimulatedContactDirectory,
+  envelope: InboundEnvelope,
+  patch: Readonly<Record<string, unknown>>
+): Promise<void> {
+  const typed: Record<string, ContactFieldValue> = {};
+  for (const [key, raw] of Object.entries(patch)) {
+    if (key.startsWith("__")) continue;
+    const field = await fields.find(tenantId, key);
+    const value = field ? coerceFieldValue(field, raw) : undefined;
+    if (value !== undefined) typed[key] = value;
+  }
+  if (Object.keys(typed).length === 0) return;
+  const profile = await contacts.resolve(tenantId, identityOf(envelope));
+  await contacts.setFields(tenantId, profile.id, typed);
 }
 
 export function composeSimulationSandbox(deps: SimulationSandboxDependencies): SimulationSandboxFactory {

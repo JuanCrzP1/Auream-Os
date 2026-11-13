@@ -1,0 +1,11 @@
+/* Condicional sobre un Campo del cliente: el valor en la forma de su tipo. */
+.cfr { display: grid; gap: 8px; }
+.cfr-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.cfr-option { padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-alt); color: var(--text); font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+.cfr-option[aria-pressed="true"] { border-color: var(--kit-accent, var(--primary)); background: color-mix(in srgb, var(--kit-accent, var(--primary)) 12%, transparent); color: var(--text); }
+.cfr-range { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+.cfr-range .kit-input { width: 110px; }
+.cfr-segment { display: inline-flex; padding: 3px; border-radius: var(--radius-sm); background: var(--surface-alt); border: 1px solid var(--border); }
+.cfr-segment button { padding: 5px 16px; border: 0; border-radius: calc(var(--radius-sm) - 2px); background: none; color: var(--muted); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.cfr-segment button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.cond-words { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--kit-accent, var(--primary)) 8%, transparent); color: var(--text); font-size: 0.8rem; line-height: 1.5; }

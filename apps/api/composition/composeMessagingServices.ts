@@ -21,6 +21,7 @@ import { StartFlowForContactService } from "../../../domains/messaging/applicati
 import { OutreachService } from "../../../domains/messaging/application/OutreachService";
 import { FlowTurn } from "../../../domains/messaging/application/FlowTurn";
 import type { ContactFieldSync } from "../../../domains/contact-fields/application/ContactFieldSync";
+import type { ContactFieldCatalog } from "../../../flow-engine/ports/ContactFieldCatalog";
 import { contactFieldTurns } from "./contactFieldTurns";
 import { FlowTimerService } from "../../../domains/messaging/application/FlowTimerService";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
@@ -86,6 +87,8 @@ export interface MessagingDependencies {
   readonly journal?: TurnJournal;
   /** Campos del cliente: lo que guardan los bloques y es un campo pasa al cliente. Ausente: queda solo en la conversación. */
   readonly contactFields?: Pick<ContactFieldSync, "persist">;
+  /** El tipo de cada campo (Esperar respuesta: volver a preguntar si no encaja). */
+  readonly fieldCatalog?: ContactFieldCatalog;
   /** Ventas del bloque Registrar venta (se guardan en Ventas). */
   readonly sales: SalesLedger;
   /** Quién oye los mensajes entrantes (se conecta después: Difusiones depende de Mensajería). */

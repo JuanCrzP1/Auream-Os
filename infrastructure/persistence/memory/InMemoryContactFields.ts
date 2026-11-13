@@ -1,5 +1,6 @@
 import type { ContactFieldDefinition } from "../../../contracts/ContactFieldContracts";
-import type { ContactFieldRepository, ContactFieldValues } from "../../../domains/contact-fields/application/ContactFieldPorts";
+import type { ContactFieldValue } from "../../../contracts/ContactContracts";
+import type { ContactFieldRepository, ContactFieldValues, FieldOrigins, OriginWrite, StoredOrigin } from "../../../domains/contact-fields/application/ContactFieldPorts";
 import type { FieldShape } from "../../../domains/contact-fields/domain/ContactField";
 import type { ObservedValues } from "../../../domains/contact-fields/domain/fieldDiscovery";
 
@@ -14,6 +15,10 @@ export class InMemoryContactFieldRepository implements ContactFieldRepository {
 
   public async find(tenantId: string, id: string): Promise<ContactFieldDefinition | null> {
     return (await this.list(tenantId)).find((row) => row.id === id) ?? null;
+  }
+
+  public async findByKey(tenantId: string, key: string): Promise<ContactFieldDefinition | null> {
+    return (await this.list(tenantId)).find((row) => row.key === key) ?? null;
   }
 
   public async create(tenantId: string, id: string, field: FieldShape): Promise<ContactFieldDefinition | null> {
@@ -42,6 +47,7 @@ export class InMemoryContactFieldRepository implements ContactFieldRepository {
 
 /** Los datos de los clientes en memoria: `seen` por cuenta; `merged` anota cada escritura. */
 export class InMemoryContactFieldValues implements ContactFieldValues {
+  private readonly contactsData = new Map<string, Record<string, ContactFieldValue>>();
   public readonly merged: Array<{ readonly tenantId: string; readonly contactId: string; readonly values: Readonly<Record<string, string | number | boolean>> }> = [];
 
   public constructor(
@@ -64,6 +70,51 @@ export class InMemoryContactFieldValues implements ContactFieldValues {
 
   public async merge(tenantId: string, contactId: string, values: Readonly<Record<string, string | number | boolean>>): Promise<void> {
     this.merged.push({ tenantId, contactId, values });
+    const current = this.contactsData.get(`${tenantId}:${contactId}`);
+    if (current) this.contactsData.set(`${tenantId}:${contactId}`, { ...current, ...values });
+  }
+
+  /** Un cliente de la cuenta con sus datos (pruebas). */
+  public seedContact(tenantId: string, contactId: string, values: Readonly<Record<string, ContactFieldValue>> = {}): void {
+    this.contactsData.set(`${tenantId}:${contactId}`, { ...values });
+  }
+
+  public async ofContact(tenantId: string, contactId: string): Promise<Record<string, ContactFieldValue> | null> {
+    const current = this.contactsData.get(`${tenantId}:${contactId}`);
+    return current ? { ...current } : null;
+  }
+
+  public async clear(tenantId: string, contactId: string, keys: ReadonlyArray<string>): Promise<void> {
+    const current = this.contactsData.get(`${tenantId}:${contactId}`);
+    if (!current) return;
+    this.contactsData.set(`${tenantId}:${contactId}`, Object.fromEntries(Object.entries(current).filter(([key]) => !keys.includes(key))));
+  }
+}
+
+/** Orígenes en memoria (pruebas): el último por cliente y clave. */
+export class InMemoryFieldOrigins implements FieldOrigins {
+  private readonly rows = new Map<string, StoredOrigin & { readonly tenantId: string; readonly contactId: string }>();
+  public constructor(private readonly now: () => string = () => new Date().toISOString()) {}
+
+  public async record(tenantId: string, contactId: string, keys: ReadonlyArray<string>, origin: OriginWrite): Promise<void> {
+    for (const key of keys) {
+      this.rows.set(`${contactId}:${key}`, {
+        tenantId, contactId, key, source: origin.source, at: this.now(),
+        flowKey: origin.source === "flow" ? origin.flowKey : null,
+        actorId: origin.source === "team" ? origin.actorId : null
+      });
+    }
+  }
+
+  public async forContact(tenantId: string, contactId: string): Promise<ReadonlyArray<StoredOrigin>> {
+    return [...this.rows.values()].filter((row) => row.tenantId === tenantId && row.contactId === contactId).map(({ tenantId: _t, contactId: _c, ...row }) => row);
+  }
+
+  public async forget(tenantId: string, contactId: string, keys: ReadonlyArray<string>): Promise<void> {
+    for (const key of keys) {
+      const row = this.rows.get(`${contactId}:${key}`);
+      if (row?.tenantId === tenantId) this.rows.delete(`${contactId}:${key}`);
+    }
   }
 }
 

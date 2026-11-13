@@ -9,13 +9,14 @@ import {
 } from "@contracts/WaitResponseConfig";
 import type { ToolEditorProps } from "../ToolUi";
 import { SwitchField } from "../_kit/Switch";
-import { TextAreaField, TextField, VariableHint } from "../_kit/fields";
+import { TextAreaField, VariableHint } from "../_kit/fields";
 import { CardSection, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import { waitResponseTool } from "./definition";
 import { WaitResponseIcon } from "./WaitResponseIcon";
 import { WaitResponseTimeout } from "./editor/WaitResponseTimeout";
 import { WaitResponseReaction } from "./editor/WaitResponseReaction";
+import { WaitResponseSaveSection } from "./editor/WaitResponseSaveSection";
 
 /**
  * Editor de «Esperar respuesta». La configuración se lee de `draft.config` en
@@ -26,7 +27,7 @@ import { WaitResponseReaction } from "./editor/WaitResponseReaction";
  * validación rechaza); al apagarlo se restaura lo último que el usuario
  * escribió en vez del default.
  */
-export function WaitResponseEditor({ draft, onChange }: ToolEditorProps) {
+export function WaitResponseEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readWaitResponseConfig(draft.config);
   const message = typeof draft.content.text === "string" ? draft.content.text : "";
 
@@ -48,6 +49,8 @@ export function WaitResponseEditor({ draft, onChange }: ToolEditorProps) {
       timeout: _t,
       reaction: _r,
       targetKey: _tk,
+      onMismatch: _om,
+      retryMessage: _rm,
       ...rest
     } = draft.config;
 
@@ -59,7 +62,10 @@ export function WaitResponseEditor({ draft, onChange }: ToolEditorProps) {
         replyToInbound: next.replyToInbound,
         ...(next.timeout ? { timeout: next.timeout } : {}),
         ...(next.reaction ? { reaction: next.reaction } : {}),
-        ...(next.targetKey ? { targetKey: next.targetKey } : {})
+        ...(next.targetKey ? { targetKey: next.targetKey } : {}),
+        // «Preguntar de nuevo» solo tiene sentido guardando en algún lado.
+        ...(next.targetKey && next.onMismatch ? { onMismatch: next.onMismatch } : {}),
+        ...(next.targetKey && next.onMismatch && next.retryMessage ? { retryMessage: next.retryMessage } : {})
       }
     });
   };
@@ -122,15 +128,7 @@ export function WaitResponseEditor({ draft, onChange }: ToolEditorProps) {
         <WaitResponseReaction reaction={config.reaction} onChange={(reaction) => update({ reaction })} />
       </CardSection>
 
-      <CardSection step={4} title="Guardar la respuesta" description="Para usarla más adelante en el flujo.">
-        <TextField
-          label="Guardar respuesta en"
-          value={config.targetKey ?? ""}
-          placeholder="Opcional: ciudad, correo, presupuesto…"
-          monospace
-          onChange={(targetKey) => update({ targetKey })}
-        />
-      </CardSection>
+      <WaitResponseSaveSection config={config} resources={resources} update={update} />
 
       <OutputsPreview outputs={waitResponseTool.outputs?.(draft.config) ?? null} />
     </ToolEditorLayout>

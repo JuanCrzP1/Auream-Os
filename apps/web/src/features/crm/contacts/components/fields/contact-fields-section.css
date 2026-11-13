@@ -1,0 +1,16 @@
+/* La ficha del cliente: sus Campos en la forma de su tipo y de dónde salió cada dato. */
+.cfv { display: grid; gap: 12px; }
+.cfv__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 0.78rem; font-weight: 600; }
+.cfv__head a { color: var(--primary); font-weight: 700; text-decoration: none; }
+.cfv__head a:hover { text-decoration: underline; }
+.cfv__field { display: grid; gap: 5px; }
+.cfv__label { color: var(--text); font-size: 0.8rem; font-weight: 700; }
+.cfv__origin { color: var(--muted); font-size: 0.74rem; }
+.cfv-segment { display: inline-flex; justify-self: start; padding: 3px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-alt); }
+.cfv-segment button { padding: 6px 18px; border: 0; border-radius: calc(var(--radius-sm) - 2px); background: none; color: var(--muted); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+.cfv-segment button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.cfv-segment button:disabled { cursor: not-allowed; }
+.cfv__loose { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--amber) 5%, transparent); color: var(--text); font-size: 0.8rem; }
+.cfv__loose-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cfv__loose-row code { color: color-mix(in srgb, var(--primary-hover) 80%, var(--text)); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.cfv__loose-row .ui-link { margin-left: auto; font-size: 0.78rem; font-weight: 700; text-decoration: none; }

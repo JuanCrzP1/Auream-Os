@@ -4,7 +4,7 @@ import type { AdoptFieldsRequest, DiscoveredField } from "@contracts/ContactFiel
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { discoverContactFields } from "../services/contactFieldsApi";
+import { discoverContactFields } from "@shared/contact-fields/contactFieldsApi";
 import { choiceFor, DiscoveryRow, type Choice } from "./DiscoveryRow";
 
 /** El servidor convierte hasta 50 a la vez. */

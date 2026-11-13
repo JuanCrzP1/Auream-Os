@@ -485,3 +485,11 @@
 .wr-out--tiempo .wr-out__handle.react-flow__handle {
   --xy-handle-background-color: var(--status-danger);
 }
+
+/* «Si la respuesta no encaja» (campo con tipo). */
+.wait-response__mismatch { display: grid; gap: 10px; margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.wait-response__mismatch legend { padding: 0 6px; color: var(--text); font-family: var(--font-display); font-size: 0.78rem; font-weight: 600; }
+.wait-response__mismatch > label { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.wait-response__mismatch > label input { margin-top: 3px; accent-color: var(--kit-accent, var(--primary)); }
+.wait-response__mismatch > label > span { display: grid; gap: 2px; color: var(--text); font-size: 0.8rem; }
+.wait-response__mismatch > label > span span { color: var(--muted); font-size: 0.72rem; line-height: 1.4; }

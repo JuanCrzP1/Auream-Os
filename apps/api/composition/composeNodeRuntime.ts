@@ -15,6 +15,7 @@ import { DisabledSalesLedger } from "../../../infrastructure/sales/DisabledSales
 import { PixelNodeHandler } from "../../../flow-engine/nodes/pixel/PixelNodeHandler";
 import { StartNodeHandler } from "../../../flow-engine/nodes/start/StartNodeHandler";
 import { QuestionNodeHandler } from "../../../flow-engine/nodes/question/QuestionNodeHandler";
+import type { ContactFieldCatalog } from "../../../flow-engine/ports/ContactFieldCatalog";
 import { TagsNodeHandler } from "../../../flow-engine/nodes/tags/TagsNodeHandler";
 import type { RoundRobinCounter } from "../../../flow-engine/ports/RoundRobinCounter";
 import { InMemoryRoundRobinCounter } from "../../../infrastructure/persistence/memory/InMemoryRoundRobinCounter";
@@ -58,6 +59,8 @@ export interface NodeRuntimeDependencies {
   readonly receipts: ReceiptRegistry;
   /** Ventas del bloque Registrar venta. Producción: guarda; simulación: calcula sin guardar. */
   readonly sales: SalesLedger;
+  /** El tipo de cada campo del cliente (Esperar respuesta: volver a preguntar). Ausente: ninguna clave tiene tipo. */
+  readonly fields?: ContactFieldCatalog;
 }
 
 /**
@@ -104,7 +107,7 @@ export function composeNodeRuntime(
   return new NodeRuntime([
     new StartNodeHandler(),
     new MessageNodeHandler(templates),
-    new QuestionNodeHandler(templates),
+    new QuestionNodeHandler(templates, dependencies.fields),
     new TagsNodeHandler(dependencies.contacts),
     new PaymentProofNodeHandler(
       { fetcher: dependencies.media, reader: dependencies.documents, receipts: dependencies.receipts },

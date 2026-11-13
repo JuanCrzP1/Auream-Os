@@ -1,6 +1,7 @@
 import type { ContactFieldSummary } from "@contracts/ContactFieldContracts";
-import { filledPercent, typeLabel, usesSummary } from "../fieldText";
-import { TypeChip } from "./TypeChip";
+import { typeLabel } from "@shared/contact-fields/fieldTypes";
+import { TypeChip } from "@shared/contact-fields/TypeChip";
+import { filledPercent, usesSummary } from "../fieldText";
 
 /** «Tuyos»: cada campo con su tipo, qué tan lleno está y quién lo usa. Toda la fila abre su detalle. */
 export function FieldsTable({

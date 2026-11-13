@@ -99,6 +99,13 @@ function escribirMensaje(texto: string) {
   fireEvent.change(screen.getByLabelText("Mensaje antes de esperar"), { target: { value: texto } });
 }
 
+/** Guarda la respuesta en un dato solo de la conversación (sin campos definidos en la cuenta). */
+function escribirClave(valor: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Guardar en" }));
+  fireEvent.click(screen.getByRole("button", { name: /Solo en esta conversación/ }));
+  fireEvent.change(screen.getByLabelText("Clave en la conversación"), { target: { value: valor } });
+}
+
 describe("creación del nodo", () => {
   it("nace con «sin límite» apagado y 30 minutos de tiempo máximo", () => {
     // Decisión de producto: el editor de un nodo recién creado debe mostrarse
@@ -165,7 +172,7 @@ describe("Guardar", () => {
     render(<MarcoGobernado inicial={nodoEspera()} onCerrar={alCerrar} />);
 
     escribirMensaje("¿En qué ciudad te encuentras?");
-    fireEvent.change(screen.getByLabelText("Guardar respuesta en"), { target: { value: "ciudad" } });
+    escribirClave("ciudad");
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
     expect(alCerrar).toHaveBeenCalled();
@@ -207,9 +214,7 @@ describe("Guardar", () => {
     const alCerrar = vi.fn();
     render(<MarcoGobernado inicial={nodoEspera()} onCerrar={alCerrar} />);
 
-    fireEvent.change(screen.getByLabelText("Guardar respuesta en"), {
-      target: { value: "mi ciudad" }
-    });
+    escribirClave("mi ciudad");
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
     expect(screen.getByRole("alert")).toBeInTheDocument();

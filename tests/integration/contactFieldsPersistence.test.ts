@@ -2,6 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ContactFieldServices } from "../../domains/contact-fields/application/ContactFieldServices.js";
 import { ContactFieldSync } from "../../domains/contact-fields/application/ContactFieldSync.js";
 import { SqlContactFieldRepository, SqlContactFieldValues } from "../../infrastructure/persistence/sql/SqlContactFields.js";
+import { SqlContactFieldOrigins } from "../../infrastructure/persistence/sql/SqlContactFieldOrigins.js";
+import { ContactFieldValueServices } from "../../domains/contact-fields/application/ContactFieldValueServices.js";
 import type { SqlClient } from "../../infrastructure/persistence/sql/SqlClient.js";
 import { cleanupTestData, createTestSqlClient, TEST_KEY_PREFIX } from "./setup/testDatabase.js";
 
@@ -32,7 +34,9 @@ const customFields = async (id: string) => (await sql.query<{ custom_fields: Rec
 function module() {
   const repository = new SqlContactFieldRepository(sql);
   const values = new SqlContactFieldValues(sql);
-  return { repository, values, fields: new ContactFieldServices(repository, values, { drafts: async () => [] }), sync: new ContactFieldSync(repository, values) };
+  const origins = new SqlContactFieldOrigins(sql);
+  const ficha = new ContactFieldValueServices(repository, values, origins, { drafts: async () => [] }, { names: async () => new Map([["u-ana", "Ana"]]) });
+  return { repository, values, origins, ficha, fields: new ContactFieldServices(repository, values, { drafts: async () => [] }), sync: new ContactFieldSync(repository, values, origins) };
 }
 
 beforeAll(() => {
@@ -90,6 +94,27 @@ describe("SqlContactFields", () => {
     expect(await customFields(laura)).toEqual({ presupuesto: "50000", nota: "" });
     expect((await fields.list(tenant, true)).fields).toEqual([]);
     expect((await fields.list(other, true)).fields.map((field) => field.key)).toEqual(["ciudad"]);
+  });
+
+  it("la ficha: editar solo lo que cambió, con su origen; un flujo anota el suyo; borrar el campo limpia todo", async () => {
+    const { tenant, other, laura } = await seed();
+    const { fields, ficha, sync, origins } = module();
+    const [presupuesto] = await fields.adopt(tenant, { fields: [{ key: "presupuesto", label: "Presupuesto", type: "number" }, { key: "ciudad", label: "Ciudad", type: "text" }] });
+
+    const saved = await ficha.update(tenant, laura, { changes: { presupuesto: "2.000.000", nota: null } as never }, "u-ana").catch((error: Error) => error);
+    expect(saved).toBeInstanceOf(Error); // «nota» no es un campo: no se toca nada
+    const ok = await ficha.update(tenant, laura, { changes: { presupuesto: "2.000.000" } }, "u-ana");
+    expect(ok.values).toEqual({ ciudad: "Medellín", presupuesto: 2_000_000, nota: "" });
+    expect(ok.origins.presupuesto).toMatchObject({ source: "team", actorName: "Ana" });
+
+    await sync.persist(tenant, async () => laura, { ciudad: "Bogotá" }, "ventas");
+    expect((await origins.forContact(tenant, laura)).map((origin) => [origin.key, origin.source, origin.flowKey]).sort()).toEqual([["ciudad", "flow", "ventas"], ["presupuesto", "team", null]]);
+    expect(await origins.forContact(other, laura)).toEqual([]);
+
+    expect((await ficha.update(tenant, laura, { changes: { ciudad: null } }, "u-ana")).values).toEqual({ presupuesto: 2_000_000, nota: "" });
+    await fields.remove(tenant, presupuesto!.id, "presupuesto");
+    expect(await origins.forContact(tenant, laura)).toEqual([]);
+    await expect(ficha.read(other, laura, true)).rejects.toThrow("no existe");
   });
 
   it("la base rechaza una clave o un tipo inválidos aunque algo se salte el dominio", async () => {

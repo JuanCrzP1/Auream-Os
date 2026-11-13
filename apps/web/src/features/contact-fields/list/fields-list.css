@@ -65,12 +65,6 @@
 .cf-bar { flex: 1; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, transparent); overflow: hidden; }
 .cf-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
 
-.cf-type { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; }
-.cf-type--list { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--cf-ink, var(--primary)); }
-.cf-type--date { background: color-mix(in srgb, var(--teal) 16%, transparent); color: color-mix(in srgb, var(--teal) 55%, var(--text)); }
-.cf-type--number { background: color-mix(in srgb, var(--amber) 18%, transparent); color: color-mix(in srgb, var(--amber) 55%, var(--text)); }
-.cf-type--boolean { background: color-mix(in srgb, var(--status-success) 15%, transparent); color: color-mix(in srgb, var(--status-success) 55%, var(--text)); }
-.cf-type--text { background: var(--surface-alt); color: var(--muted); }
 
 /* Del sistema */
 .cf-system { display: grid; gap: 12px; padding: 18px 20px; }

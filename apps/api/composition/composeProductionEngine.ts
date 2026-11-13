@@ -1,4 +1,5 @@
 import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
+import type { ContactFieldCatalog } from "../../../flow-engine/ports/ContactFieldCatalog";
 import type { ApiConfig } from "../config/loadApiConfig";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import type { BuilderWorkspaceRepository } from "../../../domains/automations/builder/application/BuilderWorkspaceRepository";
@@ -36,6 +37,8 @@ export interface ProductionEngineDependencies {
   readonly integrations: IntegrationsServices;
   readonly documents: DocumentTextReader;
   readonly sales: SalesLedger;
+  /** Campos del cliente de la cuenta (su tipo). Ausente: ninguna clave tiene tipo. */
+  readonly fieldCatalog?: ContactFieldCatalog;
 }
 
 export function composeProductionEngine(deps: ProductionEngineDependencies) {
@@ -52,7 +55,8 @@ export function composeProductionEngine(deps: ProductionEngineDependencies) {
     media: http,
     documents: deps.documents,
     receipts: new SqlReceiptRegistry(deps.sql),
-    sales: deps.sales
+    sales: deps.sales,
+    ...(deps.fieldCatalog ? { fields: deps.fieldCatalog } : {})
   });
 
   // La zona horaria de cada empresa (la de Empresa; si no eligió una, la de la plataforma).

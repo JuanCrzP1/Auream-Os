@@ -81,7 +81,7 @@ describe("valores por defecto", () => {
     );
 
     expect(container.textContent).not.toMatch(/targetKey|waitIndefinitely|groupMessages|replyToInbound/);
-    expect(screen.getByText("Guardar respuesta en")).toBeInTheDocument();
+    expect(screen.getByText("Guardar en")).toBeInTheDocument();
   });
 });
 
@@ -358,10 +358,12 @@ describe("reaccionar al mensaje recibido", () => {
 });
 
 describe("guardar la respuesta en un campo", () => {
-  it("escribe el destino", () => {
+  it("escribe el destino (un dato solo de la conversación, sin campos definidos)", () => {
     const onChange = pintar();
 
-    fireEvent.change(screen.getByLabelText("Guardar respuesta en"), {
+    fireEvent.click(screen.getByRole("button", { name: "Guardar en" }));
+    fireEvent.click(screen.getByRole("button", { name: /Solo en esta conversación/ }));
+    fireEvent.change(screen.getByLabelText("Clave en la conversación"), {
       target: { value: "ciudad" }
     });
 
@@ -373,7 +375,7 @@ describe("guardar la respuesta en un campo", () => {
   it("vaciarlo retira la clave en lugar de dejarla vacía", () => {
     const onChange = pintar(borrador({ targetKey: "ciudad" }));
 
-    fireEvent.change(screen.getByLabelText("Guardar respuesta en"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Clave en la conversación"), { target: { value: "" } });
 
     expect(onChange.mock.calls[0][0].config).not.toHaveProperty("targetKey");
   });
@@ -384,7 +386,7 @@ describe("guardar la respuesta en un campo", () => {
     // escribe, y `context.` no le pertenece.
     pintar(borrador({ targetKey: "context.ciudad" }));
 
-    expect(screen.getByLabelText("Guardar respuesta en")).toHaveValue("ciudad");
+    expect(screen.getByLabelText("Clave en la conversación")).toHaveValue("ciudad");
   });
 
   it("al tocar cualquier cosa, la clave se persiste ya normalizada", () => {
@@ -438,21 +440,23 @@ describe("no hay segunda fuente de verdad", () => {
       <WaitResponseEditor draft={borrador({ targetKey: "ciudad" })} onChange={onChange} />
     );
 
-    expect(screen.getByLabelText("Guardar respuesta en")).toHaveValue("ciudad");
+    expect(screen.getByLabelText("Clave en la conversación")).toHaveValue("ciudad");
 
     // Se reemplaza el borrador desde fuera —lo que hace el marco al resincronizar
     // con el nodo— y el editor obedece: si tuviera estado propio, seguiría
     // enseñando «ciudad».
     rerender(<WaitResponseEditor draft={borrador({ targetKey: "correo" })} onChange={onChange} />);
 
-    expect(screen.getByLabelText("Guardar respuesta en")).toHaveValue("correo");
+    expect(screen.getByLabelText("Clave en la conversación")).toHaveValue("correo");
   });
 
   it("escribir sin que nadie aplique el parche NO cambia lo que se ve", () => {
     // Confirma que el control es gobernado por `draft` y no por un estado local:
     // con un `onChange` que descarta, la interfaz no puede avanzar sola.
     pintar();
-    const campo = screen.getByLabelText("Guardar respuesta en");
+    fireEvent.click(screen.getByRole("button", { name: "Guardar en" }));
+    fireEvent.click(screen.getByRole("button", { name: /Solo en esta conversación/ }));
+    const campo = screen.getByLabelText("Clave en la conversación");
 
     fireEvent.change(campo, { target: { value: "ciudad" } });
 

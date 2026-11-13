@@ -49,11 +49,21 @@ Desde ahí, lo que un bloque guarde con esa clave también queda en la ficha del
 
 ## Cómo se usa en tus flujos
 
+- **En los bloques se elige de una lista:** en Esperar respuesta («Guardar en»), Menú, Integración, IA y Condicional ves tus campos con su tipo y qué tan llenos están. Si falta uno, lo creas ahí mismo. Para un dato de paso que no quieres en la ficha (un código, una nota), elige **Solo en esta conversación**.
+- **Preguntar de nuevo:** en Esperar respuesta, si guardas en un campo de lista, número, fecha o sí o no y el cliente responde algo que no encaja, el bloque le vuelve a preguntar (por ejemplo «Elige una de estas: Medellín, Bogotá o Cali»), hasta 2 veces. Puedes escribir tu propio mensaje.
 - **En un mensaje,** escribe la clave entre llaves: `Enviamos a {ciudad}`.
-- **En un Condicional,** elige «Campo del cliente» y su clave.
+- **En un Condicional,** elige «Campo del cliente» y el campo: cada tipo trae sus reglas. Lista: «es una de» (tocas las opciones). Sí o no: Sí / No. Número: «está entre». Fecha: «es hoy (día y mes)» (cumpleaños), «es en los próximos N días», «fue hace N días o más», antes o después de una fecha. Abajo ves la regla en palabras.
 - **Lo que el cliente dijo en la conversación manda.** Si hoy dijo «Cartagena», el flujo usa «Cartagena» aunque su ficha diga otra ciudad. Si no lo ha dicho (por ejemplo, vuelve otro día), se usa su ficha.
 - **Se escribe como persona:** un sí o no sale como «Sí» o «No», y una fecha como 13/11/1990.
 - **El Condicional entiende el tipo:** «Sí» es sí, «13/11/1990» es la misma fecha que 1990-11-13 y «1.200.000» es el mismo número que 1200000.
+
+## En la ficha del cliente
+
+En el CRM, la ficha de cada cliente muestra sus campos en su forma: una lista se elige, una fecha con calendario, sí o no con dos botones. Debajo de cada dato dice **de dónde salió**: «Lo respondió en "¿En qué ciudad estás?" del flujo "Ventas" · hoy» o «Lo cambió Ana · ayer».
+
+- Todo el equipo que edita contactos puede llenar la ficha (también los asesores).
+- Al guardar solo se manda lo que cambiaste: si un flujo guarda otro dato mientras la tienes abierta, no se pierde.
+- Los datos que guardó un flujo y no son campos aparecen aparte; los dueños y administradores pueden tocar **Convertir en campo**.
 
 ## Cambiar o borrar un campo
 

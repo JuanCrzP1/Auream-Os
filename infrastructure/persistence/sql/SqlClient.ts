@@ -31,7 +31,7 @@ export interface SqlClient extends SqlExecutor {
 export interface SqlPoolOptions {
   readonly max?: number;
   readonly idleTimeoutMs?: number;
-  /** Una conexión inactiva se cayó (p. ej. Neon la cerró): se avisa, no se tumba el proceso. */
+  /** Una conexión se cayó (quieta en el grupo o en plena transacción; p. ej. Neon la cerró o se fue la red): se avisa, no se tumba el proceso. */
   readonly onIdleError?: (error: Error) => void;
 }
 
@@ -61,6 +61,13 @@ export function createSqlClient(connectionString: string, options: SqlPoolOption
 
     async transaction(work) {
       const connection = await pool.connect();
+      // Una conexión EN USO no tiene el oyente del grupo: si la red se corta en
+      // plena transacción, `pg` emite «error» en ella y Node tumbaba el proceso
+      // (pasó en local al perder la red con Neon). Se avisa y la consulta en
+      // curso falla con su propio error, como cualquier otro.
+      const onError = (error: Error) => options.onIdleError?.(error);
+      connection.on("error", onError);
+      let broken: Error | undefined;
 
       try {
         await connection.query("begin");
@@ -70,10 +77,16 @@ export function createSqlClient(connectionString: string, options: SqlPoolOption
         await connection.query("commit");
         return result;
       } catch (error) {
-        await connection.query("rollback");
+        // Si ni el «rollback» pasa, la conexión está rota: se reporta el error
+        // ORIGINAL (no el del rollback) y la conexión se descarta.
+        await connection.query("rollback").catch((rollbackError: unknown) => {
+          broken = rollbackError instanceof Error ? rollbackError : new Error(String(rollbackError));
+        });
         throw error;
       } finally {
-        connection.release();
+        connection.off("error", onError);
+        // `release(error)` destruye la conexión en vez de devolverla rota al grupo.
+        connection.release(broken);
       }
     },
 

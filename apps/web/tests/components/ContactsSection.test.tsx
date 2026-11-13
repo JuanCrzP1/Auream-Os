@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { ContactsSection } from "../../src/features/crm/contacts/components/ContactsSection";
 import { LEAD, VIP, contact, stubContactsApi } from "../helpers/contactsApi";
 
@@ -19,7 +20,7 @@ beforeEach(() => {
 describe("lista de contactos", () => {
   it("muestra los contactos con su teléfono y etiquetas", async () => {
     stubContactsApi({ contacts: [ANA, LUIS], labels: [VIP, LEAD] });
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
 
     const fila = (await screen.findByRole("button", { name: "Ana Pérez" })).closest("tr")!;
     expect(within(fila).getByText("+573001112233")).toBeInTheDocument();
@@ -29,7 +30,7 @@ describe("lista de contactos", () => {
 
   it("busca en el servidor y filtra por etiqueta", async () => {
     const { fetchMock } = stubContactsApi({ contacts: [ANA, LUIS], labels: [VIP] });
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
     await screen.findByRole("button", { name: "Luis Gómez" });
 
     await userEvent.type(screen.getByLabelText("Buscar contactos"), "luis");
@@ -44,7 +45,7 @@ describe("lista de contactos", () => {
 
   it("sin contactos explica de dónde llegan", async () => {
     stubContactsApi();
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
 
     expect(await screen.findByText(/llegarán solos/i)).toBeInTheDocument();
   });
@@ -53,12 +54,14 @@ describe("lista de contactos", () => {
 describe("ficha del contacto", () => {
   it("cambia nombre y etiquetas y la tabla refleja lo guardado", async () => {
     const api = stubContactsApi({ contacts: [ANA], labels: [VIP, LEAD] });
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
     await userEvent.click(await screen.findByRole("button", { name: "Ana Pérez" }));
 
     const ficha = screen.getByRole("dialog");
-    expect(within(ficha).getByText("ciudad")).toBeInTheDocument();
-    expect(within(ficha).getByText("Medellín")).toBeInTheDocument();
+    // Sin campos definidos, lo que guardó un flujo se ve aparte, tal cual.
+    const sueltos = await within(ficha).findByRole("group", { name: "Otros datos que guardó un flujo" });
+    expect(within(sueltos).getByText("ciudad")).toBeInTheDocument();
+    expect(within(sueltos).getByText("Medellín")).toBeInTheDocument();
 
     const nombre = within(ficha).getByLabelText("Nombre");
     await userEvent.clear(nombre);
@@ -76,7 +79,7 @@ describe("ficha del contacto", () => {
 
   it("crea un contacto nuevo y abre su ficha", async () => {
     const api = stubContactsApi();
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
     await userEvent.click(screen.getByRole("button", { name: "Nuevo contacto" }));
 
     const dialogo = screen.getByRole("dialog", { name: "Nuevo contacto" });
@@ -92,7 +95,7 @@ describe("ficha del contacto", () => {
 
 describe("catálogo de etiquetas", () => {
   async function abrirEtiquetas() {
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
     await userEvent.click(screen.getByRole("tab", { name: /etiquetas/i }));
   }
 
@@ -145,7 +148,7 @@ describe("estados de la lista", () => {
     api.fetchMock.mockImplementation(async (url: string, init?: RequestInit) =>
       caida ? ({ ok: false, status: 503, text: async () => "{}", json: async () => ({}) } as unknown as Response) : real(url, init)
     );
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
 
     const aviso = await screen.findByRole("alert");
     expect(aviso).toHaveTextContent("No pudimos cargar tus contactos");
@@ -158,7 +161,7 @@ describe("estados de la lista", () => {
 
   it("sin resultados ofrece limpiar los filtros", async () => {
     stubContactsApi({ contacts: [ANA] });
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
     await screen.findByRole("button", { name: "Ana Pérez" });
 
     await userEvent.type(screen.getByLabelText("Buscar contactos"), "zzz");
@@ -171,7 +174,7 @@ describe("estados de la lista", () => {
 
   it("sin contactos invita a agregar uno", async () => {
     stubContactsApi();
-    render(<ContactsSection />);
+    render(<MemoryRouter><ContactsSection /></MemoryRouter>);
 
     await userEvent.click(await screen.findByRole("button", { name: "Agregar contacto" }));
     expect(screen.getByRole("dialog", { name: "Nuevo contacto" })).toBeInTheDocument();

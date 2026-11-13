@@ -40,7 +40,24 @@ export interface WaitResponseConfig {
    * Se mantiene el nombre `targetKey` por compatibilidad con nodos guardados.
    */
   readonly targetKey?: string;
+
+  /**
+   * Si `targetKey` es un campo del cliente con tipo (lista, número, fecha, sí
+   * o no) y la respuesta no encaja: `retry` vuelve a preguntar, hasta
+   * `WAIT_RESPONSE_MAX_RETRIES` veces; después sigue y lo que escribió queda
+   * solo en la conversación. Ausente: sigue igual desde la primera.
+   */
+  readonly onMismatch?: "retry";
+
+  /** Lo que se le escribe al volver a preguntar. Ausente: el mensaje según el tipo (`mismatchMessage`). */
+  readonly retryMessage?: string;
 }
+
+/** Cuántas veces se vuelve a preguntar si la respuesta no encaja en el tipo del campo. */
+export const WAIT_RESPONSE_MAX_RETRIES = 2;
+
+/** Dónde lleva la cuenta de intentos la conversación (interno: `__` no pasa a la ficha). */
+export const waitResponseRetryKey = (nodeId: string) => `__retry.${nodeId}`;
 
 export const WAIT_RESPONSE_DEFAULT_TIMEOUT: WaitResponseTimeout = {
   amount: 30,
@@ -93,6 +110,7 @@ export function readWaitResponseConfig(config: Readonly<Record<string, unknown>>
   const unit = timeout?.unit;
   const targetKey = resolveContextKey(config.targetKey) ?? "";
   const reaction = typeof config.reaction === "string" ? config.reaction.trim() : "";
+  const retryMessage = typeof config.retryMessage === "string" ? config.retryMessage.trim() : "";
 
   return {
     waitIndefinitely: config.waitIndefinitely !== false,
@@ -100,7 +118,9 @@ export function readWaitResponseConfig(config: Readonly<Record<string, unknown>>
     groupMessages: config.groupMessages === true,
     replyToInbound: config.replyToInbound === true,
     ...(reaction.length > 0 ? { reaction } : {}),
-    ...(targetKey.length > 0 ? { targetKey } : {})
+    ...(targetKey.length > 0 ? { targetKey } : {}),
+    ...(config.onMismatch === "retry" ? { onMismatch: "retry" as const } : {}),
+    ...(retryMessage.length > 0 ? { retryMessage } : {})
   };
 }
 

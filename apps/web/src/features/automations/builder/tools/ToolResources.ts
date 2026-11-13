@@ -6,6 +6,7 @@ import type { PixelConnectionSummary } from "@contracts/PixelContracts";
 import type { PaymentProofTestResult } from "@contracts/PaymentProofTestContracts";
 import type { PixelTestRequest, PixelTestResult } from "@contracts/PixelTestContracts";
 import type { ProductSummary } from "@contracts/SalesContracts";
+import type { ContactFieldDefinition, ContactFieldSummary, SaveContactFieldRequest } from "@contracts/ContactFieldContracts";
 
 // ---------------------------------------------------------------------------
 // Lo que un editor puede usar de la cuenta al configurar:
@@ -72,6 +73,18 @@ export interface ToolCapabilities {
   readonly createLabel?: (input: { readonly name: string; readonly color: string }) => Promise<CreateLabelOutcome>;
   /** Envía una vez la petición de un bloque Integración y devuelve la respuesta. */
   readonly testIntegration?: (request: IntegrationTestRequest) => Promise<IntegrationTestOutcome>;
+  /** Crea un campo del cliente (dueños y administradores); queda para todos los flujos y la ficha. */
+  readonly createContactField?: (request: SaveContactFieldRequest) => Promise<ToolOutcome<ContactFieldDefinition>>;
+}
+
+/** Los Campos del cliente de la cuenta (Configuración › Datos), para elegirlos en los bloques. */
+export interface ToolContactFields {
+  readonly fields: ReadonlyArray<ContactFieldSummary>;
+  /** Clientes de la cuenta (para «64 % de tus clientes»). */
+  readonly totalContacts: number;
+  /** ¿Puede crear campos desde el editor? (dueños y administradores) */
+  readonly canManage: boolean;
+  readonly status: ToolAiCredentialsStatus;
 }
 
 export interface ToolResources extends ToolCapabilities {
@@ -85,6 +98,8 @@ export interface ToolResources extends ToolCapabilities {
   /** Catálogo de productos (Ventas → Productos), para Registrar venta. */
   readonly products?: ReadonlyArray<ProductSummary>;
   readonly productsStatus?: ToolAiCredentialsStatus;
+  /** Campos del cliente: se eligen de una lista en Esperar respuesta, Menú, Integración, IA y Condicional. */
+  readonly contactFields?: ToolContactFields;
 }
 
 export const EMPTY_TOOL_RESOURCES: ToolResources = { labels: [] };

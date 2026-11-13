@@ -1,6 +1,8 @@
 import type { ToolEditorProps } from "../ToolUi";
 import { SwitchField } from "../_kit/Switch";
-import { AddButton, InlineInput, InlineSelect, ListCard, TextAreaField, TextField, VariableHint } from "../_kit/fields";
+import { AddButton, InlineInput, InlineSelect, ListCard, Notice, TextAreaField, TextField, VariableHint } from "../_kit/fields";
+import { FieldPicker, findField, valuesThatDontFit } from "../_kit/FieldPicker";
+import { joinOptions } from "@contracts/FieldValues";
 import { CardSection, ChatPreview, ChoiceCards, Counter, EmptyState, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { ButtonsIcon, ListIcon } from "../_kit/icons";
 import { createLocalId } from "../_kit/createLocalId";
@@ -16,8 +18,10 @@ const UNIT_OPTIONS: ReadonlyArray<{ value: MenuTimeUnit; label: string }> = [
   { value: "days", label: "días" }
 ];
 
-export function MenuEditor({ draft, onChange }: ToolEditorProps) {
+export function MenuEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readMenuConfig(draft.config);
+  const saved = findField(resources?.contactFields, config.saveToField);
+  const outside = valuesThatDontFit(saved, config.options.map((option) => option.title));
   const limits = MENU_LIMITS[config.format];
   const update = (patch: Partial<MenuConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
   const patchOption = (id: string, patch: Partial<MenuOption>) => update({ options: replaceById(config.options, id, patch) });
@@ -112,13 +116,20 @@ export function MenuEditor({ draft, onChange }: ToolEditorProps) {
       </CardSection>
 
       <CardSection step={4} title="Respuesta" description="Qué pasa con lo que elige el cliente.">
-        <TextField
-          label="Guardar la opción elegida en (opcional)"
+        <FieldPicker
+          label="Guardar la opción elegida en"
           value={config.saveToField}
-          placeholder="Campo: interes"
-          monospace
-          onChange={(saveToField) => update({ saveToField: saveToField.trim() })}
+          emptyLabel="No guardar"
+        clearLabel="No guardar"
+          contactFields={resources?.contactFields}
+          {...(resources?.createContactField ? { createField: resources.createContactField } : {})}
+          onChange={(saveToField) => update({ saveToField })}
         />
+        {outside.length > 0 ? (
+          <Notice>
+            {outside.length === 1 ? `«${outside[0]}» no está` : `${joinOptions(outside.map((title) => `«${title}»`))} no están`} entre las opciones de «{saved?.label}»: si la eligen, queda solo en la conversación.
+          </Notice>
+        ) : null}
         <SwitchField
           label="Tiempo límite para responder"
           hint="Si no elige a tiempo, el flujo sigue por «Tiempo agotado»."

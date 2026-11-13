@@ -11,6 +11,7 @@ import {
   RULE_CATEGORY_OPTIONS,
   WEEKDAY_OPTIONS,
   categoryHasField,
+  conditionInWords,
   conditionOutputs,
   createRule,
   operatorNeedsValue,
@@ -22,6 +23,8 @@ import {
 } from "./conditionConfig";
 import { conditionalTool } from "./definition";
 import { ConditionalIcon } from "./ConditionalIcon";
+import { CustomFieldRule } from "./CustomFieldRule";
+import { findField } from "../_kit/FieldPicker";
 
 function RuleValue({
   rule,
@@ -117,46 +120,51 @@ export function ConditionEditor({ draft, onChange, resources }: ToolEditorProps)
                       ariaLabel={`Qué evalúa la regla ${index + 1}`}
                       onChange={(category: RuleCategory) => patchRule(rule.id, createRule(rule.id, category))}
                     />
-                    <div className="kit-row">
-                      {categoryHasField(rule.category) ? (
-                        rule.category === "contactField" ? (
-                          <InlineSelect
-                            value={rule.field}
-                            options={CONTACT_FIELD_OPTIONS}
-                            ariaLabel={`Dato de la regla ${index + 1}`}
-                            onChange={(field) => patchRule(rule.id, { field })}
-                          />
-                        ) : (
-                          <InlineInput
-                            value={rule.field}
-                            monospace
-                            placeholder={rule.category === "customField" ? "Campo: ciudad" : "Variable: g_promo"}
-                            ariaLabel={`Campo de la regla ${index + 1}`}
-                            onChange={(field) => patchRule(rule.id, { field })}
-                          />
-                        )
-                      ) : null}
-                      <InlineSelect
-                        value={rule.operator}
-                        options={operatorsFor(rule.category)}
-                        ariaLabel={`Operador de la regla ${index + 1}`}
-                        onChange={(operator) => patchRule(rule.id, { operator })}
-                      />
-                      {operatorNeedsValue(rule) ? (
-                        <RuleValue rule={rule} index={index} labelNames={labelNames} onChange={(value) => patchRule(rule.id, { value })} />
-                      ) : null}
-                    </div>
+                    {rule.category === "customField" ? (
+                      <CustomFieldRule rule={rule} index={index} resources={resources} onPatch={(patch) => patchRule(rule.id, patch)} />
+                    ) : (
+                      <div className="kit-row">
+                        {categoryHasField(rule.category) ? (
+                          rule.category === "contactField" ? (
+                            <InlineSelect
+                              value={rule.field}
+                              options={CONTACT_FIELD_OPTIONS}
+                              ariaLabel={`Dato de la regla ${index + 1}`}
+                              onChange={(field) => patchRule(rule.id, { field })}
+                            />
+                          ) : (
+                            <InlineInput
+                              value={rule.field}
+                              monospace
+                              placeholder="Variable: g_promo"
+                              ariaLabel={`Campo de la regla ${index + 1}`}
+                              onChange={(field) => patchRule(rule.id, { field })}
+                            />
+                          )
+                        ) : null}
+                        <InlineSelect
+                          value={rule.operator}
+                          options={operatorsFor(rule.category)}
+                          ariaLabel={`Operador de la regla ${index + 1}`}
+                          onChange={(operator) => patchRule(rule.id, { operator })}
+                        />
+                        {operatorNeedsValue(rule) ? (
+                          <RuleValue rule={rule} index={index} labelNames={labelNames} onChange={(value) => patchRule(rule.id, { value })} />
+                        ) : null}
+                      </div>
+                    )}
                   </ListCard>
                 </Fragment>
               ))}
             </ul>
             <AddButton label="Añadir regla" onClick={addRule} />
+            <p className="cond-words" aria-live="polite">{conditionInWords(config, (key) => findField(resources?.contactFields, key)?.label)}</p>
           </>
         )}
       </CardSection>
 
       <Notice>
-        Los números aceptan coma o punto decimal (19,90 = 19.90). La ventana de 24 h solo aplica a la API oficial de
+        Los números se escriben como siempre (1.200.000, 19,90 o 19.90). La ventana de 24 h solo aplica a la API oficial de
         WhatsApp; en las demás conexiones siempre está abierta.
       </Notice>
       <OutputsPreview outputs={conditionOutputs()} />

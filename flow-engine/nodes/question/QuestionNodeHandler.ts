@@ -5,11 +5,14 @@ import {
   WAIT_RESPONSE_OUTPUT,
   readWaitResponseConfig,
   resolveContextKey,
+  waitResponseRetryKey,
   waitResponseTimeoutMs
 } from "../../../contracts/WaitResponseConfig";
 import type { NodeHandler } from "../NodeHandler";
 import { ConversationTemplates } from "../../templates/ConversationTemplates";
 import { waitStartsAt } from "../../scheduling/waitStartsAt";
+import { NO_CONTACT_FIELDS, type ContactFieldCatalog } from "../../ports/ContactFieldCatalog";
+import { answerFit, attemptsOf } from "./answerFit";
 
 // ---------------------------------------------------------------------------
 // Nodo `question` — la herramienta «Esperar respuesta».
@@ -19,7 +22,9 @@ import { waitStartsAt } from "../../scheduling/waitStartsAt";
 //   1ª  todavía no se espera → se emite el mensaje previo (si lo hay) y la
 //       sesión queda en `waiting_input`.
 //   2ª  llega la respuesta   → se guarda en contexto si hay campo destino, se
-//       reacciona si se configuró, y el flujo sigue.
+//       reacciona si se configuró, y el flujo sigue. Con «Preguntar de nuevo»
+//       y un campo con tipo, si no encaja vuelve a preguntar (`answerFit`) y
+//       la espera empieza otra vez.
 //
 //   vence   con tiempo máximo, la 1ª pasada declara `waitDeadlineAt`; el motor
 //           lo devuelve como despertador y la cola de tareas (FASE C6) lo
@@ -38,7 +43,10 @@ import { waitStartsAt } from "../../scheduling/waitStartsAt";
 // ---------------------------------------------------------------------------
 
 export class QuestionNodeHandler implements NodeHandler {
-  public constructor(private readonly templates: ConversationTemplates = new ConversationTemplates()) {}
+  public constructor(
+    private readonly templates: ConversationTemplates = new ConversationTemplates(),
+    private readonly fields: ContactFieldCatalog = NO_CONTACT_FIELDS
+  ) {}
 
   public supports(nodeType: FlowNode["type"]): boolean {
     return nodeType === "question";
@@ -76,7 +84,7 @@ export class QuestionNodeHandler implements NodeHandler {
         executionStatus: "success",
         output: WAIT_RESPONSE_OUTPUT.timeout,
         outputMessages: [],
-        contextPatch: {},
+        contextPatch: resetRetries(input, node.id),
         nodeResult: { timedOut: true, ...declaracionDeEspera },
         domainEvents: [`question_timed_out:${node.id}`]
       };
@@ -87,6 +95,19 @@ export class QuestionNodeHandler implements NodeHandler {
       // Esta capacidad venía del retirado nodo `capture`: una pregunta que no
       // recuerda lo que le contestaron no sirve para nada aguas abajo.
       const contextKey = resolveContextKey(config.targetKey);
+      const retryKey = waitResponseRetryKey(node.id);
+      const fit = await answerFit(config, contextKey, answer, attemptsOf(input.sessionContext[retryKey]), { tenantId: session.tenantId, fields: this.fields });
+      if (fit.kind === "retry") {
+        const [custom = ""] = config.retryMessage ? await this.templates.render([config.retryMessage], input, session) : [];
+        return {
+          executionStatus: "waiting_input",
+          // Cita lo que escribió: así se entiende qué no encajó.
+          outputMessages: [{ channel: input.envelope.channel, conversationKey: input.envelope.conversationKey, content: custom || fit.message, replyToMessageId: input.envelope.messageId }],
+          contextPatch: { [retryKey]: fit.attempt },
+          nodeResult: { ...declaracionDeEspera, mismatch: true, attempt: fit.attempt, ...this.deadline(input, timeoutMs) },
+          domainEvents: [`question_retried:${node.id}`]
+        };
+      }
 
       // La reacción se pone sobre el mensaje que acaba de llegar, no sobre el
       // que este nodo envió: se reacciona a lo que dijo el cliente.
@@ -107,13 +128,13 @@ export class QuestionNodeHandler implements NodeHandler {
         // Sale por «Respuesta» (C14); «Tiempo agotado» lo dispara el despertador (C6).
         output: WAIT_RESPONSE_OUTPUT.answer,
         outputMessages: reaccion,
-        contextPatch: contextKey ? { [contextKey]: answer } : {},
+        contextPatch: { ...(contextKey ? { [contextKey]: fit.kind === "fits" ? fit.value : answer } : {}), ...resetRetries(input, node.id) },
         nodeResult: {
           capturedInput: answer,
           ...(contextKey ? { storedKey: contextKey } : {}),
           ...declaracionDeEspera
         },
-        domainEvents: [`question_answered:${node.id}`]
+        domainEvents: [`question_answered:${node.id}`, ...(fit.kind === "gave_up" ? [`question_mismatch_kept:${node.id}`] : [])]
       };
     }
 
@@ -138,39 +159,31 @@ export class QuestionNodeHandler implements NodeHandler {
           ]
         : [];
 
-    // Vencimiento absoluto, calculado desde la recepción real y no desde el
-    // reloj del proceso: si un día lo lee un planificador, tiene que poder
-    // confiar en el instante que aquí se declara.
-    //
-    // SE COMPRUEBA QUE `receivedAt` SEA UNA FECHA. Un envelope con una recepción
-    // ilegible —vacía, malformada, ausente— daba `NaN` al restarle el reloj, y
-    // `new Date(NaN).toISOString()` LANZA `RangeError`: la ejecución entera del
-    // flujo se caía por un campo que este nodo solo lee de pasada. El resto del
-    // handler ya no confiaba en nada —la configuración pasa por un lector
-    // defensivo—, y esta era la única entrada que sí.
-    //
-    // Sin fecha utilizable se omite el vencimiento y NADA MÁS: `waitTimeoutMs`
-    // se sigue declarando porque la duración configurada es válida y se conoce;
-    // lo que no se puede decir es a qué instante concreto vence. Decir «espera
-    // 30 minutos» sin poder fechar el final es exacto; inventar la fecha desde
-    // el reloj del proceso habría sido mentir sobre cuándo empezó la espera.
-    // Cuenta desde que sale la pregunta: tras las pausas que ya puso el turno.
-    const recepcion = waitStartsAt(new Date(input.envelope.receivedAt).getTime(), input);
-    const vencimiento =
-      timeoutMs !== null && Number.isFinite(recepcion)
-        ? new Date(recepcion + timeoutMs).toISOString()
-        : null;
-
     return {
       executionStatus: "waiting_input",
       outputMessages: mensajePrevio,
       contextPatch: {},
-      nodeResult: {
-        ...declaracionDeEspera,
-        // Relativa: cuenta desde que sale la pregunta (`waitFrom`; la entrega la corrige).
-        ...(vencimiento !== null ? { waitDeadlineAt: vencimiento, waitFrom: new Date(recepcion).toISOString() } : {})
-      },
+      nodeResult: { ...declaracionDeEspera, ...this.deadline(input, timeoutMs) },
       domainEvents: [`question_prompted:${node.id}`]
     };
   }
+
+  /**
+   * Hasta cuándo se espera, calculado desde la recepción real (y tras las
+   * pausas que ya puso el turno), no desde el reloj del proceso. Sin una fecha
+   * de recepción legible se omite el vencimiento y nada más: inventarlo sería
+   * mentir sobre cuándo empezó la espera. Relativa: cuenta desde que sale la
+   * pregunta (`waitFrom`; la entrega la corrige).
+   */
+  private deadline(input: RuntimeInput, timeoutMs: number | null): { waitDeadlineAt?: string; waitFrom?: string } {
+    const from = waitStartsAt(new Date(input.envelope.receivedAt).getTime(), input);
+    if (timeoutMs === null || !Number.isFinite(from)) return {};
+    return { waitDeadlineAt: new Date(from + timeoutMs).toISOString(), waitFrom: new Date(from).toISOString() };
+  }
+}
+
+/** Al salir del bloque se olvidan los intentos (si vuelve a pasar por él, empieza de cero). */
+function resetRetries(input: RuntimeInput, nodeId: string): Record<string, unknown> {
+  const key = waitResponseRetryKey(nodeId);
+  return input.sessionContext[key] !== undefined && input.sessionContext[key] !== null ? { [key]: null } : {};
 }

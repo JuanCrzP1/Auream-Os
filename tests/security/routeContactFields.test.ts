@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Readable } from "node:stream";
 import type { IncomingMessage } from "node:http";
-import { routeContactFieldsRequest } from "../../apps/api/routes/routeContactFieldsRequest.js";
+import { routeContactFieldsRequest, type ContactFieldRoutes } from "../../apps/api/routes/routeContactFieldsRequest.js";
+import { ContactFieldValueServices } from "../../domains/contact-fields/application/ContactFieldValueServices.js";
 import { ContactFieldServices } from "../../domains/contact-fields/application/ContactFieldServices.js";
-import { InMemoryContactFieldRepository, InMemoryContactFieldValues, observedFrom } from "../../infrastructure/persistence/memory/InMemoryContactFields.js";
+import { InMemoryContactFieldRepository, InMemoryContactFieldValues, InMemoryFieldOrigins, observedFrom } from "../../infrastructure/persistence/memory/InMemoryContactFields.js";
 import { AccessError } from "../../platform/authorization/domain/AccessError.js";
 import { ROLE_SCOPES } from "../../platform/authorization/roles/RoleDefinitions.js";
 import { makeContext } from "./helpers/access.js";
@@ -21,16 +22,25 @@ const res = () => {
   return r;
 };
 
-async function run(services: ContactFieldServices | undefined, method: string, path: string, role: keyof typeof ROLE_SCOPES, tenantId = "tenant-a", body?: unknown) {
+async function run(services: ContactFieldRoutes | undefined, method: string, path: string, role: keyof typeof ROLE_SCOPES, tenantId = "tenant-a", body?: unknown) {
   const r = res();
   await routeContactFieldsRequest(req(method, path, body), r as never, new URL(`http://x${path}`), services, makeContext({ scopes: [...ROLE_SCOPES[role]], tenantId, actorId: "user-a" }));
   return { status: r.statusCode, body: r.body ? JSON.parse(r.body) : null };
 }
 
-function services() {
+const LAURA = "cccccccc-0000-4000-8000-000000000001";
+
+function services(): ContactFieldRoutes {
   let n = 0;
   const seen = new Map([["tenant-a", observedFrom({ ciudad: [["Medellín", 9], ["Bogotá", 4]] })]]);
-  return new ContactFieldServices(new InMemoryContactFieldRepository(), new InMemoryContactFieldValues(seen, 20), { drafts: async () => [] }, () => `aaaaaaaa-0000-4000-8000-00000000000${++n}`);
+  const repository = new InMemoryContactFieldRepository();
+  const values = new InMemoryContactFieldValues(seen, 20);
+  values.seedContact("tenant-a", LAURA, { ciudad: "Medellín", nota_interna: "x" });
+  const flows = { drafts: async () => [] };
+  return {
+    fields: new ContactFieldServices(repository, values, flows, () => `aaaaaaaa-0000-4000-8000-00000000000${++n}`),
+    values: new ContactFieldValueServices(repository, values, new InMemoryFieldOrigins(), flows, { names: async () => new Map([["user-a", "Ana"]]) })
+  };
 }
 
 describe("/contact-fields", () => {
@@ -65,6 +75,22 @@ describe("/contact-fields", () => {
     await expect(run(fields, "DELETE", `/contact-fields/${id}?confirm=ciudad`, "tenant_owner", "tenant-b")).rejects.toThrow(/ya no existe/);
     await expect(run(fields, "DELETE", `/contact-fields/${id}`, "tenant_owner")).rejects.toThrow(/escribe «ciudad»/);
     expect((await run(fields, "DELETE", `/contact-fields/${id}?confirm=ciudad`, "tenant_owner")).status).toBe(204);
+  });
+
+  it("la ficha: la ve quien ve contactos y la llena el Asesor; Solo lectura no la cambia; otra cuenta no la ve", async () => {
+    const fields = services();
+    await run(fields, "POST", "/contact-fields", "tenant_owner", "tenant-a", { label: "Presupuesto", type: "number" });
+    await run(fields, "POST", "/contact-fields/adopt", "tenant_owner", "tenant-a", { fields: [{ key: "ciudad", label: "Ciudad", type: "list", options: ["Medellín", "Bogotá"] }] });
+
+    expect(await run(fields, "GET", `/contact-fields/values/${LAURA}`, "viewer")).toMatchObject({ status: 200, body: { canEdit: false, values: { ciudad: "Medellín" } } });
+    const saved = await run(fields, "PATCH", `/contact-fields/values/${LAURA}`, "operator", "tenant-a", { changes: { presupuesto: "1.200.000", ciudad: null } });
+    expect(saved).toMatchObject({ status: 200, body: { canEdit: true, values: { presupuesto: 1200000, nota_interna: "x" }, origins: { presupuesto: { source: "team", actorName: "Ana" } } } });
+    expect(saved.body.values).not.toHaveProperty("ciudad");
+
+    await expect(run(fields, "PATCH", `/contact-fields/values/${LAURA}`, "viewer", "tenant-a", { changes: { presupuesto: 1 } })).rejects.toBeInstanceOf(AccessError);
+    await expect(run(fields, "PATCH", `/contact-fields/values/${LAURA}`, "operator", "tenant-a", { changes: { presupuesto: "mucho" } })).rejects.toThrow("debe ser un número");
+    await expect(run(fields, "PATCH", `/contact-fields/values/${LAURA}`, "operator", "tenant-a", { changes: { nota_interna: "y" } })).rejects.toThrow("no es un campo");
+    await expect(run(fields, "GET", `/contact-fields/values/${LAURA}`, "tenant_owner", "tenant-b")).rejects.toThrow("no existe");
   });
 
   it("sin el módulo responde 503 y no toma otras rutas", async () => {

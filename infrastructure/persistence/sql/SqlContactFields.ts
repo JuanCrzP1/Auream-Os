@@ -1,4 +1,5 @@
 import type { ContactFieldDefinition, ContactFieldType } from "../../../contracts/ContactFieldContracts";
+import type { ContactFieldValue } from "../../../contracts/ContactContracts";
 import type { ContactFieldRepository, ContactFieldValues } from "../../../domains/contact-fields/application/ContactFieldPorts";
 import type { FieldShape } from "../../../domains/contact-fields/domain/ContactField";
 import type { ObservedValues } from "../../../domains/contact-fields/domain/fieldDiscovery";
@@ -49,6 +50,11 @@ export class SqlContactFieldRepository implements ContactFieldRepository {
     return rows[0] ? toDefinition(rows[0]) : null;
   }
 
+  public async findByKey(tenantId: string, key: string): Promise<ContactFieldDefinition | null> {
+    const { rows } = await this.sql.query<Row>(`select ${COLUMNS} from contact_field_definitions where tenant_id = $1 and key = $2`, [tenantId, key]);
+    return rows[0] ? toDefinition(rows[0]) : null;
+  }
+
   public async create(tenantId: string, id: string, field: FieldShape): Promise<ContactFieldDefinition | null> {
     const { rows } = await this.sql.query<Row>(
       `insert into contact_field_definitions (id, tenant_id, key, label, type, options) values ($1, $2, $3, $4, $5, $6::jsonb)
@@ -72,6 +78,7 @@ export class SqlContactFieldRepository implements ContactFieldRepository {
       const deleted = await tx.query(`delete from contact_field_definitions where tenant_id = $1 and id = $2`, [tenantId, id]);
       if (deleted.rowCount === 0) return false;
       await tx.query(`update contacts set custom_fields = custom_fields - $2, updated_at = now() where tenant_id = $1 and custom_fields ? $2`, [tenantId, key]);
+      await tx.query(`delete from contact_field_origins where tenant_id = $1 and key = $2`, [tenantId, key]);
       return true;
     });
   }
@@ -113,6 +120,17 @@ export class SqlContactFieldValues implements ContactFieldValues {
       [tenantId, TOP_VALUES]
     );
     return new Map(rows.map((row) => [row.key, { filled: Number(row.filled), distinct: Number(row.distinct), top: row.top.map((entry) => ({ value: entry.value, count: Number(entry.count) })) }]));
+  }
+
+  public async ofContact(tenantId: string, contactId: string): Promise<Record<string, ContactFieldValue> | null> {
+    if (!isUuid(contactId)) return null;
+    const { rows } = await this.sql.query<{ custom_fields: Record<string, ContactFieldValue> | null }>(`select custom_fields from contacts where tenant_id = $1 and id = $2`, [tenantId, contactId]);
+    return rows[0] ? { ...(rows[0].custom_fields ?? {}) } : null;
+  }
+
+  public async clear(tenantId: string, contactId: string, keys: ReadonlyArray<string>): Promise<void> {
+    if (!isUuid(contactId) || keys.length === 0) return;
+    await this.sql.query(`update contacts set custom_fields = custom_fields - $3::text[], updated_at = now() where tenant_id = $1 and id = $2`, [tenantId, contactId, [...keys]]);
   }
 
   public async merge(tenantId: string, contactId: string, values: Readonly<Record<string, string | number | boolean>>): Promise<void> {

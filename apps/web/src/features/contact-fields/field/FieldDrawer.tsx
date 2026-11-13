@@ -3,10 +3,10 @@ import { useId, useState } from "react";
 import { CONTACT_FIELD_LIMITS as LIMITS, CONTACT_FIELD_TYPE_LABEL, type ContactFieldSummary, type ContactFieldType, type SaveContactFieldRequest } from "@contracts/ContactFieldContracts";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { clients, count, filledPercent } from "../fieldText";
-import { TypeChip } from "../list/TypeChip";
+import { TypeChip } from "@shared/contact-fields/TypeChip";
 import { FieldUses } from "./FieldUses";
-import { OptionsEditor } from "./OptionsEditor";
-import { TypePicker } from "./TypePicker";
+import { OptionsEditor } from "@shared/contact-fields/OptionsEditor";
+import { TypePicker } from "@shared/contact-fields/TypePicker";
 
 const same = (a: ReadonlyArray<string>, b: ReadonlyArray<string>) => a.length === b.length && a.every((value, index) => value === b[index]);
 
