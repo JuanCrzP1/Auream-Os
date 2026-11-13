@@ -15,6 +15,8 @@ import { SalesPermissions } from "../../../platform/authorization/permissions/Sa
 //   GET /dashboard/sales?…        Ventas      (analytics.read; el gasto, con ads.read)
 //   GET /dashboard/sales/export?… Descargar ventas en CSV (analytics.read + sales.manage: trae teléfonos)
 //   GET /dashboard/ads?…&level    Anuncios    (ads.read)
+//   GET /dashboard/ads/repeat?…&level&window  Con recompras: clientes nuevos de cada
+//                                 anuncio y sus recompras a 30, 60 o 90 días (ads.read)
 //   GET /dashboard/attention?…    Atención    (analytics.read)
 //   GET /dashboard/fx             Las tasas de cambio oficiales más recientes (analytics.read)
 //   GET /dashboard/lines?from&to&currency  Comparar líneas (analytics.read; gasto y ganancia, con ads.read)
@@ -81,6 +83,11 @@ export async function routeDashboardRequest(
   if (path === "/dashboard/ads") {
     requireScope(context, AdsPermissions.read, tenantId);
     sendJson(response, 200, await module.ads.performance(tenantId, filtersOf(url), url.searchParams.get("level") ?? undefined));
+    return true;
+  }
+  if (path === "/dashboard/ads/repeat") {
+    requireScope(context, AdsPermissions.read, tenantId);
+    sendJson(response, 200, await module.repeat.repeat(tenantId, filtersOf(url), url.searchParams.get("level") ?? undefined, url.searchParams.get("window") ?? undefined));
     return true;
   }
   if (path === "/dashboard/sales/export" && module.export) {

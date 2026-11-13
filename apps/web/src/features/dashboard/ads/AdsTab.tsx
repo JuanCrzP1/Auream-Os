@@ -30,6 +30,14 @@ export function AdsTab({ filters }: { readonly filters: DashboardFilters }) {
       </div>
     );
   }
+  if (data.lineWithoutCampaigns) {
+    return (
+      <div className="ads-tab__empty">
+        <h2>Esta línea no tiene campañas</h2>
+        <p className="ui-muted">Sus ventas se ven en Ventas, pero no su gasto ni su ROAS. Edita la línea y elige las campañas que la promocionan para verla completa.</p>
+      </div>
+    );
+  }
   const t = data.totals;
   const tops = [
     { label: "ROAS real", value: formatRoas(t.roas), note: `Meta dice ${formatRoas(t.roasMeta)}`, lead: true },

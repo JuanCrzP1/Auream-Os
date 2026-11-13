@@ -13,13 +13,15 @@ export type InvestmentMode = "meta" | "other" | "all";
 export const INVESTMENT_MODES: ReadonlyArray<readonly [InvestmentMode, string]> = [["meta", "Meta"], ["other", "Otros"], ["all", "Todo"]];
 
 const NO_ADS = "Conecta Meta Ads para verlo";
+/** La línea elegida no tiene campañas: su gasto no se conoce (no es que no haya Meta). */
+export const LINE_WITHOUT_CAMPAIGNS = "Esta línea no tiene campañas";
 
 export function investmentCard(view: SalesDashboardResponse, mode: InvestmentMode): SummaryCard | null {
   if (!view.canSeeAds) return null;
   const c = view.currency;
   const ads = view.ads;
   const other = view.otherSpend;
-  const campaigns = ads ? `${count(ads.activeCampaigns)} ${ads.activeCampaigns === 1 ? "campaña activa" : "campañas activas"}` : NO_ADS;
+  const campaigns = ads ? `${count(ads.activeCampaigns)} ${ads.activeCampaigns === 1 ? "campaña activa" : "campañas activas"}` : view.lineWithoutCampaigns ? LINE_WITHOUT_CAMPAIGNS : NO_ADS;
   const base = { id: "spend", icon: "spend" as const, action: { id: "expenses" as const, label: "Otros gastos" } };
 
   if (!other) {

@@ -80,7 +80,8 @@ export class SalesDashboardService {
     const prevCost = book.sum(prevDays, (d) => money(d, d.cost));
     const costsKnown = count > 0 && days.every((d) => d.withoutCost === 0);
 
-    const hasAds = status !== null && status.accounts > 0;
+    // Una línea sin campañas no tiene gasto conocido: ni el de todo el negocio ni 0.
+    const hasAds = status !== null && status.accounts > 0 && !scope.withoutCampaigns;
     const [spendDays, prevSpendDays] = hasAds ? await Promise.all([this.ads.spend(tenantId, period, scope), this.ads.spend(tenantId, before, scope)]) : [[], []];
     const spend = book.sum(spendDays, (d) => money(d, d.spend));
     const prevSpend = book.sum(prevSpendDays, (d) => money(d, d.spend));
@@ -110,6 +111,7 @@ export class SalesDashboardService {
       conversionPrevious: conversionOf(prevLeads),
       convertedLeads: leads.converted,
       reviewCount: review,
+      ...(scope.withoutCampaigns && status !== null ? { lineWithoutCampaigns: true as const } : {}),
       ads: ads ? { ...ads, realProfit: costsKnown ? round(ads.revenue.value - spend - cost) : null } : null,
       realProfit: costsKnown ? round(revenue - cost - spend - other) : null,
       // Sin permiso para ver el gasto, la ganancia lo delataría (facturación − ganancia).

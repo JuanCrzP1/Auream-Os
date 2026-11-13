@@ -58,8 +58,10 @@ export class AdsDashboardService {
     const period = periodOf(filters.from, filters.to, timezone, this.now());
     const scope = await this.scopes.resolve(tenantId, filters);
     const status = await this.ads.status(tenantId, scope);
-    if (status.accounts === 0) {
-      return { currency: status.mainCurrency ?? "USD", level, rows: [], totals: metrics(empty()), unseenSales: 0, lateShare: null, lastSyncedAt: status.lastSyncedAt, connected: false };
+    if (status.accounts === 0 || scope.withoutCampaigns) {
+      // Sin Meta, o con una línea sin campañas: no hay anuncios que mostrar (nunca los de todo el negocio).
+      const base = { currency: status.mainCurrency ?? "USD", level, rows: [], totals: metrics(empty()), unseenSales: 0, lateShare: null, lastSyncedAt: status.lastSyncedAt };
+      return status.accounts === 0 ? { ...base, connected: false } : { ...base, connected: true, lineWithoutCampaigns: true };
     }
     await this.fx.refresh();
     const [rates, days, sold] = await Promise.all([

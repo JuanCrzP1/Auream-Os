@@ -34,7 +34,7 @@ const ads = () => ({
   disconnect: vi.fn(async () => {}),
   completeOAuth: vi.fn(async () => "tenant-a")
 });
-const dashboard = () => ({ sales: { overview: vi.fn(async () => ({})) }, ads: { performance: vi.fn(async () => ({})) }, attention: { overview: vi.fn(async () => ({})) }, lines: { compare: vi.fn(async () => ({})) },
+const dashboard = () => ({ sales: { overview: vi.fn(async () => ({})) }, ads: { performance: vi.fn(async () => ({})) }, repeat: { repeat: vi.fn(async () => ({})) }, attention: { overview: vi.fn(async () => ({})) }, lines: { compare: vi.fn(async () => ({})) },
   export: { export: vi.fn(async () => ({ name: "ventas_2026-10-01_a_2026-10-31", columns: ["Cliente", "Monto"], rows: [["=cmd", 1.5]], truncated: false, currency: "COP", missingRates: [] })) } });
 const ctx = (role: keyof typeof ROLE_SCOPES) => makeContext({ scopes: [...ROLE_SCOPES[role]], tenantId: "tenant-a", actorId: "user-a" });
 
@@ -94,6 +94,14 @@ describe("Dashboard", () => {
     expect(await runDashboard(m, "/dashboard/ads?level=ad", "tenant_admin")).toBe(200);
     expect(m.ads.performance).toHaveBeenCalledWith("tenant-a", expect.anything(), "ad");
     await expect(runDashboard(m, "/dashboard/ads", "operator")).rejects.toBeInstanceOf(AccessError);
+  });
+
+  it("Con recompras: es gasto de anuncios, así que solo con ads.read; pasa el nivel y la ventana", async () => {
+    const m = dashboard();
+    expect(await runDashboard(m, "/dashboard/ads/repeat?from=2026-10-01&to=2026-10-31&level=ad&window=90", "tenant_admin")).toBe(200);
+    expect(m.repeat.repeat).toHaveBeenCalledWith("tenant-a", expect.objectContaining({ from: "2026-10-01", to: "2026-10-31" }), "ad", "90");
+    await expect(runDashboard(m, "/dashboard/ads/repeat", "operator")).rejects.toBeInstanceOf(AccessError);
+    await expect(runDashboard(m, "/dashboard/ads/repeat", "viewer")).rejects.toBeInstanceOf(AccessError);
   });
 
   it("Descargar ventas: trae teléfonos, así que solo dueños y administradores; CSV sin caché y sin fórmulas", async () => {

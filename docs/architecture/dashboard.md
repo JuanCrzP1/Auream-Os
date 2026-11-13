@@ -220,6 +220,30 @@ Lo que el negocio paga **fuera de Meta**: herramientas, sueldos, la comisión de
 
 **Cómo está armado:** Analytics recibe los gastos por el puerto `OtherExpensesReader`, que arma `composeOtherExpenseServices`. Ningún dominio importa al otro.
 
+## Con recompras (Meta Ads › Rendimiento)
+
+Es otra mirada, aparte del ROAS real, que nunca se suma a él. Mide **qué tan buenos son los clientes que trae cada anuncio**.
+
+- **Cliente nuevo de un anuncio:** su **primera compra aprobada** en Auream (`distinct on contact_id`, la más antigua) vino de ese anuncio y cayó dentro del periodo. El anuncio debe ser de una cuenta elegida, con la misma regla del ROAS real.
+- **Recompras:** sus demás compras aprobadas dentro de la **ventana** (30, 60 o 90 días desde la primera; por defecto 60), vengan o no de un anuncio.
+- **Métricas:**
+  - ROAS de nuevos = 1.ª compra ÷ gasto del periodo;
+  - ROAS a N días = (1.ª compra + recompras) ÷ gasto;
+  - `lifted` (▲) cuando el ROAS a N días supera al de nuevos en un 25 % o más.
+- **«Aún madurando»:** `maturingDays` = días que faltan para que el último día del periodo cumpla la ventana. Se usa ventana fija y no «hasta hoy» para comparar periodos de forma justa.
+- **Filtros de la línea:** números y productos aplican a la **primera** compra (qué clientes trajo la línea); las recompras cuentan todas. Una línea sin campañas responde vacía (`lineWithoutCampaigns`).
+- **Cómo está hecho:**
+  - `AdsRepeatService` (puerto `RepeatPurchasesReader`) y `SqlRepeatPurchases` (dos consultas: montos por día y moneda, convertidos con la tasa de cada día, y conteos de clientes).
+  - Índice `sales_contact_sold_idx` (migración 048).
+  - Ruta `GET /dashboard/ads/repeat?…&level&window` (`ads.read`).
+  - En la web: `features/ads/components/repeat`.
+
+## Línea sin campañas
+
+Si se elige sola una línea **sin campañas** (y no se eligen campañas a mano), su gasto en Meta **no se conoce**. El alcance lo marca `withoutCampaigns` en vez de leer «sin campañas» como «todas», y entonces:
+- Ventas muestra sus ventas sin gasto ni ROAS (`lineWithoutCampaigns`, «Esta línea no tiene campañas») y su ganancia no resta Meta;
+- Anuncios no muestra las campañas de todo el negocio.
+
 ## La conversión
 
 **De los leads nuevos del periodo, cuántos compraron en el periodo** (`SqlDashboardSales.leads` → `converted`). Nunca pasa de 100 %.

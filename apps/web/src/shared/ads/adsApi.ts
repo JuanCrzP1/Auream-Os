@@ -1,6 +1,7 @@
 import { builderApiClient } from "@shared/http/builderApiClient";
 import type { AdsAccountsResponse, MetaOAuthStartResponse } from "@contracts/AdsContracts";
 import type { AdLevel, AdsDashboardResponse, DashboardFilters } from "@contracts/DashboardContracts";
+import type { AdsRepeatResponse, RepeatWindow } from "@contracts/AdsRepeatContracts";
 
 // Meta Ads de la cuenta activa (`/ads`) y su rendimiento (`/dashboard/ads`).
 // Lo usan Meta Ads (Cuentas y Rendimiento) y el Dashboard.
@@ -41,5 +42,8 @@ export const adsApi = {
   sync: (accountId: string) => builderApiClient.post<{ queued: boolean }>(`/ads/accounts/${id(accountId)}/sync`),
   disconnect: () => builderApiClient.delete("/ads/connection"),
   performance: (filters: DashboardFilters, level: AdLevel) =>
-    builderApiClient.get<AdsDashboardResponse>(`/dashboard/ads${dashboardQuery({ ...filtersQuery(filters), level })}`)
+    builderApiClient.get<AdsDashboardResponse>(`/dashboard/ads${dashboardQuery({ ...filtersQuery(filters), level })}`),
+  /** «Con recompras»: los clientes nuevos de cada anuncio y lo que volvieron a comprar en la ventana. */
+  repeat: (filters: DashboardFilters, level: AdLevel, window: RepeatWindow) =>
+    builderApiClient.get<AdsRepeatResponse>(`/dashboard/ads/repeat${dashboardQuery({ ...filtersQuery(filters), level, window: String(window) })}`)
 };

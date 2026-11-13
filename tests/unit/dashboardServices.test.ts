@@ -4,6 +4,7 @@ import { CurrencyConverter, type FxRates } from "../../domains/analytics/applica
 import { periodOf, previousPeriod } from "../../domains/analytics/application/DashboardPeriod.js";
 import type { AdsReader, SalesReader } from "../../domains/analytics/application/DashboardReaders.js";
 import { SalesDashboardService } from "../../domains/analytics/application/SalesDashboardService.js";
+import { DashboardScopeResolver } from "../../domains/analytics/application/DashboardScopeResolver.js";
 
 // ---------------------------------------------------------------------------
 // Las cuentas del Dashboard: el periodo en la hora de la empresa, el cambio de
@@ -112,5 +113,27 @@ describe("AdsDashboardService", () => {
 
   it("sin cuentas conectadas responde vacío y lo dice", async () => {
     expect(await new AdsDashboardService(adsReader(0), fx, tz, () => NOW).performance("t", {}, "ad")).toMatchObject({ connected: false, rows: [], level: "ad" });
+  });
+});
+
+describe("una línea sin campañas", () => {
+  const LINE = "55555555-5555-4555-8555-555555555555";
+  const scopes = new DashboardScopeResolver({ scopeOf: async () => ({ productIds: ["11111111-1111-4111-8111-111111111111"], connectionIds: [], campaignIds: [] }) });
+
+  it("no carga el gasto de todo el negocio: sus ventas sí, su gasto en Meta no se conoce y no se resta de su ganancia", async () => {
+    const view = await new SalesDashboardService(salesReader(), adsReader(), fx, tz, () => NOW, scopes).overview({ tenantId: "t", canSeeAds: true }, { lineId: LINE });
+    expect(view.revenue.value).toBe(600000);
+    expect(view.ads).toBeNull();
+    expect(view.lineWithoutCampaigns).toBe(true);
+    const all = await new SalesDashboardService(salesReader(), adsReader(), fx, tz, () => NOW, scopes).overview({ tenantId: "t", canSeeAds: true }, {});
+    expect(all.lineWithoutCampaigns).toBeUndefined();
+    expect(all.ads?.spend.value).toBe(100000);
+    // Su ganancia solo resta el costo de los productos: los 100.000 de Meta de todo el negocio no son suyos.
+    expect(view.profit!.value - all.profit!.value).toBe(100000);
+  });
+
+  it("en Anuncios no muestra las campañas de todo el negocio", async () => {
+    const view = await new AdsDashboardService(adsReader(), fx, tz, () => NOW, scopes).performance("t", { lineId: LINE }, "campaign");
+    expect(view).toMatchObject({ connected: true, lineWithoutCampaigns: true, rows: [], totals: { spend: 0 } });
   });
 });

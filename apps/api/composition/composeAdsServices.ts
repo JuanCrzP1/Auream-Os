@@ -1,3 +1,5 @@
+import { AdsRepeatService } from "../../../domains/analytics/application/AdsRepeatService";
+import { SqlRepeatPurchases } from "../../../infrastructure/persistence/sql/SqlRepeatPurchases";
 import { MetaDataDeletionService } from "../../../domains/ads/application/MetaDataDeletionService";
 import { SqlMetaDataDeletions } from "../../../infrastructure/persistence/sql/SqlMetaDataDeletions";
 import type { ApiConfig } from "../config/loadApiConfig";
@@ -37,6 +39,8 @@ export interface DashboardModule {
   readonly fx: FxRates;
   readonly sales: SalesDashboardService;
   readonly ads: AdsDashboardService;
+  /** «Con recompras»: los clientes nuevos de cada anuncio y lo que volvieron a comprar. */
+  readonly repeat: AdsRepeatService;
   readonly attention: AttentionDashboardService;
   /** Comparar líneas (sin módulo de líneas, no hay). */
   readonly lines?: LineComparisonService;
@@ -79,6 +83,7 @@ export function composeAdsServices(
     fx,
     sales: new SalesDashboardService(salesReader, adsReader, fx, timezoneOf, undefined, scopes, expenses),
     ads: new AdsDashboardService(adsReader, fx, timezoneOf, undefined, scopes),
+    repeat: new AdsRepeatService(adsReader, new SqlRepeatPurchases(sql), fx, timezoneOf, undefined, scopes),
     attention: new AttentionDashboardService(new SqlDashboardAttention(sql), fx, timezoneOf, undefined, scopes),
     export: new SalesExportService(new SqlSalesExport(sql), adsReader, fx, timezoneOf, scopes),
     ...(directory ? { lines: new LineComparisonService(salesReader, adsReader, fx, timezoneOf, directory, expenses) } : {})

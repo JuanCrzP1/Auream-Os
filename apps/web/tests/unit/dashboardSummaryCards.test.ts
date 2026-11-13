@@ -44,6 +44,12 @@ describe("summaryCards", () => {
     expect(byId(cards, "roas")).toMatchObject({ value: "—", note: "Conecta Meta Ads para verlo", trend: null });
     expect(byId(cards, "conversion")).toMatchObject({ value: "—", note: "Aún no hay leads nuevos", trend: null });
   });
+
+  it("una línea sin campañas no invita a conectar Meta: dice que la línea no tiene campañas", () => {
+    const cards = summaryCards(view({ ads: null, lineWithoutCampaigns: true }));
+    expect(byId(cards, "roas")).toMatchObject({ value: "—", note: "Esta línea no tiene campañas" });
+    expect(byId(cards, "spend")).toMatchObject({ value: "—", note: "Esta línea no tiene campañas" });
+  });
 });
 
 describe("la inversión con otros gastos", () => {

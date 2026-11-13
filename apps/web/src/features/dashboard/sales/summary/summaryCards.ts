@@ -1,7 +1,7 @@
 import type { SalesDashboardResponse, Trend } from "@contracts/DashboardContracts";
 import { formatRoas } from "@shared/ads/adsFormat";
 import { money } from "../../dashboardFormat";
-import { investmentCard, profitNote, type InvestmentMode } from "./investmentCard";
+import { investmentCard, profitNote, type InvestmentMode, LINE_WITHOUT_CAMPAIGNS } from "./investmentCard";
 import { count, divide, pointsTrend, relativeTrend, type SummaryTrend } from "./summaryTrends";
 import type { SummaryIconName } from "./SummaryIcon";
 
@@ -33,7 +33,7 @@ const fromTrend = (trend: Trend, sense: "up" | "neutral" = "up") => relativeTren
 export function summaryCards(view: SalesDashboardResponse, investment: InvestmentMode = "all"): SummaryCard[] {
   const c = view.currency;
   const ads = view.ads;
-  const noAds = "Conecta Meta Ads para verlo";
+  const noAds = view.lineWithoutCampaigns ? LINE_WITHOUT_CAMPAIGNS : "Conecta Meta Ads para verlo";
   const organic = Math.max(0, view.leads.value - view.leadsFromAds);
 
   const cards: Array<SummaryCard | null> = [

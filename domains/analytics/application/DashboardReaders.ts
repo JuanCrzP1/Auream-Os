@@ -16,6 +16,12 @@ export interface DashboardScope {
   readonly connectionIds?: ReadonlyArray<string>;
   readonly productIds?: ReadonlyArray<string>;
   readonly campaignIds?: ReadonlyArray<string>;
+  /**
+   * La línea elegida no tiene campañas: su gasto en Meta NO se conoce. Sin
+   * esta marca, «sin campañas» se leería como «todas» y se le cargaría el
+   * gasto de todo el negocio.
+   */
+  readonly withoutCampaigns?: true;
 }
 
 /** Ventas aprobadas de un día en una moneda; `ad*` = las que llegaron por un anuncio. */

@@ -58,6 +58,13 @@ describe("la parte del negocio que mira el Dashboard", () => {
     expect(await resolver.resolve(T, { lineId: line, productIds: [P2] })).toEqual({ productIds: [P2], campaignIds: ["120244"] });
   });
 
+  it("una línea SIN campañas no se lee como «todas»: queda marcada (su gasto no se conoce); elegir campañas a mano lo resuelve", async () => {
+    const noCampaigns = new DashboardScopeResolver({ scopeOf: async () => ({ productIds: [P1], connectionIds: [], campaignIds: [] }) });
+    expect(await noCampaigns.resolve(T, { lineId: line })).toEqual({ productIds: [P1], withoutCampaigns: true });
+    expect(await noCampaigns.resolve(T, { lineId: line, campaignIds: ["120244"] })).toEqual({ productIds: [P1], campaignIds: ["120244"] });
+    expect(await noCampaigns.resolve(T, {})).toEqual({});
+  });
+
   it("los filtros de antes (uno solo) siguen sirviendo; ids inválidos y líneas que no existen se ignoran", async () => {
     expect(scopeOf({ connectionId: C1, productId: "no" })).toEqual({ connectionIds: [C1] });
     expect(await resolver.resolve(T, { lineId: "66666666-6666-4666-8666-666666666666", campaignIds: ["12", "*", "con espacio"] })).toEqual({ campaignIds: ["12"] });

@@ -58,12 +58,20 @@ export class DashboardScopeResolver {
     return line ? compact({ connectionIds: valid(line.connectionIds, UUID), productIds: valid(line.productIds, UUID), campaignIds: valid(line.campaignIds, META_ID) }) : null;
   }
 
+  /**
+   * Lo que se mira con los filtros. Con una línea SIN campañas (y sin elegir
+   * campañas a mano), su gasto en Meta no se conoce: se marca `withoutCampaigns`
+   * en vez de dejar «todas las campañas».
+   */
   public async resolve(tenantId: string, filters: DashboardFilters): Promise<DashboardScope> {
     const line = filters.lineId && this.lines && UUID.test(filters.lineId) ? await this.lines.scopeOf(tenantId, filters.lineId) : null;
-    return compact({
+    const askedCampaigns = asked(filters.campaignIds, undefined, META_ID);
+    const campaignIds = askedCampaigns ?? valid(line?.campaignIds, META_ID);
+    const scope = compact({
       connectionIds: asked(filters.connectionIds, filters.connectionId, UUID) ?? valid(line?.connectionIds, UUID),
       productIds: asked(filters.productIds, filters.productId, UUID) ?? valid(line?.productIds, UUID),
-      campaignIds: asked(filters.campaignIds, undefined, META_ID) ?? valid(line?.campaignIds, META_ID)
+      campaignIds
     });
+    return line && askedCampaigns === undefined && campaignIds.length === 0 ? { ...scope, withoutCampaigns: true } : scope;
   }
 }

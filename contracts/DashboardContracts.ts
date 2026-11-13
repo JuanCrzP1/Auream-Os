@@ -111,8 +111,10 @@ export interface SalesDashboardResponse {
   /** Leads nuevos del periodo que ya compraron. */
   readonly convertedLeads: number;
   readonly reviewCount: number;
-  /** `null`: sin Meta conectado o sin permiso para ver el gasto. */
+  /** `null`: sin Meta conectado, sin permiso para ver el gasto, o la línea elegida no tiene campañas. */
   readonly ads: AdsMoneySummary | null;
+  /** La línea elegida no tiene campañas: su gasto en Meta no se conoce (ni se resta de su ganancia). */
+  readonly lineWithoutCampaigns?: true;
   /** Ganancia real (ventas − anuncios − otros gastos − costo de productos); `null` si no hay costos. */
   readonly realProfit: number | null;
   /**
@@ -190,4 +192,6 @@ export interface AdsDashboardResponse {
   readonly lateShare: number | null;
   readonly lastSyncedAt: string | null;
   readonly connected: boolean;
+  /** La línea elegida no tiene campañas: no hay anuncios que mostrar (no son los de todo el negocio). */
+  readonly lineWithoutCampaigns?: true;
 }

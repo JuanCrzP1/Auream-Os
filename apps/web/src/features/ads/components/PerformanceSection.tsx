@@ -5,19 +5,23 @@ import { adsApi } from "@shared/ads/adsApi";
 import { AdsPerformanceTable } from "@shared/ads/AdsPerformanceTable";
 import { formatRoas } from "@shared/ads/adsFormat";
 import { timeAgo } from "@shared/format/timeAgo";
+import { RepeatView } from "./repeat/RepeatView";
 
 const LEVELS: ReadonlyArray<readonly [AdLevel, string]> = [["campaign", "Campañas"], ["adset", "Conjuntos"], ["ad", "Anuncios"]];
 const DAY = (offset: number) => new Date(Date.now() - offset * 86_400_000).toISOString().slice(0, 10);
 const PERIODS = [["7", "7 días"], ["30", "30 días"], ["90", "90 días"]] as const;
+const VIEWS = [["period", "Ventas del periodo"], ["repeat", "Con recompras"]] as const;
 
 /**
  * Meta Ads → Rendimiento: cada campaña, conjunto o anuncio con su gasto y lo
- * que vendió de verdad frente a lo que dice Meta. Sin cuentas conectadas,
- * lleva a Cuentas.
+ * que vendió de verdad frente a lo que dice Meta, o («Con recompras») los
+ * clientes nuevos que trajo y lo que volvieron a comprar. Sin cuentas
+ * conectadas, lleva a Cuentas.
  */
 export function PerformanceSection({ onConnectAccount }: { readonly onConnectAccount: () => void }) {
   const [level, setLevel] = useState<AdLevel>("campaign");
   const [days, setDays] = useState<string>("30");
+  const [view, setView] = useState<(typeof VIEWS)[number][0]>("period");
   const [data, setData] = useState<AdsDashboardResponse | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -49,6 +53,11 @@ export function PerformanceSection({ onConnectAccount }: { readonly onConnectAcc
             <button key={id} type="button" role="tab" aria-selected={level === id} className="ads-performance__toggle" onClick={() => setLevel(id)}>{label}</button>
           ))}
         </div>
+        <div className="ads-performance__group" role="tablist" aria-label="Vista">
+          {VIEWS.map(([id, label]) => (
+            <button key={id} type="button" role="tab" aria-selected={view === id} className="ads-performance__toggle" onClick={() => setView(id)}>{label}</button>
+          ))}
+        </div>
         <div className="ads-performance__group" role="group" aria-label="Periodo">
           {PERIODS.map(([id, label]) => (
             <button key={id} type="button" aria-pressed={days === id} className="ads-performance__toggle" onClick={() => setDays(id)}>{label}</button>
@@ -58,7 +67,13 @@ export function PerformanceSection({ onConnectAccount }: { readonly onConnectAcc
           ROAS real {formatRoas(data.totals.roas)} · Meta dice {formatRoas(data.totals.roasMeta)}{data.lastSyncedAt ? ` · actualizado ${timeAgo(data.lastSyncedAt)}` : ""}
         </span>
       </div>
-      {data.rows.length === 0 ? <p className="ui-muted">Sin gasto ni ventas por anuncio en este periodo.</p> : <AdsPerformanceTable data={data} />}
+      {view === "repeat" ? (
+        <RepeatView level={level} from={DAY(Number(days) - 1)} to={DAY(0)} />
+      ) : data.rows.length === 0 ? (
+        <p className="ui-muted">Sin gasto ni ventas por anuncio en este periodo.</p>
+      ) : (
+        <AdsPerformanceTable data={data} />
+      )}
     </div>
   );
 }

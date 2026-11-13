@@ -1,8 +1,6 @@
 import "./ads-performance-table.css";
 import type { AdPerformanceRow, AdsDashboardResponse } from "@contracts/DashboardContracts";
-import { ADVICE_LABEL, formatCop, formatCount, formatRoas } from "./adsFormat";
-
-const STATUS_LABEL: Readonly<Record<string, string>> = { ACTIVE: "Activa", PAUSED: "Pausada", CAMPAIGN_PAUSED: "Campaña pausada", ADSET_PAUSED: "Conjunto pausado", ARCHIVED: "Archivada", DELETED: "Eliminada" };
+import { ADVICE_LABEL, formatCop, formatCount, formatRoas, STATUS_LABEL } from "./adsFormat";
 
 /**
  * Cada campaña, conjunto o anuncio con lo que gastó (Meta) y lo que vendió de
