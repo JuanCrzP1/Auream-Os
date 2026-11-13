@@ -88,7 +88,8 @@ La forma de la configuración de cada bloque es un contrato compartido con el bu
 
 Una sola sintaxis para el builder y el motor (`contracts/TemplateVariables.ts`): `{nombre}`, con valor por defecto `{nombre|texto}` y el formato heredado `{{context.clave}}`.
 
-- **De dónde sale el valor** (`templates/templateResolver.ts`): variables del sistema (`first_name`, `full_name`, `phone`, `email`, `last_message`) → campos personalizados del contacto → datos guardados en la conversación. Mismo orden que usa el Condicional.
+- **De dónde sale el valor** (`templates/templateResolver.ts`): variables del sistema (`first_name`, `full_name`, `phone`, `email`, `last_message`) → lo guardado en **esta** conversación → la ficha del cliente (campos personalizados) → anuncio → reloj. Lo dicho en la conversación manda sobre la ficha (`values/customFieldValue.ts`): cada vez que un flujo arranca la conversación empieza en blanco, así que nunca es de otro día, y un dato viejo de la ficha no tapa la respuesta nueva. Mismo orden que usa el Condicional.
+- **Valores con tipo** (`contracts/FieldValues.ts`): la ficha guarda sí/no, fechas y números «a lo computador». En un mensaje (`text`) salen como persona («Sí», «13/11/1990»); en una integración, el Pixel, Registrar venta o el monto del Comprobante (`raw`, `json`, `url`, `header`) van crudos. El Condicional compara con tipo: «Sí» = `true`, «13/11/1990» = `1990-11-13`, «1.200.000» = `1200000`.
 - **Codificación según el destino**: texto tal cual en mensajes; componente de URL, cadena JSON escapada o cabecera sin saltos de línea en la Integración. Un dato del cliente nunca cambia la forma de la petición.
 - **Mensajes** (`templates/ConversationTemplates.ts`): Mensaje, Menú y Esperar respuesta resuelven sus textos; el contacto solo se consulta si el texto usa variables.
 

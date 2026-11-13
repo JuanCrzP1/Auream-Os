@@ -10,6 +10,8 @@
 // URL, de un JSON o de una cabecera no puede romper (ni inyectar) su formato.
 // ---------------------------------------------------------------------------
 
+import { fieldValueText } from "./FieldValues";
+
 /** Variable del sistema: siempre disponible, la resuelve el motor. */
 export interface BuiltInVariable {
   readonly name: string;
@@ -35,12 +37,13 @@ const VARIABLE = /\{\{\s*context\.([A-Za-z0-9_-]+)\s*\}\}|\{([A-Za-z_][A-Za-z0-9
 
 /**
  * Dónde se inserta el valor:
- *   text    tal cual (mensajes)
+ *   text    para una persona (mensajes): un sí o no es «Sí», una fecha «13/11/1990»
+ *   raw     tal cual, para una máquina (el cuerpo de una integración que no es JSON)
  *   url     codificado como componente de URL
  *   json    escapado para ir dentro de una cadena JSON
  *   header  sin saltos de línea (no se pueden inyectar cabeceras)
  */
-export type TemplateEncoding = "text" | "url" | "json" | "header";
+export type TemplateEncoding = "text" | "raw" | "url" | "json" | "header";
 
 /** Valor de una variable, o `undefined` si no existe. */
 export type VariableResolver = (name: string) => unknown;
@@ -51,10 +54,16 @@ export interface RenderedTemplate {
   readonly missing: ReadonlyArray<string>;
 }
 
-function stringify(value: unknown): string | undefined {
+/**
+ * El valor como texto. En un mensaje (`text`) se escribe como persona: un sí o
+ * no de la ficha es «Sí»/«No» y una fecha `1990-11-13` es «13/11/1990». En una
+ * URL, un JSON o una cabecera va crudo: lo lee una máquina.
+ */
+function stringify(value: unknown, encoding: TemplateEncoding): string | undefined {
   if (value === undefined || value === null) return undefined;
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return encoding === "text" ? fieldValueText(value) : String(value);
+  }
   return JSON.stringify(value);
 }
 
@@ -75,7 +84,7 @@ export function renderTemplate(template: string, resolve: VariableResolver, enco
   const missing: string[] = [];
   const text = template.replace(VARIABLE, (_match, legacy: string | undefined, name: string | undefined, fallback: string | undefined) => {
     const key = (legacy ?? name)!;
-    const resolved = stringify(resolve(key));
+    const resolved = stringify(resolve(key), encoding);
     const value = resolved === undefined || resolved === "" ? (fallback !== undefined ? fallback.trim() : resolved) : resolved;
     if (value === undefined) {
       if (!missing.includes(key)) missing.push(key);

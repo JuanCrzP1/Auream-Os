@@ -1,4 +1,5 @@
 import type { ConditionConfig, ConditionRule } from "../../../contracts/ConditionConfig";
+import { parseFieldNumber, sameTypedValue } from "../../../contracts/FieldValues";
 
 // ---------------------------------------------------------------------------
 // Evaluación de las reglas del Condicional. Pura: recibe la configuración y
@@ -81,19 +82,23 @@ function compareOrder(actual: number | string, expected: number | string, operat
 }
 
 /** Texto comparable: sin espacios sobrantes, sin mayúsculas ni tildes. */
+/** Un sí o no de la ficha se lee como «sí»/«no»: «contiene "s"» funciona igual que con lo que escribió el cliente. */
 function normalize(value: unknown): string {
-  return String(value).trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  const text = typeof value === "boolean" ? (value ? "sí" : "no") : String(value);
+  return text.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
 function hasValue(value: unknown): boolean {
   return value !== undefined && value !== null && String(value).trim().length > 0;
 }
 
+/** Solo algo que ES un número («1.200.000», «$ 49.900», «12,5»), no un texto con un número adentro. */
+const LOOKS_NUMERIC = /^\s*-?\$?\s*\d[\d.,\s]*$/;
+
 function toNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  if (typeof value !== "string" || value.trim() === "") return null;
-  const parsed = Number(value.trim().replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
+  if (typeof value !== "string" || !LOOKS_NUMERIC.test(value)) return null;
+  return parseFieldNumber(value.replace(/\s+/g, "")) ?? null;
 }
 
 /** Operadores de campo (dato del contacto, campo personalizado). */
@@ -109,6 +114,10 @@ function compareField(actual: unknown, operator: string, expected: string): bool
 
   // Sin valor: no es igual, no contiene ni empieza por nada; sí es «distinto» y «no contiene».
   if (!hasValue(actual)) return operator === "different" || operator === "not_contains";
+
+  // Con tipo: «Sí» es sí, «13/11/1990» es la misma fecha que 1990-11-13, «1.200.000» es 1200000.
+  const typed = operator === "equal" || operator === "different" ? sameTypedValue(actual, expected) : undefined;
+  if (typed !== undefined) return operator === "equal" ? typed : !typed;
 
   const a = normalize(actual);
   const b = normalize(expected);

@@ -2,14 +2,17 @@ import { adVariable } from "../../contracts/AdOrigin";
 import type { ContactProfile } from "../../contracts/ContactContracts";
 import type { RuntimeInput } from "../../contracts/RuntimeContracts";
 import type { VariableResolver } from "../../contracts/TemplateVariables";
+import { customFieldValue, hasCustomField } from "../values/customFieldValue";
 
 // ---------------------------------------------------------------------------
 // De dónde sale el valor de cada variable durante una ejecución.
 //
 //   1. Variables del sistema (`full_name`, `phone`…): el contacto manda; lo que
 //      el flujo guardó en la conversación completa lo que falte.
-//   2. Campos personalizados del contacto.
-//   3. Datos guardados en la conversación (p. ej. por «Esperar respuesta»).
+//   2. Lo que se guardó en ESTA conversación (p. ej. por «Esperar
+//      respuesta»): lo que el cliente acaba de decir, tal cual.
+//   3. La ficha del cliente (campos personalizados), si la conversación no lo
+//      tiene. Ver `values/customFieldValue`.
 //   4. El anuncio de clic a WhatsApp por el que entró el contacto, con los
 //      nombres de Leona: `{source_id}`, `{source_url}`, `{media_url}`,
 //      `{thumbnail_url}` y `{ctwa_clid}` (el Pixel lo usa para atribuir).
@@ -57,8 +60,8 @@ export function templateResolver(input: RuntimeInput, profile: ContactProfile | 
 
   return (name) => {
     if (name in builtIns && builtIns[name] !== undefined && builtIns[name] !== null) return builtIns[name];
-    if (profile && name in profile.fields) return profile.fields[name];
-    if (context[name] !== undefined && context[name] !== null) return context[name];
+    // Lo que el cliente dijo en esta conversación manda; si no, su ficha.
+    if (hasCustomField(name, context, profile)) return customFieldValue(name, context, profile);
     return adVariable(profile?.ad ?? null, name) ?? clock[name];
   };
 }

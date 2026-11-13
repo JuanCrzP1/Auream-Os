@@ -83,6 +83,27 @@ describe("datos del contacto y campos personalizados", () => {
   });
 });
 
+describe("campos con tipo (la ficha guarda sí/no, fechas y números «a lo computador»)", () => {
+  it("«Sí» es sí, «13/11/1990» es la misma fecha y «1.200.000» es el mismo número", () => {
+    const f = facts({}, { ya_compro: true, nuevo: false, cumple: "1990-11-13", presupuesto: 1200000 });
+    expect(met(all(rule("customField", "equal", "Sí", "ya_compro")), f)).toBe(true);
+    expect(met(all(rule("customField", "equal", "si", "ya_compro")), f)).toBe(true);
+    expect(met(all(rule("customField", "equal", "No", "nuevo")), f)).toBe(true);
+    expect(met(all(rule("customField", "different", "Sí", "nuevo")), f)).toBe(true);
+    expect(met(all(rule("customField", "contains", "s", "ya_compro")), f)).toBe(true);
+    expect(met(all(rule("customField", "equal", "13/11/1990", "cumple")), f)).toBe(true);
+    expect(met(all(rule("customField", "equal", "1.200.000", "presupuesto")), f)).toBe(true);
+    expect(met(all(rule("customField", "different", "1200000", "presupuesto")), f)).toBe(false);
+  });
+
+  it("lo que escribió el cliente también: fechas en cualquier formato y números como en Latinoamérica", () => {
+    const f = facts({}, { cumple: "13/11/1990", presupuesto: "1.200.000", nota: "tengo 2 hijos" });
+    expect(met(all(rule("customField", "equal", "1990-11-13", "cumple")), f)).toBe(true);
+    expect(met(all(rule("customField", "greater_than", "1000000", "presupuesto")), f)).toBe(true);
+    expect(met(all(rule("customField", "greater_than", "1", "nota")), f)).toBe(false);
+  });
+});
+
 describe("combinación y datos no disponibles", () => {
   it("«todas» exige todas; «cualquiera» basta con una", () => {
     const rules = [rule("weekday", "equal", "sunday"), rule("weekday", "equal", "monday")];
@@ -134,6 +155,20 @@ describe("ConditionNodeHandler", () => {
       node(all(rule("attendant", "equal", "ana"))), input(), { tenantId: "t" } as Session
     );
     expect(result.domainEvents).toContain("condition_fact_unavailable:cond:attendant-equal");
+  });
+
+  it("lo que el cliente dijo en esta conversación manda sobre su ficha; si no lo dijo, la ficha", async () => {
+    const { contacts } = simulationDependencies();
+    const profile = await contacts.resolve("t", { channel: "web", externalKey: "573001234567" });
+    await contacts.setFields("t", profile.id, { ciudad: "Medellín", ya_compro: true });
+    const handler = new ConditionNodeHandler(contacts);
+    const withContext = (context: Record<string, unknown>): RuntimeInput => ({ ...input(), sessionContext: context });
+
+    // Hoy dijo «Cartagena»: el dato viejo de la ficha no lo tapa.
+    expect((await handler.execute(node(all(rule("customField", "equal", "Cartagena", "ciudad"))), withContext({ ciudad: "Cartagena" }), { tenantId: "t" } as Session)).output).toBe("true");
+    // Vuelve otro día (conversación en blanco): la ficha, con su tipo.
+    expect((await handler.execute(node(all(rule("customField", "equal", "Medellín", "ciudad"))), withContext({}), { tenantId: "t" } as Session)).output).toBe("true");
+    expect((await handler.execute(node(all(rule("customField", "equal", "Sí", "ya_compro"))), withContext({}), { tenantId: "t" } as Session)).output).toBe("true");
   });
 
   it("lee las etiquetas reales del contacto de la conversación", async () => {

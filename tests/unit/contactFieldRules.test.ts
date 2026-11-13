@@ -49,6 +49,9 @@ describe("convertir lo que guarda un bloque", () => {
     expect(coerceFieldValue(of("boolean"), "no")).toBe(false);
     expect(coerceFieldValue(of("boolean"), "tal vez")).toBeUndefined();
     expect(coerceFieldValue(list, "  medellin ")).toBe("Medellín");
+    expect(coerceFieldValue(list, "¡Medellín!")).toBe("Medellín");
+    expect(coerceFieldValue(of("boolean"), "Sí.")).toBe(true);
+    expect(coerceFieldValue(of("boolean"), "no sé")).toBeUndefined();
     expect(coerceFieldValue(list, "Cartagena")).toBeUndefined();
     expect(coerceFieldValue(of("text"), "  Hola  ")).toBe("Hola");
     expect(coerceFieldValue(of("text"), "")).toBeUndefined();

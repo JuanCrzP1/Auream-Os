@@ -38,6 +38,12 @@ En Leona los campos son una lista de nombres: lo que guarda un bloque se queda e
 
 Si guardar falla, el turno no se entera (igual que el historial interno).
 
+## Cómo lo leen los flujos
+
+- **Lo dicho en esta conversación manda; si no, la ficha** (`flow-engine/values/customFieldValue.ts`, lo usan los mensajes y el Condicional). La conversación empieza en blanco cada vez que un flujo arranca (`SessionService`), así que nunca es de otro día. Por eso, si el cliente responde algo que no encaja en el tipo («Cartagena» en una lista sin esa opción), el flujo usa lo que acaba de decir y no el dato viejo de la ficha.
+- **Las mismas reglas de lectura en todas partes** (`contracts/FieldValues.ts`): guardar en la ficha, comparar en el Condicional y mostrar en la web usan `parseYesNo`, `parseFieldNumber`, `parseFieldDate` y `foldAnswer` (sin tildes, mayúsculas ni signos). Un año de dos cifras hasta 50 es 20xx y desde 51 es 19xx.
+- **Se muestra como persona** (`fieldValueText`): «Sí»/«No», «13/11/1990». En mensajes, la ficha del CRM y el laboratorio del editor. A las máquinas (integración, Pixel, Registrar venta, Comprobante) les llega crudo (`TemplateEncoding` `raw`).
+
 ## Quién llena y quién lee (`fieldUses.ts`)
 
 Se leen los borradores de los flujos no archivados (lo guardado es lo que corre):

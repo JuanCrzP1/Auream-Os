@@ -75,7 +75,7 @@ export function buildIntegrationRequest(config: IntegrationConfig, resolve: Vari
   if (methodHasBody(config.method) && config.body.trim().length > 0) {
     const declared = headers["content-type"];
     const isJson = declared !== undefined ? declared.toLowerCase().includes("json") : looksLikeJson(config.body);
-    body = track(renderTemplate(config.body, resolve, isJson ? "json" : "text"));
+    body = track(renderTemplate(config.body, resolve, isJson ? "json" : "raw"));
     if (isJson && declared === undefined) headers["content-type"] = "application/json";
     if (new TextEncoder().encode(body).length > INTEGRATION_LIMITS.maxRequestBodyBytes) {
       return { ok: false, reason: "body_too_large", message: "El cuerpo supera el tamaño máximo (256 KB)." };

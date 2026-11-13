@@ -1,4 +1,5 @@
-import { CONTACT_FIELD_TYPE_LABEL, foldFieldText, type ContactFieldType, type FieldUse } from "@contracts/ContactFieldContracts";
+import { CONTACT_FIELD_TYPE_LABEL, type ContactFieldType, type FieldUse } from "@contracts/ContactFieldContracts";
+import { foldAnswer } from "@contracts/FieldValues";
 
 // ---------------------------------------------------------------------------
 // Cómo se cuenta un campo en pantalla: qué tan lleno está, quién lo usa y qué
@@ -44,9 +45,9 @@ export function usesSummary(uses: ReadonlyArray<FieldUse>): { readonly text: str
   return { text: `${flows.size} flujos · ${uses.length} bloques`, warn: false };
 }
 
-/** Las opciones con una nueva al final, sin repetir (sin tildes ni mayúsculas). `null` si ya está o viene vacía. */
+/** Las opciones con una nueva al final, sin repetir (sin tildes, mayúsculas ni signos: la misma regla del servidor). `null` si ya está o viene vacía. */
 export function withOption(options: ReadonlyArray<string>, raw: string): string[] | null {
   const option = raw.replace(/\s+/g, " ").trim();
-  if (!option || options.some((current) => foldFieldText(current) === foldFieldText(option))) return null;
+  if (!option || options.some((current) => foldAnswer(current) === foldAnswer(option))) return null;
   return [...options, option];
 }

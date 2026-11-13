@@ -11,22 +11,8 @@ import type { DocumentTextReader } from "../../../flow-engine/ports/DocumentText
 import type { ContactsServices } from "./composeContactsServices";
 import type { IntegrationsServices } from "./composeIntegrationsServices";
 import type { ConnectionsServices } from "./composeConnectionsServices";
-import { composeNodeRuntime } from "./composeNodeRuntime";
-import { SafeHttpRequester } from "../../../infrastructure/http/SafeHttpRequester";
-import { SqlRoundRobinCounter } from "../../../infrastructure/persistence/sql/SqlRoundRobinCounter";
-import { SqlReceiptRegistry } from "../../../infrastructure/persistence/sql/SqlReceiptRegistry";
-import { SqlSessionRepository } from "../../../infrastructure/persistence/sql/SqlSessionRepository";
 import { SqlInboundMessageLog } from "../../../infrastructure/persistence/sql/SqlInboundMessageLog";
 import { SqlConversationLock } from "../../../infrastructure/persistence/sql/SqlConversationLock";
-import { SessionService } from "../../../domains/sessions/application/SessionService";
-import { ContextService } from "../../../domains/sessions/application/ContextService";
-import { AnalyticsService } from "../../../domains/analytics/application/AnalyticsService";
-import { SavedFlowRegistry } from "../../../domains/automations/runtime/SavedFlowRegistry";
-import { ExecutionLoop } from "../../../flow-engine/execution/ExecutionLoop";
-import { ExecutionOrchestrator } from "../../../flow-engine/execution/ExecutionOrchestrator";
-import { ExecutionEventTracker } from "../../../flow-engine/execution/ExecutionEventTracker";
-import { EdgeEvaluator } from "../../../flow-engine/edges/EdgeEvaluator";
-import { SqlTenantResolver } from "../../../infrastructure/persistence/sql/SqlTenantResolver";
 import { HandleInboundMessageService } from "../../../domains/messaging/application/HandleInboundMessageService";
 import { ConnectionTriggerRouter, DirectoryInboundContacts, RepositorySessionControl, SessionLiveSessions } from "../../../domains/messaging/application/adapters";
 import { StartFlowService } from "../../../domains/messaging/application/StartFlowService";
@@ -43,17 +29,15 @@ import { ConversationInbox, ConversationRecorder } from "../../../domains/conver
 import { ChatAttention } from "../../../domains/conversations/application/ChatAttention";
 import { NewChatService } from "../../../domains/conversations/application/NewChatService";
 import type { DealOwners } from "../../../domains/conversations/application/ports/ConversationPorts";
-import type { InboundContacts } from "../../../domains/messaging/application/ports/MessagingPorts";
 import { SqlTeamRepository } from "../../../infrastructure/persistence/sql/SqlTeamRepository";
+import { composeProductionEngine } from "./composeProductionEngine";
+import { chatTeam, inboundContacts } from "./messagingAdapters";
 import { SqlConversationRepository } from "../../../infrastructure/persistence/sql/SqlConversationRepository";
 
 // ---------------------------------------------------------------------------
 // composeMessagingServices — los mensajes reales de WhatsApp de punta a punta:
-// el motor de PRODUCCIÓN (sesiones y flujos guardados en PostgreSQL, contactos,
-// turnos y comprobantes reales, IA/píxel/integraciones de la cuenta) y la
-// mensajería entrante que lo usa.
-//
-// Distinto de la simulación del builder, que corre todo en memoria y aislado.
+// la mensajería entrante, la bandeja y los turnos de flujo, sobre el motor de
+// PRODUCCIÓN (`composeProductionEngine`).
 // ---------------------------------------------------------------------------
 
 export interface MessagingServices {
@@ -116,30 +100,7 @@ export interface MessagingDependencies {
 }
 
 export function composeMessagingServices(deps: MessagingDependencies): MessagingServices {
-  const http = new SafeHttpRequester({ allowPrivateNetworks: deps.config.integrationsAllowPrivateNetwork });
-  const sessionRepository = new SqlSessionRepository(deps.sql);
-  const sessions = new SessionService(sessionRepository);
-
-  const nodeRuntime = composeNodeRuntime({
-    roundRobin: new SqlRoundRobinCounter(deps.sql),
-    contacts: deps.contacts.directory,
-    http,
-    ai: deps.integrations.aiGateway,
-    conversions: deps.integrations.conversionTracker,
-    media: http,
-    documents: deps.documents,
-    receipts: new SqlReceiptRegistry(deps.sql),
-    sales: deps.sales
-  });
-
-  // La zona horaria de cada empresa (la de Empresa; si no eligió una, la de la plataforma).
-  const tenants = new SqlTenantResolver(deps.sql, deps.config.defaultTimezone);
-  const engine = new ExecutionOrchestrator(
-    tenants,
-    new SavedFlowRegistry(deps.workspaces),
-    sessions,
-    new ExecutionLoop(sessions, new ContextService(), nodeRuntime, new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService()))
-  );
+  const { engine, sessionRepository, tenants } = composeProductionEngine(deps);
 
   const lock = new SqlConversationLock(deps.lockSql);
   const conversations = new SqlConversationRepository(deps.sql);
@@ -201,27 +162,5 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
       recorder,
       inbox
     )
-  };
-}
-
-/** Quién puede atender chats: el equipo, menos los de solo lectura (igual que el responsable del CRM). */
-function chatTeam(team: SqlTeamRepository) {
-  return {
-    agents: async (tenantId: string) =>
-      (await team.listMembers(tenantId))
-        .filter((member) => member.role !== "viewer" && member.role !== "api_client" && member.role !== "worker")
-        .map((member) => ({ userId: member.userId, name: member.displayName ?? member.email ?? "Sin nombre", photoUrl: member.photoUrl }))
-  };
-}
-
-/** Identifica al cliente de cada mensaje y, si ya existía, avisa al CRM que escribió. */
-function inboundContacts(directory: InboundContacts, onWrote?: (tenantId: string, contactId: string) => Promise<void>): InboundContacts {
-  if (!onWrote) return directory;
-  return {
-    identify: async (tenantId, phone, displayName, ad) => {
-      const contact = await directory.identify(tenantId, phone, displayName, ad);
-      if (!contact.isNew) await onWrote(tenantId, contact.contactId);
-      return contact;
-    }
   };
 }

@@ -5,6 +5,7 @@ import { CONDITION_OUTPUT, readConditionConfig } from "../../../contracts/Condit
 import type { NodeHandler } from "../NodeHandler";
 import type { ContactProfile } from "../../../contracts/ContactContracts";
 import { identityOf, type ContactDirectory } from "../../ports/ContactDirectory";
+import { customFieldValue } from "../../values/customFieldValue";
 import { evaluateCondition, type ConditionFacts } from "./evaluateCondition";
 
 // ---------------------------------------------------------------------------
@@ -13,8 +14,9 @@ import { evaluateCondition, type ConditionFacts } from "./evaluateCondition";
 // ---------------------------------------------------------------------------
 
 /**
- * Hechos del contacto y la conversación. El contacto (datos, etiquetas y
- * campos) manda; lo que el flujo guardó en la sesión completa lo que falte.
+ * Hechos del contacto y la conversación. Datos y etiquetas: el contacto manda.
+ * Campos: lo que el cliente dijo en esta conversación manda y la ficha
+ * completa (igual que los mensajes, `customFieldValue`).
  */
 function factsFrom(input: RuntimeInput, profile: ContactProfile | null): ConditionFacts {
   const context = input.sessionContext;
@@ -31,7 +33,7 @@ function factsFrom(input: RuntimeInput, profile: ContactProfile | null): Conditi
     // Si la ejecución la disparó un mensaje del cliente, ese es el último.
     lastInboundAt: typeof inboundText === "string" ? input.envelope.receivedAt : null,
     contactField: (name) => contact[name],
-    customField: (name) => profile?.fields[name] ?? context[name],
+    customField: (name) => customFieldValue(name, context, profile),
     ...(profile ? { tags: profile.tags } : {})
   };
 }

@@ -170,7 +170,7 @@ export async function runPaymentProofStep(
   // 1. El monto esperado (puede venir de una variable: el precio del producto).
   let expectedAmount: number | undefined;
   if (config.amountCheck !== "off") {
-    const rendered = renderTemplate(config.expectedAmount, input.resolve);
+    const rendered = renderTemplate(config.expectedAmount, input.resolve, "raw");
     rendered.missing.forEach((name) => missing.add(name));
     expectedAmount = parseAmount(rendered.text.trim()) ?? undefined;
     if (expectedAmount === undefined) {

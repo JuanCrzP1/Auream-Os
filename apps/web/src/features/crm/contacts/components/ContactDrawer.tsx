@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ContactSummary, LabelSummary } from "@contracts/ContactContracts";
+import { fieldValueText } from "@contracts/FieldValues";
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { setContactLabels, updateContact } from "../services/contactsApi";
 import { LabelChip } from "./LabelChip";
@@ -92,7 +93,7 @@ export function ContactDrawer({ contact, catalog, onSaved, onClose }: ContactDra
               {fields.map(([key, value]) => (
                 <div key={key}>
                   <dt>{key}</dt>
-                  <dd>{String(value)}</dd>
+                  <dd>{fieldValueText(value)}</dd>
                 </div>
               ))}
             </dl>

@@ -32,7 +32,7 @@ const text = (value: unknown): string | undefined => (typeof value === "string" 
 export function buildConversionEvent(config: PixelConfig, context: ConversionContext): ConversionBuild {
   const missing = new Set<string>();
   const render = (template: string) => {
-    const rendered = renderTemplate(template, context.resolve);
+    const rendered = renderTemplate(template, context.resolve, "raw");
     rendered.missing.forEach((name) => missing.add(name));
     return rendered.text.trim();
   };

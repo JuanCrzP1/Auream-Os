@@ -37,7 +37,7 @@ export class RecordSaleNodeHandler implements NodeHandler {
     const resolve = templateResolver({ ...input, sessionContext: { ...input.sessionContext, ...session.context } }, contact);
     const missing = new Set<string>();
     const render = (template: string): string => {
-      const rendered = renderTemplate(template, resolve);
+      const rendered = renderTemplate(template, resolve, "raw");
       rendered.missing.forEach((name) => missing.add(name));
       return rendered.text.trim();
     };

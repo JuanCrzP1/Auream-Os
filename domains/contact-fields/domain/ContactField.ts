@@ -10,6 +10,7 @@ import {
 // La web arma la clave mientras escribes el nombre con la MISMA regla.
 export { foldFieldText as fold, keyFromLabel } from "../../../contracts/ContactFieldContracts";
 import { CONTACT_FIELD_KEY_PATTERN, MAX_CONTACT_FIELD_TEXT, type ContactFieldValue } from "../../../contracts/ContactContracts";
+import { foldAnswer, parseFieldDate, parseFieldNumber, parseYesNo } from "../../../contracts/FieldValues";
 import { ValidationError } from "../../../platform/observability/errors/ValidationError";
 
 // ---------------------------------------------------------------------------
@@ -58,7 +59,7 @@ function requireOptions(type: ContactFieldType, value: unknown): string[] {
   const options: string[] = [];
   for (const item of raw.map((entry) => entry.replace(/\s+/g, " ").trim()).filter(Boolean)) {
     if (item.length > LIMITS.maxOption) throw new ValidationError(`Cada opción admite hasta ${LIMITS.maxOption} caracteres.`);
-    if (!options.some((existing) => fold(existing) === fold(item))) options.push(item);
+    if (!options.some((existing) => foldAnswer(existing) === foldAnswer(item))) options.push(item);
   }
   if (options.length < LIMITS.minOptions) throw new ValidationError(`Una lista necesita al menos ${LIMITS.minOptions} opciones.`);
   if (options.length > LIMITS.maxOptions) throw new ValidationError(`Una lista admite hasta ${LIMITS.maxOptions} opciones.`);
@@ -81,37 +82,7 @@ export function requireFieldChanges(current: FieldShape, input: { readonly label
 }
 
 // --- Convertir lo que guarda un bloque a su tipo ------------------------------
-
-const TRUE = new Set(["si", "sí", "yes", "true", "1", "verdadero", "s"]);
-const FALSE = new Set(["no", "false", "0", "falso", "n"]);
-
-function parseNumber(raw: string): number | undefined {
-  let text = raw.replace(/[^\d.,-]/g, "");
-  if (!/\d/.test(text)) return undefined;
-  const lastDot = text.lastIndexOf(".");
-  const lastComma = text.lastIndexOf(",");
-  if (lastDot >= 0 && lastComma >= 0) {
-    text = lastComma > lastDot ? text.replace(/\./g, "").replace(",", ".") : text.replace(/,/g, "");
-  } else if (lastComma >= 0) {
-    text = /,\d{1,2}$/.test(text) && text.split(",").length === 2 ? text.replace(",", ".") : text.replace(/,/g, "");
-  } else if (/^\d{1,3}(\.\d{3})+$/.test(text)) {
-    text = text.replace(/\./g, "");
-  }
-  const value = Number(text);
-  return Number.isFinite(value) ? value : undefined;
-}
-
-function parseDate(raw: string): string | undefined {
-  const text = raw.trim();
-  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(text);
-  const local = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/.exec(text);
-  const parts = iso ? [Number(iso[1]), Number(iso[2]), Number(iso[3])] : local ? [Number(local[3]!.length === 2 ? `20${local[3]}` : local[3]), Number(local[2]), Number(local[1])] : null;
-  if (!parts) return undefined;
-  const [year, month, day] = parts as [number, number, number];
-  const date = new Date(Date.UTC(year, month - 1, day));
-  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return undefined;
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
+// Las reglas de lectura son las de `contracts/FieldValues` (las mismas del motor y la web).
 
 /**
  * Lo que guardó un bloque, convertido al tipo del campo. `undefined` si no
@@ -126,12 +97,12 @@ export function coerceFieldValue(field: FieldShape, raw: unknown): ContactFieldV
     case "text":
       return text.slice(0, MAX_CONTACT_FIELD_TEXT);
     case "number":
-      return typeof raw === "number" && Number.isFinite(raw) ? raw : parseNumber(text);
+      return parseFieldNumber(typeof raw === "number" ? raw : text);
     case "date":
-      return parseDate(text);
+      return parseFieldDate(text);
     case "boolean":
-      return typeof raw === "boolean" ? raw : TRUE.has(fold(text)) ? true : FALSE.has(fold(text)) ? false : undefined;
+      return parseYesNo(raw);
     case "list":
-      return field.options.find((option) => fold(option) === fold(text));
+      return field.options.find((option) => foldAnswer(option) === foldAnswer(text));
   }
 }

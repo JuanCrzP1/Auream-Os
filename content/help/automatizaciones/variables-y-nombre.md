@@ -3,9 +3,9 @@ title: Variables: el nombre del cliente y otros datos
 module: automatizaciones
 summary: Cómo usar {first_name} y los datos que guarda el flujo en tus mensajes.
 order: 6
-updated: 2026-11-11
+updated: 2026-11-13
 keywords: variables, nombre, first_name, personalizar
-related: primer-flujo, primera-difusion
+related: primer-flujo, primera-difusion, campos-del-cliente
 ---
 
 Escribe una variable entre llaves y Auream la reemplaza para cada cliente.
@@ -17,6 +17,12 @@ Escribe una variable entre llaves y Auream la reemplaza para cada cliente.
 - `{phone}`: el teléfono.
 - `{fecha}` y `{hora}`: con tu zona horaria.
 - Lo que guardó el flujo con Esperar respuesta, por su nombre.
+- Los **campos del cliente** (`{ciudad}`, `{presupuesto}`): ver el artículo «Campos del cliente».
+
+## De dónde sale el valor
+
+1. Lo que el cliente dijo **en esta conversación** (lo que guardó el flujo), tal cual lo escribió.
+2. Si no lo ha dicho, su **ficha** (Campos del cliente). Un sí o no sale como «Sí» o «No» y una fecha como 13/11/1990.
 
 ## Valor por defecto
 

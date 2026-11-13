@@ -14,7 +14,15 @@ const resolve = (name: string) => values[name];
 
 describe("renderTemplate", () => {
   it("sustituye variables y deja el resto del texto intacto", () => {
-    expect(renderTemplate("Hola {full_name}, ¿sigues en {city}? {n} {ok}", resolve).text).toBe("Hola Ana \"La Jefa\" Pérez, ¿sigues en Bogotá D.C.? 3 true");
+    expect(renderTemplate("Hola {full_name}, ¿sigues en {city}? {n} {ok}", resolve).text).toBe("Hola Ana \"La Jefa\" Pérez, ¿sigues en Bogotá D.C.? 3 Sí");
+  });
+
+  it("a una persona le escribe como persona; a una máquina, crudo", () => {
+    const typed = (name: string) => ({ ya: true, no: false, cumple: "1990-11-13", total: 1200000 })[name];
+    expect(renderTemplate("{ya} {no} · {cumple} · {total}", typed).text).toBe("Sí No · 13/11/1990 · 1200000");
+    expect(renderTemplate("{ya} {cumple}", typed, "raw").text).toBe("true 1990-11-13");
+    expect(renderTemplate('{"ya":"{ya}","cumple":"{cumple}"}', typed, "json").text).toBe('{"ya":"true","cumple":"1990-11-13"}');
+    expect(renderTemplate("?ya={ya}", typed, "url").text).toBe("?ya=true");
   });
 
   it("admite guiones en el nombre, como Leona: {resposta-lead}", () => {
@@ -79,10 +87,14 @@ describe("templateResolver (motor)", () => {
     expect([r("first_name"), r("full_name"), r("phone"), r("last_message")]).toEqual(["Laura", "Laura Gómez", "573001112233", "hola"]);
   });
 
-  it("campo del contacto antes que dato de la conversación; luego la conversación", () => {
+  it("lo que el cliente dijo en esta conversación manda; si no lo dijo, su ficha", () => {
     const r = templateResolver(input({ ciudad: "Lima", plan: "pro" }), profile);
-    expect(r("ciudad")).toBe("Cali");
+    expect(r("ciudad")).toBe("Lima");
     expect(r("plan")).toBe("pro");
+    // Un cliente que vuelve otro día (conversación en blanco): su ficha.
+    expect(templateResolver(input(), profile)("ciudad")).toBe("Cali");
+    // Una respuesta vacía no tapa la ficha.
+    expect(templateResolver(input({ ciudad: "" }), profile)("ciudad")).toBe("Cali");
   });
 
   it("sin contacto, lo que guardó el flujo completa y el teléfono sale del canal", () => {

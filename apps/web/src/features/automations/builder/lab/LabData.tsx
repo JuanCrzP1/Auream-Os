@@ -1,7 +1,9 @@
 import "./lab-data.css";
+import { fieldValueText } from "@contracts/FieldValues";
 import type { SimulationPersona } from "@contracts/SimulationContracts";
 
-const show = (value: unknown) => (typeof value === "string" ? value : JSON.stringify(value));
+/** Como lo lee una persona («Sí», «13/11/1990»); lo que no es un dato simple, en JSON. */
+const show = (value: unknown) => (typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? fieldValueText(value) : JSON.stringify(value));
 
 /**
  * Los datos de la prueba: el cliente de prueba tal como quedó (etiquetas y
