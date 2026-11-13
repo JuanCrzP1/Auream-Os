@@ -55,13 +55,28 @@ En la API: `WHATSAPP_SIMULATOR_URL` (solo `http://localhost` o `127.0.0.1`) y `W
 | — (solo del simulador) | **Adelantar el tiempo**: `POST /_sim/chats/:instance/:phone/advance` → Auream `POST /dev/simulator/advance`. |
 | Avisos `connection`, `messages`, `messages_update`, `groups` | Mismo formato que uazapi, incluido el origen de anuncio (`externalAdReply`). |
 
+## Datos de demostración
+
+Con el simulador y la API corriendo (pasos de *Arrancar*):
+
+```bash
+npm run sim:demo
+```
+
+En segundos deja en tu cuenta local un número «Demo» conectado, el flujo «Bienvenida (demo)» con el disparador «hola», el producto «Plan demo» y cuatro clientes: Laura (la saluda el bot), Carlos (llega por anuncio y le responde el asesor), Marta (llega por anuncio y compra: la venta queda amarrada al anuncio) y Pedro (tiene un mensaje programado para mañana). Se puede correr varias veces: reutiliza el número, el flujo y el producto, y suma mensajes y otra venta. Si empezaste de cero el simulador, borra la conexión «Demo» en Auream y vuelve a correrlo.
+
+Solo funciona en tu máquina: exige que la API y el simulador estén en `localhost` y usa la clave de desarrollo (`DEV_API_KEY`), que no existe en producción.
+
 ## Pruebas
 
 ```bash
-npx vitest run tests/contract/waSimulatorContract.test.ts
+npx vitest run tests/contract/waSimulatorContract.test.ts   # el contrato con uazapi
+npm run test:e2e                                            # los recorridos de punta a punta
 ```
 
-Usa el cliente y los parsers **reales** de uazapi de Auream contra el simulador. Si falla, el simulador y Auream ya no hablan igual.
+El **contrato** usa el cliente y los parsers **reales** de uazapi de Auream contra el simulador. Si falla, el simulador y Auream ya no hablan igual.
+
+Los **recorridos** levantan solos el simulador y la API (no hace falta tener nada corriendo; apaga la API local antes, porque su cola de tareas comparte la base de pruebas) y cuentan un día de negocio: conectar por QR, el bot que saluda, el asesor que responde con ✓✓ y leído, la clienta que llega por anuncio y compra, y un mensaje programado que sale con «Enviar ahora». Dejan un informe en español en `data/e2e/informe.md`.
 
 ## Agregar algo que haga uazapi
 

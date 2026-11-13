@@ -25,6 +25,7 @@ Nada sale a WhatsApp: no hay números reales, ni costos, ni riesgo de bloqueo.
 | `provider/` | La **API de uazapi** que usa Auream: números (`/instance/*`, `/webhook`), mensajes (`/send/text`, `/send/media`, `/send/menu`, `/message/*`) y grupos (`/group/*`). Con sus mismos tokens y errores (401, 503). | el teléfono de prueba |
 | `phone/` | El **teléfono de prueba**: su API (`/_sim/*`), los archivos que sube el «cliente» y la página (`phone/ui`). | uazapi |
 | `http/` | Enrutador mínimo, lectura de JSON con límite de tamaño. | — |
+| `demo/` | Los pasos del negocio para los recorridos y los datos de demostración (abajo). Habla con Auream y con el teléfono; el simulador no lo importa. | el estado interno del simulador |
 | `config.ts`, `server.ts`, `main.ts` | Configuración (rechaza producción), armado y arranque. | — |
 
 ## Recorrido
@@ -74,12 +75,29 @@ Teléfono de prueba ── POST /_sim/chats/:instance/:phone/advance
 
 - **Dos QR a la vez dejaban un número huérfano.** Dos pedidos de vinculación casi simultáneos creaban dos instancias en uazapi (con 4 ms de diferencia). Ahora la sesión nueva se guarda solo si nadie se adelantó (`ConnectionRepository.saveIfSession`); el pedido que pierde borra la suya y muestra el QR del ganador (`LinkConnectionService`, prueba `connectionLinkRace.test.ts`).
 
+- **Una venta anotada sin persona real fallaba (500).** «Quién la anotó» es una columna uuid; con la clave de desarrollo (que no es una persona) la base rechazaba la venta. Ahora el repositorio guarda solo ids de personas reales (`SqlSaleRepository`, como ya hacían los mensajes programados). Lo encontró el recorrido 4.
+
 ## Límites (a propósito)
 
 - No imita la red de WhatsApp: no hay bloqueos, límites de envío ni números que no existen.
 - Los archivos del «cliente» se sirven por `http://localhost`; Auream los pide por `/message/download`, como con un aviso real sin enlace.
 - Los perfiles no tienen foto.
 
+## Recorridos automáticos y datos de demostración
+
+`apps/wa-sim/demo/steps.ts` guarda los **pasos del negocio** (conectar por QR, armar un flujo con su disparador, escribir como cliente, responder como asesor) hablando con la API de Auream como la web y con el teléfono de prueba. Los usan dos cosas, para que la historia sea una sola:
+
+| | `npm run test:e2e` | `npm run sim:demo` |
+|---|---|---|
+| Para qué | Comprobar de punta a punta que todo sigue funcionando | Tener datos para mirar y probar a mano en segundos |
+| Dónde corre | Levanta su propio simulador y su propia API (`tests/e2e/harness/stack.ts`), en el mismo proceso | Usa la API y el simulador que ya tienes corriendo |
+| Cuenta | Una nueva por corrida (`it-e2e-…`) en la base de **pruebas** (`requireTestDatabaseUrl`), que se borra al terminar | La de la clave de desarrollo (`DEV_TENANT_ID`) |
+| Resultado | Informe en español en `data/e2e/informe.md` (`tests/e2e/setup/spanishReport.ts`) | Un resumen en la terminal |
+
+- **Sin código nuevo en Auream.** Los recorridos entran con la clave de desarrollo (`sales.read`, `sales.write` y `sales.manage` incluidos para productos y ventas). Esa clave no existe en producción.
+- **Siempre locales.** `sim:demo` rechaza direcciones que no sean `localhost` y no corre con `NODE_ENV=production`; el simulador tampoco.
+- Para sumar un escenario: un `it(...)` en `tests/e2e/whatsapp.e2e.ts` (o un archivo `*.e2e.ts` nuevo) que use los pasos; si hace falta un paso nuevo, va en `steps.ts`.
+
 ## Lo que sigue
 
-1. **Recorridos automáticos** (`npm run test:e2e`): escenarios de punta a punta con informe, y datos de demostración para empezar en segundos.
+Más escenarios en los recorridos a medida que crecen las funciones (difusiones, grupos, CRM, «Adelantar el tiempo» con un Programador).

@@ -2,6 +2,10 @@ import type { SaleSource, SaleStatus, SalesTotal } from "../../../contracts/Sale
 import type { SaleChanges, SaleCursor, SaleQuery, SaleRecord, SaleRepository } from "../../../domains/sales/application/SaleRepository";
 import type { NewSale } from "../../../domains/sales/domain/Sale";
 import type { SqlExecutor } from "./SqlClient";
+import { isUuid } from "./sqlValues";
+
+/** Quién la anotó: solo personas reales (la clave de desarrollo no es una persona y la columna es uuid). */
+const personOf = (id: string | null) => (id && isUuid(id) ? id : null);
 
 // ---------------------------------------------------------------------------
 // SqlSaleRepository — `sales` (031). Al leer suma los nombres de la conexión
@@ -104,7 +108,7 @@ export class SqlSaleRepository implements SaleRepository {
        returning id`,
       [
         tenantId, status, sale.source, sale.productId, sale.productName, sale.amount, sale.currency, sale.country, sale.contactId, sale.customerName,
-        sale.customerPhone, sale.connectionId, sale.flowKey, sale.adSourceId, sale.receiptReference, sale.originKey, reviewReason, sale.note, sale.recordedBy, sale.soldAt
+        sale.customerPhone, sale.connectionId, sale.flowKey, sale.adSourceId, sale.receiptReference, sale.originKey, reviewReason, sale.note, personOf(sale.recordedBy), sale.soldAt
       ]
     );
     const created = inserted.rows.length > 0;
@@ -126,7 +130,7 @@ export class SqlSaleRepository implements SaleRepository {
                         customer_name = $9, note = $10, review_reason = $11, recorded_by = $12, updated_at = now()
         where tenant_id = $1 and id = $2 returning id`,
       [tenantId, saleId, changes.status, changes.productId, changes.productName, changes.amount, changes.currency, changes.country,
-       changes.customerName, changes.note, changes.reviewReason, changes.recordedBy]
+       changes.customerName, changes.note, changes.reviewReason, personOf(changes.recordedBy)]
     );
     return result.rows.length > 0 ? this.find(tenantId, saleId) : null;
   }

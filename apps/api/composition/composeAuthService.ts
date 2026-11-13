@@ -30,7 +30,11 @@ const DEV_SCOPES = [
   "connections.read",
   "connections.write",
   "conversations.read",
-  "conversations.write"
+  "conversations.write",
+  // Productos y ventas desde el chat (recorridos automáticos con el WhatsApp simulado).
+  "sales.read",
+  "sales.write",
+  "sales.manage"
 ];
 
 export function composeAuthService(config: ApiConfig, authConfig: NeonAuthConfig): AuthService {
