@@ -19,6 +19,8 @@ import { routeGroupLink } from "./routeGroupLink";
 import { routeHelpRequest, type HelpRoutes } from "./routeHelpRequest";
 import { routeNotificationsRequest } from "./routeNotificationsRequest";
 import { routeQuickRepliesRequest } from "./routeQuickRepliesRequest";
+import { routeContactFieldsRequest } from "./routeContactFieldsRequest";
+import type { ContactFieldServices } from "../../../domains/contact-fields/application/ContactFieldServices";
 import { routeContactNotesRequest } from "./routeContactNotesRequest";
 import type { ContactNoteServices } from "../../../domains/contacts/application/ContactNoteServices";
 import type { QuickReplyServices } from "../../../domains/quick-replies/application/QuickReplyServices";
@@ -116,6 +118,8 @@ export interface ApiRouterDependencies {
   readonly notificationServices?: NotificationServices;
   /** Respuestas rápidas del chat (`/quick-replies`). Ausente: responde 503. */
   readonly quickReplyServices?: QuickReplyServices;
+  /** Campos del cliente (`/contact-fields`). Ausente: responde 503. */
+  readonly contactFieldServices?: ContactFieldServices;
   /** Notas internas de los clientes (`/contacts/:id/notes`). Ausente: responde 503. */
   readonly contactNoteServices?: ContactNoteServices;
   readonly groupServices?: GroupRoutes & { readonly link: Pick<LinkService, "click">; readonly activity: Pick<GroupActivity, "handle"> };
@@ -227,6 +231,7 @@ export async function routeApiRequest(
   if (await routeHelpRequest(request, response, url, dependencies.helpServices, requestContext)) return;
   if (await routeNotificationsRequest(request, response, url, dependencies.notificationServices, requestContext)) return;
   if (await routeQuickRepliesRequest(request, response, url, dependencies.quickReplyServices, requestContext)) return;
+  if (await routeContactFieldsRequest(request, response, url, dependencies.contactFieldServices, requestContext)) return;
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
   if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
   if (await routeSalesLinesRequest(request, response, url, dependencies.salesLineServices, requestContext)) return;

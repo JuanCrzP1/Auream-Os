@@ -25,6 +25,7 @@ const DEV_SCOPES = [
   "runtime.execute",
   "contacts.read",
   "contacts.write",
+  "contacts.manage",
   "credentials.read",
   "credentials.write",
   "connections.read",

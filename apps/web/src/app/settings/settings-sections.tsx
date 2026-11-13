@@ -4,7 +4,7 @@ import { SidebarIcons } from "../navigation/sidebar/sidebar-icons";
 
 // ---------------------------------------------------------------------------
 // Las secciones de Configuración, agrupadas como en Stripe o Vercel: lo tuyo
-// (en todas las empresas) y lo de la empresa activa. Agregar una sección es
+// (en todas las empresas), lo de la empresa activa, sus datos y sus chats. Agregar una sección es
 // una línea aquí y su contenido en `SettingsScreen`.
 // ---------------------------------------------------------------------------
 
@@ -15,6 +15,7 @@ export const SETTINGS_ROUTES = {
   team: "/settings/team",
   billing: "/settings/billing",
   security: "/settings/security",
+  "contact-fields": "/settings/contact-fields",
   "quick-replies": "/settings/quick-replies"
 } as const;
 
@@ -41,6 +42,13 @@ const Icons = {
       <path d="M9 8h2M13 8h2M9 12h2M13 12h2M10 21v-4h4v4" />
     </>
   ),
+  contactFields: icon(
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2.5" />
+      <circle cx="8.5" cy="11" r="2" />
+      <path d="M5.5 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 14h3" />
+    </>
+  ),
   quickReplies: icon(<path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" />),
   security: icon(<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3zM9.5 12l2 2 3.5-4" />)
 };
@@ -60,6 +68,18 @@ export const SETTINGS_GROUPS: ReadonlyArray<SettingsNavGroup> = [
       { id: "team", label: "Equipo", path: SETTINGS_ROUTES.team, icon: SidebarIcons.team, description: "Las personas de la empresa y lo que puede hacer cada una." },
       { id: "billing", label: "Plan y pagos", path: SETTINGS_ROUTES.billing, icon: SidebarIcons.billing, description: "Tu plan, lo que consumes en el mes, tu método de pago y tus facturas.", soon: true },
       { id: "security", label: "Seguridad", path: SETTINGS_ROUTES.security, icon: Icons.security, description: "Cómo entra tu equipo y quién puede hacerlo.", soon: true }
+    ]
+  },
+  {
+    title: "Datos",
+    items: [
+      {
+        id: "contact-fields",
+        label: "Campos del cliente",
+        path: SETTINGS_ROUTES["contact-fields"],
+        icon: Icons.contactFields,
+        description: "Lo que Auream sabe de cada cliente: de dónde sale, en cuántos está y qué flujos lo usan."
+      }
     ]
   },
   {

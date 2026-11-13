@@ -36,6 +36,7 @@ import { composeGroupServices } from "../composition/composeGroupServices";
 import { composeHelpServices } from "../composition/composeHelpServices";
 import { composeNotificationServices } from "../composition/composeNotificationServices";
 import { composeQuickReplyServices } from "../composition/composeQuickReplyServices";
+import { composeContactFieldServices } from "../composition/composeContactFieldServices";
 import { composeContactNoteServices } from "../composition/composeContactNoteServices";
 import type { InboundListener } from "../composition/composeMessagingServices";
 import { StageLabelRules } from "../../../domains/crm/application/StageLabelRules";
@@ -134,6 +135,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   );
   // Difusiones oye los mensajes entrantes («SALIR»), pero se arma después de Mensajería.
   const inboundListeners: { current: InboundListener[] } = { current: [] };
+  // Campos del cliente: el catálogo y el paso de los datos de los flujos al cliente.
+  const contactFields = composeContactFieldServices({ sql: tenancy.sqlClient, automations: services.automationRepository, workspaces: services.workspaceRepository });
   const messagingServices = composeMessagingServices({
     config,
     sql: tenancy.sqlClient,
@@ -146,6 +149,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     documents,
     scheduler: scheduling.scheduler,
     journal: composeTurnJournal(new SqlFlowTurnJournal(tenancy.sqlClient), logger),
+    contactFields: contactFields.sync,
     sales: sales.ledger,
     inboundListeners,
     dealOwners: crm.ownerClaims,
@@ -234,6 +238,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     helpServices: { ...help, docsBase: config.helpDocsBase },
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
     quickReplyServices: quickReplies,
+    contactFieldServices: contactFields.services,
     contactNoteServices: composeContactNoteServices(tenancy.sqlClient),
     adsServices: ads,
     salesLineServices: salesLines.lines,

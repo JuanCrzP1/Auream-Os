@@ -34,6 +34,8 @@ import type { TurnJournal } from "../../../domains/messaging/application/FlowTur
 import { StartFlowForContactService } from "../../../domains/messaging/application/StartFlowForContactService";
 import { OutreachService } from "../../../domains/messaging/application/OutreachService";
 import { FlowTurn } from "../../../domains/messaging/application/FlowTurn";
+import type { ContactFieldSync } from "../../../domains/contact-fields/application/ContactFieldSync";
+import { contactFieldTurns } from "./contactFieldTurns";
 import { FlowTimerService } from "../../../domains/messaging/application/FlowTimerService";
 import type { TaskScheduler } from "../../../domains/scheduling/application/TaskScheduler";
 import { SchedulerFlowTimers } from "./flowTimerAdapters";
@@ -98,6 +100,8 @@ export interface MessagingDependencies {
   readonly scheduler: TaskScheduler;
   /** Historial interno de los turnos (Neon + registro). Ausente: no se anota. */
   readonly journal?: TurnJournal;
+  /** Campos del cliente: lo que guardan los bloques y es un campo pasa al cliente. Ausente: queda solo en la conversación. */
+  readonly contactFields?: Pick<ContactFieldSync, "persist">;
   /** Ventas del bloque Registrar venta (se guardan en Ventas). */
   readonly sales: SalesLedger;
   /** Quién oye los mensajes entrantes (se conecta después: Difusiones depende de Mensajería). */
@@ -142,7 +146,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
   const recorder = new ConversationRecorder(conversations);
   const delivery = deps.connections.channel;
   // Un solo «turno de flujo» para los tres orígenes: mensaje, envío a mano y despertador.
-  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(deps.scheduler), undefined, deps.journal);
+  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(deps.scheduler), undefined, deps.journal, deps.contactFields ? contactFieldTurns(deps.contactFields, deps.contacts.directory) : undefined);
   const launcher = new StartFlowService(deps.connections.flows, lock, new RepositorySessionControl(sessionRepository), turn);
 
   const inbound = new HandleInboundMessageService(

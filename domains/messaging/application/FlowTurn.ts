@@ -16,12 +16,22 @@ import { NO_JOURNAL, turnRecord, type TurnJournal } from "./FlowTurnJournal";
 //      desde que salió de verdad el último mensaje: si la entrega tardó más de
 //      lo planeado (envíos, red), el despertador se corre exactamente eso
 //
+//   4. lo que guardaron los bloques y es un campo del cliente queda en el
+//      cliente (`TurnFields`), en paralelo con la entrega
+//
 // Cada turno (también uno que revienta) queda en el historial interno
-// (`TurnJournal`): si anotarlo falla, el turno no se entera.
+// (`TurnJournal`): si anotarlo o guardar los campos falla, el turno no se entera.
 //
 // Quien lo usa pone el candado de la conversación: un turno nunca se cruza
 // con otro del mismo chat.
 // ---------------------------------------------------------------------------
+
+/** Lo que guardaron los bloques del turno, para pasar al cliente lo que sea un campo definido. */
+export interface TurnFields {
+  afterTurn(tenantId: string, envelope: InboundEnvelope, patch: Readonly<Record<string, unknown>>): Promise<void>;
+}
+
+const NO_FIELDS: TurnFields = { afterTurn: async () => undefined };
 
 export interface FlowTurnOutcome {
   readonly result: FlowRunResult;
@@ -35,7 +45,8 @@ export class FlowTurn {
     private readonly conversations: Pick<ConversationLog, "recordOutbound">,
     private readonly timers: FlowTimers,
     private readonly now: () => Date = () => new Date(),
-    private readonly journal: TurnJournal = NO_JOURNAL
+    private readonly journal: TurnJournal = NO_JOURNAL,
+    private readonly fields: TurnFields = NO_FIELDS
   ) {}
 
   public async run(target: FlowTurnTarget & { readonly conversationId: string }, envelope: InboundEnvelope): Promise<FlowTurnOutcome> {
@@ -56,6 +67,8 @@ export class FlowTurn {
 
   private async turn(target: FlowTurnTarget & { readonly conversationId: string }, envelope: InboundEnvelope) {
     const result = await this.runner.handle(envelope);
+    const patch = result.contextPatch ?? {};
+    const saving = Object.keys(patch).length > 0 ? this.fields.afterTurn(target.tenantId, envelope, patch).catch(() => undefined) : Promise.resolve();
     const report = await this.delivery.deliver(target.tenantId, target.connectionId, target.phone, result.outputMessages, async (sent) => {
       // Un aviso al equipo (Notificación) no es parte del chat del cliente.
       if (sent.message.recipient) return;
@@ -63,6 +76,7 @@ export class FlowTurn {
     });
     const wakeUp = result.wakeUp ? alignWakeUpToDelivery(result.wakeUp, this.now()) : undefined;
     await this.timers.afterTurn(target, wakeUp === result.wakeUp ? result : { ...result, wakeUp });
+    await saving;
     return { result, report, ...(wakeUp ? { wakeUpAt: wakeUp.at } : {}) };
   }
 }

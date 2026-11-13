@@ -1,0 +1,104 @@
+/* Configuración › Datos › Campos del cliente: la barra, «por ordenar», la
+ * tabla «Tuyos» y los del sistema. Solo tokens del tema (claro y oscuro). */
+.cf {
+  --cf-line: color-mix(in srgb, var(--primary) 16%, transparent);
+  --cf-soft: color-mix(in srgb, var(--primary) 8%, transparent);
+  --cf-ink: color-mix(in srgb, var(--primary-hover) 80%, var(--text));
+}
+
+.cf__frame {
+  display: grid;
+  gap: 18px;
+  container: cf / inline-size;
+}
+
+.cf-loading {
+  height: 260px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, var(--surface) 0%, var(--surface-alt) 50%, var(--surface) 100%);
+  background-size: 200% 100%;
+  animation: cf-shimmer 1.2s linear infinite;
+}
+
+@keyframes cf-shimmer { to { background-position: -200% 0; } }
+
+.cf__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.cf__who { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: 0.8rem; }
+.cf__who svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.cf code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--cf-ink); }
+
+.cf-card { border: 1px solid var(--cf-line); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.cf-card__head { display: grid; gap: 2px; padding: 18px 20px 12px; }
+.cf-card h2 { margin: 0; color: var(--text); font-size: 1rem; font-weight: 800; }
+.cf-card h2 span { margin-left: 6px; color: var(--muted); font-weight: 700; }
+.cf-card__head p, .cf-system__head p { margin: 0; color: var(--muted); font-size: 0.82rem; }
+
+/* «Por ordenar» */
+.cf-pending { border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.cf-pending__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 20px; border-bottom: 1px solid color-mix(in srgb, var(--amber) 25%, transparent); background: color-mix(in srgb, var(--amber) 7%, transparent); color: var(--text); font-size: 0.9rem; }
+.cf-pending__head span { color: var(--muted); font-size: 0.78rem; }
+.cf-pending__item { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 20px; }
+.cf-pending__icon { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 12px; background: var(--cf-soft); color: var(--primary); }
+.cf-pending__icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.cf-pending__text { display: grid; flex: 1 1 320px; gap: 2px; color: var(--text); font-size: 0.9rem; }
+.cf-pending__text span { color: var(--muted); font-size: 0.82rem; }
+
+.cf-soft-btn { height: 38px; padding: 0 16px; border: 1px solid var(--cf-line); border-radius: 12px; background: var(--surface-alt); color: var(--text); font: 700 0.85rem var(--font-body); cursor: pointer; }
+.cf-soft-btn:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: var(--primary); }
+
+/* La tabla «Tuyos» */
+.cf-table__head, .cf-row { display: grid; grid-template-columns: 2.4fr 1fr 1.5fr 2fr 28px; gap: 12px; align-items: center; padding: 0 20px; }
+.cf-table__head { padding-block: 10px; border-block: 1px solid var(--cf-soft); background: color-mix(in srgb, var(--primary) 3%, var(--surface)); color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.cf-table__rows { margin: 0; padding: 0; list-style: none; }
+.cf-table__rows li + li .cf-row { border-top: 1px solid var(--cf-soft); }
+.cf-row { box-sizing: border-box; width: 100%; padding-block: 13px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: background var(--speed-fast) ease; }
+.cf-row:hover, .cf-row:focus-visible { background: color-mix(in srgb, var(--primary) 6%, transparent); outline: none; }
+.cf-row__name { display: grid; gap: 2px; min-width: 0; }
+.cf-row__name strong { overflow: hidden; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+.cf-row__name code { font-size: 0.78rem; }
+.cf-row__fill { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; }
+.cf-row__uses { color: var(--muted); font-size: 0.8rem; }
+.cf-row__uses.is-warn { color: color-mix(in srgb, var(--amber) 70%, var(--text)); font-weight: 700; }
+.cf-row__chevron { color: var(--muted); text-align: center; }
+
+.cf-bar { flex: 1; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, transparent); overflow: hidden; }
+.cf-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+
+.cf-type { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; }
+.cf-type--list { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--cf-ink, var(--primary)); }
+.cf-type--date { background: color-mix(in srgb, var(--teal) 16%, transparent); color: color-mix(in srgb, var(--teal) 55%, var(--text)); }
+.cf-type--number { background: color-mix(in srgb, var(--amber) 18%, transparent); color: color-mix(in srgb, var(--amber) 55%, var(--text)); }
+.cf-type--boolean { background: color-mix(in srgb, var(--status-success) 15%, transparent); color: color-mix(in srgb, var(--status-success) 55%, var(--text)); }
+.cf-type--text { background: var(--surface-alt); color: var(--muted); }
+
+/* Del sistema */
+.cf-system { display: grid; gap: 12px; padding: 18px 20px; }
+.cf-system__head { display: flex; align-items: center; gap: 10px; }
+.cf-system__lock { display: grid; place-items: center; flex: 0 0 30px; height: 30px; border-radius: 10px; background: var(--cf-soft); color: var(--primary); }
+.cf-system__lock svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.cf-system__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.cf-system__item { display: grid; gap: 3px; padding: 12px 14px; border-radius: 14px; background: var(--surface-alt); }
+.cf-system__top { display: flex; justify-content: space-between; gap: 8px; color: var(--text); font-size: 0.85rem; }
+.cf-system__top code { font-size: 0.75rem; }
+.cf-system__source { color: var(--muted); font-size: 0.78rem; }
+
+/* Angosto (celular o panel estrecho): cada campo es una tarjeta. */
+@container cf (max-width: 680px) {
+  .cf-table__head { display: none; }
+  .cf-row { grid-template-columns: 1fr auto; grid-template-areas: "name type" "fill fill" "uses uses"; row-gap: 8px; }
+  .cf-row__name { grid-area: name; }
+  .cf-row > span:nth-child(2) { grid-area: type; }
+  .cf-row__fill { grid-area: fill; }
+  .cf-row__uses { grid-area: uses; }
+  .cf-row__chevron { display: none; }
+  .cf-system__grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container cf (min-width: 681px) and (max-width: 860px) {
+  .cf-system__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cf-loading { animation: none; }
+}

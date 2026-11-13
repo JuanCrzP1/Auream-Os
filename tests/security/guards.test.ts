@@ -118,7 +118,7 @@ describe("requireRole (guard)", () => {
 
   it("tenant_owner satisfecho con todos los scopes", () => {
     const context = makeContext({
-      scopes: ["flows.read", "flows.write", "flows.publish", "runtime.execute", "analytics.read", "contacts.read", "contacts.write", "credentials.read", "credentials.write", "connections.read", "connections.write", "conversations.read", "conversations.write", "conversations.manage", "tenant.manage", "team.read", "team.manage", "sales.read", "sales.write", "sales.manage", "crm.read", "crm.write", "crm.manage", "ads.read", "ads.manage", "broadcasts.read", "broadcasts.manage", "groups.read", "groups.manage"]
+      scopes: ["flows.read", "flows.write", "flows.publish", "runtime.execute", "analytics.read", "contacts.read", "contacts.write", "contacts.manage", "credentials.read", "credentials.write", "connections.read", "connections.write", "conversations.read", "conversations.write", "conversations.manage", "tenant.manage", "team.read", "team.manage", "sales.read", "sales.write", "sales.manage", "crm.read", "crm.write", "crm.manage", "ads.read", "ads.manage", "broadcasts.read", "broadcasts.manage", "groups.read", "groups.manage"]
     });
     expect(() => requireRole(context, "tenant_owner")).not.toThrow();
   });

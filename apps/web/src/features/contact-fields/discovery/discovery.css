@@ -1,0 +1,37 @@
+/* El primer día: lo que tus flujos ya guardan, para convertirlo en campos. */
+.cf-discovery { display: grid; gap: 14px; padding-bottom: 4px; border: 1px solid var(--cf-line); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.cf-discovery__hero { display: grid; gap: 6px; padding: 22px 22px 18px; background: linear-gradient(125deg, #1e1530 0%, #33246b 55%, #5b4bd4 100%); color: #ffffff; }
+.cf-discovery__hero h2 { margin: 0; font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; }
+.cf-discovery__hero p { margin: 0; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; line-height: 1.5; }
+.cf-discovery__empty { margin: 0; padding: 0 22px; color: var(--muted); font-size: 0.85rem; }
+
+.cf-discovery__head, .cf-found { display: grid; grid-template-columns: 28px 2fr 1.6fr 1.1fr 1fr; gap: 12px; align-items: center; padding: 0 22px; }
+.cf-discovery__head { padding-block: 8px; border-block: 1px solid var(--cf-soft); color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.cf-discovery__rows { margin: 0; padding: 0; list-style: none; }
+.cf-found { padding-block: 12px; opacity: 0.6; transition: opacity var(--speed-fast) ease; }
+.cf-found + .cf-found { border-top: 1px solid var(--cf-soft); }
+.cf-found.is-on { opacity: 1; }
+.cf-found__check input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+.cf-found__key { display: grid; gap: 2px; min-width: 0; color: var(--muted); font-size: 0.76rem; }
+.cf-found__key code { overflow: hidden; font-size: 0.85rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.cf-found__similar { color: color-mix(in srgb, var(--amber) 65%, var(--text)); font-weight: 700; }
+.cf-found__filled { display: grid; gap: 1px; color: var(--text); font-size: 0.85rem; }
+.cf-found__filled span { color: var(--muted); font-size: 0.74rem; }
+
+.cf-discovery__technical { margin-top: 6px; border-top: 1px solid var(--cf-soft); }
+.cf-discovery__technical summary { display: grid; gap: 2px; padding: 14px 22px; color: var(--text); font-size: 0.85rem; cursor: pointer; }
+.cf-discovery__technical summary span { color: var(--muted); font-size: 0.78rem; }
+
+.cf-discovery > .ui-error { margin: 0 22px; }
+.cf-discovery__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; padding: 14px 22px 10px; border-top: 1px solid var(--cf-soft); }
+.cf-discovery__footer > span { flex: 1 1 260px; color: var(--muted); font-size: 0.8rem; }
+
+@container cf (max-width: 680px) {
+  .cf-discovery__head { display: none; }
+  .cf-found { grid-template-columns: 28px 1fr 1fr; grid-template-areas: "check key key" ". label type" ". filled filled"; row-gap: 8px; }
+  .cf-found__check { grid-area: check; }
+  .cf-found__key { grid-area: key; }
+  .cf-found__label { grid-area: label; }
+  .cf-found__type { grid-area: type; }
+  .cf-found__filled { grid-area: filled; }
+}

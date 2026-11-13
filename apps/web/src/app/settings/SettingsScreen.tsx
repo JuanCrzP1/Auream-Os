@@ -3,6 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { AppearanceSettings } from "@features/account/components/AppearanceSettings";
 import { CompanySettings } from "@features/account/components/CompanySettings";
 import { ProfileSettings } from "@features/account/components/ProfileSettings";
+import { ContactFieldsSettings } from "@features/contact-fields/ContactFieldsSettings";
 import { QuickRepliesSettings } from "@features/conversations/quick-replies/QuickRepliesSettings";
 import { TeamSettings } from "@features/team/components/TeamSettings";
 import { lastAppLocation } from "@shared/navigation/lastAppLocation";
@@ -20,6 +21,7 @@ const CONTENT: Readonly<Record<SettingsSectionId, () => ReactElement>> = {
   general: () => <CompanySettings />,
   team: () => <TeamSettings />,
   billing: () => soon("Aquí vas a ver tu plan, lo que consumes en el mes, tu método de pago y tus facturas."),
+  "contact-fields": () => <ContactFieldsSettings />,
   "quick-replies": () => <QuickRepliesSettings />,
   security: () => soon("Aquí vas a decidir cómo entra tu equipo: verificación en dos pasos y sesiones abiertas.")
 };
