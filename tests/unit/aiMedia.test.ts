@@ -63,6 +63,11 @@ describe("prepareAiMedia", () => {
     expect([media.text, media.kind]).toEqual(["", "audio"]);
   });
 
+  it("si el mensaje trae el enlace del audio dentro de un texto («Respuestas del usuario: {respuesta}»), se quita y la IA oye el audio", async () => {
+    const media = await prepareAiMedia(all, "ia", `Respuestas del usuario:\n${AUDIO_URL}`, { mediaUrl: AUDIO_URL }, ports({ [AUDIO_URL]: { bytes: OGG, type: "audio/ogg" } }));
+    expect([media.text, media.kind]).toEqual(["Respuestas del usuario:", "audio"]);
+  });
+
   it("del PDF se lee el texto y se le agrega al mensaje", async () => {
     const url = "https://files.example.com/f.pdf";
     const media = await prepareAiMedia(all, "ia", "Mira", { mediaUrl: url }, ports({ [url]: { bytes: PDF, type: "application/pdf" } }));

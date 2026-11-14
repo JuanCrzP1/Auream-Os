@@ -92,7 +92,8 @@ export async function prepareAiMedia(
   const fromText = LONE_URL.test(trimmed);
   const url = fromText ? trimmed : inbound;
   if (!url) return plain;
-  const text = fromText ? "" : rendered;
+  // «Respuestas del usuario: {respuesta}» con un audio trae su enlace dentro: la IA oye el audio, no lee el enlace.
+  const text = fromText ? "" : rendered.split(inbound).join("").trim();
   const declared = !fromText || trimmed === inbound ? (typeof payload["mediaType"] === "string" ? payload["mediaType"] : "") : "";
 
   const fetched = await ports.fetcher.fetch({ url, maxBytes: AI_MEDIA_MAX_BYTES, timeoutMs: DOWNLOAD_TIMEOUT_MS });
