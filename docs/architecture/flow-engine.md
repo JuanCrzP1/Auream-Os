@@ -98,7 +98,7 @@ Una sola sintaxis para el builder y el motor (`contracts/TemplateVariables.ts`):
 - **Nombres de Leona** (`contracts/VariableCatalog.ts`, `LEONA_VARIABLE_ALIASES`): `{phone_number}`, `{ai.response}`, `{ai.erro}`, `{ai.fail.reason}`, `{response.erro}` y `{comprovante.*}` valen lo mismo que su nombre en Auream; el alias solo se usa si la variable no existe con su propio nombre.
 - **Error de la Integración**: al salir por `failure` queda el motivo en `{integracion.error}` (= `{response.erro}`); un éxito posterior lo borra.
 - **Condicional con variables**: el «valor» de una regla puede llevar `{…}` (`{data}`, `{ref_anterior}`); se resuelve en crudo antes de comparar.
-- **En el editor**: cada campo de texto tiene el botón «{ } Variables» (`_kit/variables`), con buscador y por grupos (del cliente, campos del cliente, datos del negocio, del sistema, del anuncio, de otros bloques); la pone donde está el cursor.
+- **En el editor**: como en Leona, un ícono «{ }» dentro del campo (`_kit/variables`: `VariableHost` + `VariablePopover`), solo en los campos donde Leona lo pone; la lista flota en una capa propia (no la corta el lienzo), con buscador y por grupos (del cliente, campos del cliente, datos del negocio, del sistema, del anuncio, de otros bloques), y la pone donde está el cursor. Escape cierra solo la lista.
 
 ### Peticiones salientes (Integración)
 

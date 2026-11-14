@@ -5,14 +5,16 @@ import userEvent from "@testing-library/user-event";
 import { NotificationEditor } from "@features/automations/builder/tools/notification/NotificationEditor";
 import { ConditionEditor } from "@features/automations/builder/tools/conditional/ConditionEditor";
 import { MessageEditor } from "@features/automations/builder/tools/message/MessageEditor";
+import { MenuEditor } from "@features/automations/builder/tools/menu/MenuEditor";
 import { insertVariable } from "@features/automations/builder/tools/_kit/variables/insertVariable";
 import type { ToolDraft, ToolEditorProps } from "@features/automations/builder/tools/ToolUi";
 import type { ToolResources } from "@features/automations/builder/tools/ToolResources";
 
 // ---------------------------------------------------------------------------
-// El botón «{ } Variables» de los campos de texto, como en Leona: abre una
-// lista con buscador y por grupos (del cliente, campos del cliente, datos del
-// negocio, del sistema…) y elegir una la pone donde estaba el cursor.
+// El ícono «{ }» dentro de los campos, como en Leona y solo donde Leona lo
+// pone: abre una lista flotante con buscador y por grupos (del cliente, campos
+// del cliente, datos del negocio, del sistema…) y elegir una la pone donde
+// estaba el cursor.
 // ---------------------------------------------------------------------------
 
 const resources = {
@@ -46,7 +48,7 @@ describe("el botón de variables", () => {
     const field = screen.getByLabelText("Texto del aviso") as HTMLTextAreaElement;
     field.focus();
     field.setSelectionRange(5, 5);
-    await userEvent.click(screen.getByRole("button", { name: "Variables" }));
+    await userEvent.click(screen.getByRole("button", { name: "Insertar variable" }));
     const menu = screen.getByRole("dialog", { name: "Elegir una variable" });
     expect(within(menu).getAllByRole("heading").map((h) => h.textContent)).toEqual(["Del cliente", "Campos del cliente", "Datos del negocio", "Del sistema", "Del anuncio", "De otros bloques"]);
     await userEvent.click(within(menu).getByRole("button", { name: /\{first_name\}/ }));
@@ -56,7 +58,7 @@ describe("el botón de variables", () => {
 
   it("busca por nombre o por lo que es, sin tildes; Enter pone la primera", async () => {
     render(<Editor Tool={NotificationEditor} config={{ message: "" }} />);
-    await userEvent.click(screen.getByRole("button", { name: "Variables" }));
+    await userEvent.click(screen.getByRole("button", { name: "Insertar variable" }));
     await userEvent.type(screen.getByLabelText("Buscar variable"), "dia");
     const options = within(screen.getByRole("dialog")).getAllByRole("button").map((b) => b.querySelector("code")?.textContent);
     expect(options).toContain("{dia}");
@@ -64,6 +66,23 @@ describe("el botón de variables", () => {
     await userEvent.clear(screen.getByLabelText("Buscar variable"));
     await userEvent.type(screen.getByLabelText("Buscar variable"), "horario{Enter}");
     expect(saved()).toMatchObject({ message: "{g_horario}" });
+  });
+
+  it("solo donde Leona lo pone: en el Menú, el mensaje sí; el título y el pie no", () => {
+    render(<Editor Tool={MenuEditor} />);
+    const host = (label: string) => screen.getByLabelText(label).closest(".kit-var-host");
+    expect(host("Mensaje")).not.toBeNull();
+    expect(host("Título (opcional)")).toBeNull();
+    expect(host("Pie (opcional)")).toBeNull();
+  });
+
+  it("la lista flota y se cierra al tocar fuera, sin cambiar nada", async () => {
+    render(<Editor Tool={NotificationEditor} config={{ message: "Hola" }} />);
+    await userEvent.click(screen.getByRole("button", { name: "Insertar variable" }));
+    expect(screen.getByRole("dialog", { name: "Elegir una variable" }).parentElement).toBe(document.body);
+    await userEvent.click(document.body);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(saved()).toMatchObject({ message: "Hola" });
   });
 
   it("el Condicional compara contra una variable", async () => {
@@ -76,7 +95,7 @@ describe("el botón de variables", () => {
   it("el texto del Mensaje también lo tiene; sin tocar el campo, va al final", async () => {
     const onChange = vi.fn();
     render(<MessageEditor draft={{ name: "Mensaje", content: {}, config: { items: [{ id: "t", kind: "text", text: "Hola " }] } }} resources={resources} onChange={onChange} />);
-    await userEvent.click(screen.getByRole("button", { name: "Variables" }));
+    await userEvent.click(screen.getByRole("button", { name: "Insertar variable" }));
     await userEvent.type(screen.getByLabelText("Buscar variable"), "saludo{Enter}");
     const patch = onChange.mock.calls.at(-1)![0] as { config: { items: Array<{ text: string }> } };
     expect(patch.config.items[0]!.text).toBe("Hola {saludo}");

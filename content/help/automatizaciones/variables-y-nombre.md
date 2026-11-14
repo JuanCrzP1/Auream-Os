@@ -1,7 +1,7 @@
 ---
 title: Variables: el nombre del cliente y otros datos
 module: automatizaciones
-summary: Cómo poner el nombre del cliente, la fecha, el saludo y otros datos en tus mensajes, con el botón «{ } Variables».
+summary: Cómo poner el nombre del cliente, la fecha, el saludo y otros datos en tus mensajes, con el ícono { } de cada campo.
 order: 6
 updated: 2026-11-14
 keywords: variables, nombre, first_name, personalizar, saludo, fecha, dia, asesor, leona
@@ -10,9 +10,9 @@ related: primer-flujo, primera-difusion, campos-del-cliente, datos-del-negocio, 
 
 Escribe una variable entre llaves y Auream la reemplaza para cada cliente. «Hola {first_name}» le llega a Laura como «Hola Laura».
 
-## El botón «{ } Variables»
+## El ícono { } dentro del campo
 
-Cada campo de texto de los bloques tiene el botón **{ } Variables**. Ábrelo, busca (por ejemplo «saludo» o «fecha») y toca la que quieras: queda donde tenías el cursor. Están por grupos:
+Los campos que aceptan variables tienen un ícono **{ }** en su esquina derecha (en los textos largos, abajo a la derecha): en el texto del Mensaje y la dirección de sus archivos, el mensaje de Esperar respuesta, del Menú y del Aviso, lo que recibe la IA, la Integración, el Píxel, Registrar venta, Guardar dato, el Comprobante y el valor de las reglas del Condicional. Tócalo, busca (por ejemplo «saludo» o «fecha») y elige: queda donde tenías el cursor. Están por grupos:
 
 - **Del cliente**: nombre, teléfono, correo, cuándo llegó, quién lo atiende.
 - **Campos del cliente** y **Datos del negocio** de tu cuenta.

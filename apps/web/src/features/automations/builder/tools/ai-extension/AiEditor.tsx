@@ -44,7 +44,6 @@ export function AiEditor({ draft, onChange, resources }: ToolEditorProps) {
 
       <CardSection step={2} title="Instrucciones" description="Cómo debe comportarse y qué recibe.">
         <TextAreaField
-          variables
           label="Instrucciones del asistente"
           value={config.systemPrompt}
           placeholder="Ej.: Eres un asesor de ventas amable. Responde en máximo dos frases."

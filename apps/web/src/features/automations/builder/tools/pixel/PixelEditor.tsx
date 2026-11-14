@@ -61,6 +61,7 @@ export function PixelEditor({ draft, onChange, resources }: ToolEditorProps) {
 
       <CardSection step={3} title="Anuncios de clic a WhatsApp" description="Opcional. Atribuye el evento al anuncio por el que llegó el cliente.">
         <TextField
+          variables
           label="ID de la página de Facebook"
           value={config.pageId}
           placeholder="Página del anuncio, p. ej. 1029384756"

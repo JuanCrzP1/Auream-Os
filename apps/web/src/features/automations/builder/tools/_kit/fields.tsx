@@ -1,7 +1,7 @@
 import "./kit.css";
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { useAutoHeight } from "./useAutoHeight";
-import { useVariableInsertion, VariableMenu, VariableToggle } from "./variables/VariablePicker";
+import { useVariableInsertion, VariableHost } from "./variables/VariablePicker";
 
 // ---------------------------------------------------------------------------
 // Primitivas de formulario de los editores. Sin estado de negocio: reciben un
@@ -18,32 +18,19 @@ export function editorAccent(color: string): CSSProperties {
 export function Field({
   label,
   hint,
-  aside,
   children
 }: {
   readonly label: string;
   readonly hint?: string;
-  /** A la derecha del rótulo (p. ej. el botón de variables). */
-  readonly aside?: ReactNode;
   readonly children: (id: string) => ReactNode;
 }) {
   const id = useId();
-  const labelElement = (
-    <label className="kit-label" htmlFor={id}>
-      {label}
-    </label>
-  );
 
   return (
     <div className="kit-field">
-      {aside ? (
-        <div className="kit-label-row">
-          {labelElement}
-          {aside}
-        </div>
-      ) : (
-        labelElement
-      )}
+      <label className="kit-label" htmlFor={id}>
+        {label}
+      </label>
       {children(id)}
       {hint ? <p className="kit-hint">{hint}</p> : null}
     </div>
@@ -61,7 +48,7 @@ interface TextFieldProps {
   readonly invalid?: boolean;
   /** Límite de caracteres: muestra un contador y corta lo que sobre. */
   readonly maxLength?: number;
-  /** Acepta variables: muestra el botón «{ } Variables» que las inserta donde está el cursor. */
+  /** Acepta variables: un ícono «{ }» dentro del campo las inserta donde está el cursor (como en Leona). */
   readonly variables?: boolean;
 }
 
@@ -78,27 +65,39 @@ function CharCounter({ length, max }: { readonly length: number; readonly max: n
 export function TextField({ label, value, onChange, hint, placeholder, type = "text", monospace, invalid, maxLength, variables }: TextFieldProps) {
   const picker = useVariableInsertion<HTMLInputElement>(value, onChange);
   return (
-    <Field label={label} hint={hint} {...(variables ? { aside: <VariableToggle open={picker.open} onToggle={picker.toggle} /> } : {})}>
+    <Field label={label} hint={hint}>
       {(id) => (
-        <div className={maxLength ? "kit-input-wrap" : undefined}>
-          <input
-            ref={picker.ref}
-            id={id}
-            type={type}
-            className={`kit-input nodrag${monospace ? " kit-input--mono" : ""}${invalid ? " kit-input--invalid" : ""}`}
-            value={value}
-            placeholder={placeholder}
-            maxLength={maxLength}
-            autoComplete="off"
-            spellCheck={false}
-            aria-invalid={invalid || undefined}
-            onChange={(event) => onChange(event.target.value)}
-          />
-          {maxLength ? <CharCounter length={value.length} max={maxLength} /> : null}
-          {variables && picker.open ? <VariableMenu onPick={picker.pick} onClose={picker.close} /> : null}
-        </div>
+        <VariableHost picker={variables ? picker : undefined}>
+          <TextInputBox counter={maxLength ? <CharCounter length={value.length} max={maxLength} /> : null}>
+            <input
+              ref={picker.ref}
+              id={id}
+              type={type}
+              className={`kit-input nodrag${monospace ? " kit-input--mono" : ""}${invalid ? " kit-input--invalid" : ""}`}
+              value={value}
+              placeholder={placeholder}
+              maxLength={maxLength}
+              autoComplete="off"
+              spellCheck={false}
+              aria-invalid={invalid || undefined}
+              onChange={(event) => onChange(event.target.value)}
+            />
+          </TextInputBox>
+        </VariableHost>
       )}
     </Field>
+  );
+}
+
+/** Con límite, el contador va dentro de la caja del campo; sin límite, el campo solo. */
+function TextInputBox({ counter, children }: { readonly counter: ReactNode; readonly children: ReactNode }) {
+  return counter ? (
+    <div className="kit-input-wrap">
+      {children}
+      {counter}
+    </div>
+  ) : (
+    <>{children}</>
   );
 }
 
@@ -121,7 +120,7 @@ export function InlineInput({
   readonly maxLength?: number;
   /** Valores que el navegador sugiere al escribir. Escribir otro sigue valiendo. */
   readonly options?: ReadonlyArray<string>;
-  /** Acepta variables: botón «{ }» al lado que las inserta donde está el cursor. */
+  /** Acepta variables: un ícono «{ }» dentro del campo. */
   readonly variables?: boolean;
 }) {
   const listId = useId();
@@ -162,16 +161,7 @@ export function InlineInput({
       {datalist}
     </>
   );
-  if (!variables) return field;
-  return (
-    <div className="kit-inline-vars">
-      <div className="kit-inline-vars__row">
-        {field}
-        <VariableToggle open={picker.open} onToggle={picker.toggle} label="" />
-      </div>
-      {picker.open ? <VariableMenu onPick={picker.pick} onClose={picker.close} /> : null}
-    </div>
-  );
+  return <VariableHost picker={variables ? picker : undefined}>{field}</VariableHost>;
 }
 
 export function TextAreaField({
@@ -187,9 +177,9 @@ export function TextAreaField({
   const picker = useVariableInsertion<HTMLTextAreaElement>(value, onChange, ref);
 
   return (
-    <Field label={label} hint={hint} {...(variables ? { aside: <VariableToggle open={picker.open} onToggle={picker.toggle} /> } : {})}>
+    <Field label={label} hint={hint}>
       {(id) => (
-        <>
+        <VariableHost picker={variables ? picker : undefined} multiline>
           <textarea
             id={id}
             ref={ref}
@@ -199,8 +189,7 @@ export function TextAreaField({
             rows={3}
             onChange={(event) => onChange(event.target.value)}
           />
-          {variables && picker.open ? <VariableMenu onPick={picker.pick} onClose={picker.close} /> : null}
-        </>
+        </VariableHost>
       )}
     </Field>
   );

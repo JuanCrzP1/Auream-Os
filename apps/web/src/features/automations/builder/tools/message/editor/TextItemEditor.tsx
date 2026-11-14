@@ -1,6 +1,6 @@
 import type { MessageTextItem } from "../types";
 import { useAutoHeight } from "../../_kit/useAutoHeight";
-import { VariableBar, useVariableInsertion } from "../../_kit/variables/VariablePicker";
+import { VariableHost, useVariableInsertion } from "../../_kit/variables/VariablePicker";
 
 interface TextItemEditorProps {
   readonly item: MessageTextItem;
@@ -18,18 +18,19 @@ export function TextItemEditor({ item, position, onEdit }: TextItemEditorProps) 
 
   return (
     <div className="message-item__body">
-      <textarea
-        ref={fieldRef}
-        className="message-item__text nodrag nowheel"
-        value={item.text}
-        onChange={(event) => onEdit({ text: event.target.value })}
-        placeholder="Escribe tu mensaje"
-        aria-label={`Texto del bloque ${position}`}
-        // Explícito: `wrap="off"` es lo único que haría que dejara de envolver.
-        wrap="soft"
-        spellCheck
-      />
-      <VariableBar picker={picker} />
+      <VariableHost picker={picker} multiline>
+        <textarea
+          ref={fieldRef}
+          className="message-item__text nodrag nowheel"
+          value={item.text}
+          onChange={(event) => onEdit({ text: event.target.value })}
+          placeholder="Escribe tu mensaje"
+          aria-label={`Texto del bloque ${position}`}
+          // Explícito: `wrap="off"` es lo único que haría que dejara de envolver.
+          wrap="soft"
+          spellCheck
+        />
+      </VariableHost>
     </div>
   );
 }

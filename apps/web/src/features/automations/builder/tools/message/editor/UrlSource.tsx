@@ -1,4 +1,4 @@
-import { VariableBar, useVariableInsertion } from "../../_kit/variables/VariablePicker";
+import { VariableHost, useVariableInsertion } from "../../_kit/variables/VariablePicker";
 import type { MessageMediaKind } from "../types";
 import { hasMediaVariable, isMediaSource, isUsableUrl } from "../mediaSource";
 
@@ -37,20 +37,21 @@ export function UrlSource({ kind, position, url, onChange }: UrlSourceProps) {
     <div className="media-url">
       <label className="media-url__field">
         <span className="media-url__label">URL del archivo o variable</span>
-        <input
-          ref={picker.ref}
-          type="text"
-          inputMode="url"
-          spellCheck={false}
-          className={`media-url__input nodrag${acceptable ? "" : " media-url__input--invalid"}`}
-          value={url}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="https://… o {portada}"
-          aria-label={`URL del archivo del bloque ${position}`}
-          aria-invalid={!acceptable}
-        />
+        <VariableHost picker={picker}>
+          <input
+            ref={picker.ref}
+            type="text"
+            inputMode="url"
+            spellCheck={false}
+            className={`media-url__input nodrag${acceptable ? "" : " media-url__input--invalid"}`}
+            value={url}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="https://… o {portada}"
+            aria-label={`URL del archivo del bloque ${position}`}
+            aria-invalid={!acceptable}
+          />
+        </VariableHost>
       </label>
-      <VariableBar picker={picker} />
 
       {acceptable ? null : <p className="media-url__error">Debe empezar por http:// o https://, o ser una variable como {"{portada}"}</p>}
       {variable && acceptable ? <p className="media-url__hint">Se envía el enlace que tenga esta variable en ese momento (por ejemplo, el que guardó una Integración). Si está vacía, este archivo no sale.</p> : null}

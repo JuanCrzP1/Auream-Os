@@ -50,13 +50,13 @@ export function MenuEditor({ draft, onChange, resources }: ToolEditorProps) {
       </CardSection>
 
       <CardSection step={2} title="Mensaje" description="Lo que lee el cliente antes de elegir.">
-        <TextField variables label="Título (opcional)" value={config.title} placeholder="Ej.: ¿En qué te ayudamos?" onChange={(title) => update({ title })} />
+        <TextField label="Título (opcional)" value={config.title} placeholder="Ej.: ¿En qué te ayudamos?" onChange={(title) => update({ title })} />
         <TextAreaField variables label="Mensaje" value={config.message} onChange={(message) => update({ message })} />
         <div className="kit-grid">
           {config.format === "list" ? (
             <TextField label="Texto del botón" value={config.buttonLabel} onChange={(buttonLabel) => update({ buttonLabel })} />
           ) : null}
-          <TextField variables label="Pie (opcional)" value={config.footer} placeholder="Texto pequeño al final" onChange={(footer) => update({ footer })} />
+          <TextField label="Pie (opcional)" value={config.footer} placeholder="Texto pequeño al final" onChange={(footer) => update({ footer })} />
         </div>
         <VariableHint variables={CONTACT_VARIABLES} />
       </CardSection>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { MessageMediaItem } from "../types";
 import { useAutoHeight } from "../../_kit/useAutoHeight";
-import { VariableBar, useVariableInsertion } from "../../_kit/variables/VariablePicker";
+import { VariableHost, useVariableInsertion } from "../../_kit/variables/VariablePicker";
 import { MediaSourceTabs, type MediaSource } from "./MediaSourceTabs";
 import { FileSource, type FileSourceChange } from "./FileSource";
 import { UrlSource } from "./UrlSource";
@@ -59,16 +59,17 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
       {/* Textarea, no input: la descripción puede ocupar varios renglones. */}
       <label className="media-caption">
         <span className="media-caption__label">{CAPTION_COPY[item.kind].label}</span>
-        <textarea
-          ref={captionRef}
-          className="media-caption__input nodrag nowheel"
-          value={item.caption}
-          onChange={(event) => onEdit({ caption: event.target.value })}
-          placeholder={CAPTION_COPY[item.kind].placeholder}
-          wrap="soft"
-        />
+        <VariableHost picker={picker} multiline>
+          <textarea
+            ref={captionRef}
+            className="media-caption__input nodrag nowheel"
+            value={item.caption}
+            onChange={(event) => onEdit({ caption: event.target.value })}
+            placeholder={CAPTION_COPY[item.kind].placeholder}
+            wrap="soft"
+          />
+        </VariableHost>
       </label>
-      <VariableBar picker={picker} />
 
       <SendOnceSwitch checked={item.sendOnce} onChange={(sendOnce) => onEdit({ sendOnce })} position={position} />
     </div>

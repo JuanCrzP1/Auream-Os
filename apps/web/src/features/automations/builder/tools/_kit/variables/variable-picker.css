@@ -1,47 +1,86 @@
-/* El botón «{ } Variables» y su lista, en línea debajo del campo. Tokens del tema. */
-.kit-variables-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 24px;
-  padding: 0 8px;
-  border: 1px solid color-mix(in srgb, var(--kit-accent, var(--primary)) 25%, transparent);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 6%, var(--surface));
-  color: color-mix(in srgb, var(--kit-accent, var(--primary)) 85%, var(--text));
-  font: 700 0.72rem var(--font-body);
-  cursor: pointer;
-  white-space: nowrap;
+/* El ícono «{ }» dentro del campo (como en Leona) y su lista flotante. Tokens del tema. */
+.kit-var-host {
+  position: relative;
+  min-width: 0;
 }
 
-.kit-variables-toggle span {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+/* Lugar para el ícono: a la derecha en una línea, abajo a la derecha en un texto largo. */
+.kit-var-host > :is(input, textarea) {
+  padding-right: 36px;
+}
+
+.kit-var-host > .kit-input-wrap > .kit-input {
+  padding-right: 80px;
+}
+
+.kit-var-host > .kit-input-wrap .kit-counter-chars {
+  right: 38px;
+}
+
+.kit-var-corner {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: color-mix(in srgb, var(--kit-accent, var(--primary)) 70%, var(--muted));
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.kit-var-host--multiline .kit-var-corner {
+  top: auto;
+  bottom: 6px;
+  transform: none;
+}
+
+.kit-var-corner span {
+  font: 700 0.72rem ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: -0.04em;
 }
 
-.kit-variables-toggle:hover,
-.kit-variables-toggle.is-open {
-  border-color: var(--kit-accent, var(--primary));
-  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 12%, var(--surface));
+.kit-var-corner:hover,
+.kit-var-corner:focus-visible,
+.kit-var-corner.is-open {
+  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 14%, transparent);
+  color: var(--kit-accent, var(--primary));
+  outline: none;
 }
 
-/* Rótulo con el botón a la derecha. */
-.kit-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
+/* La lista: capa propia sobre todo (fuera del bloque), colores globales. */
 .kit-variables {
+  position: fixed;
+  z-index: 2000;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  /* Una regla general de los diálogos centra su contenido: aquí, de arriba abajo. */
+  align-items: stretch;
+  justify-items: stretch;
   gap: 6px;
-  margin-top: 6px;
+  max-height: min(380px, calc(100vh - 16px));
+  overflow: hidden;
   padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--line, var(--border));
+  border-radius: 12px;
+  background: var(--surface-floating, var(--surface));
+  color: var(--text);
+  box-shadow: 0 18px 40px -16px rgba(8, 6, 24, 0.45);
+  font-family: var(--font-body);
+  animation: kit-variables-in 0.12s ease-out;
+}
+
+@keyframes kit-variables-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
 .kit-variables__search {
@@ -50,8 +89,9 @@
 
 .kit-variables__list {
   display: grid;
+  align-content: start;
   gap: 8px;
-  max-height: 240px;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -110,43 +150,4 @@
   padding: 6px 8px;
   color: var(--muted);
   font-size: 0.78rem;
-}
-
-/* Un campo de una línea (en una lista) con su botón al lado. */
-.kit-inline-vars {
-  display: grid;
-  min-width: 0;
-}
-
-.kit-inline-vars__row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.kit-inline-vars__row > .kit-input,
-.kit-inline-vars__row > .kit-input-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.kit-inline-vars__row .kit-variables-toggle {
-  height: 30px;
-}
-
-/* Barra bajo un campo propio (el texto del Mensaje, su leyenda o su enlace). */
-.kit-variables-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 4px;
-}
-
-.kit-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
