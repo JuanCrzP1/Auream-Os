@@ -126,6 +126,13 @@
   font-size: 0.76rem;
 }
 
+/* Lo que dice Meta junto al número de Auream, en el azul de la etiqueta «Meta». */
+.sales-summary__beside {
+  color: #1d5fd6;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 /* La inversión: Meta · Otros · Todo, y el enlace a «Otros gastos». */
 .sales-summary__modes {
   display: inline-flex;

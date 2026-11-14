@@ -21,11 +21,11 @@ const VE = "33333333-3333-4333-8333-333333333333";
 const CO = "44444444-4444-4444-8444-444444444444";
 const row = (id: string | null, name: string, extra: Partial<LineComparisonRow>): LineComparisonRow => ({
   id, name, color: "#e0a400", revenue: trend(500_000, 250_000), sales: 5, averageTicket: 100_000, share: 0.63, hasCampaigns: true,
-  spend: 100_000, roas: 4, roasMeta: 1.5, otherSpend: 0, profit: trend(400_000, 200_000), margin: 0.8, ...extra
+  spend: 100_000, roas: 4, roasMeta: 1.5, metaPurchases: 6, metaRevenue: 150_000, otherSpend: 0, profit: trend(400_000, 200_000), margin: 0.8, ...extra
 });
 const COMPARISON: LineComparisonResponse = {
   currency: "COP", missingRates: [], canSeeAds: true, overlapping: false,
-  rows: [row(VE, "Venezuela", {}), row(CO, "Colombia", { hasCampaigns: false, spend: null, roas: null, otherSpend: 20_000, profit: trend(-30_000, 10_000), margin: -0.15, share: 0.25 })],
+  rows: [row(VE, "Venezuela", {}), row(CO, "Colombia", { hasCampaigns: false, spend: null, roas: null, roasMeta: null, metaPurchases: null, metaRevenue: null, otherSpend: 20_000, profit: trend(-30_000, 10_000), margin: -0.15, share: 0.25 })],
   total: row(null, "Todo el negocio", { revenue: trend(800_000, 400_000), profit: trend(580_000, 290_000), share: 1 })
 };
 

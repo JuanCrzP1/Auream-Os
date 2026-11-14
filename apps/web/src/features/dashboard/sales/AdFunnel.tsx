@@ -2,6 +2,7 @@ import "./ad-funnel.css";
 import { salesUnknown } from "@contracts/AdMeasurementContracts";
 import type { SalesDashboardResponse } from "@contracts/DashboardContracts";
 import { MetaTag } from "@shared/ads/MetaTag";
+import { metaBeside, purchasesText } from "@shared/ads/metaSource";
 import { money } from "../dashboardFormat";
 
 /**
@@ -18,10 +19,10 @@ export function AdFunnel({ view }: { readonly view: SalesDashboardResponse }) {
   const steps: ReadonlyArray<{ readonly name: string; readonly value: number; readonly cost: string; readonly color: string; readonly meta?: true }> = [
     { name: "Vieron el anuncio", value: funnel.impressions, cost: `CPM ${per(funnel.impressions, 1000)}`, color: "#a78bfa" },
     { name: "Hicieron clic", value: funnel.clicks, cost: `costo por clic ${per(funnel.clicks)}`, color: "#8b5cf6" },
-    { name: "Escribieron", value: funnel.chats, cost: `costo por chat ${per(funnel.chats)}`, color: "#6c5ce7" },
+    { name: "Escribieron", value: funnel.chats, cost: `costo por chat ${per(funnel.chats)} · llegaron ${ads.measurement.arrivedChats.toLocaleString("es-CO")} a Auream`, color: "#6c5ce7" },
     blind
       ? { name: "Compraron", value: ads.metaPurchases, cost: `costo por compra ${per(ads.metaPurchases)}`, color: "#0d9488", meta: true }
-      : { name: "Compraron", value: funnel.sales, cost: `costo por venta ${per(funnel.sales)}`, color: "#0d9488" }
+      : { name: "Compraron", value: funnel.sales, cost: `costo por venta ${per(funnel.sales)} · ${metaBeside(purchasesText(ads.metaPurchases))}`, color: "#0d9488" }
   ];
   const rate = (from: number, to: number) => (from > 0 ? `${((to / from) * 100).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %` : "—");
   const verbs = ["hace clic", "escribe", "compra"];
@@ -29,7 +30,7 @@ export function AdFunnel({ view }: { readonly view: SalesDashboardResponse }) {
     <section className="ad-funnel" aria-labelledby="ad-funnel-title">
       <header className="ad-funnel__header">
         <h2 id="ad-funnel-title">Del anuncio a la venta</h2>
-        <span className="ui-muted">Cuántos llegan a cada paso y lo que te cuesta cada uno</span>
+        <span className="ui-muted">Vistas, clics y chats los reporta Meta; las compras son tus ventas en Auream</span>
       </header>
       <ol className="ad-funnel__steps">
         {steps.map((step, i) => (

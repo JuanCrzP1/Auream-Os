@@ -13,7 +13,7 @@ const trend = (value: number, previous: number) => ({ value, previous, change: p
 const view = (over: Partial<SalesDashboardResponse> = {}): SalesDashboardResponse => ({
   currency: "COP", missingRates: [], revenue: trend(600000, 300000), sales: trend(12, 6), averageTicket: 50000,
   leads: trend(60, 50), leadsFromAds: 40, conversion: 0.15, conversionPrevious: 0.1, convertedLeads: 9, reviewCount: 0,
-  ads: { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: null, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, activeCampaigns: 1 },
+  ads: { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: null, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerSaleMeta: 33333, metaRevenue: 150000, metaPurchases: 3, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, activeCampaigns: 1 },
   realProfit: null, profit: trend(500000, 220000), otherSpend: null, otherExpenses: [], costsKnown: false,
   daily: [], funnel: null, byHour: [], byConnection: [], byProduct: [], byCountry: [], recentSales: [], canSeeAds: true,
   ...over

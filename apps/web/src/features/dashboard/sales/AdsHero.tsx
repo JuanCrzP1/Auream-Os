@@ -57,7 +57,7 @@ export function AdsHero({ view, periodWords }: { readonly view: SalesDashboardRe
         profitCard,
         { label: "Costo por venta", value: money(ads.costPerSale, c), note: [`${ads.attributedSales} ventas por anuncio`, ads.costPerSaleMeta !== null ? metaBeside(money(ads.costPerSaleMeta, c)) : null].filter(Boolean).join(" · ") },
         perChat,
-        { label: "Cada chat de anuncio deja", value: money(ads.revenuePerChat, c), note: "en ventas, en promedio" }
+        { label: "Cada chat de anuncio deja", value: money(ads.revenuePerChat, c), note: ["en ventas, en promedio", metaPerChat !== null ? metaBeside(money(metaPerChat, c)) : null].filter(Boolean).join(" · ") }
       ];
   const roasMoney = (value: number | null) => (value === null ? null : value.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   const real = roasMoney(ads.roas);

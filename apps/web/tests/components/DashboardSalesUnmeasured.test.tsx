@@ -81,7 +81,7 @@ describe("la gráfica y el embudo", () => {
 describe("Comparar líneas", () => {
   const row = (name: string, extra: Partial<LineComparisonRow>): LineComparisonRow => ({
     id: name, name, color: null, revenue: trend(0, 0), sales: 0, averageTicket: null, share: null, hasCampaigns: true,
-    spend: 2_000_000, roas: null, roasMeta: 0.4, otherSpend: 0, profit: null, margin: null, salesUnknown: true, ...extra
+    spend: 2_000_000, roas: null, roasMeta: 0.4, metaPurchases: 300, metaRevenue: 800_000, otherSpend: 0, profit: null, margin: null, salesUnknown: true, ...extra
   });
 
   it("una línea que gasta sin ventas en Auream: ROAS de Meta con su etiqueta; ganancia y margen esperan (no «pierde plata»)", () => {

@@ -78,6 +78,7 @@ function SummaryCardView({ card, onMode, onAction }: {
           </>
         ) : null}
       </span>
+      {card.beside ? <span className="sales-summary__beside">{card.beside}</span> : null}
     </article>
   );
 }

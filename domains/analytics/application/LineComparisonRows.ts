@@ -59,6 +59,8 @@ export function lineRow(
     spend: canSeeAds ? spend : null,
     roas: canSeeAds && spend !== null && !blind ? ratio(adRevenue, spend) : null,
     roasMeta: canSeeAds && spend !== null ? ratio(metaRevenue, spend) : null,
+    metaPurchases: canSeeAds && numbers.spendDays ? numbers.spendDays.reduce((sum, d) => sum + d.metaPurchases, 0) : null,
+    metaRevenue: canSeeAds && numbers.spendDays ? round(metaRevenue) : null,
     otherSpend: canSeeAds ? other.now : null,
     profit: canSeeAds && !blind ? signedTrend(profit, round(prevRevenue - (prevSpend ?? 0) - other.before - prevCost)) : null,
     margin: canSeeAds && !blind && revenue > 0 ? round(profit / revenue) : null,

@@ -100,6 +100,7 @@ function CellView({ label, cell }: { readonly label: string; readonly cell: Cell
     <td data-label={label} title={cell.hint} className={cell.tone ? `is-${cell.tone}` : undefined}>
       <span className="line-comparison__value">{cell.text}{cell.source === "meta" ? <> <MetaTag /></> : null}</span>
       {cell.trend ? <span className={`line-comparison__trend is-${cell.trend.tone}`}>{cell.trend.text}</span> : null}
+      {cell.beside ? <span className="line-comparison__beside">{cell.beside}</span> : null}
     </td>
   );
 }

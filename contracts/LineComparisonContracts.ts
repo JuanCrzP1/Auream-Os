@@ -26,6 +26,9 @@ export interface LineComparisonRow {
   readonly roas: number | null;
   /** Lo que Meta reporta en compras ÷ su gasto. `null` sin gasto o sin `ads.read`. */
   readonly roasMeta: number | null;
+  /** Lo que reporta Meta de sus campañas: compras y su valor. `null` sin campañas o sin `ads.read`. */
+  readonly metaPurchases: number | null;
+  readonly metaRevenue: number | null;
   /** Otros gastos de la línea (o de todo, en la fila del negocio). `null` sin `ads.read`. */
   readonly otherSpend: number | null;
   /**

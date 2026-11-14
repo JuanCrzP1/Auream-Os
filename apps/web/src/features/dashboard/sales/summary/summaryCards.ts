@@ -1,7 +1,7 @@
 import type { SalesDashboardResponse, Trend } from "@contracts/DashboardContracts";
 import { salesUnknown } from "@contracts/AdMeasurementContracts";
 import { formatRoas } from "@shared/ads/adsFormat";
-import { META_REPORTS, metaBeside, perUnit, WAITS_FOR_AD_SALES, WAITS_FOR_SALES } from "@shared/ads/metaSource";
+import { META_REPORTS, metaBeside, perUnit, purchasesText, WAITS_FOR_AD_SALES, WAITS_FOR_SALES } from "@shared/ads/metaSource";
 import { money } from "../../dashboardFormat";
 import { investmentCard, profitNote, type InvestmentMode, LINE_WITHOUT_CAMPAIGNS } from "./investmentCard";
 import { count, divide, pointsTrend, relativeTrend, type SummaryTrend } from "./summaryTrends";
@@ -28,6 +28,8 @@ export interface SummaryCard {
   readonly trend: SummaryTrend | null;
   /** El número lo reporta Meta (lleva la etiqueta «Meta»); sin esto, es de Auream. */
   readonly source?: "meta";
+  /** Con el número de Auream, lo que dice Meta al lado («Meta: 21 compras»). */
+  readonly beside?: string;
   /** Qué se puede elegir ver en la tarjeta (la inversión: Meta · Otros · Todo). */
   readonly modes?: { readonly current: InvestmentMode; readonly options: ReadonlyArray<readonly [InvestmentMode, string]> };
   /** Un enlace dentro de la tarjeta (la inversión: «Otros gastos»). */
@@ -46,6 +48,8 @@ export function summaryCards(view: SalesDashboardResponse, investment: Investmen
   const blind = ads !== null && salesUnknown(ads.measurement, ads.attributedSales);
   const meta = blind && view.sales.value === 0 ? ads : null;
   const metaTicket = meta ? perUnit(meta.metaRevenue, meta.metaPurchases) : null;
+  // Con ventas en Auream (y Meta conectado), lo de Meta va al lado del número de Auream.
+  const beside = (text: (a: NonNullable<typeof ads>) => string) => (ads && !meta ? { beside: metaBeside(text(ads)) } : {});
 
   const cards: Array<SummaryCard | null> = [
     meta
@@ -56,7 +60,8 @@ export function summaryCards(view: SalesDashboardResponse, investment: Investmen
           label: "Facturación",
           value: money(view.revenue.value, c),
           note: view.missingRates.length > 0 ? `Sin cambio para ${view.missingRates.join(", ")}: no suman` : "Lo vendido y anotado en Auream",
-          trend: fromTrend(view.revenue)
+          trend: fromTrend(view.revenue),
+          ...beside((a) => money(a.metaRevenue, c))
         },
     meta
       ? { id: "sales", icon: "sales", label: "Ventas", value: count(meta.metaPurchases), note: "Compras que vio Meta", trend: null, source: "meta" }
@@ -65,8 +70,9 @@ export function summaryCards(view: SalesDashboardResponse, investment: Investmen
           icon: "sales",
           label: "Ventas",
           value: count(view.sales.value),
-          note: view.reviewCount > 0 ? `Aprobadas · ${count(view.reviewCount)} por revisar` : "Aprobadas",
-          trend: fromTrend(view.sales)
+          note: view.reviewCount > 0 ? `Aprobadas en Auream · ${count(view.reviewCount)} por revisar` : "Aprobadas en Auream",
+          trend: fromTrend(view.sales),
+          ...beside((a) => purchasesText(a.metaPurchases))
         },
     meta
       ? { id: "ticket", icon: "ticket", label: "Compra promedio", value: money(metaTicket, c), note: metaTicket === null ? WAITS_FOR_SALES : META_REPORTS, trend: null, ...(metaTicket === null ? {} : { source: "meta" as const }) }
@@ -76,7 +82,8 @@ export function summaryCards(view: SalesDashboardResponse, investment: Investmen
           label: "Compra promedio",
           value: money(view.averageTicket, c),
           note: "Lo que deja cada venta",
-          trend: relativeTrend(view.averageTicket, divide(view.revenue.previous, view.sales.previous))
+          trend: relativeTrend(view.averageTicket, divide(view.revenue.previous, view.sales.previous)),
+          ...beside((a) => money(perUnit(a.metaRevenue, a.metaPurchases), c))
         },
     view.profit
       ? {

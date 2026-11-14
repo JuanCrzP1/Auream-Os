@@ -20,7 +20,7 @@ const metrics = { spend: 100000, impressions: 20000, clicks: 600, chats: 40, arr
 
 const SALES = (withAds: boolean): SalesDashboardResponse => ({
   currency: "COP", missingRates: [], revenue: trend(600000, 300000), sales: trend(12, 6), averageTicket: 50000, leads: trend(60, 50), leadsFromAds: 40, conversion: 0.15, conversionPrevious: 0.1, convertedLeads: 9, reviewCount: 2,
-  ads: withAds ? { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: 360000, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, activeCampaigns: 3 } : null,
+  ads: withAds ? { spend: trend(100000, 80000), revenue: trend(500000, 200000), profit: trend(400000, 120000), realProfit: 360000, roas: 5, roasMeta: 1.5, costPerSale: 10000, costPerSaleMeta: 33333, metaRevenue: 150000, metaPurchases: 3, costPerChat: 2500, revenuePerChat: 12500, chats: 40, attributedSales: 10, impressions: 20000, clicks: 600, measurement: { state: "measured", metaChats: 40, arrivedChats: 38, metaPurchases: 3 }, activeCampaigns: 3 } : null,
   realProfit: 360000, profit: withAds ? trend(360000, 160000) : null, otherSpend: null, otherExpenses: [], costsKnown: true,
   daily: [{ day: "2026-11-01", revenue: 100000, spend: 20000 }, { day: "2026-11-02", revenue: 500000, spend: 80000 }],
   funnel: withAds ? { impressions: 20000, clicks: 600, chats: 40, sales: 10 } : null,
@@ -82,7 +82,7 @@ describe("Dashboard", () => {
     expect(within(summary).getAllByRole("article").map((item) => item.getAttribute("aria-label"))).toEqual([
       "Facturación", "Ventas", "Compra promedio", "Ganancia", "Leads nuevos", "Conversión", "ROAS real", "Inversión en Meta"
     ]);
-    expect(card("Ventas")).toHaveTextContent("Ventas▲ 100 %12Aprobadas · 2 por revisar");
+    expect(card("Ventas")).toHaveTextContent("Ventas▲ 100 %12Aprobadas en Auream · 2 por revisarMeta: 3 compras");
     expect(card("Conversión")).toHaveTextContent("15 %");
     expect(card("Conversión")).toHaveTextContent("9 de 60 leads compraron");
     expect(card("Conversión")).toHaveTextContent("▲ 5 pts");

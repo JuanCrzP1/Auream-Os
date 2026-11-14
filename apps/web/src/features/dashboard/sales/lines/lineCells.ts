@@ -1,6 +1,6 @@
 import type { LineComparisonRow } from "@contracts/LineComparisonContracts";
 import { formatRoas } from "@shared/ads/adsFormat";
-import { WAITS_FOR_AD_SALES } from "@shared/ads/metaSource";
+import { metaBeside, purchasesText, WAITS_FOR_AD_SALES } from "@shared/ads/metaSource";
 import { money, trendText } from "../../dashboardFormat";
 
 // ---------------------------------------------------------------------------
@@ -18,6 +18,8 @@ export interface Cell {
   readonly hint?: string;
   /** El número lo reporta Meta (lleva la etiqueta «Meta»). */
   readonly source?: "meta";
+  /** Con el número de Auream, lo que dice Meta debajo («Meta: 0,5x»). */
+  readonly beside?: string;
 }
 
 export interface Column {
@@ -35,8 +37,17 @@ const waits: Cell = { text: "—", tone: "muted", hint: WAITS_FOR_AD_SALES };
 /** El ROAS sin ventas en Auream: el que reporta Meta, con su etiqueta. */
 const metaRoas = (row: LineComparisonRow): Cell => (row.roasMeta === null ? waits : { text: formatRoas(row.roasMeta), source: "meta", hint: "Lo que reporta Meta. El ROAS real se calcula cuando sus anuncios vendan en Auream." });
 
-const revenue: Column = { id: "revenue", label: "Facturación", cell: (row, c) => ({ text: money(row.revenue.value, c), trend: trendText(row.revenue) }) };
-const sales: Column = { id: "sales", label: "Ventas", cell: (row) => ({ text: row.sales.toLocaleString("es-CO") }) };
+/** Con campañas, lo que reporta Meta debajo de lo de Auream. */
+const revenue: Column = {
+  id: "revenue",
+  label: "Facturación",
+  cell: (row, c) => ({ text: money(row.revenue.value, c), trend: trendText(row.revenue), ...(row.metaRevenue === null ? {} : { beside: metaBeside(money(row.metaRevenue, c)) }) })
+};
+const sales: Column = {
+  id: "sales",
+  label: "Ventas",
+  cell: (row) => ({ text: row.sales.toLocaleString("es-CO"), ...(row.metaPurchases === null ? {} : { beside: metaBeside(purchasesText(row.metaPurchases)) }) })
+};
 
 export const MONEY_COLUMNS: ReadonlyArray<Column> = [
   revenue,
@@ -49,7 +60,7 @@ export const MONEY_COLUMNS: ReadonlyArray<Column> = [
   {
     id: "roas",
     label: "ROAS real",
-    cell: (row) => (row.salesUnknown ? metaRoas(row) : row.roas === null ? { text: "—", tone: "muted", hint: row.hasCampaigns ? undefined : NO_CAMPAIGNS } : { text: formatRoas(row.roas), tone: row.roas < 1 ? "bad" : row.roas >= 3 ? "good" : undefined })
+    cell: (row) => (row.salesUnknown ? metaRoas(row) : row.roas === null ? { text: "—", tone: "muted", hint: row.hasCampaigns ? undefined : NO_CAMPAIGNS } : { text: formatRoas(row.roas), tone: row.roas < 1 ? "bad" : row.roas >= 3 ? "good" : undefined, ...(row.roasMeta === null ? {} : { beside: metaBeside(formatRoas(row.roasMeta)) }) })
   },
   { id: "other", label: "Otros gastos", cell: (row, c) => ({ text: row.otherSpend ? money(row.otherSpend, c) : "—", tone: row.otherSpend ? undefined : "muted" }) },
   {

@@ -79,6 +79,7 @@ td.is-muted .line-comparison__value { color: var(--muted); font-weight: 500; }
 .line-comparison__trend.is-good { color: var(--status-active-text); }
 .line-comparison__trend.is-bad { color: var(--status-danger); }
 .line-comparison__trend.is-flat { color: var(--muted); }
+.line-comparison__beside { display: block; margin-top: 2px; color: #1d5fd6; font-size: 0.7rem; font-weight: 700; }
 
 .line-comparison__name {
   display: flex;
