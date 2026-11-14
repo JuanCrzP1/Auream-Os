@@ -72,7 +72,7 @@ export function PerformanceSection({ onConnectAccount }: { readonly onConnectAcc
           ))}
         </div>
         <span className="ui-muted ads-performance__sync">
-          ROAS real {salesUnknown(data.measurement, data.totals.sales) ? "sin medir" : formatRoas(data.totals.roas)} · Meta dice {formatRoas(data.totals.roasMeta)}{data.lastSyncedAt ? ` · actualizado ${timeAgo(data.lastSyncedAt)}` : ""}
+          ROAS real {salesUnknown(data.measurement, data.totals.sales) ? "sin medir" : formatRoas(data.totals.roas)} · Meta: {formatRoas(data.totals.roasMeta)}{data.lastSyncedAt ? ` · actualizado ${timeAgo(data.lastSyncedAt)}` : ""}
         </span>
       </div>
       <MeasurementNotice measurement={data.measurement} />

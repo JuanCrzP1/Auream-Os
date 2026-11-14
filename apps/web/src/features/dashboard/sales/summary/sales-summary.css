@@ -99,6 +99,13 @@
   overflow: visible;
 }
 
+/* Donde va el cambio, la etiqueta «Meta» cuando el número lo reporta Meta. */
+.sales-summary__source {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
 .sales-summary__value-row .sales-summary__chip {
   margin-left: 0;
 }

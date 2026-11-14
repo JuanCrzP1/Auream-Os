@@ -1,6 +1,7 @@
 import type { SalesDashboardResponse, Trend } from "@contracts/DashboardContracts";
 import { salesUnknown } from "@contracts/AdMeasurementContracts";
 import { formatRoas } from "@shared/ads/adsFormat";
+import { META_REPORTS, metaBeside, perUnit, WAITS_FOR_AD_SALES, WAITS_FOR_SALES } from "@shared/ads/metaSource";
 import { money } from "../../dashboardFormat";
 import { investmentCard, profitNote, type InvestmentMode, LINE_WITHOUT_CAMPAIGNS } from "./investmentCard";
 import { count, divide, pointsTrend, relativeTrend, type SummaryTrend } from "./summaryTrends";
@@ -13,6 +14,9 @@ export { pointsTrend, relativeTrend, type SummaryTrend, type TrendTone } from ".
 // anterior. Función pura (sin React): de la respuesta del Dashboard a lo que
 // dice cada tarjeta. Lo que el periodo anterior no permite comparar no lleva
 // cambio, y lo que la persona no puede ver (el gasto) no aparece.
+// Lo de Auream y lo de Meta con la regla de `@shared/ads/metaSource`: sin
+// ventas en Auream, lo que Meta reporta va con la etiqueta «Meta» y la
+// ganancia y la conversión esperan a las ventas reales (nunca $0 ni pérdida).
 // ---------------------------------------------------------------------------
 
 export interface SummaryCard {
@@ -22,6 +26,8 @@ export interface SummaryCard {
   readonly value: string;
   readonly note: string;
   readonly trend: SummaryTrend | null;
+  /** El número lo reporta Meta (lleva la etiqueta «Meta»); sin esto, es de Auream. */
+  readonly source?: "meta";
   /** Qué se puede elegir ver en la tarjeta (la inversión: Meta · Otros · Todo). */
   readonly modes?: { readonly current: InvestmentMode; readonly options: ReadonlyArray<readonly [InvestmentMode, string]> };
   /** Un enlace dentro de la tarjeta (la inversión: «Otros gastos»). */
@@ -36,40 +42,50 @@ export function summaryCards(view: SalesDashboardResponse, investment: Investmen
   const ads = view.ads;
   const noAds = view.lineWithoutCampaigns ? LINE_WITHOUT_CAMPAIGNS : "Conecta Meta Ads para verlo";
   const organic = Math.max(0, view.leads.value - view.leadsFromAds);
+  // Auream no ve las ventas de los anuncios: la ganancia espera. Sin ninguna venta en Auream, lo vendido es lo que reporta Meta.
+  const blind = ads !== null && salesUnknown(ads.measurement, ads.attributedSales);
+  const meta = blind && view.sales.value === 0 ? ads : null;
+  const metaTicket = meta ? perUnit(meta.metaRevenue, meta.metaPurchases) : null;
 
   const cards: Array<SummaryCard | null> = [
-    {
-      id: "revenue",
-      icon: "revenue",
-      label: "Facturación",
-      value: money(view.revenue.value, c),
-      note: view.missingRates.length > 0 ? `Sin cambio para ${view.missingRates.join(", ")}: no suman` : "Todo lo vendido en el periodo",
-      trend: fromTrend(view.revenue)
-    },
-    {
-      id: "sales",
-      icon: "sales",
-      label: "Ventas",
-      value: count(view.sales.value),
-      note: view.reviewCount > 0 ? `Aprobadas · ${count(view.reviewCount)} por revisar` : "Aprobadas",
-      trend: fromTrend(view.sales)
-    },
-    {
-      id: "ticket",
-      icon: "ticket",
-      label: "Compra promedio",
-      value: money(view.averageTicket, c),
-      note: "Lo que deja cada venta",
-      trend: relativeTrend(view.averageTicket, divide(view.revenue.previous, view.sales.previous))
-    },
+    meta
+      ? { id: "revenue", icon: "revenue", label: "Facturación", value: money(meta.metaRevenue, c), note: META_REPORTS, trend: null, source: "meta" }
+      : {
+          id: "revenue",
+          icon: "revenue",
+          label: "Facturación",
+          value: money(view.revenue.value, c),
+          note: view.missingRates.length > 0 ? `Sin cambio para ${view.missingRates.join(", ")}: no suman` : "Lo vendido y anotado en Auream",
+          trend: fromTrend(view.revenue)
+        },
+    meta
+      ? { id: "sales", icon: "sales", label: "Ventas", value: count(meta.metaPurchases), note: "Compras que vio Meta", trend: null, source: "meta" }
+      : {
+          id: "sales",
+          icon: "sales",
+          label: "Ventas",
+          value: count(view.sales.value),
+          note: view.reviewCount > 0 ? `Aprobadas · ${count(view.reviewCount)} por revisar` : "Aprobadas",
+          trend: fromTrend(view.sales)
+        },
+    meta
+      ? { id: "ticket", icon: "ticket", label: "Compra promedio", value: money(metaTicket, c), note: metaTicket === null ? WAITS_FOR_SALES : META_REPORTS, trend: null, ...(metaTicket === null ? {} : { source: "meta" as const }) }
+      : {
+          id: "ticket",
+          icon: "ticket",
+          label: "Compra promedio",
+          value: money(view.averageTicket, c),
+          note: "Lo que deja cada venta",
+          trend: relativeTrend(view.averageTicket, divide(view.revenue.previous, view.sales.previous))
+        },
     view.profit
       ? {
           id: "profit",
           icon: "profit",
           label: "Ganancia",
-          value: money(view.profit.value, c),
-          note: profitNote(view),
-          trend: fromTrend(view.profit)
+          value: blind ? "—" : money(view.profit.value, c),
+          note: blind ? WAITS_FOR_AD_SALES : profitNote(view),
+          trend: blind ? null : fromTrend(view.profit)
         }
       : null,
     {
@@ -84,21 +100,32 @@ export function summaryCards(view: SalesDashboardResponse, investment: Investmen
       id: "conversion",
       icon: "conversion",
       label: "Conversión",
-      value: view.conversion === null ? "—" : `${Math.round(view.conversion * 100)} %`,
-      note: view.conversion === null ? "Aún no hay leads nuevos" : `${count(view.convertedLeads)} de ${count(view.leads.value)} leads compraron`,
-      trend: pointsTrend(view.conversion, view.conversionPrevious)
+      value: meta || view.conversion === null ? "—" : `${Math.round(view.conversion * 100)} %`,
+      note: meta ? WAITS_FOR_SALES : view.conversion === null ? "Aún no hay leads nuevos" : `${count(view.convertedLeads)} de ${count(view.leads.value)} leads compraron`,
+      trend: meta ? null : pointsTrend(view.conversion, view.conversionPrevious)
     },
-    view.canSeeAds
-      ? {
-          id: "roas",
-          icon: "roas",
-          label: "ROAS real",
-          value: ads ? formatRoas(ads.roas) : "—",
-          note: ads ? `${salesUnknown(ads.measurement, ads.attributedSales) ? "Sin medir · " : ""}Meta dice ${formatRoas(ads.roasMeta)}` : noAds,
-          trend: ads ? relativeTrend(ads.roas, divide(ads.revenue.previous, ads.spend.previous)) : null
-        }
-      : null,
+    roasCard(view, blind, noAds),
     investmentCard(view, investment)
   ];
   return cards.filter((card): card is SummaryCard => card !== null);
+}
+
+/** Con ventas de los anuncios en Auream, el ROAS real (y Meta al lado); sin ellas, el que reporta Meta, con su etiqueta. */
+function roasCard(view: SalesDashboardResponse, blind: boolean, noAds: string): SummaryCard | null {
+  if (!view.canSeeAds) return null;
+  const ads = view.ads;
+  const base = { id: "roas", icon: "roas" as const };
+  if (!ads) return { ...base, label: "ROAS real", value: "—", note: noAds, trend: null };
+  if (blind) {
+    return ads.roasMeta === null
+      ? { ...base, label: "ROAS real", value: "—", note: WAITS_FOR_AD_SALES, trend: null }
+      : { ...base, label: "ROAS", value: formatRoas(ads.roasMeta), note: META_REPORTS, trend: null, source: "meta" };
+  }
+  return {
+    ...base,
+    label: "ROAS real",
+    value: formatRoas(ads.roas),
+    note: metaBeside(formatRoas(ads.roasMeta)),
+    trend: relativeTrend(ads.roas, divide(ads.revenue.previous, ads.spend.previous))
+  };
 }

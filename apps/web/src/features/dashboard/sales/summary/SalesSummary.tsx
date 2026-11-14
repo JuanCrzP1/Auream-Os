@@ -1,6 +1,7 @@
 import "./sales-summary.css";
 import { useState } from "react";
 import type { SalesDashboardResponse } from "@contracts/DashboardContracts";
+import { MetaTag } from "@shared/ads/MetaTag";
 import type { InvestmentMode } from "./investmentCard";
 import { SummaryIcon } from "./SummaryIcon";
 import { summaryCards, type SummaryCard, type SummaryTrend } from "./summaryCards";
@@ -62,7 +63,7 @@ function SummaryCardView({ card, onMode, onAction }: {
               <button key={mode} type="button" aria-pressed={card.modes!.current === mode} onClick={() => onMode(mode)}>{label}</button>
             ))}
           </span>
-        ) : card.trend ? <TrendChip trend={card.trend} /> : null}
+        ) : card.source === "meta" ? <span className="sales-summary__source"><MetaTag /></span> : card.trend ? <TrendChip trend={card.trend} /> : null}
       </span>
       <span className="sales-summary__value-row">
         <span className="sales-summary__value">{card.value}</span>

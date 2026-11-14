@@ -71,6 +71,18 @@ El gasto y los chats los reporta Meta; la venta real solo existe si el chat lleg
 - La respuesta de `/dashboard/ads` y el resumen de anuncios de `/dashboard/sales` llevan `measurement` (estado, chats de Meta, chats que llegaron, compras de Meta), calculado igual en los dos.
 - En la web, `shared/ads/MeasurementNotice` muestra el mismo aviso en Meta Ads › Rendimiento, Dashboard › Anuncios y Dashboard › Ventas; los textos están en `shared/ads/measurementText.ts`.
 
+### Lo de Auream y lo de Meta
+
+Una sola regla para todas las piezas (`apps/web/src/shared/ads/metaSource.ts` con las palabras, `MetaTag` con la etiqueta):
+
+| Situación | Qué se muestra |
+|---|---|
+| Hay ventas de los anuncios en Auream | Los números de Auream; lo de Meta al lado («Meta: 0,5x»; en tablas, «Auream / Meta») |
+| `salesUnknown` y hay otras ventas en Auream | Facturación y ventas de Auream; ganancia y ROAS real esperan; el ROAS es el de Meta con su etiqueta |
+| `salesUnknown` y ninguna venta en Auream | Lo que reporta Meta con la etiqueta «Meta» (facturación, compras, compra promedio, ROAS, costo por compra, curva de la gráfica con `DayPoint.metaRevenue`); ganancia y conversión dicen «Se calcula cuando…» |
+
+La ganancia nunca se calcula con lo de Meta: el Píxel cuenta menos compras que las reales, y daría una pérdida que no existe. En «Comparar líneas», una línea que gasta sin ventas de sus anuncios en Auream lleva `salesUnknown`, `roasMeta` (con la etiqueta) y ganancia y margen en `null`; va al final del orden.
+
 ## El Dashboard
 
 ### El periodo

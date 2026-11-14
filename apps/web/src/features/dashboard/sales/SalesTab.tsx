@@ -2,7 +2,9 @@ import "./sales-tab.css";
 import { useCallback, useEffect, useState } from "react";
 import type { AdsDashboardResponse, DashboardFilters, SalesDashboardResponse } from "@contracts/DashboardContracts";
 import { adsApi } from "@shared/ads/adsApi";
+import { salesUnknown } from "@contracts/AdMeasurementContracts";
 import { MeasurementNotice } from "@shared/ads/MeasurementNotice";
+import { MetaTag } from "@shared/ads/MetaTag";
 import { dashboardApi } from "../services/dashboardApi";
 import { useDashboardData } from "../useDashboardData";
 import { AdFunnel } from "./AdFunnel";
@@ -58,6 +60,9 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency, onS
 
   if (sales.failed) return <p className="ui-error" role="alert">No pudimos cargar el Dashboard. Vuelve a intentarlo en unos segundos.</p>;
   if (!view) return <div className="sales-tab__loading" aria-busy="true" aria-label="Cargando el Dashboard" />;
+  // Auream no ve las ventas de los anuncios: sin ganancia. Sin ninguna venta en Auream, la curva es lo que reporta Meta.
+  const blind = view.ads !== null && salesUnknown(view.ads.measurement, view.ads.attributedSales);
+  const fromMeta = blind && view.sales.value === 0;
 
   return (
     <div className="sales-tab">
@@ -82,12 +87,12 @@ export function SalesTab({ filters, periodWords, onSeeAds, onReportCurrency, onS
         <header className="sales-tab__card-header">
           <h2 id="sales-chart-title">{view.ads ? "Facturación y gasto" : "Facturación"} por {chartUnit(view.daily.length) === "week" ? "semana" : "día"}</h2>
           <span className="sales-tab__legend">
-            <span><i className="sales-tab__key sales-tab__key--line" />Facturación ({view.currency})</span>
+            <span><i className={`sales-tab__key sales-tab__key--line${fromMeta ? " sales-tab__key--meta" : ""}`} />Facturación ({view.currency}){fromMeta ? <> <MetaTag /></> : null}</span>
             {view.ads ? <span><i className="sales-tab__key sales-tab__key--bar" />Gasto en Meta</span> : null}
-            {view.ads ? <span><i className="sales-tab__key sales-tab__key--dash" />Ganancia</span> : null}
+            {view.ads && !blind ? <span><i className="sales-tab__key sales-tab__key--dash" />Ganancia</span> : null}
           </span>
         </header>
-        <RevenueChart points={view.daily} currency={view.currency} withSpend={Boolean(view.ads)} />
+        <RevenueChart points={view.daily} currency={view.currency} withSpend={Boolean(view.ads)} withProfit={!blind} revenueFrom={fromMeta ? "meta" : "auream"} />
       </section>
       {view.funnel ? <AdFunnel view={view} /> : null}
       {campaigns.data ? <CampaignAdvice data={campaigns.data} onSeeAll={onSeeAds} /> : null}

@@ -63,5 +63,6 @@
 }
 
 .sales-tab__key--line { height: 3px; border-radius: 2px; background: var(--primary); }
+.sales-tab__key--meta { background: #1d5fd6; }
 .sales-tab__key--bar { width: 10px; height: 10px; border-radius: 3px; background: #fda4af; }
 .sales-tab__key--dash { height: 0; border-top: 2px dashed var(--teal); }

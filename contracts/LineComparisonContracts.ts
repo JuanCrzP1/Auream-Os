@@ -24,15 +24,20 @@ export interface LineComparisonRow {
   readonly spend: number | null;
   /** Lo vendido por sus anuncios ÷ su gasto. `null` sin gasto. */
   readonly roas: number | null;
+  /** Lo que Meta reporta en compras ÷ su gasto. `null` sin gasto o sin `ads.read`. */
+  readonly roasMeta: number | null;
   /** Otros gastos de la línea (o de todo, en la fila del negocio). `null` sin `ads.read`. */
   readonly otherSpend: number | null;
   /**
    * Facturación − gasto en Meta − otros gastos − costo de los productos (si
-   * todos lo tienen). `null` sin `ads.read` (con la facturación delataría el gasto).
+   * todos lo tienen). `null` sin `ads.read` (con la facturación delataría el gasto)
+   * o si sus ventas de anuncios no se conocen (`salesUnknown`).
    */
   readonly profit: Trend | null;
   /** Ganancia ÷ facturación. */
   readonly margin: number | null;
+  /** Gasta en Meta y en Auream no hay ninguna venta de sus anuncios: ROAS real, ganancia y margen no se conocen (no son 0); se muestra el ROAS de Meta. */
+  readonly salesUnknown?: true;
 }
 
 export interface LineComparisonResponse {

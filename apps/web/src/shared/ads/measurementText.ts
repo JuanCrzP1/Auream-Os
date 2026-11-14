@@ -21,7 +21,7 @@ export function measurementCopy(seen: AdMeasurement): MeasurementCopy | null {
   if (seen.state === "none") {
     return {
       title: "Auream aún no ve los chats de tus anuncios",
-      body: `Meta cobró ${formatCount(seen.metaChats)} chats en este periodo y a Auream no llegó ninguno. Por eso no hay ROAS real ni consejos: solo lo que reporta Meta. Conecta el WhatsApp al que llevan esos anuncios y Auream empieza a medir tus ventas de verdad.`,
+      body: `Meta cobró ${formatCount(seen.metaChats)} chats en este periodo y a Auream no llegó ninguno. Mientras tanto ves lo que reporta Meta, marcado con «Meta»; la ganancia y el ROAS real se calculan cuando vendas en Auream. Conecta el WhatsApp al que llevan esos anuncios y Auream empieza a medir tus ventas de verdad.`,
       action: { label: "Conectar un número", to: "/connections" }
     };
   }

@@ -82,7 +82,7 @@ describe("Meta Ads conectado", () => {
     expect(within(table).getByText("Escalar")).toBeInTheDocument();
     expect(within(table).getByText("Apagar")).toBeInTheDocument();
     expect(within(table).getAllByText("5x").length).toBeGreaterThan(0);
-    expect(screen.getByText(/ROAS real 5x · Meta dice 1,5x/)).toBeInTheDocument();
+    expect(screen.getByText(/ROAS real 5x · Meta: 1,5x/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "Anuncios" }));
     await waitFor(() => expect(calls.some((call) => call.path.startsWith("/dashboard/ads") && call.path.includes("level=ad"))).toBe(true));
   });

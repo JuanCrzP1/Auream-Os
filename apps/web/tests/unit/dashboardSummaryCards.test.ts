@@ -28,7 +28,7 @@ describe("summaryCards", () => {
     // Compra promedio: 50.000 frente a 300.000 ÷ 6 = 50.000 → igual.
     expect(byId(cards, "ticket").trend).toEqual({ text: "= igual", tone: "flat" });
     // ROAS: 5x frente a 200.000 ÷ 80.000 = 2,5x → ▲ 100 %.
-    expect(byId(cards, "roas")).toMatchObject({ value: "5x", note: "Meta dice 1,5x", trend: { text: "▲ 100 %", tone: "good" } });
+    expect(byId(cards, "roas")).toMatchObject({ value: "5x", note: "Meta: 1,5x", trend: { text: "▲ 100 %", tone: "good" } });
     expect(byId(cards, "conversion")).toMatchObject({ value: "15 %", note: "9 de 60 leads compraron", trend: { text: "▲ 5 pts", tone: "good" } });
     expect(byId(cards, "spend")).toMatchObject({ note: "1 campaña activa", trend: { text: "▲ 25 %", tone: "flat" } });
     expect(byId(cards, "profit").note).toBe("Facturación − inversión en Meta");

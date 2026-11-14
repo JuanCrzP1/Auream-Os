@@ -3,8 +3,8 @@ title: El resumen del periodo en el Dashboard
 module: dashboard
 summary: Qué mide cada una de las ocho tarjetas y cómo leer su cambio frente al periodo anterior.
 order: 5
-updated: 2026-11-12
-keywords: resumen, tarjetas, facturación, ventas, compra promedio, ganancia, leads, conversión, roas, inversión
+updated: 2026-11-13
+keywords: resumen, tarjetas, facturación, ventas, compra promedio, ganancia, leads, conversión, roas, inversión, meta, etiqueta meta
 related: roas-real, registrar-venta, conectar-meta-ads, elegir-fechas
 ---
 
@@ -30,6 +30,15 @@ Cada tarjeta compara con el periodo anterior del mismo largo: los últimos 30 d�
 - La **inversión en Meta** va en gris, porque gastar más o menos no es bueno ni malo por sí solo. Júzgala junto al ROAS real.
 - Si el periodo anterior no tiene datos, la tarjeta no muestra cambio.
 
-> **Importante:** una venta solo cuenta si se registra, ya sea con el bloque **Registrar venta** en tu flujo o anotándola en **Ventas**. Si tus flujos confirman pagos pero no registran la venta, estas tarjetas quedan en cero.
+## Lo de Auream y lo de Meta
+
+- El número grande es **de Auream**: tus ventas anotadas aquí.
+- Si Auream aún no tiene ventas, ves lo que **reporta Meta**, con la etiqueta **Meta**. Así nunca lo confundes con una venta real.
+- La **ganancia** y la **conversión** solo se calculan con tus ventas en Auream. Mientras no haya, dicen «Se calcula cuando vendas en Auream», nunca $0 ni una pérdida.
+- Cuando empiezas a vender en Auream, las tarjetas pasan solas a tus números y lo de Meta queda al lado: «Meta: 0,5x».
+
+Lo mismo pasa en el bloque de anuncios de arriba, la gráfica, «Del anuncio a la venta» y «Comparar líneas».
+
+> **Importante:** una venta solo cuenta si se registra, ya sea con el bloque **Registrar venta** en tu flujo o anotándola en **Ventas**.
 
 Si tu rol no puede ver el gasto en anuncios, no verás ROAS real, inversión en Meta ni ganancia.

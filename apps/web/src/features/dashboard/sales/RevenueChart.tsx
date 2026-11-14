@@ -53,10 +53,21 @@ export function smooth(points: ReadonlyArray<readonly [number, number]>): string
 /**
  * Facturación (curva) y gasto en Meta (barras) por día —o por semana en
  * periodos largos—, en la moneda de reporte; con gasto, la ganancia
- * (punteada). Marca el mejor día o semana.
+ * (punteada). Marca el mejor día o semana. Sin las ventas de los anuncios no
+ * hay ganancia (`withProfit`); sin ninguna venta en Auream, la curva es lo
+ * que Meta reporta en compras (`revenueFrom: "meta"`, en el azul de Meta).
  */
-export function RevenueChart({ points: days, currency, withSpend }: { readonly points: ReadonlyArray<DayPoint>; readonly currency: string; readonly withSpend: boolean }) {
+export function RevenueChart({ points: given, currency, withSpend, withProfit = withSpend, revenueFrom = "auream" }: {
+  readonly points: ReadonlyArray<DayPoint>;
+  readonly currency: string;
+  readonly withSpend: boolean;
+  readonly withProfit?: boolean;
+  readonly revenueFrom?: "auream" | "meta";
+}) {
+  const fromMeta = revenueFrom === "meta";
+  const days = fromMeta ? given.map((d) => ({ ...d, revenue: d.metaRevenue ?? 0 })) : given;
   const { unit, points } = chartPoints(days);
+  const sold = fromMeta ? "Meta reportó" : "facturó";
   const withYear = (days[0]?.day.slice(0, 4) ?? "") !== (days[days.length - 1]?.day.slice(0, 4) ?? "");
   const bestWord = unit === "week" ? "Mejor semana: la del" : "Mejor día:";
   const max = Math.max(1, ...points.map((p) => Math.max(p.revenue, withSpend ? p.spend : 0)));
@@ -73,7 +84,7 @@ export function RevenueChart({ points: days, currency, withSpend }: { readonly p
 
   return (
     <figure className="revenue-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="revenue-chart__svg" role="img" aria-label={`Facturación${withSpend ? " y gasto" : ""} por ${unit === "week" ? "semana" : "día"}; ${unit === "week" ? "la mejor semana" : "el mejor día"} facturó ${money(bestPoint?.revenue ?? 0, currency)}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="revenue-chart__svg" role="img" aria-label={`${fromMeta ? "Lo que Meta reporta en compras" : "Facturación"}${withSpend ? " y gasto" : ""} por ${unit === "week" ? "semana" : "día"}; ${unit === "week" ? "la mejor semana" : "el mejor día"} ${sold} ${money(bestPoint?.revenue ?? 0, currency)}`}>
         <defs>
           <linearGradient id="revenue-area" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#6c5ce7" stopOpacity="0.24" />
@@ -82,16 +93,16 @@ export function RevenueChart({ points: days, currency, withSpend }: { readonly p
         </defs>
         {[0.25, 0.5, 0.75].map((f) => <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} className="revenue-chart__grid" />)}
         {withSpend ? <path d={bars} className="revenue-chart__spend" /> : null}
-        <path d={area} fill="url(#revenue-area)" />
-        <path d={smooth(revenue)} className="revenue-chart__line" />
-        {withSpend ? <path d={smooth(profit)} className="revenue-chart__profit" /> : null}
-        {bestPoint && bestPoint.revenue > 0 ? <circle cx={x(best)} cy={y(bestPoint.revenue)} r="6" className="revenue-chart__best" /> : null}
+        {fromMeta ? null : <path d={area} fill="url(#revenue-area)" />}
+        <path d={smooth(revenue)} className={`revenue-chart__line${fromMeta ? " revenue-chart__line--meta" : ""}`} />
+        {withSpend && withProfit ? <path d={smooth(profit)} className="revenue-chart__profit" /> : null}
+        {bestPoint && bestPoint.revenue > 0 ? <circle cx={x(best)} cy={y(bestPoint.revenue)} r="6" className={`revenue-chart__best${fromMeta ? " revenue-chart__best--meta" : ""}`} /> : null}
       </svg>
       <figcaption className="revenue-chart__axis">
         <span>{days[0] ? label(days[0].day, withYear) : ""}</span>
         {bestPoint && bestPoint.revenue > 0 ? (
           <span className="revenue-chart__best-label">
-            {bestWord} {label(bestPoint.day)} · facturó $ {compact(bestPoint.revenue)}{withSpend ? ` con $ ${compact(bestPoint.spend)} de gasto` : ""}
+            {bestWord} {label(bestPoint.day)} · {sold} $ {compact(bestPoint.revenue)}{withSpend ? ` con $ ${compact(bestPoint.spend)} de gasto` : ""}
           </span>
         ) : null}
         <span>{days.length > 0 ? label(days[days.length - 1]!.day, withYear) : ""}</span>

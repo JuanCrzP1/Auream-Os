@@ -13,8 +13,8 @@ import { summaryCards } from "../../src/features/dashboard/sales/summary/summary
 // Cuando Auream no ve lo que venden los anuncios (los chats llegan a otra
 // herramienta, el número se conectó hace poco o el negocio no anota ventas),
 // las tres pantallas lo dicen igual: un aviso con qué hacer, «Sin medir» en
-// vez de «Apagar», y rayas (no ceros ni pérdidas en rojo) en lo que depende
-// de las ventas. Lo que reporta Meta se sigue viendo.
+// vez de «Apagar», lo que reporta Meta con la etiqueta «Meta», y la ganancia
+// esperando a las ventas reales (nunca ceros ni pérdidas en rojo).
 // ---------------------------------------------------------------------------
 
 const reply = (body: unknown) => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
@@ -60,7 +60,7 @@ describe("Meta Ads › Rendimiento sin medición", () => {
     const notice = await screen.findByRole("status", { name: "Auream aún no ve los chats de tus anuncios" });
     expect(notice).toHaveTextContent("Meta cobró 4.726 chats en este periodo y a Auream no llegó ninguno");
     expect(within(notice).getByRole("link", { name: "Conectar un número" })).toHaveAttribute("href", "/connections");
-    expect(screen.getByText(/ROAS real sin medir · Meta dice 0,2x/)).toBeInTheDocument();
+    expect(screen.getByText(/ROAS real sin medir · Meta: 0,2x/)).toBeInTheDocument();
 
     const table = screen.getByRole("table");
     expect(within(table).queryByText("Apagar")).toBeNull();
@@ -77,14 +77,14 @@ describe("Meta Ads › Rendimiento sin medición", () => {
 });
 
 describe("Dashboard sin medición", () => {
-  it("Anuncios: el aviso arriba, ROAS y ganancia con raya y sin «¿Por qué Meta dice menos?»", async () => {
+  it("Anuncios: el aviso arriba, el ROAS y el costo por venta de Meta con su etiqueta, la ganancia espera, sin «¿Por qué Meta dice menos?»", async () => {
     serve(performance());
     render(<MemoryRouter><AdsTab filters={{}} /></MemoryRouter>);
     expect(await screen.findByRole("status", { name: "Auream aún no ve los chats de tus anuncios" })).toBeInTheDocument();
     const tops = screen.getByRole("region", { name: "Resumen de anuncios" });
-    expect(tops).toHaveTextContent("ROAS real—Meta dice 0,2x");
-    expect(tops).toHaveTextContent("Ganancia—Necesita tus ventas reales");
-    expect(tops).toHaveTextContent("Costo por venta—sin ventas reales · Meta dice $ 5.855 COP");
+    expect(tops).toHaveTextContent("ROAS0,2x MetaLo que reporta Meta");
+    expect(tops).toHaveTextContent("Ganancia—Se calcula cuando tus anuncios vendan en Auream");
+    expect(tops).toHaveTextContent("Costo por venta$ 5.855 COP Meta805 compras que vio Meta");
     expect(screen.queryByText("¿Por qué Meta dice menos?")).toBeNull();
   });
 
@@ -95,18 +95,18 @@ describe("Dashboard sin medición", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
-  it("Ventas: la franja no dice «0x» ni una pérdida; el resumen marca el ROAS como sin medir", () => {
+  it("Ventas: la franja muestra lo de Meta con su etiqueta, nunca «0x» ni una pérdida; el resumen igual", () => {
     render(<AdsHero view={sales(NONE)} periodWords="últimos 30 días" />);
     const hero = screen.getByRole("region", { name: "La plata de tus anuncios" });
-    expect(hero).toHaveTextContent("ROAS real · últimos 30 días—Auream aún no ve los chats de tus anuncios: no hay con qué calcularlo.Meta dice 0,2x");
-    expect(hero).toHaveTextContent("Facturación por anuncios—Meta dice $ 936.288 COP");
-    expect(hero).toHaveTextContent("Costo por venta—sin ventas reales · Meta dice $ 6.072 COP");
-    expect(hero).toHaveTextContent("Ganancia (ventas − anuncios)—sin esas ventas no se puede calcular");
+    expect(hero).toHaveTextContent("ROAS · últimos 30 días Meta0,2xPor cada $ 1 en anuncios, Meta reporta $ 0,20 en compras.ROAS real: se calcula cuando tus anuncios vendan en Auream");
+    expect(hero).toHaveTextContent("Facturación por anuncios Meta$ 936.288 COPLo que reporta Meta");
+    expect(hero).toHaveTextContent("Costo por venta Meta$ 6.072 COP771 compras que vio Meta");
+    expect(hero).toHaveTextContent("Ganancia (ventas − anuncios)—Se calcula cuando tus anuncios vendan en Auream");
     expect(hero).toHaveTextContent("Gasto en Meta$ 4.681.440");
     expect(hero).not.toHaveTextContent("4.681.440 COP−");
 
     const roas = summaryCards(sales(NONE)).find((card) => card.id === "roas")!;
-    expect(roas).toMatchObject({ value: "—", note: "Sin medir · Meta dice 0,2x", trend: null });
+    expect(roas).toMatchObject({ label: "ROAS", value: "0,2x", note: "Lo que reporta Meta", source: "meta", trend: null });
   });
 
   it("Ventas con medición parcial: los números se ven, con la advertencia de que falta una parte", () => {
@@ -118,10 +118,11 @@ describe("Dashboard sin medición", () => {
     expect(hero).toHaveTextContent("Facturación por anuncios$ 1.900.000");
   });
 
-  it("Ventas con medición parcial y ninguna venta todavía: rayas, no «0x»", () => {
+  it("Ventas con medición parcial y ninguna venta todavía: lo de Meta con su etiqueta, no «0x»", () => {
     render(<AdsHero view={sales({ state: "partial", metaChats: 4726, arrivedChats: 1182, metaPurchases: 0 })} periodWords="últimos 30 días" />);
     const hero = screen.getByRole("region", { name: "La plata de tus anuncios" });
-    expect(hero).toHaveTextContent("ROAS real · últimos 30 días—Medición parcial: a Auream llegaron 1.182 de 4.726 chats de tus anuncios.");
-    expect(hero).toHaveTextContent("Facturación por anuncios—");
+    expect(hero).toHaveTextContent("ROAS · últimos 30 días Meta0,2x");
+    expect(hero).toHaveTextContent("Facturación por anuncios Meta$ 936.288 COP");
+    expect(hero).not.toHaveTextContent("0x");
   });
 });

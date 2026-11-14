@@ -70,7 +70,7 @@ describe("Dashboard", () => {
     const hero = await screen.findByRole("region", { name: "La plata de tus anuncios" });
     expect(within(hero).getByText("5x")).toBeInTheDocument();
     expect(within(hero).getByText(/te vuelven/)).toHaveTextContent("$ 5,00");
-    expect(within(hero).getByText(/Meta dice 1,5x/)).toBeInTheDocument();
+    expect(within(hero).getByText(/Meta: 1,5x/)).toBeInTheDocument();
     expect(within(hero).getByText("Ganancia real")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Del anuncio a la venta" })).toHaveTextContent("costo por venta $ 10.000");
     expect(await screen.findByRole("region", { name: "Qué hacer con tus campañas" })).toHaveTextContent("Escalar");

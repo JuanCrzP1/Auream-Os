@@ -45,7 +45,10 @@ export function lineRow(
   const spend = spendOf(numbers.spendDays);
   const prevSpend = spendOf(numbers.prevSpendDays);
   const adRevenue = book.sum(numbers.days, money((d) => d.adAmount));
+  const metaRevenue = numbers.spendDays ? book.sum(numbers.spendDays, (d) => ({ amount: d.metaRevenue, currency: d.currency, day: d.day })) : 0;
   const profit = round(revenue - (spend ?? 0) - other.now - cost);
+  // La misma regla que el Dashboard: gasto en anuncios sin ninguna venta de ellos en Auream no es «perdió», es «no se sabe».
+  const blind = canSeeAds && spend !== null && spend > 0 && numbers.days.every((d) => d.adCount === 0);
 
   return {
     ...identity,
@@ -54,16 +57,18 @@ export function lineRow(
     averageTicket: sales > 0 ? round(revenue / sales) : null,
     share: totalRevenue > 0 ? Math.min(1, round(revenue / totalRevenue)) : null,
     spend: canSeeAds ? spend : null,
-    roas: canSeeAds && spend !== null ? ratio(adRevenue, spend) : null,
+    roas: canSeeAds && spend !== null && !blind ? ratio(adRevenue, spend) : null,
+    roasMeta: canSeeAds && spend !== null ? ratio(metaRevenue, spend) : null,
     otherSpend: canSeeAds ? other.now : null,
-    profit: canSeeAds ? signedTrend(profit, round(prevRevenue - (prevSpend ?? 0) - other.before - prevCost)) : null,
-    margin: canSeeAds && revenue > 0 ? round(profit / revenue) : null
+    profit: canSeeAds && !blind ? signedTrend(profit, round(prevRevenue - (prevSpend ?? 0) - other.before - prevCost)) : null,
+    margin: canSeeAds && !blind && revenue > 0 ? round(profit / revenue) : null,
+    ...(blind ? { salesUnknown: true as const } : {})
   };
 }
 
-/** De la que más gana a la que menos; sin ver el gasto, de la que más factura. */
+/** De la que más gana a la que menos (las «sin medir» al final); sin ver el gasto, de la que más factura. */
 export function rankRows(rows: ReadonlyArray<LineComparisonRow>, canSeeAds: boolean): LineComparisonRow[] {
-  const key = (row: LineComparisonRow) => (canSeeAds ? row.profit?.value ?? 0 : row.revenue.value);
+  const key = (row: LineComparisonRow) => (canSeeAds ? row.profit?.value ?? -Infinity : row.revenue.value);
   return [...rows].sort((a, b) => key(b) - key(a) || b.revenue.value - a.revenue.value || a.name.localeCompare(b.name, "es"));
 }
 

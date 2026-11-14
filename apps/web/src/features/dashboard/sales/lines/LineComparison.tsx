@@ -1,5 +1,6 @@
 import "./line-comparison.css";
 import type { LineComparisonResponse, LineComparisonRow } from "@contracts/LineComparisonContracts";
+import { MetaTag } from "@shared/ads/MetaTag";
 import { dashboardApi } from "../../services/dashboardApi";
 import { useDashboardData } from "../../useDashboardData";
 import { MONEY_COLUMNS, SALES_COLUMNS, verdict, type Cell, type Column } from "./lineCells";
@@ -24,6 +25,7 @@ export function LineComparison({ range, currency, periodWords, version, onSelect
   const columns = data.canSeeAds ? MONEY_COLUMNS : SALES_COLUMNS;
   const sentence = verdict(data.rows, data.canSeeAds, data.currency);
   const withoutCampaigns = data.canSeeAds && data.rows.some((row) => !row.hasCampaigns);
+  const unmeasured = data.rows.some((row) => row.salesUnknown) || Boolean(data.total.salesUnknown);
 
   return (
     <section className="line-comparison" aria-labelledby="line-comparison-title">
@@ -50,8 +52,9 @@ export function LineComparison({ range, currency, periodWords, version, onSelect
           </tfoot>
         </table>
       </div>
-      {withoutCampaigns || data.overlapping || data.missingRates.length > 0 ? (
+      {unmeasured || withoutCampaigns || data.overlapping || data.missingRates.length > 0 ? (
         <ul className="line-comparison__notes">
+          {unmeasured ? <li>Las líneas con «Meta» aún no tienen ventas de sus anuncios en Auream: su ROAS es el que reporta Meta, y su ganancia y su margen se calculan cuando vendan en Auream.</li> : null}
           {withoutCampaigns ? <li>Una línea «Sin campañas» no resta gasto en Meta de su ganancia: ponle sus campañas para verla completa.</li> : null}
           {data.overlapping ? <li>Algunas líneas comparten productos o campañas, así que sumadas pasan del total del negocio.</li> : null}
           {data.missingRates.length > 0 ? <li>Sin tasa de cambio para {data.missingRates.join(", ")}: esos montos no se sumaron.</li> : null}
@@ -95,7 +98,7 @@ function LineRow({ row, columns, currency, onSelect }: {
 function CellView({ label, cell }: { readonly label: string; readonly cell: Cell }) {
   return (
     <td data-label={label} title={cell.hint} className={cell.tone ? `is-${cell.tone}` : undefined}>
-      <span className="line-comparison__value">{cell.text}</span>
+      <span className="line-comparison__value">{cell.text}{cell.source === "meta" ? <> <MetaTag /></> : null}</span>
       {cell.trend ? <span className={`line-comparison__trend is-${cell.trend.tone}`}>{cell.trend.text}</span> : null}
     </td>
   );

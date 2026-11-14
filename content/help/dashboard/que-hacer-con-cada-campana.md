@@ -24,7 +24,7 @@ Auream recomienda qué hacer con cada campaña, conjunto y anuncio según lo que
 
 ## Cuando Auream no da un consejo
 
-Para juzgar una campaña, Auream necesita ver dos cosas: los chats que trae y las ventas de esos clientes. Si le falta alguna, **no recomienda nada** y en vez de un ROAS en cero muestra una raya (—). Lo que reporta Meta se sigue viendo.
+Para juzgar una campaña, Auream necesita ver dos cosas: los chats que trae y las ventas de esos clientes. Si le falta alguna, **no recomienda nada** y nunca muestra un ROAS en cero ni una pérdida: ves lo que reporta Meta, con la etiqueta **Meta**, y la ganancia se calcula cuando haya ventas en Auream.
 
 | Etiqueta | Qué pasa | Qué hacer |
 |---|---|---|

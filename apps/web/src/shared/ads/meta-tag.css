@@ -1,0 +1,26 @@
+/* La etiqueta «Meta»: un número que reporta Meta, no una venta de Auream. */
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  text-transform: none;
+  vertical-align: middle;
+  cursor: help;
+}
+
+.meta-tag--light {
+  background: rgba(8, 102, 255, 0.1);
+  color: #1d5fd6;
+}
+
+.meta-tag--dark {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}

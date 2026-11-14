@@ -7,6 +7,8 @@ import { adsApi } from "@shared/ads/adsApi";
 import { AdsPerformanceTable } from "@shared/ads/AdsPerformanceTable";
 import { formatPercent, formatRoas } from "@shared/ads/adsFormat";
 import { MeasurementNotice } from "@shared/ads/MeasurementNotice";
+import { MetaTag } from "@shared/ads/MetaTag";
+import { META_REPORTS, metaBeside, purchasesText, WAITS_FOR_AD_SALES } from "@shared/ads/metaSource";
 import { timeAgo } from "@shared/format/timeAgo";
 import { money } from "../dashboardFormat";
 import { useDashboardData } from "../useDashboardData";
@@ -16,8 +18,8 @@ const LEVELS: ReadonlyArray<readonly [AdLevel, string]> = [["campaign", "Campañ
 /**
  * Dashboard › Anuncios: el resumen de la plata de los anuncios, cada campaña,
  * conjunto o anuncio con su venta real frente a Meta y qué hacer, y por qué
- * Meta dice menos. Si Auream no ve los chats o las ventas de esos anuncios, lo
- * avisa arriba y no da ROAS real ni ganancia.
+ * Meta dice menos. Si Auream no ve las ventas de esos anuncios, lo avisa
+ * arriba y muestra lo que reporta Meta con su etiqueta; la ganancia espera.
  */
 export function AdsTab({ filters }: { readonly filters: DashboardFilters }) {
   const [level, setLevel] = useState<AdLevel>("campaign");
@@ -43,12 +45,19 @@ export function AdsTab({ filters }: { readonly filters: DashboardFilters }) {
   }
   const t = data.totals;
   const blind = salesUnknown(data.measurement, t.sales);
-  const tops = [
-    { label: "ROAS real", value: formatRoas(t.roas), note: `Meta dice ${formatRoas(t.roasMeta)}`, lead: true },
-    { label: "Ganancia", value: money(t.profit, data.currency), note: blind ? "Necesita tus ventas reales" : "ventas por anuncio − gasto", lead: true },
-    { label: "Gasto", value: money(t.spend, data.currency), note: `${t.clicks.toLocaleString("es-CO")} clics · CTR ${formatPercent(t.ctr)}` },
-    { label: "Costo por venta", value: money(t.costPerSale, data.currency), note: `${blind ? "sin ventas reales" : `${t.sales} ventas por anuncio`}${t.costPerSaleMeta !== null ? ` · Meta dice ${money(t.costPerSaleMeta, data.currency)}` : ""}` },
-    { label: "Costo por chat", value: money(t.costPerChat, data.currency), note: `${t.chats.toLocaleString("es-CO")} chats` }
+  const c = data.currency;
+  const metaRoas = blind && t.roasMeta !== null;
+  const metaCost = blind && t.costPerSaleMeta !== null;
+  const tops: ReadonlyArray<{ label: string; value: string; note: string; lead?: true; meta?: boolean }> = [
+    metaRoas
+      ? { label: "ROAS", value: formatRoas(t.roasMeta), note: META_REPORTS, lead: true, meta: true }
+      : { label: "ROAS real", value: formatRoas(t.roas), note: blind ? WAITS_FOR_AD_SALES : metaBeside(formatRoas(t.roasMeta)), lead: true },
+    { label: "Ganancia", value: money(blind ? null : t.profit, c), note: blind ? WAITS_FOR_AD_SALES : "ventas por anuncio − gasto", lead: true },
+    { label: "Gasto", value: money(t.spend, c), note: `${t.clicks.toLocaleString("es-CO")} clics · CTR ${formatPercent(t.ctr)}` },
+    metaCost
+      ? { label: "Costo por venta", value: money(t.costPerSaleMeta, c), note: `${purchasesText(t.metaPurchases)} que vio Meta`, meta: true }
+      : { label: "Costo por venta", value: money(blind ? null : t.costPerSale, c), note: blind ? WAITS_FOR_AD_SALES : [`${t.sales} ventas por anuncio`, t.costPerSaleMeta !== null ? metaBeside(money(t.costPerSaleMeta, c)) : null].filter(Boolean).join(" · ") },
+    { label: "Costo por chat", value: money(t.costPerChat, c), note: `${t.chats.toLocaleString("es-CO")} chats` }
   ];
   const best = [...data.rows].filter((row) => row.sales >= 3 && row.roas !== null).sort((a, b) => (b.roas ?? 0) - (a.roas ?? 0))[0];
 
@@ -59,7 +68,7 @@ export function AdsTab({ filters }: { readonly filters: DashboardFilters }) {
         {tops.map((top) => (
           <div key={top.label} className={`ads-tab__top${top.lead ? " ads-tab__top--lead" : ""}`}>
             <span className="ads-tab__label">{top.label}</span>
-            <strong>{top.value}</strong>
+            <strong>{top.value}{top.meta ? <> <MetaTag /></> : null}</strong>
             <span className="ui-muted">{top.note}</span>
           </div>
         ))}

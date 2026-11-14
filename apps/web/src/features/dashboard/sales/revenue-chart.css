@@ -1,4 +1,4 @@
-/* Facturación (curva violeta), gasto (barras rosadas) y ganancia (punteada). */
+/* Facturación (curva violeta, o azul si es lo que reporta Meta), gasto (barras rosadas) y ganancia (punteada). */
 
 .revenue-chart {
   display: flex;
@@ -29,6 +29,12 @@
   stroke-width: 3.5;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
+}
+
+/* Lo que reporta Meta: su azul, el mismo de la etiqueta «Meta». */
+.revenue-chart__line--meta,
+.revenue-chart__best--meta {
+  stroke: #1d5fd6;
 }
 
 .revenue-chart__profit {

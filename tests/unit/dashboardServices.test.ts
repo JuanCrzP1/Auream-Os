@@ -89,7 +89,7 @@ describe("SalesDashboardService", () => {
     // Ganancia del resumen: igual, frente a 300.000 − 60.000 − 80.000 del periodo anterior.
     expect(view.profit).toEqual({ value: 360000, previous: 160000, change: 1.25 });
     expect(view.funnel).toEqual({ impressions: 20000, clicks: 600, chats: 40, sales: 10 });
-    expect(view.daily.find((d) => d.day === "2026-11-02")).toEqual({ day: "2026-11-02", revenue: 400000, spend: 100000 });
+    expect(view.daily.find((d) => d.day === "2026-11-02")).toEqual({ day: "2026-11-02", revenue: 400000, spend: 100000, metaRevenue: 150000 });
   });
 
   it("sin permiso para ver el gasto no hay nada de anuncios; sin costos no hay ganancia real", async () => {

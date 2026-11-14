@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { FxRates } from "../../domains/analytics/application/CurrencyConverter.js";
 import type { AdsReader, DashboardScope, SalesReader } from "../../domains/analytics/application/DashboardReaders.js";
 import { DashboardScopeResolver } from "../../domains/analytics/application/DashboardScopeResolver.js";
+import { CurrencyConverter } from "../../domains/analytics/application/CurrencyConverter.js";
+import { lineRow, rankRows } from "../../domains/analytics/application/LineComparisonRows.js";
 import { LineComparisonService, type LineInfo } from "../../domains/analytics/application/LineComparisonService.js";
+import { MoneyBook } from "../../domains/analytics/application/MoneyBook.js";
 import type { ExpenseRule } from "../../domains/analytics/application/OtherExpenseLedger.js";
 import { SalesDashboardService } from "../../domains/analytics/application/SalesDashboardService.js";
 
@@ -103,5 +106,21 @@ describe("comparar líneas", () => {
     const view = await compare([]);
     expect(view.rows).toEqual([]);
     expect(view.total.revenue.value).toBe(800_000);
+  });
+});
+
+describe("una línea que gasta y no tiene ventas de sus anuncios en Auream", () => {
+  const book = new MoneyBook(new CurrencyConverter(new Map()), "COP");
+  const day = (amount: number, adCount: number) => ({ day: "2026-11-02", currency: "COP", amount, count: amount > 0 ? 1 : 0, adAmount: 0, adCount, cost: 0, withoutCost: 0 });
+  const spend = [{ day: "2026-11-02", currency: "COP", spend: 2_000_000, conversations: 900, impressions: 0, clicks: 0, metaPurchases: 150, metaRevenue: 800_000 }];
+  const row = (adCount: number) => lineRow({ id: "v", name: "Venezuela", color: null, hasCampaigns: true }, { days: [day(100_000, adCount)], prevDays: [], spendDays: spend, prevSpendDays: [] }, { now: 0, before: 0 }, { book, canSeeAds: true, totalRevenue: 100_000 });
+
+  it("no «pierde plata»: ROAS, ganancia y margen no se conocen, y va al final", () => {
+    const blind = row(0);
+    expect(blind).toMatchObject({ salesUnknown: true, roas: null, profit: null, margin: null, spend: 2_000_000 });
+    const measured = row(1);
+    expect(measured.salesUnknown).toBeUndefined();
+    expect(measured.profit?.value).toBe(-1_900_000);
+    expect(rankRows([blind, measured], true).map((r) => r.salesUnknown ?? false)).toEqual([false, true]);
   });
 });

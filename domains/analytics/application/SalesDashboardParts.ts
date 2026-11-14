@@ -20,15 +20,16 @@ export function signedTrend(value: number, previous: number) {
   return { value, previous, change: previous !== 0 ? (value - previous) / Math.abs(previous) : null };
 }
 
-/** Una fila por día del periodo (aunque no haya ventas), con lo vendido y lo gastado en Meta. */
+/** Una fila por día del periodo (aunque no haya ventas), con lo vendido, lo gastado en Meta y lo que Meta reporta en compras. */
 export function dailySeries(period: Period, book: MoneyBook, days: ReadonlyArray<SalesDay>, spend: ReadonlyArray<SpendDay>) {
-  const series: Array<{ day: string; revenue: number; spend: number }> = [];
+  const series: Array<{ day: string; revenue: number; spend: number; metaRevenue: number }> = [];
   for (let i = 0; i < period.days; i += 1) {
     const day = new Date(Date.UTC(+period.fromDay.slice(0, 4), +period.fromDay.slice(5, 7) - 1, +period.fromDay.slice(8, 10) + i)).toISOString().slice(0, 10);
     series.push({
       day,
       revenue: book.sum(days.filter((d) => d.day === day), (d) => ({ amount: d.amount, currency: d.currency, day })),
-      spend: book.sum(spend.filter((d) => d.day === day), (d) => ({ amount: d.spend, currency: d.currency, day }))
+      spend: book.sum(spend.filter((d) => d.day === day), (d) => ({ amount: d.spend, currency: d.currency, day })),
+      metaRevenue: book.sum(spend.filter((d) => d.day === day), (d) => ({ amount: d.metaRevenue, currency: d.currency, day }))
     });
   }
   return series;

@@ -1,5 +1,6 @@
 import type { LineComparisonRow } from "@contracts/LineComparisonContracts";
 import { formatRoas } from "@shared/ads/adsFormat";
+import { WAITS_FOR_AD_SALES } from "@shared/ads/metaSource";
 import { money, trendText } from "../../dashboardFormat";
 
 // ---------------------------------------------------------------------------
@@ -15,6 +16,8 @@ export interface Cell {
   readonly tone?: "good" | "bad" | "muted";
   /** Lo que se lee al pasar el mouse (por qué falta un número). */
   readonly hint?: string;
+  /** El número lo reporta Meta (lleva la etiqueta «Meta»). */
+  readonly source?: "meta";
 }
 
 export interface Column {
@@ -27,6 +30,10 @@ const percent = (value: number | null) => (value === null ? "—" : `${Math.roun
 /** Un margen de «-9393 %» no dice nada: pasando de perder lo vendido, «menos de -100 %». */
 const marginText = (value: number | null) => (value !== null && value < -1 ? "< -100 %" : percent(value));
 const NO_CAMPAIGNS = "Esta línea no tiene campañas: ponle las suyas para saber su gasto y su ROAS.";
+/** Gasta en anuncios y en Auream no hay ventas de ellos: lo que sale de las ventas espera (no es que perdió). */
+const waits: Cell = { text: "—", tone: "muted", hint: WAITS_FOR_AD_SALES };
+/** El ROAS sin ventas en Auream: el que reporta Meta, con su etiqueta. */
+const metaRoas = (row: LineComparisonRow): Cell => (row.roasMeta === null ? waits : { text: formatRoas(row.roasMeta), source: "meta", hint: "Lo que reporta Meta. El ROAS real se calcula cuando sus anuncios vendan en Auream." });
 
 const revenue: Column = { id: "revenue", label: "Facturación", cell: (row, c) => ({ text: money(row.revenue.value, c), trend: trendText(row.revenue) }) };
 const sales: Column = { id: "sales", label: "Ventas", cell: (row) => ({ text: row.sales.toLocaleString("es-CO") }) };
@@ -42,15 +49,15 @@ export const MONEY_COLUMNS: ReadonlyArray<Column> = [
   {
     id: "roas",
     label: "ROAS real",
-    cell: (row) => (row.roas === null ? { text: "—", tone: "muted", hint: row.hasCampaigns ? undefined : NO_CAMPAIGNS } : { text: formatRoas(row.roas), tone: row.roas < 1 ? "bad" : row.roas >= 3 ? "good" : undefined })
+    cell: (row) => (row.salesUnknown ? metaRoas(row) : row.roas === null ? { text: "—", tone: "muted", hint: row.hasCampaigns ? undefined : NO_CAMPAIGNS } : { text: formatRoas(row.roas), tone: row.roas < 1 ? "bad" : row.roas >= 3 ? "good" : undefined })
   },
   { id: "other", label: "Otros gastos", cell: (row, c) => ({ text: row.otherSpend ? money(row.otherSpend, c) : "—", tone: row.otherSpend ? undefined : "muted" }) },
   {
     id: "profit",
     label: "Ganancia",
-    cell: (row, c) => (row.profit === null ? { text: "—", tone: "muted" } : { text: money(row.profit.value, c), trend: trendText(row.profit), tone: row.profit.value < 0 ? "bad" : "good" })
+    cell: (row, c) => (row.salesUnknown ? waits : row.profit === null ? { text: "—", tone: "muted" } : { text: money(row.profit.value, c), trend: trendText(row.profit), tone: row.profit.value < 0 ? "bad" : "good" })
   },
-  { id: "margin", label: "Margen", cell: (row) => ({ text: marginText(row.margin), tone: row.margin === null ? "muted" : row.margin < 0 ? "bad" : undefined }) }
+  { id: "margin", label: "Margen", cell: (row) => (row.salesUnknown ? waits : { text: marginText(row.margin), tone: row.margin === null ? "muted" : row.margin < 0 ? "bad" : undefined }) }
 ];
 
 export const SALES_COLUMNS: ReadonlyArray<Column> = [
@@ -64,9 +71,11 @@ export const SALES_COLUMNS: ReadonlyArray<Column> = [
 export function verdict(rows: ReadonlyArray<LineComparisonRow>, canSeeAds: boolean, currency: string): string | null {
   if (rows.length < 2) return null;
   if (!canSeeAds) return `${rows[0]!.name} es la que más vende: ${money(rows[0]!.revenue.value, currency)}.`;
-  const best = rows[0]!;
-  const losing = rows.filter((row) => (row.profit?.value ?? 0) < 0);
-  if (losing.length === rows.length) return "Todas tus líneas pierden plata en este periodo: revisa su gasto y sus otros gastos.";
+  const measured = rows.filter((row) => !row.salesUnknown);
+  if (measured.length === 0) return "Cuánto deja cada línea se calcula cuando sus anuncios vendan en Auream.";
+  const best = measured[0]!;
+  const losing = measured.filter((row) => (row.profit?.value ?? 0) < 0);
+  if (losing.length === measured.length) return "Todas tus líneas pierden plata en este periodo: revisa su gasto y sus otros gastos.";
   const head = `${best.name} es la que más te deja: ${money(best.profit?.value ?? 0, currency)}.`;
   if (losing.length === 0) return head;
   return `${head} ${losing.length === 1 ? `${losing[0]!.name} pierde plata` : `${losing.map((row) => row.name).join(" y ")} pierden plata`}: revisa su gasto.`;

@@ -82,6 +82,8 @@ export interface DayPoint {
   readonly day: string;
   readonly revenue: number;
   readonly spend: number;
+  /** Lo que Meta reporta en compras ese día (su Píxel); se dibuja si Auream aún no tiene ventas. */
+  readonly metaRevenue?: number;
 }
 
 export interface Breakdown {
