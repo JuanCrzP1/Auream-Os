@@ -1,0 +1,15 @@
+/* Configuración › Campos y datos: «Cómo funciona», las pestañas y la pregunta
+ * de «Nuevo dato». Solo tokens del tema. */
+.data-settings { display: grid; gap: 18px; }
+.data-settings__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+
+.data-choice { width: min(520px, calc(100vw - 32px)); }
+.data-choice__options { display: grid; gap: 10px; margin-top: 4px; }
+.data-choice__option { display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; border: 1.5px solid color-mix(in srgb, var(--primary) 14%, transparent); border-radius: 16px; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--speed-fast) ease, background var(--speed-fast) ease; }
+.data-choice__option:hover, .data-choice__option:focus-visible { border-color: color-mix(in srgb, var(--primary) 55%, transparent); background: color-mix(in srgb, var(--primary) 4%, var(--surface)); outline: none; }
+.data-choice__icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.data-choice__icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.data-choice__text { display: grid; gap: 2px; min-width: 0; }
+.data-choice__text strong { font-size: 0.95rem; }
+.data-choice__text span { color: var(--text); font-size: 0.85rem; }
+.data-choice__text small { color: var(--muted); font-size: 0.78rem; }

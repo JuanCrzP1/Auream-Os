@@ -20,4 +20,4 @@ Lo que comparten Configuración, el editor de flujos, el chat y las difusiones v
 ## Permisos
 Todos los que ven flujos los ven, con su historial (`flows.read`); el chat lee solo los valores (`conversations.read`); crear, cambiar, programar y borrar es de dueños y administradores (`flows.write`).
 
-Es una pestaña de Configuración › Campos y datos (`app/settings/data`), junto a Campos del cliente: la página pone «Cómo funciona» (`shared/ui/how-it-works`) y la pregunta de «Nuevo dato» (`onNew`); `createNow` le pide abrir «crear».
+Es una pestaña de Configuración › Campos y datos (`app/settings/fields-and-data`), junto a Campos del cliente: la página pone «Cómo funciona» (`shared/ui/how-it-works`) y la pregunta de «Nuevo dato» (`onNew`); `createNow` le pide abrir «crear».

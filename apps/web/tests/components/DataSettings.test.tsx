@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { SYSTEM_CONTACT_FIELDS, type ContactFieldsResponse } from "@contracts/ContactFieldContracts";
 import type { BusinessDataResponse } from "@contracts/BusinessDataContracts";
-import { DataSettings } from "../../src/app/settings/data/DataSettings";
+import { DataSettings } from "../../src/app/settings/fields-and-data/DataSettings";
 import { LEGACY_SETTINGS } from "../../src/app/settings/settings-sections";
 
 // ---------------------------------------------------------------------------

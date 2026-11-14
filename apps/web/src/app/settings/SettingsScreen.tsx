@@ -10,7 +10,7 @@ import { lastAppLocation } from "@shared/navigation/lastAppLocation";
 import { SettingsLayout } from "@shared/ui/settings-layout/SettingsLayout";
 import { StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { DataSettings } from "./data/DataSettings";
+import { DataSettings } from "./fields-and-data/DataSettings";
 import { LEGACY_SETTINGS, SETTINGS_GROUPS, SETTINGS_ROUTES, type SettingsSectionId } from "./settings-sections";
 
 const soon = (what: string) => <StateCard icon={StateIcons.sparkles} title="Muy pronto" description={what} />;

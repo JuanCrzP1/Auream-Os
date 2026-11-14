@@ -9,7 +9,7 @@
 | Base | `infrastructure/persistence/sql/SqlBusinessData.ts` (repositorio y valores para el motor) · `SqlBusinessDataTimeline.ts` (programados e historial) · `SqlBusinessDataTexts.ts` (difusiones y respuestas rápidas) · migraciones `052_business_data.sql` y `054_business_data_timeline.sql` |
 | Motor | `flow-engine/ports/BusinessDataReader.ts` · `ExecutionOrchestrator` (una lectura por turno) · `templateResolver` · `evaluateCondition` |
 | API | `apps/api/routes/routeBusinessDataRequest.ts` · `composition/composeBusinessDataServices.ts` |
-| Web | `apps/web/src/features/business-data` (Configuración: lista, detalle en pestañas, `schedules/`, `history/`) · `apps/web/src/shared/business-data` (API y valores: los usan el editor, el chat y las difusiones) · `apps/web/src/app/settings/data` (la pantalla «Campos y datos») · `apps/web/src/shared/ui/how-it-works` («Cómo funciona») · `builder/tools/conditional/BusinessDataRule.tsx` |
+| Web | `apps/web/src/features/business-data` (Configuración: lista, detalle en pestañas, `schedules/`, `history/`) · `apps/web/src/shared/business-data` (API y valores: los usan el editor, el chat y las difusiones) · `apps/web/src/app/settings/fields-and-data` (la pantalla «Campos y datos») · `apps/web/src/shared/ui/how-it-works` («Cómo funciona») · `builder/tools/conditional/BusinessDataRule.tsx` |
 
 ## Lo que da valor
 
@@ -22,7 +22,7 @@ En Leona las variables globales son una lista de nombres con un valor inicial qu
 - **Mismo prefijo `g_` que Leona:** un flujo traído de allá funciona al crear el dato.
 - **Cambio programado** (Leona no lo tiene): otro valor entre dos fechas que entra y sale solo, igual en todo lo que lee `{g_…}`.
 - **Historial** con quién y «Volver a este valor».
-- **Junto a Campos del cliente, en una sola pantalla** (Configuración › Campos y datos, `/settings/data`, `apps/web/src/app/settings/data`): dos pestañas, un solo «Cómo funciona» (el mismo mensaje con `{ciudad}` y `{g_horario}`: Laura lee Medellín, Pedro Lima, los dos el mismo horario) y un solo «Nuevo dato» que primero pregunta «¿cambia con cada cliente o es igual para todos?». Como ManyChat (User Fields / Bot Fields), más «dónde se usa», programados e historial. Las direcciones viejas (`/settings/business-data`, `/settings/contact-fields`) llevan a su pestaña. Los ejemplos sirven a cualquier negocio de cualquier país.
+- **Junto a Campos del cliente, en una sola pantalla** (Configuración › Campos y datos, `/settings/data`, `apps/web/src/app/settings/fields-and-data`): dos pestañas, un solo «Cómo funciona» (el mismo mensaje con `{ciudad}` y `{g_horario}`: Laura lee Medellín, Pedro Lima, los dos el mismo horario) y un solo «Nuevo dato» que primero pregunta «¿cambia con cada cliente o es igual para todos?». Como ManyChat (User Fields / Bot Fields), más «dónde se usa», programados e historial. Las direcciones viejas (`/settings/business-data`, `/settings/contact-fields`) llevan a su pestaña. Los ejemplos sirven a cualquier negocio de cualquier país.
 
 ## Modelo
 
