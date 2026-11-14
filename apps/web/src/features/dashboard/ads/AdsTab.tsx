@@ -67,8 +67,8 @@ export function AdsTab({ filters }: { readonly filters: DashboardFilters }) {
       <section className="ads-tab__tops" aria-label="Resumen de anuncios">
         {tops.map((top) => (
           <div key={top.label} className={`ads-tab__top${top.lead ? " ads-tab__top--lead" : ""}`}>
-            <span className="ads-tab__label">{top.label}</span>
-            <strong>{top.value}{top.meta ? <> <MetaTag /></> : null}</strong>
+            <span className="ads-tab__label">{top.label}{top.meta ? <> <MetaTag /></> : null}</span>
+            <strong>{top.value}</strong>
             <span className="ui-muted">{top.note}</span>
           </div>
         ))}

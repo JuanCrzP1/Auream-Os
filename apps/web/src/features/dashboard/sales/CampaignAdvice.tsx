@@ -2,9 +2,15 @@ import "@shared/ads/ads-performance-table.css";
 import "./campaign-advice.css";
 import type { AdsDashboardResponse } from "@contracts/DashboardContracts";
 import { ADVICE_LABEL, formatRoas } from "@shared/ads/adsFormat";
+import { MetaTag } from "@shared/ads/MetaTag";
+import { metaBeside } from "@shared/ads/metaSource";
 import { money } from "../dashboardFormat";
 
-/** «Qué hacer con tus campañas»: las de más gasto con su consejo, ROAS real, ganancia y costo por venta. */
+/**
+ * «Qué hacer con tus campañas»: las de más gasto con su consejo, ROAS real,
+ * ganancia y costo por venta. Sin ventas de la campaña en Auream, el ROAS y el
+ * costo por compra son los que reporta Meta, con su etiqueta; la ganancia espera.
+ */
 export function CampaignAdvice({ data, onSeeAll }: { readonly data: AdsDashboardResponse; readonly onSeeAll: () => void }) {
   const rows = data.rows.slice(0, 5);
   return (
@@ -19,9 +25,17 @@ export function CampaignAdvice({ data, onSeeAll }: { readonly data: AdsDashboard
           <li key={row.id} className="campaign-advice__row">
             <span className={`ads-table__advice ads-table__advice--${row.advice}`}>{ADVICE_LABEL[row.advice]}</span>
             <span className="campaign-advice__name"><strong>{row.name}</strong><span>{row.adviceReason}</span></span>
-            <span className="campaign-advice__metric"><strong className={row.roas !== null && row.roas >= 3 ? "ads-table__good" : row.roas !== null && row.roas < 1 ? "ads-table__bad" : undefined}>{formatRoas(row.roas)}</strong><span>ROAS real</span></span>
+            {row.roas === null && row.roasMeta !== null ? (
+              <span className="campaign-advice__metric"><strong>{formatRoas(row.roasMeta)} <MetaTag /></strong><span>ROAS</span></span>
+            ) : (
+              <span className="campaign-advice__metric"><strong className={row.roas !== null && row.roas >= 3 ? "ads-table__good" : row.roas !== null && row.roas < 1 ? "ads-table__bad" : undefined}>{formatRoas(row.roas)}</strong><span>ROAS real</span></span>
+            )}
             <span className="campaign-advice__metric"><strong className={row.profit === null || row.profit >= 0 ? undefined : "ads-table__bad"}>{row.profit !== null && row.profit < 0 ? "−" : ""}{money(row.profit === null ? null : Math.abs(row.profit), data.currency)}</strong><span>ganancia</span></span>
-            <span className="campaign-advice__metric"><strong>{money(row.costPerSale, data.currency)}</strong><span>costo por venta{row.costPerSaleMeta !== null ? ` · Meta: ${money(row.costPerSaleMeta, data.currency)}` : ""}</span></span>
+            {row.costPerSale === null && row.costPerSaleMeta !== null ? (
+              <span className="campaign-advice__metric"><strong>{money(row.costPerSaleMeta, data.currency)} <MetaTag /></strong><span>costo por compra</span></span>
+            ) : (
+              <span className="campaign-advice__metric"><strong>{money(row.costPerSale, data.currency)}</strong><span>costo por venta{row.costPerSaleMeta !== null ? ` · ${metaBeside(money(row.costPerSaleMeta, data.currency))}` : ""}</span></span>
+            )}
           </li>
         ))}
       </ul>

@@ -7,6 +7,7 @@ import { measurementCopy } from "@shared/ads/measurementText";
 import { PerformanceSection } from "../../src/features/ads/components/PerformanceSection";
 import { AdsTab } from "../../src/features/dashboard/ads/AdsTab";
 import { AdsHero } from "../../src/features/dashboard/sales/AdsHero";
+import { CampaignAdvice } from "../../src/features/dashboard/sales/CampaignAdvice";
 import { summaryCards } from "../../src/features/dashboard/sales/summary/summaryCards";
 
 // ---------------------------------------------------------------------------
@@ -82,9 +83,9 @@ describe("Dashboard sin medición", () => {
     render(<MemoryRouter><AdsTab filters={{}} /></MemoryRouter>);
     expect(await screen.findByRole("status", { name: "Auream aún no ve los chats de tus anuncios" })).toBeInTheDocument();
     const tops = screen.getByRole("region", { name: "Resumen de anuncios" });
-    expect(tops).toHaveTextContent("ROAS0,2x MetaLo que reporta Meta");
+    expect(tops).toHaveTextContent("ROAS Meta0,2xLo que reporta Meta");
     expect(tops).toHaveTextContent("Ganancia—Se calcula cuando tus anuncios vendan en Auream");
-    expect(tops).toHaveTextContent("Costo por venta$ 5.855 COP Meta805 compras que vio Meta");
+    expect(tops).toHaveTextContent("Costo por venta Meta$ 5.855 COP805 compras que vio Meta");
     expect(screen.queryByText("¿Por qué Meta dice menos?")).toBeNull();
   });
 
@@ -107,6 +108,15 @@ describe("Dashboard sin medición", () => {
 
     const roas = summaryCards(sales(NONE)).find((card) => card.id === "roas")!;
     expect(roas).toMatchObject({ label: "ROAS", value: "0,2x", note: "Lo que reporta Meta", source: "meta", trend: null });
+  });
+
+  it("Qué hacer con tus campañas: sin ventas en Auream, el ROAS y el costo por compra de Meta con su etiqueta; la ganancia espera", () => {
+    render(<CampaignAdvice data={performance()} onSeeAll={() => {}} />);
+    const row = screen.getByText("dilo cantando (7926)").closest("li")!;
+    expect(row).toHaveTextContent("0,2x MetaROAS");
+    expect(row).toHaveTextContent("—ganancia");
+    expect(row).toHaveTextContent("$ 5.855 COP Metacosto por compra");
+    expect(row).not.toHaveTextContent("ROAS real");
   });
 
   it("Ventas con medición parcial: los números se ven, con la advertencia de que falta una parte", () => {
