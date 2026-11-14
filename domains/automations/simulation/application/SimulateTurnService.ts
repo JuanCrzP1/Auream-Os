@@ -73,6 +73,8 @@ export class SimulateTurnService {
     const envelope = this.envelopeFor(tenantId, snapshot, state, event);
     const run = await this.sandboxes.create({ tenantId, persona: state.persona, counters: state.counters, options: readOptions(body["options"]) }).run(snapshot, session, envelope);
     if (run.result.untouched && session?.status === "delayed" && event.type !== "skip-wait") notice = DELAYED_NOTICE;
+    // «Ir a otro flujo»: el laboratorio prueba un flujo a la vez; el salto se ve, no se hace.
+    if (run.result.handoff) notice = `Aquí el cliente pasa al flujo «${run.result.handoff.flowName || "elegido"}». Ábrelo y pruébalo para seguir: en un chat real sigue solo, con los datos guardados.`;
 
     const finalSession = run.session ?? session;
     const wait: SimulationWait | null = run.result.wakeUp

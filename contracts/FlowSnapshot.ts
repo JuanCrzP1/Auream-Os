@@ -39,6 +39,7 @@ export type NodeType =
   | "tags"
   | "payment-proof"
   | "record-sale"
+  | "set-field"
   | "condition"
   | "distributor"
   | "pixel"
@@ -47,6 +48,7 @@ export type NodeType =
   | "integration"
   | "menu"
   | "notification"
+  | "go-to-flow"
   | "end";
 
 export type EdgeOperator = "always" | "eq" | "neq" | "exists";

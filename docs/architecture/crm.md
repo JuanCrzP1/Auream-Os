@@ -4,7 +4,7 @@
 
 ## La idea central: cada etapa ES una etiqueta
 
-Estar en «Pidió precio» es tener la etiqueta «Pidió precio». Así, el bloque **Etiquetas** de los flujos, el chat y la ficha del contacto mueven clientes de etapa sin un camino aparte. Por eso no hay un bloque nuevo y siguen siendo 13 herramientas. Es el modelo de FunnelChat (columnas ligadas a etiquetas).
+Estar en «Pidió precio» es tener la etiqueta «Pidió precio». Así, el bloque **Etiquetas** de los flujos, el chat y la ficha del contacto mueven clientes de etapa sin un camino aparte. Por eso no hay un bloque aparte para el CRM. Es el modelo de FunnelChat (columnas ligadas a etiquetas).
 
 **Una sola etapa por embudo.** Contactos tiene un único paso por donde cambian las etiquetas (`LabelRulesContactRepository`):
 

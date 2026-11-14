@@ -1,3 +1,4 @@
+import type { FlowHandoff } from "./GoToFlowConfig";
 import type { FlowTimerReason } from "./FlowTimerContracts";
 
 /**
@@ -139,6 +140,12 @@ export interface NodeExecutionResult {
   readonly contextPatch: Readonly<Record<string, unknown>>;
   readonly nodeResult: Readonly<Record<string, unknown>>;
   readonly domainEvents: ReadonlyArray<string>;
+  /**
+   * «Ir a otro flujo»: este flujo terminó y el cliente sigue en otro. El motor
+   * no conoce los demás flujos: lo devuelve y quien corre el turno hace el
+   * salto (`FlowTurn`; el laboratorio solo lo muestra).
+   */
+  readonly handoff?: FlowHandoff;
 }
 
 export interface RuntimeInput {

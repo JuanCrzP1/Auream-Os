@@ -108,7 +108,7 @@ function BuilderView({ flowKey, onReload }: BuilderViewProps) {
         removeNode={edit.removeNode}
         readOnly={readOnly}
       >
-      <BuilderResourcesProvider>
+      <BuilderResourcesProvider flowKey={flowKey}>
       <div className="builder-stage">
         <header className="builder-topbar">
           <div className="builder-topbar__left">

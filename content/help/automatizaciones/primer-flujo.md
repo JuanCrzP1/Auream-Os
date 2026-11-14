@@ -5,7 +5,7 @@ summary: Un flujo que saluda, muestra lo que vendes y deja al cliente listo para
 order: 1
 updated: 2026-11-13
 keywords: flujo, bienvenida, crear, automatización, editor
-related: las-13-herramientas, laboratorio-de-pruebas, disparadores
+related: herramientas-del-editor, laboratorio-de-pruebas, disparadores
 ---
 
 Un **flujo** es un recorrido de bloques que responde solo por WhatsApp. Se guarda mientras lo armas: lo guardado es lo que corre.

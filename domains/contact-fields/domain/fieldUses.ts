@@ -6,7 +6,8 @@ import type { BuilderFlowSnapshot } from "../../../contracts/FlowSnapshot";
 // sus bloques (la misma que guarda el editor):
 //
 //   llena   Esperar respuesta (`targetKey`), Menú (`saveToField`),
-//           Integración (`responseMappings[].field`), Extensión IA (`responseVariable`)
+//           Integración (`responseMappings[].field`), Extensión IA (`responseVariable`),
+//           Guardar dato (`field`)
 //   lee     cualquier texto con `{clave}` o `{clave|…}`, y las reglas del
 //           Condicional sobre un campo del cliente (`customField`)
 //
@@ -56,6 +57,8 @@ function filledKeys(type: string, config: Readonly<Record<string, unknown>>): { 
     }
     case "ai":
       return { keys: [text(config["responseVariable"])].filter(Boolean), technical: [text(config["errorVariable"])].filter(Boolean) };
+    case "set-field":
+      return { keys: [text(config["field"])].filter(Boolean), technical: [] };
     case "payment-proof":
       return { keys: [], technical: [text(config["resultVariable"]), text(config["errorVariable"])].filter(Boolean) };
     case "record-sale":

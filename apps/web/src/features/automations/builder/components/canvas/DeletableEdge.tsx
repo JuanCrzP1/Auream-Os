@@ -43,6 +43,11 @@ import { selfLoopPath } from "./selfLoopPath";
  * a la entrada del mismo bloque lo atravesaría. Se dibuja como un lazo por
  * debajo del bloque (`selfLoopPath`) con `BaseEdge`, el mismo trazo base de
  * React Flow, así que conserva estilo, etiqueta y selección.
+ *
+ * UNA CONEXIÓN PERFECTAMENTE HORIZONTAL (dos bloques a la misma altura) tiene
+ * una caja de alto 0, y el navegador NO pinta un degradado sobre una caja así
+ * (`objectBoundingBox`): la línea desaparecía. Se corre su llegada un píxel,
+ * invisible a la vista, para que siempre tenga alto.
  */
 /** Trazo de la conexión seleccionada: más grueso que el normal (2.3) y con halo. */
 const SELECTED_STROKE_WIDTH = 3.6;
@@ -53,6 +58,7 @@ export function DeletableEdge(props: EdgeProps<CanvasEdge>) {
   const { id, source, target, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, selected } = props;
   const loopNode = useInternalNode(source);
   const selfLoop = source === target;
+  const flat = !selfLoop && Math.abs(sourceY - targetY) < 1;
   const strokeStyle = selected ? { ...props.style, strokeWidth: SELECTED_STROKE_WIDTH, filter: SELECTED_GLOW } : props.style;
 
   const loop = selfLoop
@@ -98,7 +104,7 @@ export function DeletableEdge(props: EdgeProps<CanvasEdge>) {
           {...(strokeStyle ? { style: strokeStyle } : {})}
         />
       ) : (
-        <BezierEdge {...props} {...(strokeStyle ? { style: strokeStyle } : {})} />
+        <BezierEdge {...props} {...(flat ? { targetY: targetY + 1 } : {})} {...(strokeStyle ? { style: strokeStyle } : {})} />
       )}
       {selected && (
         <EdgeLabelRenderer>

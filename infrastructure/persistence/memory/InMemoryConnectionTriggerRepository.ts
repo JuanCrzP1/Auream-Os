@@ -42,6 +42,6 @@ export class InMemoryFlowCatalog implements FlowCatalog {
   public async findMany(tenantId: string, ids: ReadonlyArray<string>): Promise<ReadonlyArray<FlowReference>> {
     return this.flows
       .filter((flow) => flow.tenantId === tenantId && ids.includes(flow.id))
-      .map(({ id, key, name, archived }) => ({ id, key: key ?? id, name, archived }));
+      .map(({ id, key, name, archived, paused }) => ({ id, key: key ?? id, name, archived, ...(paused ? { paused } : {}) }));
   }
 }

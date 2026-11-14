@@ -1,0 +1,27 @@
+/* Guardar dato: cómo quedará el dato, en una línea. Tokens del tema. */
+.set-field__preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 9px 11px;
+  border: 1px dashed color-mix(in srgb, var(--kit-accent, var(--primary)) 35%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 6%, transparent);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.set-field__preview code {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font: 600 0.8rem ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.set-field__error {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--rose);
+}

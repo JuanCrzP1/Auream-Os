@@ -1,6 +1,7 @@
 import type { FlowSnapshot } from "../../contracts/FlowSnapshot";
 import type { InboundEnvelope, NodeExecutionResult, RuntimeInput, Session } from "../../contracts/RuntimeContracts";
 import { WAKE_CONTEXT_KEY, timerOf, type FlowRunResult, type FlowStep } from "../../contracts/FlowTimerContracts";
+import { HANDOFF_PAYLOAD } from "../../contracts/GoToFlowConfig";
 import { pausedMs, stateOf, wakeUpOf } from "./turnState";
 
 import type { SessionStore, ContextWriter } from "../ports/RuntimePorts";
@@ -93,6 +94,12 @@ export class ExecutionLoop {
       return untouched(`delayed_message_ignored:${session.currentNodeId}`);
     }
 
+    // «Ir a otro flujo»: el flujo de destino empieza con los datos que guardó el anterior.
+    const carried = timer ? undefined : envelope.payload[HANDOFF_PAYLOAD.context];
+    if (carried && typeof carried === "object" && !Array.isArray(carried)) {
+      session = this.contextService.applyPatch(session, Object.fromEntries(Object.entries(carried).filter(([key]) => !key.startsWith("__"))));
+    }
+
     const aggregate = {
       executionStatus: "success" as NodeExecutionResult["executionStatus"],
       outputMessages: [] as Array<NodeExecutionResult["outputMessages"][number]>,
@@ -145,7 +152,9 @@ export class ExecutionLoop {
       this.eventTracker.trackNodeExecuted(session, currentNode.id, execution.executionStatus);
 
       if (execution.executionStatus !== "success") {
-        return finish(execution.executionStatus, undefined, execution.nodeResult);
+        const done = await finish(execution.executionStatus, undefined, execution.nodeResult);
+        // «Ir a otro flujo»: este terminó; quien corre el turno hace el salto.
+        return execution.handoff ? { ...done, handoff: execution.handoff } : done;
       }
 
       const outgoingEdges = snapshot.edgesBySource[currentNode.id] ?? [];

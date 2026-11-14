@@ -1,7 +1,9 @@
 import type { InboundEnvelope } from "../../../contracts/RuntimeContracts";
 import { alignWakeUpToDelivery, type FlowRunResult } from "../../../contracts/FlowTimerContracts";
+import type { FlowCatalog } from "../../connections/application/ports/FlowCatalog";
 import type { ConversationLog, DeliveryReport, FlowRunner, FlowTimers, FlowTurnTarget, OutboundDelivery } from "./ports/MessagingPorts";
 import { NO_JOURNAL, turnRecord, type TurnJournal } from "./FlowTurnJournal";
+import { nextHandoff } from "./flowHandoff";
 
 // ---------------------------------------------------------------------------
 // FlowTurn — UN turno de un flujo en una conversación, sea cual sea su origen
@@ -18,6 +20,11 @@ import { NO_JOURNAL, turnRecord, type TurnJournal } from "./FlowTurnJournal";
 //
 //   4. lo que guardaron los bloques y es un campo del cliente queda en el
 //      cliente (`TurnFields`), en paralelo con la entrega
+//
+//   5. «Ir a otro flujo»: si el flujo terminó pasando al cliente a otro, ese
+//      otro arranca AHORA, en el mismo turno y con los datos guardados
+//      (`flowHandoff.ts` decide si se puede: flujo activo, no el mismo, como
+//      mucho 5 saltos seguidos). Lo que envíen ambos cuenta junto.
 //
 // Cada turno (también uno que revienta) queda en el historial interno
 // (`TurnJournal`): si anotarlo o guardar los campos falla, el turno no se entera.
@@ -46,10 +53,27 @@ export class FlowTurn {
     private readonly timers: FlowTimers,
     private readonly now: () => Date = () => new Date(),
     private readonly journal: TurnJournal = NO_JOURNAL,
-    private readonly fields: TurnFields = NO_FIELDS
+    private readonly fields: TurnFields = NO_FIELDS,
+    /** Los flujos de la cuenta, para «Ir a otro flujo». Ausente: el salto no se hace (queda anotado). */
+    private readonly flows?: FlowCatalog
   ) {}
 
   public async run(target: FlowTurnTarget & { readonly conversationId: string }, envelope: InboundEnvelope): Promise<FlowTurnOutcome> {
+    let outcome = await this.single(target, envelope);
+    let current: { target: FlowTurnTarget; envelope: InboundEnvelope } = { target, envelope };
+    while (outcome.result.handoff) {
+      const step = await nextHandoff(this.flows, current.target, current.envelope, outcome.result.handoff, this.now());
+      if (step.kind === "refused") {
+        outcome = { ...outcome, result: { ...outcome.result, domainEvents: [...outcome.result.domainEvents, step.event] } };
+        break;
+      }
+      current = { target: step.target, envelope: step.envelope };
+      outcome = joined(outcome, await this.single({ ...step.target, conversationId: target.conversationId }, step.envelope));
+    }
+    return outcome;
+  }
+
+  private async single(target: FlowTurnTarget & { readonly conversationId: string }, envelope: InboundEnvelope): Promise<FlowTurnOutcome> {
     const startedAt = this.now();
     try {
       const outcome = await this.turn(target, envelope);
@@ -79,4 +103,12 @@ export class FlowTurn {
     await saving;
     return { result, report, ...(wakeUp ? { wakeUpAt: wakeUp.at } : {}) };
   }
+}
+
+/** Dos flujos en un mismo turno: lo que envió cada uno cuenta junto; la sesión es la del último. */
+function joined(first: FlowTurnOutcome, second: FlowTurnOutcome): FlowTurnOutcome {
+  return {
+    result: { ...second.result, domainEvents: [...first.result.domainEvents, ...second.result.domainEvents] },
+    report: { sent: first.report.sent + second.report.sent, failures: [...first.report.failures, ...second.report.failures], results: [...first.report.results, ...second.report.results] }
+  };
 }

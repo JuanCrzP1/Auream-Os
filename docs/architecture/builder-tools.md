@@ -13,7 +13,7 @@ Lo que NO es visual de cada bloque vive una sola vez en `contracts/blocks/` y lo
 | Archivo | Qué decide |
 |---|---|
 | `BlockRules.ts` | El contrato: tipo, nombre, contenido y configuración con que nace, si se ofrece en la paleta, si cierra una rama, sus salidas, si está listo (`validate`) y su forma canónica (`normalizeConfig`, con los lectores de `contracts/*Config.ts`) |
-| `blockCatalog.ts` | Las reglas de los 14 tipos (`MENU_BLOCK`, `MESSAGE_BLOCK`…), `findBlockRules`, `blockOutputs` |
+| `blockCatalog.ts` | Las reglas de los 16 tipos (15 en la paleta + Inicio/Finalizar; los últimos: Guardar dato `set-field` e Ir a otro flujo `go-to-flow`, 2026-11-14) (`MENU_BLOCK`, `MESSAGE_BLOCK`…), `findBlockRules`, `blockOutputs` |
 | `outputs.ts` · `validation/*` | Salidas con nombre y validación de cada bloque |
 | `connectionRules.ts` | ¿Se puede trazar esta conexión? (una por salida, nada llega al inicio, salidas que existan) |
 | `reviewFlow.ts` | «Revisión del flujo»: errores y avisos, bloque a bloque |
@@ -68,6 +68,7 @@ Lo vigilan los tests de arquitectura (`toolRegistry`, `toolUiRegistry`, `distrib
 Algunos editores usan cosas de la cuenta al configurar:
 
 - **Datos para ofrecer**: el catálogo de etiquetas (el bloque Etiquetas muestra la LISTA de la cuenta, con su color, para marcar o desmarcar; la regla «Etiqueta» del Condicional las autocompleta) y las conexiones de IA de la cuenta (sin claves, con su estado). Mañana, píxeles.
+- **Flujos de la cuenta** (`flows`, `currentFlowKey`): «Ir a otro flujo» los elige de una lista (sin el que se edita ni los archivados; uno pausado se ve pero no se elige). Los carga `context/useFlowOptions.ts`.
 - **Capacidades**: `createLabel`, `testIntegration`, `createAiCredential` (conectar una IA sin salir del bloque), `listAiModels` (los modelos reales de esa cuenta del proveedor) y `testAi` («Probar» la Extensión IA), `testPixel` (el Pixel, que exige el código de prueba de Meta; el bloque no conecta píxeles: eso se hace solo en Meta Ads), `testPaymentProof` («Probar» el Comprobante con una imagen o PDF de ejemplo; reduce las fotos en el navegador), `products` (el catálogo de Ventas para Registrar venta; el bloque no crea productos: eso se hace en Ventas → Productos) y `uploadMedia` (subir archivos de los mensajes). No lanzan: devuelven un resultado o un mensaje para mostrar.
 
 - Llegan por props, en `ToolEditorProps.resources` (`tools/ToolResources.ts`). Son opcionales: un editor funciona igual sin ellos.

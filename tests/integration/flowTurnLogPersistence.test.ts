@@ -26,12 +26,15 @@ describe("SqlFlowTurnJournal", () => {
     };
     await journal.record({ ...base, origin: "message", startedAt: "2026-11-09T12:00:00.000Z", finishedAt: "2026-11-09T12:00:01.000Z", steps: [{ nodeId: "m1", type: "message", status: "success" }], wakeUp: { reason: "resume", at: "2026-11-09T12:03:00.000Z" } });
     await journal.record({ ...base, origin: "timer", trigger: "resume:intervalo", startedAt: "2026-11-09T12:03:00.010Z", finishedAt: "2026-11-09T12:03:00.900Z", steps: [], wakeUp: null, error: "uazapi caído" });
+    // «Ir a otro flujo»: el turno del flujo de destino queda con su origen.
+    await journal.record({ ...base, origin: "handoff", trigger: "go-to-flow", startedAt: "2026-11-09T12:04:00.000Z", finishedAt: "2026-11-09T12:04:00.500Z", steps: [], wakeUp: null });
 
     const rows = await sql.query<{ origin: string; steps: unknown; wake_up: unknown; error: string | null }>(
       "select origin, steps, wake_up, error from flow_turn_log where tenant_id = $1 and conversation_key = $2 order by started_at desc",
       [tenant, "conv-1"]
     );
     expect(rows.rows).toEqual([
+      { origin: "handoff", steps: [], wake_up: null, error: null },
       { origin: "timer", steps: [], wake_up: null, error: "uazapi caído" },
       { origin: "message", steps: [{ nodeId: "m1", type: "message", status: "success" }], wake_up: { reason: "resume", at: "2026-11-09T12:03:00.000Z" }, error: null }
     ]);

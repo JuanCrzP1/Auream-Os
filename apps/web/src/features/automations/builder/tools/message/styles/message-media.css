@@ -585,6 +585,14 @@ video.media-file__media {
   color: var(--rose);
 }
 
+/* Enlace con variable: se pone al enviar. */
+.media-url__hint {
+  margin: 0;
+  font-size: 0.71rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
 .media-url__preview {
   display: flex;
   align-items: center;

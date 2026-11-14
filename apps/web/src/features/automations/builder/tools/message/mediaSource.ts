@@ -7,7 +7,7 @@ import { isUsableMediaUrl as isUsableUrl } from "@contracts/blocks/validation/me
 // ---------------------------------------------------------------------------
 
 /** Solo `http:`/`https:` cuentan como fuente (la misma regla que valida el bloque). */
-export { isUsableMediaUrl as isUsableUrl } from "@contracts/blocks/validation/message";
+export { hasMediaVariable, isMediaSource, isUsableMediaUrl as isUsableUrl } from "@contracts/blocks/validation/message";
 
 /** ¿El archivo del bloque está subido (tiene su URL guardada)? */
 export function isUploaded(item: MessageItem): boolean {

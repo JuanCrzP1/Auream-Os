@@ -113,7 +113,17 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
   const recorder = new ConversationRecorder(conversations);
   const delivery = deps.connections.channel;
   // Un solo «turno de flujo» para los tres orígenes: mensaje, envío a mano y despertador.
-  const turn = new FlowTurn(engine, delivery, recorder, new SchedulerFlowTimers(deps.scheduler), undefined, deps.journal, deps.contactFields ? contactFieldTurns(deps.contactFields, deps.contacts.directory) : undefined);
+  const turn = new FlowTurn(
+    engine,
+    delivery,
+    recorder,
+    new SchedulerFlowTimers(deps.scheduler),
+    undefined,
+    deps.journal,
+    deps.contactFields ? contactFieldTurns(deps.contactFields, deps.contacts.directory) : undefined,
+    // «Ir a otro flujo»: el flujo de destino tiene que ser de la cuenta y estar activo.
+    deps.connections.flows
+  );
   const launcher = new StartFlowService(deps.connections.flows, lock, new RepositorySessionControl(sessionRepository), turn);
 
   const inbound = new HandleInboundMessageService(

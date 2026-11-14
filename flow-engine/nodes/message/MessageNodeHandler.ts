@@ -3,6 +3,7 @@ import type { ChatPresence, NodeExecutionResult, OutboundMessage, RuntimeInput }
 import { INLINE_PAUSE_BUDGET_MS } from "../../../contracts/FlowTimerContracts";
 import type { Session } from "../../../contracts/RuntimeContracts";
 import { intervalMs, readMessageItems, type MessageItem } from "../../../contracts/MessageConfig";
+import { isUsableMediaUrl } from "../../../contracts/blocks/validation/message";
 import type { NodeHandler } from "../NodeHandler";
 import { ConversationTemplates } from "../../templates/ConversationTemplates";
 
@@ -50,6 +51,11 @@ export function presenceBefore(items: ReadonlyArray<MessageItem>, index: number)
   return next.kind === "audio" ? "recording" : "composing";
 }
 
+/** El enlace de cada medio (puede llevar variables); vacío si no es un medio. */
+function urlOf(item: MessageItem): string {
+  return item.kind === "text" || item.kind === "interval" ? "" : item.url;
+}
+
 /** Texto de cada bloque que lleva variables (texto o leyenda). */
 function templateOf(item: MessageItem): string {
   if (item.kind === "text") return item.text;
@@ -67,6 +73,8 @@ export class MessageNodeHandler implements NodeHandler {
   public async execute(node: FlowNode, input: RuntimeInput, session: Session): Promise<NodeExecutionResult> {
     const items = readMessageItems(node.config, node.content);
     const texts = await this.templates.render(items.map(templateOf), input, session);
+    // El enlace de un medio puede ser una variable (`{kie.ai.result}`), como en Leona: se pone al enviar.
+    const urls = await this.templates.render(items.map(urlOf), input, session);
     const outputMessages: OutboundMessage[] = [];
     const domainEvents: string[] = [];
     const contextPatch: Record<string, unknown> = {};
@@ -104,8 +112,14 @@ export class MessageNodeHandler implements NodeHandler {
         outputMessages.push({ ...base, kind: "pause", content: "", delayMs: ms, ...(presence ? { presence } : {}) });
         continue;
       }
-      if (!item.url) {
+      const url = urls[index]!.trim();
+      if (!url) {
         domainEvents.push(`message_item_not_deliverable:${node.id}:${item.kind}`);
+        continue;
+      }
+      // Una variable que no trajo un enlace (vacía, o texto suelto): ese medio no sale y queda anotado.
+      if (!isUsableMediaUrl(url)) {
+        domainEvents.push(`message_media_not_a_link:${node.id}:${item.kind}`);
         continue;
       }
       const onceKey = sentOnceKey(node.id, item.id);
@@ -115,7 +129,7 @@ export class MessageNodeHandler implements NodeHandler {
         ...base,
         kind: "media",
         content: texts[index]!,
-        media: { type: item.kind, url: item.url, ...(item.fileName ? { fileName: item.fileName } : {}) }
+        media: { type: item.kind, url, ...(item.fileName ? { fileName: item.fileName } : {}) }
       });
     }
 

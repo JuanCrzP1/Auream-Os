@@ -13,6 +13,6 @@ export class SqlFlowCatalog implements FlowCatalog {
       "select id, key, name, status from automations where tenant_id = $1 and id = any($2::uuid[])",
       [tenantId, valid]
     );
-    return result.rows.map((row) => ({ id: row.id, key: row.key, name: row.name, archived: row.status === "archived" }));
+    return result.rows.map((row) => ({ id: row.id, key: row.key, name: row.name, archived: row.status === "archived", paused: row.status === "paused" }));
   }
 }

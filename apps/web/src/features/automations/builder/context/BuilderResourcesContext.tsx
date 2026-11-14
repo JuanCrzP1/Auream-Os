@@ -12,6 +12,7 @@ import { usePixelConnections } from "@shared/pixel-connections/usePixelConnectio
 import { useProductCatalog } from "@shared/products/useProductCatalog";
 import { useContactFieldCatalog } from "@shared/contact-fields/useContactFieldCatalog";
 import { useBusinessData } from "@shared/business-data/useBusinessData";
+import { useFlowOptions } from "./useFlowOptions";
 
 // ---------------------------------------------------------------------------
 // Recursos de la cuenta (datos y capacidades) para los editores de herramientas.
@@ -26,7 +27,7 @@ import { useBusinessData } from "@shared/business-data/useBusinessData";
 
 const BuilderResourcesContext = createContext<ToolResources>(EMPTY_TOOL_RESOURCES);
 
-export function BuilderResourcesProvider({ children }: { readonly children: ReactNode }) {
+export function BuilderResourcesProvider({ children, flowKey }: { readonly children: ReactNode; /** El flujo que se edita: «Ir a otro flujo» no lo ofrece. */ readonly flowKey?: string }) {
   const catalog = useLabelCatalog();
   const { create } = catalog;
   const ai = useAiCredentials();
@@ -39,6 +40,8 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
   const { refresh: refreshFields, create: createField } = fields;
   const business = useBusinessData();
   const { refresh: refreshBusiness } = business;
+  const flowOptions = useFlowOptions();
+  const { refresh: refreshFlows } = flowOptions;
 
   // Los píxeles se conectan en Meta Ads, los productos se crean en Ventas y los
   // campos en Configuración, que los bloques abren en otra pestaña: al volver
@@ -50,10 +53,11 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
       void refreshProducts();
       void refreshFields();
       void refreshBusiness();
+      void refreshFlows();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refreshPixels, refreshProducts, refreshFields, refreshBusiness]);
+  }, [refreshPixels, refreshProducts, refreshFields, refreshBusiness, refreshFlows]);
 
   const resources = useMemo<ToolResources>(
     () => ({
@@ -87,6 +91,9 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
         status: fields.status
       },
       businessData: business.list,
+      flows: flowOptions.flows,
+      flowsStatus: flowOptions.status,
+      ...(flowKey ? { currentFlowKey: flowKey } : {}),
       // Crea en el catálogo (el mismo de Configuración › Campos y datos › Campos del cliente) y lo recarga.
       createContactField: async (request) => {
         try {
@@ -96,7 +103,7 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
         }
       }
     }),
-    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, catalogOfProducts.products, catalogOfProducts.status, fields.fields, fields.data, fields.status, createField, business.list]
+    [catalog.labels, create, ai.credentials, ai.status, createAiCredential, pixels.connections, pixels.status, catalogOfProducts.products, catalogOfProducts.status, fields.fields, fields.data, fields.status, createField, business.list, flowOptions.flows, flowOptions.status, flowKey]
   );
 
   return <BuilderResourcesContext.Provider value={resources}>{children}</BuilderResourcesContext.Provider>;

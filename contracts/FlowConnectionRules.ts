@@ -22,6 +22,7 @@ export const SINGLE_OUTPUT_NODE_TYPES: ReadonlySet<NodeType> = new Set<NodeType>
   "tags",
   "pixel",
   "record-sale",
+  "set-field",
   "notification"
 ]);
 

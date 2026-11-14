@@ -5,7 +5,7 @@ summary: El cliente envía su comprobante, Auream lo lee y, si es válido, regis
 order: 5
 updated: 2026-11-11
 keywords: cobrar, pago, comprobante, transferencia, validar
-related: registrar-venta, por-revisar, las-13-herramientas
+related: registrar-venta, por-revisar, herramientas-del-editor
 ---
 
 ## El recorrido

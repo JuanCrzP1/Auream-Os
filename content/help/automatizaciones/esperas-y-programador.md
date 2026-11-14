@@ -5,7 +5,7 @@ summary: Cómo esperar una respuesta, qué pasa si no llega y cómo seguir más 
 order: 4
 updated: 2026-11-11
 keywords: esperar, tiempo agotado, programador, horario, recordatorio
-related: las-13-herramientas, crear-cuenta-y-empresa
+related: herramientas-del-editor, crear-cuenta-y-empresa
 ---
 
 ## Esperar respuesta y Menú

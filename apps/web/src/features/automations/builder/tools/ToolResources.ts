@@ -88,6 +88,14 @@ export interface ToolContactFields {
   readonly status: ToolAiCredentialsStatus;
 }
 
+/** Un flujo de la cuenta, para «Ir a otro flujo». */
+export interface ToolFlowOption {
+  readonly id: string;
+  readonly key: string;
+  readonly name: string;
+  readonly status: "active" | "paused" | "draft" | "archived";
+}
+
 export interface ToolResources extends ToolCapabilities {
   readonly labels: ReadonlyArray<ToolLabelOption>;
   /** Conexiones de IA de la cuenta (sin claves: solo su pista). */
@@ -103,6 +111,11 @@ export interface ToolResources extends ToolCapabilities {
   readonly contactFields?: ToolContactFields;
   /** Datos del negocio (`{g_…}`): la regla «Dato del negocio» del Condicional los elige de una lista. */
   readonly businessData?: ReadonlyArray<BusinessDatum>;
+  /** Los flujos de la cuenta, para «Ir a otro flujo». */
+  readonly flows?: ReadonlyArray<ToolFlowOption>;
+  readonly flowsStatus?: ToolAiCredentialsStatus;
+  /** El flujo que se está editando (no se puede ir a sí mismo). */
+  readonly currentFlowKey?: string;
 }
 
 export const EMPTY_TOOL_RESOURCES: ToolResources = { labels: [] };

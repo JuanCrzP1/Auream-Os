@@ -35,7 +35,7 @@ describe("editar flujos por MCP", () => {
     const token = await s.credential("write");
 
     const types = await s.result(token, "list_block_types");
-    expect(types.blockTypes.map((block: { type: string }) => block.type)).toEqual(["message", "question", "tags", "payment-proof", "record-sale", "condition", "distributor", "pixel", "ai", "delay", "integration", "menu", "notification"]);
+    expect(types.blockTypes.map((block: { type: string }) => block.type)).toEqual(["message", "question", "tags", "payment-proof", "record-sale", "set-field", "condition", "distributor", "pixel", "ai", "delay", "integration", "menu", "notification", "go-to-flow"]);
     expect((await s.result(token, "get_block_type", { type: "menu" })).fields.options).toMatch(/SALIDA/);
 
     const flow = await s.result(token, "create_flow", { name: "Bienvenida" });

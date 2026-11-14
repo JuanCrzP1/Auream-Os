@@ -14,6 +14,7 @@ import { RECORD_SALE_DEFAULT_CONFIG, readRecordSaleConfig } from "../RecordSaleC
 import { TAGS_DEFAULT_CONFIG, readTagsConfig } from "../TagsConfig";
 import { WAIT_RESPONSE_DEFAULT_CONFIG, readWaitResponseConfig } from "../WaitResponseConfig";
 import type { BlockData, BlockOutput, BlockRules } from "./BlockRules";
+import { GO_TO_FLOW_BLOCK, SET_FIELD_BLOCK } from "./dataFlowBlocks";
 import { aiOutputs, conditionOutputs, distributorOutputs, integrationOutputs, menuOutputs, paymentProofOutputs, waitResponseOutputs } from "./outputs";
 import { validateAi } from "./validation/ai";
 import { validateCondition } from "./validation/condition";
@@ -171,21 +172,12 @@ export const END_BLOCK: BlockRules = { type: "end", label: "Finalizar", defaultC
 /** Todos los bloques, en el orden de la paleta (los de sistema al principio y al final). */
 export const BLOCK_CATALOG: ReadonlyArray<BlockRules> = [
   START_BLOCK,
-  MESSAGE_BLOCK,
-  WAIT_RESPONSE_BLOCK,
-  TAGS_BLOCK,
-  PAYMENT_PROOF_BLOCK,
-  RECORD_SALE_BLOCK,
-  CONDITION_BLOCK,
-  DISTRIBUTOR_BLOCK,
-  PIXEL_BLOCK,
-  AI_BLOCK,
-  DELAY_BLOCK,
-  INTEGRATION_BLOCK,
-  MENU_BLOCK,
-  NOTIFICATION_BLOCK,
+  MESSAGE_BLOCK, WAIT_RESPONSE_BLOCK, TAGS_BLOCK, PAYMENT_PROOF_BLOCK, RECORD_SALE_BLOCK, SET_FIELD_BLOCK,
+  CONDITION_BLOCK, DISTRIBUTOR_BLOCK, PIXEL_BLOCK, AI_BLOCK, DELAY_BLOCK, INTEGRATION_BLOCK, MENU_BLOCK, NOTIFICATION_BLOCK, GO_TO_FLOW_BLOCK,
   END_BLOCK
 ];
+
+export { GO_TO_FLOW_BLOCK, SET_FIELD_BLOCK };
 
 const BY_TYPE = new Map<string, BlockRules>(BLOCK_CATALOG.map((block) => [block.type, block]));
 

@@ -62,6 +62,8 @@ function renameSlots(type: string, config: Data, rename: ReadonlyMap<string, str
       return "saveToField" in config ? { ...config, saveToField: renamed(config["saveToField"], rename) } : config;
     case "ai":
       return "responseVariable" in config ? { ...config, responseVariable: renamed(config["responseVariable"], rename) } : config;
+    case "set-field":
+      return "field" in config ? { ...config, field: renamed(config["field"], rename) } : config;
     case "integration":
       return Array.isArray(config["responseMappings"])
         ? { ...config, responseMappings: config["responseMappings"].map((mapping: Data) => (mapping && typeof mapping === "object" ? { ...mapping, field: renamed(mapping["field"], rename) } : mapping)) }

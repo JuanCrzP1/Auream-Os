@@ -6,6 +6,8 @@ import { waitResponseUi } from "./wait-response/ui";
 import { tagsUi } from "./tags/ui";
 import { paymentProofUi } from "./payment-proof/ui";
 import { recordSaleUi } from "./record-sale/ui";
+import { setFieldUi } from "./set-field/ui";
+import { goToFlowUi } from "./go-to-flow/ui";
 import { conditionalUi } from "./conditional/ui";
 import { distributorUi } from "./distributor/ui";
 import { pixelUi } from "./pixel/ui";
@@ -29,6 +31,7 @@ const TOOL_UIS: ReadonlyArray<ToolUi> = [
   tagsUi,
   paymentProofUi,
   recordSaleUi,
+  setFieldUi,
   conditionalUi,
   distributorUi,
   pixelUi,
@@ -37,6 +40,7 @@ const TOOL_UIS: ReadonlyArray<ToolUi> = [
   integrationUi,
   menuUi,
   notificationUi,
+  goToFlowUi,
   endUi
 ];
 

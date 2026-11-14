@@ -9,6 +9,8 @@ export interface FlowReference {
   readonly key: string;
   readonly name: string;
   readonly archived: boolean;
+  /** Pausado: no arranca solo (disparadores, «Ir a otro flujo»). Ausente: no. */
+  readonly paused?: boolean;
 }
 
 export interface FlowCatalog {

@@ -10,7 +10,8 @@ import type { DeliveryReport, FlowTurnTarget } from "./ports/MessagingPorts";
 // (Neon por 14 días y una línea en el registro de Vercel).
 // ---------------------------------------------------------------------------
 
-export type FlowTurnOrigin = "message" | "timer" | "manual";
+/** `handoff`: otro flujo pasó al cliente a este («Ir a otro flujo»). */
+export type FlowTurnOrigin = "message" | "timer" | "manual" | "handoff";
 
 export interface FlowTurnRecord {
   readonly tenantId: string;
@@ -47,6 +48,7 @@ function originOf(envelope: InboundEnvelope): { origin: FlowTurnOrigin; trigger:
   const timer = timerOf(envelope);
   if (timer) return { origin: "timer", trigger: `${timer.reason}:${timer.nodeId}` };
   if (envelope.payload["manual"] === true) return { origin: "manual", trigger: "manual" };
+  if (envelope.payload["handoff"] === true) return { origin: "handoff", trigger: "go-to-flow" };
   const text = envelope.payload["text"];
   return { origin: "message", trigger: typeof text === "string" ? text.slice(0, TRIGGER_MAX) : "" };
 }

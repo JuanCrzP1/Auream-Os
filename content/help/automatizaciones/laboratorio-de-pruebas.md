@@ -5,7 +5,7 @@ summary: Conversa con tu flujo como si fueras un cliente, sin enviar nada real.
 order: 3
 updated: 2026-11-11
 keywords: laboratorio, probar, test, simulador
-related: primer-flujo, las-13-herramientas
+related: primer-flujo, herramientas-del-editor
 ---
 
 El **laboratorio** abre un chat estilo WhatsApp donde tú eres el cliente. El flujo responde de verdad, pero **nada sale a WhatsApp**.

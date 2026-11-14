@@ -10,6 +10,8 @@ import { MessageNodeHandler } from "../../../flow-engine/nodes/message/MessageNo
 import { NotificationNodeHandler } from "../../../flow-engine/nodes/notification/NotificationNodeHandler";
 import { PaymentProofNodeHandler } from "../../../flow-engine/nodes/payment-proof/PaymentProofNodeHandler";
 import { RecordSaleNodeHandler } from "../../../flow-engine/nodes/record-sale/RecordSaleNodeHandler";
+import { SetFieldNodeHandler } from "../../../flow-engine/nodes/set-field/SetFieldNodeHandler";
+import { GoToFlowNodeHandler } from "../../../flow-engine/nodes/go-to-flow/GoToFlowNodeHandler";
 import type { SalesLedger } from "../../../flow-engine/ports/SalesLedger";
 import { DisabledSalesLedger } from "../../../infrastructure/sales/DisabledSalesLedger";
 import { PixelNodeHandler } from "../../../flow-engine/nodes/pixel/PixelNodeHandler";
@@ -114,6 +116,7 @@ export function composeNodeRuntime(
       dependencies.contacts
     ),
     new RecordSaleNodeHandler(dependencies.sales, dependencies.contacts),
+    new SetFieldNodeHandler(dependencies.contacts),
     new ConditionNodeHandler(dependencies.contacts),
     new DistributorNodeHandler(dependencies.roundRobin),
     new PixelNodeHandler(dependencies.conversions, dependencies.contacts),
@@ -122,6 +125,7 @@ export function composeNodeRuntime(
     new IntegrationNodeHandler(dependencies.http, dependencies.contacts),
     new MenuNodeHandler(templates),
     new NotificationNodeHandler(templates),
+    new GoToFlowNodeHandler(),
     new EndNodeHandler()
   ]);
 }

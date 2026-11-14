@@ -1,16 +1,16 @@
 ---
-title: Las 13 herramientas del editor de flujos
+title: Las 15 herramientas del editor de flujos
 module: automatizaciones
 summary: Para qué sirve cada bloque y cuándo usarlo.
 order: 2
-updated: 2026-11-11
-keywords: bloques, herramientas, mensaje, menú, condicional, etiquetas, comprobante, registrar venta, distribuidor, programador, notificación, integración, ia, pixel
-related: primer-flujo, cobrar-y-comprobante, esperas-y-programador
+updated: 2026-11-14
+keywords: bloques, herramientas, mensaje, menú, condicional, etiquetas, comprobante, registrar venta, distribuidor, programador, notificación, integración, ia, pixel, guardar dato, manipulador, ir a otro flujo, conexión de flujo
+related: primer-flujo, cobrar-y-comprobante, esperas-y-programador, guardar-dato, ir-a-otro-flujo
 ---
 
 ## Conversar
 
-- **Mensaje:** texto, foto, video, audio o archivo, con pausas y «escribiendo…».
+- **Mensaje:** texto, foto, video, audio o archivo, con pausas y «escribiendo…». El enlace del archivo puede ser una variable, como `{portada}`.
 - **Esperar respuesta:** espera lo que el cliente escriba y lo guarda; con tiempo máximo.
 - **Menú:** botones o lista de opciones; cada opción sigue su camino.
 
@@ -19,6 +19,8 @@ related: primer-flujo, cobrar-y-comprobante, esperas-y-programador
 - **Condicional:** sigue un camino u otro según lo que dijo, sus etiquetas, el día o la hora.
 - **Etiquetas:** pone o quita etiquetas al cliente. En el CRM, las etapas también son etiquetas.
 - **Distribuidor:** reparte clientes entre caminos o asesores por turnos.
+- **Guardar dato:** pone o cambia un dato del cliente, o lleva una cuenta (reintentos, puntos).
+- **Ir a otro flujo:** este flujo termina y el cliente sigue en otro, con lo que ya contó.
 
 ## Vender
 

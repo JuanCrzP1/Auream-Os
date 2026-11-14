@@ -29,7 +29,13 @@ const EVENT_NOTES: ReadonlyArray<readonly [RegExp, (match: RegExpMatchArray) => 
   [/^delay_(resumed|elapsed):/, () => "Terminó la espera del Programador"],
   [/^notification_skipped:/, () => "No avisó al equipo: falta un número válido"],
   [/_variable_missing:[^:]+:(.+)$/, (match) => `Variable sin valor: {${match[1]}}`],
-  [/^distributor_without_outputs:/, () => "El Distribuidor no tiene salidas"]
+  [/^distributor_without_outputs:/, () => "El Distribuidor no tiene salidas"],
+  [/^go_to_flow:[^:]+:(.+)$/, (match) => `Aquí el cliente pasa al flujo «${match[1]}»`],
+  [/^go_to_flow_skipped:/, () => "No pasa a ningún flujo: falta elegirlo"],
+  [/^set_field_not_a_number:/, () => "No hizo la cuenta: el dato o el número no es un número (el dato no cambió)"],
+  [/^set_field_divide_by_zero:/, () => "No dividió entre 0 (el dato no cambió)"],
+  [/^set_field_skipped:/, () => "No guardó nada: falta el dato o es uno que un flujo no cambia"],
+  [/^message_media_not_a_link:[^:]+:(.+)$/, () => "Un archivo no salió: su variable no trae un enlace"]
 ];
 
 function eventNotes(events: ReadonlyArray<string>): string[] {

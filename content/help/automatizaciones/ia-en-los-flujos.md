@@ -5,7 +5,7 @@ summary: La Extensión IA responde o entiende mensajes con tu propia clave de IA
 order: 7
 updated: 2026-11-11
 keywords: ia, inteligencia artificial, openai, gemini, extensión ia
-related: las-13-herramientas
+related: herramientas-del-editor
 ---
 
 ## Antes de empezar

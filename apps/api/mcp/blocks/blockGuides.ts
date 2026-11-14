@@ -24,7 +24,7 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
   message: {
     purpose: "Envía al cliente uno o varios contenidos en orden (texto, imagen, video, audio, documento) y sigue.",
     fields: {
-      items: "Lista en orden. Texto: {kind:'text', text}. Medio: {kind:'image'|'video'|'audio'|'file', url (https pública), caption?, fileName?, sendOnce? (solo la primera vez)}. Pausa entre envíos: {kind:'interval', amount, unit:'seconds'|'minutes'|'hours'}."
+      items: "Lista en orden. Texto: {kind:'text', text}. Medio: {kind:'image'|'video'|'audio'|'file', url (https pública o una variable que traiga el enlace al enviar, como '{kie.ai.result}' o '{portada}'; si al enviar no es un enlace, ese medio no sale), caption?, fileName?, sendOnce? (solo la primera vez)}. Pausa entre envíos: {kind:'interval', amount, unit:'seconds'|'minutes'|'hours'}."
     },
     outputs: "Una sola salida.",
     example: { items: [{ kind: "text", text: "¡Hola {first_name}! 👋" }, { kind: "interval", amount: 2, unit: "seconds" }, { kind: "text", text: "¿En qué te ayudo?" }] }
@@ -151,6 +151,16 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
     outputs: "Una sola salida.",
     example: { productId: "<id>", amountMode: "variable", amount: "{comprobante.valor}", currency: "{comprobante.moneda}" }
   },
+  "set-field": {
+    purpose: "Guardar dato (el Manipulador de Leona): pone un valor en un dato del cliente o de la conversación, o hace una cuenta con el número que ya tiene. Si es un Campo del cliente, queda en su ficha. Los Datos del negocio (g_…) y los datos que llena Auream no se cambian.",
+    fields: {
+      field: "Clave del dato (letras, números, _, - o .), p. ej. 'cancion_video' o 'reintentos'. Luego se usa como {cancion_video}.",
+      operation: "'set' (poner el valor) | 'add' | 'subtract' | 'multiply' | 'divide' (cuenta con el número que tiene; vacío cuenta como 0; si algo no es número o se divide entre 0, el dato no cambia).",
+      value: "El valor (con variables: 'usada', '{cancion_2}', '{kie.ai.result}') o el número de la cuenta ('1', '{comprobante.valor}'). Obligatorio."
+    },
+    outputs: "Una sola salida.",
+    example: { field: "cancion_video", operation: "set", value: "{cancion_2}" }
+  },
   pixel: {
     purpose: "Envía un evento de conversión a Meta (Lead o Compra).",
     fields: {
@@ -161,6 +171,15 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
     },
     outputs: "Una sola salida.",
     example: { connectionId: "<id>", event: "lead" }
+  },
+  "go-to-flow": {
+    purpose: "Ir a otro flujo (la Conexión de flujo de Leona): este flujo termina y el cliente sigue, en el mismo momento, en el inicio del flujo elegido, con los datos que guardó la conversación. Si el flujo de destino está pausado, archivado o es el mismo, el salto no ocurre (queda anotado); como mucho 5 saltos seguidos.",
+    fields: {
+      flowId: "Id del flujo de destino (de list_flows), de la misma cuenta y activo. Obligatorio.",
+      flowName: "Su nombre (para mostrarlo en el lienzo)."
+    },
+    outputs: "Ninguna: la conversación sigue en el otro flujo (no se le conecta nada).",
+    example: { flowId: "<id de list_flows>", flowName: "Promoción" }
   },
   notification: {
     purpose: "Avisa por WhatsApp a un número del EQUIPO (no al cliente), desde el número conectado del chat.",

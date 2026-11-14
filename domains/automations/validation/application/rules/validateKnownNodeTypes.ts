@@ -17,6 +17,7 @@ const KNOWN_NODE_TYPES: ReadonlySet<string> = new Set<NodeType>([
   "tags",
   "payment-proof",
   "record-sale",
+  "set-field",
   "condition",
   "distributor",
   "pixel",
@@ -25,6 +26,7 @@ const KNOWN_NODE_TYPES: ReadonlySet<string> = new Set<NodeType>([
   "integration",
   "menu",
   "notification",
+  "go-to-flow",
   "end"
 ]);
 

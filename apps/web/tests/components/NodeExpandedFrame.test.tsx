@@ -612,7 +612,7 @@ describe("el marco hace cumplir la validez que declara la herramienta", () => {
 
     expect(onCommit).not.toHaveBeenCalled();
     expect(screen.getByRole("alert").textContent).toBe(
-      "Sube el archivo o escribe el enlace de cada imagen, video, audio o documento."
+      "Sube el archivo o escribe el enlace (o una variable, como {portada}) de cada imagen, video, audio o documento."
     );
   });
 

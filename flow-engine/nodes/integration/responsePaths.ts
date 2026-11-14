@@ -7,6 +7,10 @@ import type { OutboundHttpResponse } from "../../ports/HttpRequester";
 //   body.id                                    → igual (prefijo opcional)
 //   status                                     → código HTTP
 //   headers.location                           → una cabecera
+//
+// Un valor que es un JSON escrito como texto (Kie.ai entrega así
+// `data.resultJson`: "{\"resultUrls\":[…]}") se abre solo si la ruta sigue
+// dentro de él: `data.resultJson.resultUrls[0]`.
 // ---------------------------------------------------------------------------
 
 export type PathLookup = { readonly found: true; readonly value: unknown } | { readonly found: false };
@@ -32,9 +36,25 @@ function segmentsOf(path: string): string[] | null {
   return segments.length > 0 ? segments : null;
 }
 
+/** Un texto que es un objeto o una lista JSON, abierto; si no lo es, `undefined`. */
+function openPacked(value: string): unknown {
+  const text = value.trim();
+  if (!(text.startsWith("{") || text.startsWith("["))) return undefined;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
 function walk(value: unknown, segments: ReadonlyArray<string>): PathLookup {
   let current = value;
   for (const segment of segments) {
+    if (typeof current === "string") {
+      const opened = openPacked(current);
+      if (opened === undefined) return { found: false };
+      current = opened;
+    }
     if (Array.isArray(current) && /^\d+$/.test(segment)) {
       current = current[Number(segment)];
     } else if (typeof current === "object" && current !== null && Object.prototype.hasOwnProperty.call(current, segment)) {
@@ -80,13 +100,21 @@ function preview(value: unknown): string {
 
 /**
  * Rutas de los valores simples de un JSON, para ofrecerlas al configurar.
- * De los arreglos solo se recorre el primer elemento.
+ * De los arreglos solo se recorre el primer elemento; un JSON escrito como
+ * texto se recorre por dentro.
  */
 export function listResponsePaths(json: unknown): ResponsePath[] {
   const paths: ResponsePath[] = [];
 
   const visit = (value: unknown, path: string, depth: number) => {
     if (paths.length >= MAX_PATHS) return;
+    // Un JSON escrito como texto (Kie.ai): se ofrece también lo que hay dentro.
+    const packed = typeof value === "string" && depth < MAX_DEPTH ? openPacked(value) : undefined;
+    if (packed !== undefined && packed !== null && typeof packed === "object") {
+      if (path) paths.push({ path, preview: preview(value) });
+      visit(packed, path, depth + 1);
+      return;
+    }
     if (value === null || typeof value !== "object") {
       if (path) paths.push({ path, preview: preview(value) });
       return;

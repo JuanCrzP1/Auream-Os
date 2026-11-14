@@ -6,6 +6,8 @@ import { waitResponseTool } from "./wait-response/definition";
 import { tagsTool } from "./tags/definition";
 import { paymentProofTool } from "./payment-proof/definition";
 import { recordSaleTool } from "./record-sale/definition";
+import { setFieldTool } from "./set-field/definition";
+import { goToFlowTool } from "./go-to-flow/definition";
 import { conditionalTool } from "./conditional/definition";
 import { distributorTool } from "./distributor/definition";
 import { pixelTool } from "./pixel/definition";
@@ -40,6 +42,7 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   tagsTool,
   paymentProofTool,
   recordSaleTool,
+  setFieldTool,
   conditionalTool,
   distributorTool,
   pixelTool,
@@ -48,6 +51,7 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   integrationTool,
   menuTool,
   notificationTool,
+  goToFlowTool,
   endTool
 ];
 
