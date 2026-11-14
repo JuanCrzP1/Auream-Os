@@ -5,12 +5,13 @@ import type { BusinessDataTexts } from "../../../domains/business-data/applicati
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlBusinessDataRepository, SqlBusinessValues } from "../../../infrastructure/persistence/sql/SqlBusinessData";
 import { SqlBusinessDataTexts } from "../../../infrastructure/persistence/sql/SqlBusinessDataTexts";
+import { SqlTenantResolver } from "../../../infrastructure/persistence/sql/SqlTenantResolver";
 
 // ---------------------------------------------------------------------------
 // Datos del negocio: los valores que lee el motor en cada turno (se arman
 // primero: los necesitan el laboratorio y la mensajería) y el servicio de la
 // pantalla, que mira los flujos, las difusiones y las respuestas rápidas para
-// decir dónde se usa cada dato. Comparten la memoria de los valores: un
+// decir dónde se usa cada dato, con sus cambios programados e historial. Comparten la memoria de los valores: un
 // cambio en la pantalla se ve en el siguiente mensaje de este servidor.
 // ---------------------------------------------------------------------------
 
@@ -23,6 +24,8 @@ export interface BusinessDataDependencies {
   readonly values: SqlBusinessValues;
   readonly automations: Pick<AutomationRepository, "findByTenant">;
   readonly workspaces: Pick<BuilderWorkspaceRepository, "getWorkspaces">;
+  /** La de la plataforma, para la empresa que no eligió una (Empresa). */
+  readonly defaultTimezone: string;
 }
 
 export function composeBusinessDataServices(deps: BusinessDataDependencies): BusinessDataServices {
@@ -37,5 +40,8 @@ export function composeBusinessDataServices(deps: BusinessDataDependencies): Bus
     broadcasts: (tenantId) => others.broadcasts(tenantId),
     quickReplies: (tenantId) => others.quickReplies(tenantId)
   };
-  return new BusinessDataServices(new SqlBusinessDataRepository(deps.sql), texts, deps.values);
+  // Los cambios programados se eligen en la hora de la empresa, igual que en los flujos.
+  const tenants = new SqlTenantResolver(deps.sql, deps.defaultTimezone);
+  const timeZoneOf = async (tenantId: string) => (await tenants.resolve(tenantId)).timezone;
+  return new BusinessDataServices(new SqlBusinessDataRepository(deps.sql), texts, deps.values, { timeZoneOf });
 }

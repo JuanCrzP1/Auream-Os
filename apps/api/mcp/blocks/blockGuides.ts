@@ -16,7 +16,7 @@ export interface BlockGuide {
   readonly example: Readonly<Record<string, unknown>>;
 }
 
-export const VARIABLES_NOTE = `Los textos admiten variables entre llaves: ${BUILT_IN_VARIABLES.map((v) => `{${v.name}}`).join(", ")}, los campos personalizados del contacto ({ciudad}), los guardados por otros bloques ({ia.respuesta}) y los Datos del negocio de la cuenta ({g_horario}; de list_flow_resources, solo se leen). Con valor por defecto: {first_name|amigo}.`;
+export const VARIABLES_NOTE = `Los textos admiten variables entre llaves: ${BUILT_IN_VARIABLES.map((v) => `{${v.name}}`).join(", ")}, los campos personalizados del contacto ({ciudad}), los guardados por otros bloques ({ia.respuesta}) y los Datos del negocio de la cuenta ({g_horario}; de list_flow_resources, solo se leen; si tienen un cambio programado, dicen ese valor mientras rige y luego vuelven solos al de siempre). Con valor por defecto: {first_name|amigo}.`;
 
 const conditionCategories = RULE_CATEGORIES.map((category) => `${category} (${ruleOperators(category).join("/")})`).join("; ");
 

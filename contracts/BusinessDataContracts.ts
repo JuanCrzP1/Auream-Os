@@ -1,6 +1,7 @@
 import { CONTACT_FIELD_LIMITS, keyFromLabel, type ContactFieldType } from "./ContactFieldContracts";
 import type { ContactFieldValue } from "./ContactContracts";
 import { coerceFieldValue, fieldValueText } from "./FieldValues";
+import { valueAt, type BusinessDataSchedule } from "./BusinessDataTimeline";
 
 // ---------------------------------------------------------------------------
 // Datos del negocio (Configuración › Datos › Datos del negocio): lo que se
@@ -49,6 +50,8 @@ export interface BusinessDatum {
   readonly value: string;
   /** Para qué es, opcional: «La cuenta donde pagan los de Venezuela». */
   readonly description: string;
+  /** Cambios programados por venir o activos, del más próximo al más lejano (los terminados quedan en el historial). */
+  readonly schedules: ReadonlyArray<BusinessDataSchedule>;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -56,7 +59,7 @@ export interface BusinessDatum {
 /** Dónde se usa: un bloque de un flujo, una difusión que aún se va a enviar o una respuesta rápida. */
 export type BusinessDataUse =
   | { readonly kind: "flow"; readonly flowKey: string; readonly flowName: string; readonly blockId: string; readonly blockName: string; readonly blockType: string }
-  | { readonly kind: "broadcast"; readonly id: string; readonly name: string }
+  | { readonly kind: "broadcast"; readonly id: string; readonly name: string; /** Cuándo sale, si está programada (ISO): avisa si cae en un cambio programado. */ readonly sendAt: string | null }
   | { readonly kind: "quickReply"; readonly id: string; readonly shortcut: string };
 
 /** Un mensaje real que lo usa, para «Así lo ve tu cliente». */
@@ -76,6 +79,8 @@ export interface BusinessDataResponse {
   readonly data: ReadonlyArray<BusinessDatumSummary>;
   /** Dueños y administradores (`flows.write`): crean, cambian y borran. */
   readonly canManage: boolean;
+  /** Zona horaria del negocio (IANA): la de los cambios programados. */
+  readonly timeZone: string;
 }
 
 /** Solo los valores, con su tipo: para quien los pone en un texto (el chat, la vista previa de una difusión). */
@@ -110,11 +115,18 @@ export function businessValueText(datum: Pick<BusinessDatum, "type" | "value">):
   return datum.type === "number" && typeof typed === "number" ? typed.toLocaleString("es-CO", { maximumFractionDigits: 2 }) : fieldValueText(typed);
 }
 
-/** Los valores de la cuenta por clave, con su tipo. */
-export function businessValuesOf(data: ReadonlyArray<Pick<BusinessDatum, "key" | "type" | "value">>): Record<string, ContactFieldValue> {
+/**
+ * Los valores de la cuenta por clave, con su tipo, en ese momento: el de un
+ * cambio programado mientras rige, si no el de siempre. Lo usan el motor, el
+ * chat, las difusiones y la vista previa: así todos dicen lo mismo.
+ */
+export function businessValuesOf(
+  data: ReadonlyArray<Pick<BusinessDatum, "key" | "type" | "value"> & { readonly schedules?: BusinessDatum["schedules"] }>,
+  now: Date = new Date()
+): Record<string, ContactFieldValue> {
   const values: Record<string, ContactFieldValue> = {};
   for (const datum of data) {
-    const typed = typedBusinessValue(datum);
+    const typed = typedBusinessValue({ type: datum.type, value: valueAt(datum, now) });
     if (typed !== undefined) values[datum.key] = typed;
   }
   return values;

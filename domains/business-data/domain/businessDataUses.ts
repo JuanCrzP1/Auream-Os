@@ -17,6 +17,8 @@ import type { BuilderFlowSnapshot } from "../../../contracts/FlowSnapshot";
 export interface BroadcastText {
   readonly id: string;
   readonly name: string;
+  /** Cuándo sale, si está programada (ISO). */
+  readonly sendAt?: string | null;
   readonly texts: ReadonlyArray<string>;
 }
 
@@ -69,7 +71,7 @@ export function businessDataUsage(flows: ReadonlyArray<BuilderFlowSnapshot>, bro
     }
   }
   for (const broadcast of broadcasts) {
-    for (const key of new Set(broadcast.texts.flatMap(businessKeysIn))) add(key, { kind: "broadcast", id: broadcast.id, name: broadcast.name });
+    for (const key of new Set(broadcast.texts.flatMap(businessKeysIn))) add(key, { kind: "broadcast", id: broadcast.id, name: broadcast.name, sendAt: broadcast.sendAt ?? null });
     sample(broadcast.texts, `Difusión «${broadcast.name}»`);
   }
   for (const reply of quickReplies) {

@@ -1,3 +1,5 @@
+import type { BusinessDatum } from "../../../../contracts/BusinessDataContracts";
+import { scheduleState, valueAt } from "../../../../contracts/BusinessDataTimeline";
 import type { ApiServices } from "../../composition/composeBuilderServices";
 import type { IntegrationsServices } from "../../composition/composeIntegrationsServices";
 import type { FlowEditingService } from "../../../../domains/automations/editing/application/FlowEditingService";
@@ -18,7 +20,7 @@ export interface FlowReadServices {
   readonly integrations?: Pick<IntegrationsServices, "aiCredentials" | "pixelConnections">;
   readonly products?: Pick<ProductServices, "list">;
   /** Datos del negocio (`{g_…}`): se usan en los textos y en la regla «Variable global» del Condicional. */
-  readonly business?: { list(tenantId: string): Promise<ReadonlyArray<{ key: string; label: string; type: string; value: string }>> };
+  readonly business?: { list(tenantId: string): Promise<ReadonlyArray<BusinessDatum>> };
 }
 
 const PALETTE = BLOCK_CATALOG.filter((block) => block.availableInPalette);
@@ -76,7 +78,7 @@ export function flowTools(services: FlowReadServices): McpTool[] {
     {
       name: "list_flow_resources",
       title: "Recursos para configurar bloques",
-      description: "Las conexiones de IA (para «Extensión IA»: credentialId), los píxeles de Meta (para «Pixel»: connectionId) los productos activos (para «Registrar venta»: productId, con su precio por país) y los Datos del negocio (businessData: {g_clave} en los textos y «globalVariable» en el Condicional; los flujos no los cambian) de la cuenta. Sin claves ni tokens.",
+      description: "Las conexiones de IA (para «Extensión IA»: credentialId), los píxeles de Meta (para «Pixel»: connectionId) los productos activos (para «Registrar venta»: productId, con su precio por país) y los Datos del negocio (businessData: {g_clave} en los textos y «globalVariable» en el Condicional; los flujos no los cambian; `value` es el que dicen AHORA, `usualValue` el de siempre y `scheduled` los cambios programados, que rigen solos entre `from` y `until`) de la cuenta. Sin claves ni tokens.",
       scope: "flows.read",
       readOnly: true,
       inputSchema: { type: "object", properties: {} },
@@ -88,8 +90,21 @@ export function flowTools(services: FlowReadServices): McpTool[] {
               .filter((product) => product.status === "active")
               .map((product) => ({ id: product.id, name: product.name, kind: product.kind, prices: product.prices }))
           : [],
-        businessData: services.business ? (await services.business.list(tenantId)).map((datum) => ({ key: datum.key, label: datum.label, type: datum.type, value: datum.value })) : []
+        businessData: services.business ? (await services.business.list(tenantId)).map(businessDatumForAgent) : []
       })
     }
   ];
+}
+
+/** Un dato del negocio para un agente: el valor que dice ahora, el de siempre y lo programado (horas ISO). */
+function businessDatumForAgent(datum: BusinessDatum) {
+  const now = new Date();
+  return {
+    key: datum.key,
+    label: datum.label,
+    type: datum.type,
+    value: valueAt(datum, now),
+    usualValue: datum.value,
+    scheduled: datum.schedules.map((schedule) => ({ value: schedule.value, from: schedule.startsAt, until: schedule.endsAt, note: schedule.note, active: scheduleState(schedule, now) === "active" }))
+  };
 }

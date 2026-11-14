@@ -1,5 +1,6 @@
 import type { BroadcastText, QuickReplyText } from "../../../domains/business-data/domain/businessDataUses";
 import type { SqlExecutor } from "./SqlClient";
+import { toIso } from "./sqlValues";
 
 // ---------------------------------------------------------------------------
 // Los textos donde puede aparecer un dato del negocio, fuera de los flujos:
@@ -29,11 +30,17 @@ export class SqlBusinessDataTexts {
   public constructor(private readonly sql: SqlExecutor) {}
 
   public async broadcasts(tenantId: string): Promise<ReadonlyArray<BroadcastText>> {
-    const { rows } = await this.sql.query<{ id: string; name: string; variants: unknown; follow_up: unknown }>(
-      `select id, name, variants, follow_up from broadcasts where tenant_id = $1 and status = any($2::text[]) order by created_at desc limit 200`,
+    const { rows } = await this.sql.query<{ id: string; name: string; status: string; scheduled_at: Date | string | null; variants: unknown; follow_up: unknown }>(
+      `select id, name, status, scheduled_at, variants, follow_up from broadcasts where tenant_id = $1 and status = any($2::text[]) order by created_at desc limit 200`,
       [tenantId, PENDING]
     );
-    return rows.map((row) => ({ id: row.id, name: row.name, texts: textsIn([row.variants, row.follow_up]) }));
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      // Solo una programada tiene hora de salida; las demás ya salen o esperan.
+      sendAt: row.status === "scheduled" && row.scheduled_at !== null ? toIso(row.scheduled_at) : null,
+      texts: textsIn([row.variants, row.follow_up])
+    }));
   }
 
   public async quickReplies(tenantId: string): Promise<ReadonlyArray<QuickReplyText>> {

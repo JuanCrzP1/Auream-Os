@@ -6,7 +6,7 @@ import type { BuilderFlowSnapshot } from "../../contracts/FlowSnapshot.js";
 import { requireDatumChanges, requireNewDatum } from "../../domains/business-data/domain/BusinessDatum.js";
 import { businessDataUsage } from "../../domains/business-data/domain/businessDataUses.js";
 import { BusinessDataServices } from "../../domains/business-data/application/BusinessDataServices.js";
-import type { BusinessDataRepository } from "../../domains/business-data/application/BusinessDataPorts.js";
+import { InMemoryBusinessDataRepository } from "../../infrastructure/persistence/memory/InMemoryBusinessData.js";
 import { requireNewField } from "../../domains/contact-fields/domain/ContactField.js";
 import { personalize } from "../../domains/broadcasts/domain/Personalize.js";
 import { evaluateCondition, type ConditionFacts } from "../../flow-engine/nodes/condition/evaluateCondition.js";
@@ -140,30 +140,12 @@ describe("dónde se usa", () => {
   });
 });
 
-function memory(): BusinessDataRepository & { rows: Map<string, never> } {
-  const rows = new Map<string, never>();
-  let n = 0;
-  return {
-    rows,
-    list: async () => [...rows.values()],
-    find: async (_t, id) => rows.get(id) ?? null,
-    create: async (_t, id, datum) => {
-      if ([...rows.values()].some((row: { key: string }) => row.key === datum.key)) return null;
-      const row = { ...datum, id, createdAt: `2026-11-13T00:00:0${n++}Z`, updatedAt: "2026-11-13T00:00:00Z" } as never;
-      rows.set(id, row);
-      return row;
-    },
-    update: async (_t, id, datum) => (rows.has(id) ? (rows.set(id, { ...(rows.get(id) as object), ...datum } as never), rows.get(id)!) : null),
-    remove: async (_t, id) => rows.delete(id)
-  };
-}
-
 describe("el servicio", () => {
   const ID = "11111111-1111-4111-8111-111111111111";
   const setup = (flows: BuilderFlowSnapshot[] = []) => {
-    const repository = memory();
+    const repository = new InMemoryBusinessDataRepository();
     const cache = { forget: vi.fn() };
-    const services = new BusinessDataServices(repository, { flows: async () => flows, broadcasts: async () => [], quickReplies: async () => [] }, cache, () => ID);
+    const services = new BusinessDataServices(repository, { flows: async () => flows, broadcasts: async () => [], quickReplies: async () => [] }, cache, { newId: () => ID });
     return { repository, cache, services };
   };
 
@@ -180,12 +162,12 @@ describe("el servicio", () => {
     const { services } = setup([flow(["Paga al {g_pago_movil}"])]);
     await services.create("t", { label: "Pago Móvil", type: "text", value: PAGO }, "u1");
     expect((await services.list("t", true)).data[0]).toMatchObject({ key: "g_pago_movil", uses: [{ kind: "flow", blockName: "Pago" }], example: { template: "Paga al {g_pago_movil}" } });
-    await expect(services.remove("t", ID, null)).rejects.toThrow("Para borrarlo escribe «g_pago_movil»: 1 mensaje lo usa");
-    await services.remove("t", ID, "g_pago_movil");
+    await expect(services.remove("t", ID, null, "u1")).rejects.toThrow("Para borrarlo escribe «g_pago_movil»: 1 mensaje lo usa");
+    await services.remove("t", ID, "g_pago_movil", "u1");
     expect((await services.list("t", true)).data).toEqual([]);
     const unused = setup();
     await unused.services.create("t", { label: "Horario", type: "text", value: "8 a 6" }, "u1");
-    await unused.services.remove("t", ID, null);
-    expect(unused.repository.rows.size).toBe(0);
+    await unused.services.remove("t", ID, null, "u1");
+    expect(await unused.repository.list("t")).toEqual([]);
   });
 });

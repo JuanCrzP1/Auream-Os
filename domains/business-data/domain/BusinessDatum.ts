@@ -55,7 +55,7 @@ function requireType(value: unknown): BusinessDataType {
 }
 
 /** El valor como se guarda: texto tal cual (sin espacios de más al borde), número sin puntos, `true`/`false`, `AAAA-MM-DD`. */
-function requireValue(type: BusinessDataType, value: unknown): string {
+export function requireValue(type: BusinessDataType, value: unknown): string {
   const text = typeof value === "string" ? value.trim() : typeof value === "number" || typeof value === "boolean" ? String(value) : "";
   if (!text) throw new ValidationError("Escribe el valor: es lo que van a leer tus clientes.");
   if (type === "text") {

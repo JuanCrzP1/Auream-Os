@@ -224,7 +224,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const team = composeTeamServices(tenancy.sqlClient);
 
   // Datos del negocio: la pantalla (dónde se usa cada dato) y el MCP.
-  const businessData = composeBusinessDataServices({ sql: tenancy.sqlClient, values: businessValues, automations: services.automationRepository, workspaces: services.workspaceRepository });
+  const businessData = composeBusinessDataServices({ sql: tenancy.sqlClient, values: businessValues, automations: services.automationRepository, workspaces: services.workspaceRepository, defaultTimezone: config.defaultTimezone });
 
   // Ayuda: artículos del repositorio (también para el MCP y llms.txt), tutoriales y soporte.
   const help = composeHelpServices(tenancy.sqlClient);

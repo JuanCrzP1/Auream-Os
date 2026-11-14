@@ -32,7 +32,7 @@ function services(): BusinessDataServices {
   let n = 0;
   const flows = [{ flow: { key: "ventas", name: "Ventas" }, nodes: { pago: { id: "pago", name: "Pago", type: "message", content: {}, config: { items: [{ kind: "text", text: "Paga al {g_pago_movil}" }] } } } }];
   const texts = { flows: async (tenantId: string) => (tenantId === "tenant-a" ? flows : []) as never, broadcasts: async () => [], quickReplies: async () => [] };
-  return new BusinessDataServices(new InMemoryBusinessDataRepository(), texts, { forget: () => undefined }, () => `aaaaaaaa-0000-4000-8000-00000000000${++n}`);
+  return new BusinessDataServices(new InMemoryBusinessDataRepository(), texts, { forget: () => undefined }, { newId: () => `aaaaaaaa-0000-4000-8000-00000000000${++n}` });
 }
 
 describe("/business-data", () => {
@@ -64,6 +64,30 @@ describe("/business-data", () => {
     await expect(run(data, "PATCH", `/business-data/${id}`, "tenant_owner", "tenant-b", { value: "robado" })).rejects.toThrow("Ese dato ya no existe.");
     await expect(run(data, "DELETE", `/business-data/${id}?confirm=g_horario`, "tenant_owner", "tenant-b")).rejects.toThrow("Ese dato ya no existe.");
     expect((await run(data, "GET", "/business-data/values", "tenant_owner", "tenant-a")).body).toEqual({ values: { g_horario: "8 a 6" } });
+  });
+
+  it("programar y quitar cambios: dueños y administradores; el historial lo ve quien ve los datos; otra cuenta, nada", async () => {
+    const data = services();
+    const id = (await run(data, "POST", "/business-data", "tenant_owner", "tenant-a", { label: "Horario", type: "text", value: "8 a 6" })).body.id as string;
+    const body = { value: "Cerrado", from: { date: "2099-12-24", time: "08:00" }, until: { date: "2099-12-26", time: "08:00" }, note: "Navidad" };
+    await expect(run(data, "POST", `/business-data/${id}/schedules`, "operator", "tenant-a", body)).rejects.toBeInstanceOf(AccessError);
+    await expect(run(data, "POST", `/business-data/${id}/schedules`, "tenant_owner", "tenant-b", body)).rejects.toThrow("Ese dato ya no existe.");
+    await expect(run(data, "GET", `/business-data/${id}/history`, "tenant_owner", "tenant-b")).rejects.toThrow("Ese dato ya no existe.");
+    // «Hasta un año adelante»: este va muy lejos.
+    await expect(run(data, "POST", `/business-data/${id}/schedules`, "tenant_admin", "tenant-a", body)).rejects.toThrow("hasta un año adelante");
+
+    const soon = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const later = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    const scheduled = await run(data, "POST", `/business-data/${id}/schedules`, "tenant_admin", "tenant-a", { ...body, from: { date: soon, time: "08:00" }, until: { date: later, time: "08:00" } });
+    expect(scheduled).toMatchObject({ status: 201, body: { schedules: [{ value: "Cerrado", note: "Navidad" }] } });
+    const sid = scheduled.body.schedules[0].id as string;
+    await expect(run(data, "PATCH", `/business-data/${id}/schedules/${sid}`, "operator", "tenant-a", { note: "x" })).rejects.toBeInstanceOf(AccessError);
+    await expect(run(data, "DELETE", `/business-data/${id}/schedules/${sid}`, "tenant_owner", "tenant-b")).rejects.toThrow("Ese dato ya no existe.");
+    expect((await run(data, "PATCH", `/business-data/${id}/schedules/${sid}`, "tenant_owner", "tenant-a", { note: "Navidad 2026" })).body.schedules[0]).toMatchObject({ note: "Navidad 2026" });
+
+    const history = await run(data, "GET", `/business-data/${id}/history`, "operator", "tenant-a");
+    expect(history.body.changes.map((change: { kind: string }) => change.kind)).toEqual(["rescheduled", "scheduled", "created"]);
+    expect((await run(data, "DELETE", `/business-data/${id}/schedules/${sid}`, "tenant_owner", "tenant-a")).body.schedules).toEqual([]);
   });
 
   it("sin el módulo responde 503", async () => {

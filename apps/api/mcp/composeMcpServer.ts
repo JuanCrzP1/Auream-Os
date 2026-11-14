@@ -1,3 +1,4 @@
+import type { BusinessDatum } from "../../../contracts/BusinessDataContracts";
 import type { HelpServices } from "../../../domains/help/application/HelpServices";
 import type { BusinessDataReader } from "../../../flow-engine/ports/BusinessDataReader";
 import { helpTools } from "./tools/helpTools";
@@ -98,7 +99,7 @@ export interface McpDependencies {
   /** Datos del negocio (`{g_…}`): una respuesta rápida enviada por un agente los lleva puestos, como en el chat. */
   readonly businessValues?: BusinessDataReader;
   /** Los Datos del negocio de la cuenta, para configurar bloques (`list_flow_resources`). */
-  readonly businessData?: { list(tenantId: string): Promise<ReadonlyArray<{ key: string; label: string; type: string; value: string }>> };
+  readonly businessData?: { list(tenantId: string): Promise<ReadonlyArray<BusinessDatum>> };
   readonly contacts: Pick<ContactsServices, "listContacts" | "getContact" | "createContact" | "updateContact" | "listLabels" | "createLabel" | "directory">;
   readonly connections: Pick<ConnectionsServices, "list" | "triggers">;
   readonly messaging: Pick<MessagingServices, "conversations"> | undefined;
