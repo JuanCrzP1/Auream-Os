@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import type { AdMeasurement } from "@contracts/AdMeasurementContracts";
 import type { AdsDashboardResponse, SalesDashboardResponse } from "@contracts/DashboardContracts";
 import { measurementCopy } from "@shared/ads/measurementText";
+import { chatCoverage } from "@shared/ads/metaSource";
 import { PerformanceSection } from "../../src/features/ads/components/PerformanceSection";
 import { AdsTab } from "../../src/features/dashboard/ads/AdsTab";
 import { AdsHero } from "../../src/features/dashboard/sales/AdsHero";
@@ -71,9 +72,20 @@ describe("Meta Ads › Rendimiento sin medición", () => {
     // Gasto, chats y costo por chat (de Meta) sí; ventas, facturación, ganancia y ROAS de Auream, con raya.
     const cells = [...row.querySelectorAll("td")].slice(2).map((cell) => cell.textContent);
     // Cada número en pareja «Auream / Meta»: lo de Meta se ve aunque Auream aún no tenga ventas; la ganancia solo con ventas reales.
-    expect(cells).toEqual(["$ 1.750.508", "1.779", "$ 984", "— / 299", "— / $ 350.000", "—", "— / 0,2x", "— / $ 5.855"]);
+    // Los chats: cuántos llegaron a Auream de los que cobró Meta, y qué parte.
+    expect(cells).toEqual(["$ 1.750.508", "0 / 1.779llegó el 0 %", "$ 984", "— / 299", "— / $ 350.000", "—", "— / 0,2x", "— / $ 5.855"]);
     expect(row.querySelector(".ads-table__bad")).toBeNull();
     expect(table.querySelector("tfoot")).toHaveTextContent("— / 805");
+  });
+});
+
+describe("cuántos chats de Meta llegan a Auream", () => {
+  it("dice qué parte llegó, con su tono: menos de la mitad no alcanza para juzgar", () => {
+    expect(chatCoverage(0, 1788)).toEqual({ text: "llegó el 0 %", tone: "low" });
+    expect(chatCoverage(3, 1788)).toEqual({ text: "llegó menos del 1 %", tone: "low" });
+    expect(chatCoverage(1182, 2000)).toEqual({ text: "llegó el 59 %", tone: "fair" });
+    expect(chatCoverage(310, 300)).toEqual({ text: "llegó el 100 %", tone: "good" });
+    expect(chatCoverage(5, 0)).toBeNull();
   });
 });
 

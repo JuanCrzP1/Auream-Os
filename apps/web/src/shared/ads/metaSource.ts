@@ -29,3 +29,16 @@ export const purchasesText = (count: number) => `${count.toLocaleString("es-CO")
 
 /** Una división que no inventa: sin divisor no hay número. */
 export const perUnit = (total: number, units: number): number | null => (units > 0 ? total / units : null);
+
+/**
+ * Qué parte de los chats que cobró Meta llegó a Auream: «llegó el 54 %».
+ * Menos de la mitad es «partial» (como `AdMeasurementContracts`); desde el
+ * 80 % se puede confiar. Sin chats de Meta no hay nada que decir.
+ */
+export function chatCoverage(arrived: number, metaChats: number): { readonly text: string; readonly tone: "good" | "fair" | "low" } | null {
+  if (metaChats <= 0) return null;
+  const share = Math.min(1, arrived / metaChats);
+  const percent = Math.round(share * 100);
+  const text = arrived > 0 && percent === 0 ? "llegó menos del 1 %" : `llegó el ${percent} %`;
+  return { text, tone: share >= 0.8 ? "good" : share >= 0.5 ? "fair" : "low" };
+}

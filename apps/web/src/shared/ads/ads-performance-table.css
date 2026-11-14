@@ -81,6 +81,17 @@
   font-weight: 600;
 }
 
+/* Qué parte de los chats de Meta llegó a Auream: ámbar si menos de la mitad, verde desde el 80 %. */
+.ads-table__coverage {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.ads-table__coverage--low { color: #b45309; }
+.ads-table__coverage--fair { color: var(--muted); }
+.ads-table__coverage--good { color: var(--teal); }
+
 .ads-table__reason {
   color: var(--muted);
   font-size: 0.72rem;

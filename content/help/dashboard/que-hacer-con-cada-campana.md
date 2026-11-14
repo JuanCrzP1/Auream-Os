@@ -34,4 +34,12 @@ Para juzgar una campaña, Auream necesita ver dos cosas: los chats que trae y la
 
 Cuando esto le pasa a toda la cuenta, un aviso arriba de Meta Ads y del Dashboard lo explica.
 
+## Cuánto mide Auream en cada campaña
+
+En la tabla de campañas, la columna **Chats** dice **Auream / Meta**: cuántos clientes llegaron a Auream por ese anuncio y cuántos chats cobró Meta. Debajo ves qué parte llegó:
+
+- **Verde (80 % o más):** Auream ve casi todo; puedes confiar en su consejo.
+- **Gris (entre 50 % y 80 %):** ve la mayoría.
+- **Ámbar (menos de la mitad):** todavía no alcanza para juzgar la campaña.
+
 > **Consejo:** si acabas de conectar tu número, verás «Medición parcial» mientras el periodo que miras incluya días anteriores a la conexión. Con «7 días» se quita antes que con «30 días».

@@ -81,6 +81,8 @@ Una sola regla para todas las piezas (`apps/web/src/shared/ads/metaSource.ts` co
 | `salesUnknown` y hay otras ventas en Auream | Facturación y ventas de Auream; ganancia y ROAS real esperan; el ROAS es el de Meta con su etiqueta |
 | `salesUnknown` y ninguna venta en Auream | Lo que reporta Meta con la etiqueta «Meta» (facturación, compras, compra promedio, ROAS, costo por compra, curva de la gráfica con `DayPoint.metaRevenue`); ganancia y conversión dicen «Se calcula cuando…» |
 
+**Cobertura por campaña:** en `AdsPerformanceTable` la columna Chats es «Auream / Meta» (`arrivedChats` / `chats`) con `chatCoverage` (`metaSource.ts`): «llegó el X %», ámbar bajo el 50 % (el umbral de `partial`), verde desde el 80 %.
+
 La ganancia nunca se calcula con lo de Meta: el Píxel cuenta menos compras que las reales, y daría una pérdida que no existe. En «Comparar líneas», una línea que gasta sin ventas de sus anuncios en Auream lleva `salesUnknown`, `roasMeta` (con la etiqueta) y ganancia y margen en `null`; va al final del orden.
 
 ## El Dashboard
