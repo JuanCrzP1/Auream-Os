@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Campos del cliente (Configuración › Datos › Campos del cliente): los datos
+// Campos del cliente (Configuración › Campos y datos › Campos del cliente): los datos
 // que la cuenta guarda de cada cliente, con nombre, clave y TIPO. La clave es
 // lo que se escribe en los mensajes (`{ciudad}`) y la que usan los bloques.
 //

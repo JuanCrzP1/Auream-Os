@@ -1,6 +1,6 @@
 # Datos del negocio
 
-**Configuración › Datos › Datos del negocio** (`/settings/business-data`): lo que les dices igual a todos tus clientes (horario, dirección, link de pago, enlaces) escrito una vez y usado como `{g_clave}`. Entrega A: el catálogo. Entrega B: **cambios programados** e **historial**.
+**Configuración › Campos y datos › Datos del negocio** (`/settings/data?tab=business`): lo que les dices igual a todos tus clientes (horario, dirección, link de pago, enlaces) escrito una vez y usado como `{g_clave}`. Entrega A: el catálogo. Entrega B: **cambios programados** e **historial**.
 
 | Pieza | Dónde vive |
 |---|---|
@@ -9,7 +9,7 @@
 | Base | `infrastructure/persistence/sql/SqlBusinessData.ts` (repositorio y valores para el motor) · `SqlBusinessDataTimeline.ts` (programados e historial) · `SqlBusinessDataTexts.ts` (difusiones y respuestas rápidas) · migraciones `052_business_data.sql` y `054_business_data_timeline.sql` |
 | Motor | `flow-engine/ports/BusinessDataReader.ts` · `ExecutionOrchestrator` (una lectura por turno) · `templateResolver` · `evaluateCondition` |
 | API | `apps/api/routes/routeBusinessDataRequest.ts` · `composition/composeBusinessDataServices.ts` |
-| Web | `apps/web/src/features/business-data` (Configuración: lista, detalle en pestañas, `schedules/`, `history/`) · `apps/web/src/shared/business-data` (API y valores: los usan el editor, el chat y las difusiones) · `apps/web/src/shared/ui/how-it-works` («Cómo funciona», también en Campos del cliente) · `builder/tools/conditional/BusinessDataRule.tsx` |
+| Web | `apps/web/src/features/business-data` (Configuración: lista, detalle en pestañas, `schedules/`, `history/`) · `apps/web/src/shared/business-data` (API y valores: los usan el editor, el chat y las difusiones) · `apps/web/src/app/settings/data` (la pantalla «Campos y datos») · `apps/web/src/shared/ui/how-it-works` («Cómo funciona») · `builder/tools/conditional/BusinessDataRule.tsx` |
 
 ## Lo que da valor
 
@@ -22,7 +22,7 @@ En Leona las variables globales son una lista de nombres con un valor inicial qu
 - **Mismo prefijo `g_` que Leona:** un flujo traído de allá funciona al crear el dato.
 - **Cambio programado** (Leona no lo tiene): otro valor entre dos fechas que entra y sale solo, igual en todo lo que lee `{g_…}`.
 - **Historial** con quién y «Volver a este valor».
-- **«Cómo funciona»** arriba (y en Campos del cliente): qué es, tres pasos con dibujo, y el enlace a la otra pantalla. Se cierra con «Entendido» (se recuerda en el navegador) y queda abierto mientras no haya datos. Los ejemplos sirven a cualquier negocio de cualquier país.
+- **Junto a Campos del cliente, en una sola pantalla** (Configuración › Campos y datos, `/settings/data`, `apps/web/src/app/settings/data`): dos pestañas, un solo «Cómo funciona» (el mismo mensaje con `{ciudad}` y `{g_horario}`: Laura lee Medellín, Pedro Lima, los dos el mismo horario) y un solo «Nuevo dato» que primero pregunta «¿cambia con cada cliente o es igual para todos?». Como ManyChat (User Fields / Bot Fields), más «dónde se usa», programados e historial. Las direcciones viejas (`/settings/business-data`, `/settings/contact-fields`) llevan a su pestaña. Los ejemplos sirven a cualquier negocio de cualquier país.
 
 ## Modelo
 
@@ -72,4 +72,4 @@ En Leona las variables globales son una lista de nombres con un valor inicial qu
 - `tests/unit/businessDataTimeline.test.ts`: bordes de hora y zona, cruces, límites, editar uno activo, terminar ya, historial y que el motor cambie justo a la hora.
 - `tests/security/routeBusinessData.test.ts`: permisos por rol (también programar e historial) y aislamiento entre cuentas.
 - `tests/integration/businessDataPersistence.test.ts`: tablas y reglas de la base, cruces con el dato bloqueado, nombre de quién, historial de 50 y textos de difusiones y respuestas rápidas.
-- `apps/web/tests/components/BusinessDataSettings.test.tsx` («Cómo funciona» incluido), `BusinessDataTimeline.test.tsx` y `ConditionBusinessData.test.tsx`.
+- `apps/web/tests/components/BusinessDataSettings.test.tsx`, `BusinessDataTimeline.test.tsx`, `DataSettings.test.tsx` (la pantalla con las dos pestañas) y `ConditionBusinessData.test.tsx`.

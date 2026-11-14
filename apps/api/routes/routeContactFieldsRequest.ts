@@ -11,7 +11,7 @@ import { sendJson } from "../http/sendJson";
 import { routeContactFieldToolsRequest, type ContactFieldToolRoutes } from "./routeContactFieldToolsRequest";
 
 // ---------------------------------------------------------------------------
-// Campos del cliente (Configuración › Datos › Campos del cliente) y la ficha.
+// Campos del cliente (Configuración › Campos y datos › Campos del cliente) y la ficha.
 //
 //   GET    /contact-fields                   los campos, su uso y los del sistema   contacts.read
 //   GET    /contact-fields/values/:contact   la ficha: datos y de dónde salieron    contacts.read

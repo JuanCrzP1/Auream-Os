@@ -6,7 +6,7 @@ import { SYSTEM_CONTACT_FIELDS, type ContactFieldSummary, type ContactFieldsResp
 import { ContactFieldsSettings } from "../../src/features/contact-fields/ContactFieldsSettings";
 
 // ---------------------------------------------------------------------------
-// Configuración › Datos › Campos del cliente: la tabla con tipo, qué tan
+// Configuración › Campos y datos › Campos del cliente: la tabla con tipo, qué tan
 // lleno y quién lo usa; crear con la clave que sale del nombre; el primer
 // día (convertir lo que ya guardan los flujos); borrar escribiendo la clave;
 // y quien no organiza solo ve.
@@ -48,7 +48,7 @@ const bodyOf = (fetchMock: ReturnType<typeof stub>, path: string) => JSON.parse(
 
 beforeEach(() => vi.restoreAllMocks());
 
-describe("Configuración › Campos del cliente", () => {
+describe("Configuración › Campos y datos › Campos del cliente", () => {
   it("cada campo con su tipo, qué tan lleno está y quién lo usa; el detalle dice de dónde sale", async () => {
     stub({});
     page();

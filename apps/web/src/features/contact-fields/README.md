@@ -1,11 +1,11 @@
-# Campos del cliente — módulo web (`/settings/contact-fields`)
+# Campos del cliente — módulo web (pestaña de `/settings/data`)
 
 Los datos que la cuenta guarda de cada cliente, con su tipo, en cuántos clientes están y qué bloques los llenan o los leen. Diseño: [`docs/architecture/contact-fields.md`](../../../../../docs/architecture/contact-fields.md).
 
 ## Estructura
 ```
 features/contact-fields/
-├── ContactFieldsSettings.tsx  la sección: barra, por ordenar, tabla, del sistema y diálogos
+├── ContactFieldsSettings.tsx  la pestaña (en `app/settings/data`, junto a Datos del negocio): barra, por ordenar, tabla, del sistema y diálogos
 ├── list/       la tabla «Tuyos» (tarjetas en angosto), «por ordenar», los del sistema y el chip de tipo
 ├── field/      nuevo campo, el detalle (panel con encabezado oscuro), borrar escribiendo la clave, opciones y tipos
 ├── discovery/  el primer día: convertir en campos lo que tus flujos ya guardan

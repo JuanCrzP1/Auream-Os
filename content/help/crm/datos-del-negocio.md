@@ -8,7 +8,7 @@ keywords: datos del negocio, variables globales, g_, horario, dirección, link d
 related: campos-del-cliente, variables-y-nombre, primer-flujo
 ---
 
-Un **dato del negocio** es algo que les dices **igual a todos tus clientes**: tu horario, tu dirección, tu link de pago, el enlace de tu grupo. Está en **Configuración › Datos › Datos del negocio**.
+Un **dato del negocio** es algo que les dices **igual a todos tus clientes**: tu horario, tu dirección, tu link de pago, el enlace de tu grupo. Está en **Configuración › Campos y datos**, pestaña **Datos del negocio**.
 
 ## ¿En qué se diferencia de un campo del cliente?
 
@@ -26,7 +26,7 @@ Si tu link de pago aparece en 15 mensajes, cambiarlo significa abrir los 15. Con
 
 ## Crear uno
 
-1. Toca **Nuevo dato**.
+1. Toca **Nuevo dato** y elige **Dato del negocio** (igual para todos tus clientes).
 2. Ponle un nombre, por ejemplo «Horario». La clave sale sola: `{g_horario}`.
 3. Elige el tipo: **Texto**, **Número**, **Fecha** o **Sí o no**.
 4. Escribe el valor y, si quieres, para qué es.

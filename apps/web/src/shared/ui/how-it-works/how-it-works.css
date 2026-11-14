@@ -45,3 +45,8 @@
   .how__steps { grid-template-columns: minmax(0, 1fr); }
   .how__steps > li:not(:last-child)::after { top: auto; right: 50%; bottom: -12px; transform: translateX(50%) rotate(135deg); }
 }
+
+/* Varios dibujos en un mismo paso (dos campos, dos burbujas). */
+.how-demo-stack { display: grid; gap: 6px; min-width: 0; }
+.how-demo-stack .how-demo--chat { padding: 8px; }
+.how-demo__bubble b { font-weight: 700; }

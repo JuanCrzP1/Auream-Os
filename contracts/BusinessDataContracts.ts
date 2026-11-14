@@ -4,7 +4,7 @@ import { coerceFieldValue, fieldValueText } from "./FieldValues";
 import { valueAt, type BusinessDataSchedule } from "./BusinessDataTimeline";
 
 // ---------------------------------------------------------------------------
-// Datos del negocio (Configuración › Datos › Datos del negocio): lo que se
+// Datos del negocio (Configuración › Campos y datos › Datos del negocio): lo que se
 // repite en los mensajes de la cuenta (Pago Móvil, horario, dirección, enlace
 // del grupo VIP), escrito UNA vez y usado como `{g_clave}` en flujos,
 // difusiones y respuestas rápidas, y en el Condicional. El prefijo `g_` es el

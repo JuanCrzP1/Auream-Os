@@ -15,13 +15,18 @@ export const SETTINGS_ROUTES = {
   team: "/settings/team",
   billing: "/settings/billing",
   security: "/settings/security",
-  "contact-fields": "/settings/contact-fields",
-  "business-data": "/settings/business-data",
+  data: "/settings/data",
   labels: "/settings/labels",
   "quick-replies": "/settings/quick-replies"
 } as const;
 
 export type SettingsSectionId = keyof typeof SETTINGS_ROUTES;
+
+/** Direcciones de antes: Campos del cliente y Datos del negocio ahora son pestañas de «Campos y datos». */
+export const LEGACY_SETTINGS: Readonly<Record<string, string>> = {
+  "contact-fields": `${SETTINGS_ROUTES.data}?tab=customer`,
+  "business-data": `${SETTINGS_ROUTES.data}?tab=business`
+};
 
 const STROKE = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
@@ -49,12 +54,6 @@ const Icons = {
       <rect x="3" y="5" width="18" height="14" rx="2.5" />
       <circle cx="8.5" cy="11" r="2" />
       <path d="M5.5 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 14h3" />
-    </>
-  ),
-  businessData: icon(
-    <>
-      <path d="M4 20V9l8-5 8 5v11" />
-      <path d="M9 20v-5h6v5M4 20h16M9.5 10.5h5" />
     </>
   ),
   labels: icon(
@@ -88,18 +87,11 @@ export const SETTINGS_GROUPS: ReadonlyArray<SettingsNavGroup> = [
     title: "Datos",
     items: [
       {
-        id: "contact-fields",
-        label: "Campos del cliente",
-        path: SETTINGS_ROUTES["contact-fields"],
+        id: "data",
+        label: "Campos y datos",
+        path: SETTINGS_ROUTES.data,
         icon: Icons.contactFields,
-        description: "Lo que sabes de cada cliente y cambia de uno a otro: su ciudad, su cumpleaños, su talla."
-      },
-      {
-        id: "business-data",
-        label: "Datos del negocio",
-        path: SETTINGS_ROUTES["business-data"],
-        icon: Icons.businessData,
-        description: "Tu horario, tu dirección, tu link de pago: lo que les dices igual a todos tus clientes, escrito una sola vez."
+        description: "Lo que pones entre llaves en tus mensajes: lo que cambia con cada cliente y lo que es igual para todos."
       },
       {
         id: "labels",

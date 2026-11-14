@@ -1,6 +1,6 @@
 # Campos del cliente
 
-**Configuración › Datos › Campos del cliente** (`/settings/contact-fields`): el catálogo de los datos que la cuenta guarda de cada cliente, con nombre, clave y **tipo**.
+**Configuración › Campos y datos › Campos del cliente** (`/settings/data?tab=customer`): el catálogo de los datos que la cuenta guarda de cada cliente, con nombre, clave y **tipo**.
 
 | Pieza | Dónde vive |
 |---|---|

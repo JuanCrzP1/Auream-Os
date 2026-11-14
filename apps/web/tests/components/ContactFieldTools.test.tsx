@@ -7,7 +7,7 @@ import type { FieldSuggestions } from "@contracts/ContactFieldToolsContracts";
 import { ContactFieldsSettings } from "../../src/features/contact-fields/ContactFieldsSettings";
 
 // ---------------------------------------------------------------------------
-// Configuración › Campos del cliente, las herramientas: «por ordenar» sugiere
+// Configuración › Campos y datos › Campos del cliente, las herramientas: «por ordenar» sugiere
 // ordenar valores y unir campos; cada una muestra qué cambia antes de
 // confirmar; lo hecho se puede deshacer; y el detalle dice lo que vende cada
 // valor.

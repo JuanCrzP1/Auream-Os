@@ -87,7 +87,7 @@ export function BuilderResourcesProvider({ children }: { readonly children: Reac
         status: fields.status
       },
       businessData: business.list,
-      // Crea en el catálogo (el mismo de Configuración › Campos del cliente) y lo recarga.
+      // Crea en el catálogo (el mismo de Configuración › Campos y datos › Campos del cliente) y lo recarga.
       createContactField: async (request) => {
         try {
           return { ok: true, value: await createField(request) };

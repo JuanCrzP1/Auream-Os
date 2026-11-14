@@ -53,9 +53,9 @@ export function ContactFieldsSection({
     <section className="cfv" aria-label="Campos del cliente">
       <div className="cfv__head">
         <span>Campos del cliente</span>
-        {canManage ? <Link to="/settings/contact-fields">Organizar campos</Link> : null}
+        {canManage ? <Link to="/settings/data?tab=customer">Organizar campos</Link> : null}
       </div>
-      {catalog.fields.length === 0 ? <p className="ui-muted">Aún no hay campos del cliente. {canManage ? "Créalos en Configuración › Campos del cliente." : "Los crean los dueños y administradores."}</p> : null}
+      {catalog.fields.length === 0 ? <p className="ui-muted">Aún no hay campos del cliente. {canManage ? "Créalos en Configuración › Campos y datos › Campos del cliente." : "Los crean los dueños y administradores."}</p> : null}
       {catalog.fields.map((field) => {
         const origin = origins[field.key];
         return (

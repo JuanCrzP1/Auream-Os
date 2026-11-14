@@ -13,7 +13,6 @@
 @keyframes bd-shimmer { to { background-position: -200% 0; } }
 
 .bd__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.bd__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .bd__who { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: 0.8rem; }
 .bd__who svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 

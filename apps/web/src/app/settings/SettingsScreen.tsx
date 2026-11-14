@@ -3,8 +3,6 @@ import { Navigate, useParams } from "react-router-dom";
 import { AppearanceSettings } from "@features/account/components/AppearanceSettings";
 import { CompanySettings } from "@features/account/components/CompanySettings";
 import { ProfileSettings } from "@features/account/components/ProfileSettings";
-import { ContactFieldsSettings } from "@features/contact-fields/ContactFieldsSettings";
-import { BusinessDataSettings } from "@features/business-data/BusinessDataSettings";
 import { LabelsSettings } from "@features/labels/LabelsSettings";
 import { QuickRepliesSettings } from "@features/conversations/quick-replies/QuickRepliesSettings";
 import { TeamSettings } from "@features/team/components/TeamSettings";
@@ -12,7 +10,8 @@ import { lastAppLocation } from "@shared/navigation/lastAppLocation";
 import { SettingsLayout } from "@shared/ui/settings-layout/SettingsLayout";
 import { StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { SETTINGS_GROUPS, SETTINGS_ROUTES, type SettingsSectionId } from "./settings-sections";
+import { DataSettings } from "./data/DataSettings";
+import { LEGACY_SETTINGS, SETTINGS_GROUPS, SETTINGS_ROUTES, type SettingsSectionId } from "./settings-sections";
 
 const soon = (what: string) => <StateCard icon={StateIcons.sparkles} title="Muy pronto" description={what} />;
 
@@ -23,8 +22,7 @@ const CONTENT: Readonly<Record<SettingsSectionId, () => ReactElement>> = {
   general: () => <CompanySettings />,
   team: () => <TeamSettings />,
   billing: () => soon("Aquí vas a ver tu plan, lo que consumes en el mes, tu método de pago y tus facturas."),
-  "contact-fields": () => <ContactFieldsSettings />,
-  "business-data": () => <BusinessDataSettings />,
+  data: () => <DataSettings />,
   labels: () => <LabelsSettings />,
   "quick-replies": () => <QuickRepliesSettings />,
   security: () => soon("Aquí vas a decidir cómo entra tu equipo: verificación en dos pasos y sesiones abiertas.")
@@ -34,11 +32,14 @@ const ITEMS = SETTINGS_GROUPS.flatMap((group) => group.items);
 
 /**
  * `/settings/:section` — Configuración a pantalla completa, sin la barra de la
- * app. Una sección que no existe lleva a General.
+ * app. Una dirección de antes lleva a su lugar nuevo; una sección que no
+ * existe lleva a General.
  */
 export function SettingsScreen() {
   const { section } = useParams();
   const current = ITEMS.find((item) => item.id === section);
+  const legacy = section ? LEGACY_SETTINGS[section] : undefined;
+  if (legacy) return <Navigate to={legacy} replace />;
   if (!current) return <Navigate to={SETTINGS_ROUTES.general} replace />;
 
   return (

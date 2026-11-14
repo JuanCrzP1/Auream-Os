@@ -7,7 +7,7 @@ import { shapeOf, TypedValue } from "./CustomFieldRule";
 
 // ---------------------------------------------------------------------------
 // Una regla sobre un Dato del negocio: se elige de la
-// lista de Configuración › Datos del negocio y se compara con su tipo, igual
+// lista de Configuración › Campos y datos › Datos del negocio y se compara con su tipo, igual
 // que un campo del cliente (Sí / No, número entre, fecha…). Un flujo traído de
 // Leona que nombra uno que aún no existe lo sigue mostrando, para crearlo.
 // ---------------------------------------------------------------------------
@@ -44,8 +44,8 @@ export function BusinessDataRule({
   return (
     <div className="cfr">
       <InlineSelect value={rule.field} options={choices} ariaLabel={`Dato del negocio de la regla ${index + 1}`} onChange={setField} />
-      {datum ? <p className="kit-hint">Hoy vale «{businessValueText(datum)}». Se cambia en Configuración › Datos del negocio.</p> : null}
-      {rule.field && !datum ? <p className="kit-hint">Créalo en Configuración › Datos del negocio con la clave {`{${rule.field}}`}: mientras no exista, la regla no se cumple.</p> : null}
+      {datum ? <p className="kit-hint">Hoy vale «{businessValueText(datum)}». Se cambia en Configuración › Campos y datos › Datos del negocio.</p> : null}
+      {rule.field && !datum ? <p className="kit-hint">Créalo en Configuración › Campos y datos › Datos del negocio con la clave {`{${rule.field}}`}: mientras no exista, la regla no se cumple.</p> : null}
       <div className="kit-row">
         <InlineSelect
           value={rule.operator}

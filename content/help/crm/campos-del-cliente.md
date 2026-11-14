@@ -8,7 +8,7 @@ keywords: campos, campos personalizados, datos del cliente, ficha, variables, ci
 related: datos-del-negocio, variables-y-nombre, primer-flujo, embudo-y-etapas
 ---
 
-Un **campo del cliente** es un dato que guardas de cada cliente: su ciudad, su presupuesto, su cumpleaños, si ya compró. Está en **Configuración › Datos › Campos del cliente**.
+Un **campo del cliente** es un dato que guardas de cada cliente: su ciudad, su presupuesto, su cumpleaños, si ya compró. Está en **Configuración › Campos y datos**, pestaña **Campos del cliente**.
 
 ## ¿En qué se diferencia de un dato del negocio?
 
@@ -24,7 +24,7 @@ Un campo del cliente **cambia con cada persona**: Laura vive en Medellín y Pedr
 
 Si tus flujos ya guardan datos (con Esperar respuesta, Menú, Integración o IA), Auream los encuentra y te propone convertirlos en campos, con el nombre y el tipo que mejor les queda.
 
-1. Abre **Configuración › Datos › Campos del cliente**.
+1. Abre **Configuración › Campos y datos**, pestaña **Campos del cliente**.
 2. Revisa cada dato: cambia el nombre si quieres y elige el tipo.
 3. Marca los que quieras y toca **Convertir en campos**.
 
@@ -34,7 +34,7 @@ Tus flujos siguen igual: los datos solo ganan nombre, tipo y lugar en la ficha. 
 
 ## Crear un campo
 
-1. Toca **Nuevo campo**.
+1. Toca **Nuevo dato** y elige **Campo del cliente** (cambia con cada persona).
 2. Escribe el nombre. Debajo ves cómo se escribe en tus mensajes: «Producto de interés» se usa como `{producto_de_interes}`.
 3. Elige el tipo. Si es **Lista**, escribe sus opciones (al menos 2).
 4. Toca **Crear campo**.

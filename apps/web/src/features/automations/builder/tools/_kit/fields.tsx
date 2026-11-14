@@ -242,7 +242,7 @@ export function VariableHint({ variables }: { readonly variables: ReadonlyArray<
         Si puede faltar, dale un valor por defecto: <code className="kit-variable">{"{first_name|amigo}"}</code>
       </p>
       <p className="kit-hint">
-        Lo que les dices igual a todos tus clientes (horario, dirección, link de pago) va en Configuración › Datos del negocio y se escribe así:{" "}
+        Lo que les dices igual a todos tus clientes (horario, dirección, link de pago) va en Configuración › Campos y datos › Datos del negocio y se escribe así:{" "}
         <code className="kit-variable">{"{g_horario}"}</code>
       </p>
     </>

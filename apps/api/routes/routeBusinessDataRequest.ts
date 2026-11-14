@@ -10,7 +10,7 @@ import { parseJsonBody } from "../http/parseJsonBody";
 import { sendJson } from "../http/sendJson";
 
 // ---------------------------------------------------------------------------
-// Datos del negocio (Configuración › Datos › Datos del negocio).
+// Datos del negocio (Configuración › Campos y datos › Datos del negocio).
 //
 //   GET    /business-data          los datos, dónde se usan y un mensaje real   flows.read
 //   GET    /business-data/values   solo los valores (el chat, las difusiones)   flows.read o conversations.read

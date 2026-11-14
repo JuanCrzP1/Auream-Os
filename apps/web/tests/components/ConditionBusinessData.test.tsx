@@ -37,7 +37,7 @@ describe("Condicional con un Dato del negocio", () => {
     const onConfig = vi.fn();
     render(<Editor onConfig={onConfig} />);
     fireEvent.change(screen.getByRole("combobox", { name: "Dato del negocio de la regla 1" }), { target: { value: "g_promo_activa" } });
-    expect(screen.getByText("Hoy vale «Sí». Se cambia en Configuración › Datos del negocio.")).toBeInTheDocument();
+    expect(screen.getByText("Hoy vale «Sí». Se cambia en Configuración › Campos y datos › Datos del negocio.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sí" }));
     expect(lastRule(onConfig)).toMatchObject({ category: "globalVariable", field: "g_promo_activa", operator: "equal", value: "Sí" });
     expect(screen.getByText("Se cumple si Promo activa es igual a Sí.")).toBeInTheDocument();
@@ -56,6 +56,6 @@ describe("Condicional con un Dato del negocio", () => {
   it("uno que aún no existe se ve y avisa que hay que crearlo", () => {
     render(<Editor field="g_horario" onConfig={vi.fn()} />);
     expect(screen.getByRole("option", { name: "{g_horario} · no existe en Datos del negocio" })).toBeInTheDocument();
-    expect(screen.getByText(/Créalo en Configuración › Datos del negocio con la clave \{g_horario\}/)).toBeInTheDocument();
+    expect(screen.getByText(/Créalo en Configuración › Campos y datos › Datos del negocio con la clave \{g_horario\}/)).toBeInTheDocument();
   });
 });

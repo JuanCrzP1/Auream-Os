@@ -1,33 +1,46 @@
 import "./business-data.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { BusinessDatumSummary } from "@contracts/BusinessDataContracts";
 import { useBusinessData } from "@shared/business-data/useBusinessData";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { HowItWorksButton, useHowItWorks } from "@shared/ui/how-it-works/HowItWorks";
 import { DatumDrawer } from "./datum/DatumDrawer";
 import { DeleteDatumDialog } from "./datum/DeleteDatumDialog";
 import { NewDatumDialog } from "./datum/NewDatumDialog";
 import { DataTable } from "./list/DataTable";
-import { HowBusinessData } from "./list/HowBusinessData";
 import { PricesCard } from "./list/PricesCard";
 import { useMinute } from "./useMinute";
 
 type Dialog = { readonly kind: "new" } | { readonly kind: "datum"; readonly id: string } | { readonly kind: "delete"; readonly datum: BusinessDatumSummary } | null;
 
 /**
- * Configuración › Datos › Datos del negocio: lo que les dices igual a todos
- * tus clientes (horario, dirección, link de pago, enlace del grupo) escrito
- * una vez y usado como `{g_…}` en flujos, difusiones, respuestas rápidas y el
- * Condicional, con cambios programados e historial. Arriba, «Cómo funciona»
- * (siempre abierto mientras no haya datos). Dueños y administradores los
- * cambian; el resto los ve.
+ * Configuración › Campos y datos › pestaña «Datos del negocio»: lo que les
+ * dices igual a todos tus clientes (horario, dirección, link de pago, enlace
+ * del grupo) escrito una vez y usado como `{g_…}` en flujos, difusiones,
+ * respuestas rápidas y el Condicional, con cambios programados e historial.
+ * Dueños y administradores los cambian; el resto los ve.
+ *
+ * `onNew`: el botón «Nuevo dato» es de la página (pregunta primero qué
+ * clase de dato). `createNow`: la página pide abrir «crear» aquí.
  */
-export function BusinessDataSettings() {
+export function BusinessDataSettings({
+  onNew,
+  createNow = false,
+  onCreateOpened
+}: {
+  readonly onNew?: () => void;
+  readonly createNow?: boolean;
+  readonly onCreateOpened?: () => void;
+} = {}) {
   const { data, list, status, reload, create, update, remove, schedules } = useBusinessData();
   const [dialog, setDialog] = useState<Dialog>(null);
   const now = useMinute();
-  const how = useHowItWorks("business-data", data !== null && list.length === 0);
+
+  useEffect(() => {
+    if (!createNow) return;
+    setDialog({ kind: "new" });
+    onCreateOpened?.();
+  }, [createNow, onCreateOpened]);
 
   if (!data && status === "loading") return <div className="bd-loading" aria-busy="true" aria-label="Cargando datos del negocio" />;
   if (!data) {
@@ -43,22 +56,18 @@ export function BusinessDataSettings() {
   return (
     <section className="bd" aria-label="Datos del negocio">
       <div className="bd__frame">
-        {how.open ? <HowBusinessData {...(how.canClose ? { onClose: how.close } : {})} /> : null}
         <div className="bd__bar">
           <p className="bd__who">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v6c0 4.4 3.4 7.6 8 8 4.6-.4 8-3.6 8-8V7z" /></svg>
             {data.canManage ? "Tú y los administradores los cambian; tus flujos solo los leen." : "Los cambian los dueños y administradores. Tú los ves y los usas en tus mensajes."}
           </p>
-          <div className="bd__actions">
-            {how.open ? null : <HowItWorksButton onClick={how.reopen} />}
-            {data.canManage ? <button type="button" className="ui-btn ui-btn--primary" onClick={() => setDialog({ kind: "new" })}>Nuevo dato</button> : null}
-          </div>
+          {data.canManage ? <button type="button" className="ui-btn ui-btn--primary" onClick={onNew ?? (() => setDialog({ kind: "new" }))}>Nuevo dato</button> : null}
         </div>
 
         {list.length === 0 ? (
           <StateCard
             icon={StateIcons.sparkles}
-            title="Crea tu primer dato"
+            title="Crea tu primer dato del negocio"
             description={
               data.canManage
                 ? "Empieza por el que más repites: tu horario, tu dirección o tu link de pago."

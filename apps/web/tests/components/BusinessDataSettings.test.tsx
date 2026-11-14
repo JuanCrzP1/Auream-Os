@@ -8,11 +8,10 @@ import { previewPieces } from "../../src/features/business-data/businessDataText
 import { applyQuickReply } from "../../src/features/conversations/components/composer/draft";
 
 // ---------------------------------------------------------------------------
-// Configuración › Datos del negocio: lo que les dices igual a todos tus
+// Configuración › Campos y datos › Datos del negocio: lo que les dices igual a todos tus
 // clientes, escrito una vez. Cada dato dice dónde se usa y «Así lo ve tu
 // cliente» se actualiza mientras escribes. Borrar uno que se usa pide su
-// clave. Quien no lo puede cambiar lo ve. «Cómo funciona» explica la pantalla.
-// Y en el chat, una respuesta rápida sale con el valor puesto.
+// clave. Quien no lo puede cambiar lo ve. Y en el chat, una respuesta rápida sale con el valor puesto.
 // ---------------------------------------------------------------------------
 
 const reply = (status: number, body?: unknown) => ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body ?? {}) }) as unknown as Response;
@@ -103,27 +102,6 @@ describe("Datos del negocio", () => {
     await userEvent.type(within(dialog).getByRole("textbox"), "g_link_de_pago");
     await userEvent.click(confirm);
     expect(sent(fetchMock, "DELETE").url).toContain("/business-data/d1?confirm=g_link_de_pago");
-  });
-
-  it("«Cómo funciona»: se cierra con «Entendido», se recuerda y se vuelve a abrir; sin datos, siempre abierto", async () => {
-    stub({ data: [PAGO], canManage: true, timeZone: TZ });
-    const first = page();
-    const how = await screen.findByRole("region", { name: "Escríbelo una vez. Úsalo en todos tus mensajes." });
-    expect(how).toHaveTextContent("Tu cliente lo lee");
-    expect(within(how).getByRole("link", { name: /Campos del cliente/ })).toHaveAttribute("href", "/settings/contact-fields");
-    await userEvent.click(within(how).getByRole("button", { name: "Entendido" }));
-    expect(screen.queryByRole("region", { name: /Escríbelo una vez/ })).toBeNull();
-    first.unmount();
-    const second = page();
-    await userEvent.click(await screen.findByRole("button", { name: "¿Cómo funciona?" }));
-    expect(screen.getByRole("region", { name: /Escríbelo una vez/ })).toBeInTheDocument();
-    second.unmount();
-
-    window.localStorage.setItem("auream.how-it-works.business-data", "closed");
-    stub({ data: [], canManage: true, timeZone: TZ });
-    page();
-    await screen.findByRole("button", { name: "Crear el primero" });
-    expect(within(screen.getByRole("region", { name: /Escríbelo una vez/ })).queryByRole("button", { name: "Entendido" })).toBeNull();
   });
 
   it("quien no los puede cambiar los ve, sin botones para cambiarlos", async () => {

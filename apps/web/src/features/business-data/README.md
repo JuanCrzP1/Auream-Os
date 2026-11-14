@@ -1,12 +1,12 @@
-# Datos del negocio — módulo web (`/settings/business-data`)
+# Datos del negocio — módulo web (pestaña de `/settings/data`)
 
 Lo que se repite en los mensajes de la cuenta (horario, dirección, link de pago, enlaces) escrito una vez y usado como `{g_…}`. Diseño: [`docs/architecture/business-data.md`](../../../../../docs/architecture/business-data.md).
 
 ## Estructura
 ```
 features/business-data/
-├── BusinessDataSettings.tsx  la sección: «Cómo funciona», barra, tabla, tarjeta de precios y diálogos
-├── list/       «Cómo funciona», la tabla «Tus datos» (valor de ahora y su etiqueta; tarjetas en angosto) y «¿Precios? Van en Productos»
+├── BusinessDataSettings.tsx  la pestaña: barra, tabla, tarjeta de precios y diálogos
+├── list/       la tabla «Tus datos» (valor de ahora y su etiqueta; tarjetas en angosto) y «¿Precios? Van en Productos»
 ├── datum/      nuevo dato, el detalle en pestañas (Dato: «Así lo ve tu cliente» en cada momento, valor y dónde se usa), borrar y el valor según su tipo
 ├── schedules/  pestaña «Cambios programados»: tarjetas, formulario y textos (`scheduleText.ts`, en la hora de la empresa)
 ├── history/    pestaña «Historial»: la línea de tiempo y «Volver a este valor» (`historyText.ts`)
@@ -20,4 +20,4 @@ Lo que comparten Configuración, el editor de flujos, el chat y las difusiones v
 ## Permisos
 Todos los que ven flujos los ven, con su historial (`flows.read`); el chat lee solo los valores (`conversations.read`); crear, cambiar, programar y borrar es de dueños y administradores (`flows.write`).
 
-«Cómo funciona» (`shared/ui/how-it-works`) es el mismo cuadro de Campos del cliente: se cierra con «Entendido» (se recuerda en el navegador) y queda abierto mientras no haya datos.
+Es una pestaña de Configuración › Campos y datos (`app/settings/data`), junto a Campos del cliente: la página pone «Cómo funciona» (`shared/ui/how-it-works`) y la pregunta de «Nuevo dato» (`onNew`); `createNow` le pide abrir «crear».

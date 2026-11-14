@@ -1,10 +1,9 @@
 import "./list/fields-list.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ContactFieldSummary } from "@contracts/ContactFieldContracts";
 import type { FieldOperationResponse } from "@contracts/ContactFieldToolsContracts";
 import { RetryButton, StateCard } from "@shared/ui/state/StateCard";
 import { StateIcons } from "@shared/ui/state/stateIcons";
-import { HowItWorksButton, useHowItWorks } from "@shared/ui/how-it-works/HowItWorks";
 import { DiscoveryView } from "./discovery/DiscoveryView";
 import { DeleteFieldDialog } from "./field/DeleteFieldDialog";
 import { FieldDrawer } from "./field/FieldDrawer";
@@ -16,7 +15,6 @@ import { MergeDialog } from "./tools/MergeDialog";
 import { TidyDialog } from "./tools/TidyDialog";
 import { UndoBanner } from "./tools/UndoBanner";
 import { SystemFields } from "./list/SystemFields";
-import { HowContactFields } from "./list/HowContactFields";
 
 type Dialog =
   | { readonly kind: "new" }
@@ -27,13 +25,24 @@ type Dialog =
   | null;
 
 /**
- * Configuración › Datos › Campos del cliente: los datos que la cuenta guarda
+ * Configuración › Campos y datos › Campos del cliente: los datos que la cuenta guarda
  * de cada cliente, con su tipo, en cuántos clientes están y qué bloques los
  * llenan o los leen. El primer día propone convertir en campos lo que los
- * flujos ya guardan. Arriba, «Cómo funciona» (siempre abierto mientras no
- * haya campos). Dueños y administradores los organizan; el resto los ve.
+ * flujos ya guardan. Dueños y administradores los organizan; el resto los ve.
+ * Es la pestaña «Campos del cliente» de Configuración › Campos y datos.
+ *
+ * `onNew`: el botón «Nuevo dato» es de la página (pregunta primero qué
+ * clase de dato). `createNow`: la página pide abrir «crear» aquí.
  */
-export function ContactFieldsSettings() {
+export function ContactFieldsSettings({
+  onNew,
+  createNow = false,
+  onCreateOpened
+}: {
+  readonly onNew?: () => void;
+  readonly createNow?: boolean;
+  readonly onCreateOpened?: () => void;
+} = {}) {
   const { data, status, reload, refresh, create, adopt, update, remove } = useContactFieldCatalog();
   const [skipped, setSkipped] = useState<ReadonlyArray<string>>([]);
   // Tras ordenar o unir: la lista se vuelve a pedir (trae el «Deshacer») y se avisa de los flujos que no se pudieron tocar.
@@ -43,7 +52,13 @@ export function ContactFieldsSettings() {
   };
   const [dialog, setDialog] = useState<Dialog>(null);
   const [reviewing, setReviewing] = useState<boolean | null>(null);
-  const how = useHowItWorks("contact-fields", data !== null && data.fields.length === 0);
+
+  useEffect(() => {
+    if (!createNow) return;
+    setReviewing(false);
+    setDialog({ kind: "new" });
+    onCreateOpened?.();
+  }, [createNow, onCreateOpened]);
 
   if (!data && status === "loading") return <div className="cf-loading" aria-busy="true" aria-label="Cargando campos del cliente" />;
   if (!data) {
@@ -59,16 +74,12 @@ export function ContactFieldsSettings() {
   return (
     <section className="cf" aria-label="Campos del cliente">
       <div className="cf__frame">
-        {how.open ? <HowContactFields {...(how.canClose ? { onClose: how.close } : {})} /> : null}
         <div className="cf__bar">
           <p className="cf__who">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v6c0 4.4 3.4 7.6 8 8 4.6-.4 8-3.6 8-8V7z" /></svg>
             {data.canManage ? "Tú y los administradores los editan; tu equipo los ve y los llena en la ficha del cliente." : "Los editan los dueños y administradores. Tú los ves y los llenas en la ficha del cliente."}
           </p>
-          <div className="cf__actions">
-            {how.open ? null : <HowItWorksButton onClick={how.reopen} />}
-            {data.canManage && !showDiscovery ? <button type="button" className="ui-btn ui-btn--primary" onClick={() => setDialog({ kind: "new" })}>Nuevo campo</button> : null}
-          </div>
+          {data.canManage && !showDiscovery ? <button type="button" className="ui-btn ui-btn--primary" onClick={onNew ?? (() => setDialog({ kind: "new" }))}>{onNew ? "Nuevo dato" : "Nuevo campo"}</button> : null}
         </div>
 
         {showDiscovery ? (
