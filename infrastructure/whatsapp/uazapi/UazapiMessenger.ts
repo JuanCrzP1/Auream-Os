@@ -6,7 +6,7 @@ import { UazapiError, type UazapiClient } from "./UazapiClient";
 // ---------------------------------------------------------------------------
 // Envío por uazapi de las salidas de un flujo:
 //   texto        → /send/text (citando el mensaje si el flujo lo pide)
-//   archivo      → /send/media (image · video · audio · ptt (nota de voz) · document)
+//   archivo      → /send/media (image · video · audio · ptt (nota de voz) · document; viewOnce = ver una vez)
 //   botones/lista→ /send/menu (button «texto|id» · list «texto|id|descripción»)
 //   reacción     → /message/react
 //   presencia    → /message/presence («escribiendo…» / «grabando audio…»)
@@ -64,7 +64,8 @@ export class UazapiMessenger implements WhatsAppMessenger {
         ...(message.replyToMessageId ? { replyId: message.replyToMessageId } : {}),
         file: message.media.url,
         ...(message.content ? { text: message.content } : {}),
-        ...(message.media.type === "file" && message.media.fileName ? { docName: message.media.fileName } : {})
+        ...(message.media.type === "file" && message.media.fileName ? { docName: message.media.fileName } : {}),
+        ...(message.media.viewOnce && message.media.type !== "file" ? { viewOnce: true } : {})
       });
     }
     if (message.interactive && message.interactive.options.length > 0) {

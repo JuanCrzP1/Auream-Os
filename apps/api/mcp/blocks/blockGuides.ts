@@ -25,7 +25,7 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
   message: {
     purpose: "Envía al cliente uno o varios contenidos en orden (texto, imagen, video, audio, documento) y sigue.",
     fields: {
-      items: "Lista en orden. Texto: {kind:'text', text}. Medio: {kind:'image'|'video'|'audio'|'file', url (https pública o una variable que traiga el enlace al enviar, como '{kie.ai.result}' o '{portada}'; si al enviar no es un enlace, ese medio no sale), caption?, fileName?, sendOnce? (solo la primera vez)}. Pausa entre envíos: {kind:'interval', amount, unit:'seconds'|'minutes'|'hours'}."
+      items: "Lista en orden. Texto: {kind:'text', text}. Medio: {kind:'image'|'video'|'audio'|'file', url (https pública o una variable que traiga el enlace al enviar, como '{kie.ai.result}' o '{portada}'; si al enviar no es un enlace, ese medio no sale), caption?, fileName?, sendOnce? (solo la primera vez), viewOnce? (ver una sola vez de WhatsApp: el cliente lo abre una vez y se borra; solo image, video o audio)}. Pausa entre envíos: {kind:'interval', amount, unit:'seconds'|'minutes'|'hours'}."
     },
     outputs: "Una sola salida.",
     example: { items: [{ kind: "text", text: "¡Hola {first_name}! 👋" }, { kind: "interval", amount: 2, unit: "seconds" }, { kind: "text", text: "¿En qué te ayudo?" }] }
@@ -106,7 +106,10 @@ export const BLOCK_GUIDES: Readonly<Partial<Record<NodeType, BlockGuide>>> = {
       autoSend: "true: envía la respuesta al cliente.",
       keepContext: "true: recuerda los últimos turnos (contextTurns, 1–20).",
       intents: "[{id?, description, key}] — hasta 10; cada una es una salida.",
-      fallbackKey: "Nombre de la salida sin coincidencia (por defecto 'otro')."
+      fallbackKey: "Nombre de la salida sin coincidencia (por defecto 'otro').",
+      understandAudio: "true: oye la nota de voz del cliente (la del mensaje que acaba de llegar, o la de userMessage si es solo esa variable, p. ej. '{respuesta}'). Con OpenAI se transcribe antes.",
+      understandImage: "true: ve la foto o captura del cliente (el modelo debe aceptar imágenes).",
+      understandPdf: "true: lee el texto del PDF del cliente y se lo agrega al mensaje."
     },
     outputs: "Sin intenciones: «success» y «failure». Con intenciones: una por intención (su id), «fallback» y «failure».",
     example: { credentialId: "<id>", model: "gpt-4o-mini", systemPrompt: "Eres un asesor amable.", userMessage: "{last_message}", autoSend: true }

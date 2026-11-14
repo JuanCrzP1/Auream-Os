@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { canViewOnce } from "@contracts/MessageConfig";
 import type { MessageMediaItem } from "../types";
 import { useAutoHeight } from "../../_kit/useAutoHeight";
 import { VariableHost, useVariableInsertion } from "../../_kit/variables/VariablePicker";
@@ -19,13 +20,14 @@ interface MediaItemEditorProps {
   readonly item: MessageMediaItem;
   readonly position: number;
   readonly onEdit: (
-    change: { url: string } | FileSourceChange | { caption: string } | { sendOnce: boolean }
+    change: { url: string } | FileSourceChange | { caption: string } | { sendOnce: boolean } | { viewOnce: boolean }
   ) => void;
 }
 
 /**
  * Cuerpo de imagen, video, audio o archivo: pestañas de origen, archivo o
- * enlace, descripción y «enviar una sola vez». Mismo código para los cuatro;
+ * enlace, descripción, «enviar una sola vez» y (menos el archivo) «ver una
+ * sola vez», como en Leona. Mismo código para los cuatro;
  * cambia el acento (heredado del bloque) y las etiquetas.
  *
  * La pestaña activa es estado de interfaz, no configuración: no va al snapshot.
@@ -63,8 +65,8 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
           <textarea
             ref={captionRef}
             className="media-caption__input nodrag nowheel"
-          // Su nombre es el rótulo, sin el ícono de variables que está dentro de él.
-          aria-label={CAPTION_COPY[item.kind].label}
+            // Su nombre es el rótulo, sin el ícono de variables que está dentro de él.
+            aria-label={CAPTION_COPY[item.kind].label}
             value={item.caption}
             onChange={(event) => onEdit({ caption: event.target.value })}
             placeholder={CAPTION_COPY[item.kind].placeholder}
@@ -74,6 +76,16 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
       </label>
 
       <SendOnceSwitch checked={item.sendOnce} onChange={(sendOnce) => onEdit({ sendOnce })} position={position} />
+      {canViewOnce(item.kind) ? (
+        <SendOnceSwitch
+          id="view-once"
+          label="Ver una sola vez"
+          hint="El cliente lo abre una vez y se borra del chat."
+          checked={item.viewOnce === true}
+          onChange={(viewOnce) => onEdit({ viewOnce })}
+          position={position}
+        />
+      ) : null}
     </div>
   );
 }

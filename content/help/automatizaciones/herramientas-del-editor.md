@@ -4,13 +4,13 @@ module: automatizaciones
 summary: Para qué sirve cada bloque y cuándo usarlo.
 order: 2
 updated: 2026-11-14
-keywords: bloques, herramientas, mensaje, menú, condicional, etiquetas, comprobante, registrar venta, distribuidor, programador, notificación, integración, ia, pixel, guardar dato, manipulador, ir a otro flujo, conexión de flujo
+keywords: bloques, herramientas, mensaje, ver una sola vez, menú, condicional, etiquetas, comprobante, registrar venta, distribuidor, programador, notificación, integración, ia, pixel, guardar dato, manipulador, ir a otro flujo, conexión de flujo
 related: primer-flujo, cobrar-y-comprobante, esperas-y-programador, guardar-dato, ir-a-otro-flujo
 ---
 
 ## Conversar
 
-- **Mensaje:** texto, foto, video, audio o archivo, con pausas y «escribiendo…». El enlace del archivo puede ser una variable, como `{portada}`.
+- **Mensaje:** texto, foto, video, audio o archivo, con pausas y «escribiendo…». El enlace del archivo puede ser una variable, como `{portada}`. Una foto, un video o un audio puede ir con **Ver una sola vez**: el cliente lo abre una vez y se borra de su chat (sirve para mandar una muestra sin regalar el trabajo).
 - **Esperar respuesta:** espera lo que el cliente escriba y lo guarda; con tiempo máximo.
 - **Menú:** botones o lista de opciones; cada opción sigue su camino.
 
@@ -36,6 +36,6 @@ related: primer-flujo, cobrar-y-comprobante, esperas-y-programador, guardar-dato
 ## Conectar
 
 - **Integración:** llama a otro sistema (por ejemplo, tu tienda) y usa su respuesta.
-- **Extensión IA:** responde o entiende con inteligencia artificial, con tu propia clave.
+- **Extensión IA:** responde o entiende con inteligencia artificial, con tu propia clave. También oye notas de voz, ve fotos y lee PDF.
 
 Y **Finalizar**, que cierra el recorrido.

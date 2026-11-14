@@ -120,7 +120,7 @@ export function composeNodeRuntime(
     new ConditionNodeHandler(dependencies.contacts),
     new DistributorNodeHandler(dependencies.roundRobin),
     new PixelNodeHandler(dependencies.conversions, dependencies.contacts),
-    new AiNodeHandler(dependencies.ai, dependencies.contacts),
+    new AiNodeHandler(dependencies.ai, dependencies.contacts, { fetcher: dependencies.media, reader: dependencies.documents }),
     new DelayNodeHandler(),
     new IntegrationNodeHandler(dependencies.http, dependencies.contacts),
     new MenuNodeHandler(templates),

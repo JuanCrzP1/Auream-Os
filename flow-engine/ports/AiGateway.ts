@@ -8,9 +8,21 @@
 // ni el flujo, ni la sesión, ni los registros pueden filtrarla.
 // ---------------------------------------------------------------------------
 
+/**
+ * Un archivo del cliente que el modelo ve u oye (solo en el mensaje actual):
+ * una foto o una nota de voz, en base64. El PDF no viaja así: se lee su texto.
+ */
+export interface AiAttachment {
+  readonly kind: "image" | "audio";
+  /** `image/jpeg`, `audio/ogg`… (por la firma del archivo, no lo que dijo el servidor). */
+  readonly mimeType: string;
+  readonly data: string;
+}
+
 export interface AiMessage {
   readonly role: "user" | "assistant";
   readonly content: string;
+  readonly attachments?: ReadonlyArray<AiAttachment>;
 }
 
 export interface AiGenerateRequest {

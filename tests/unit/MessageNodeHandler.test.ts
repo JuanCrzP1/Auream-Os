@@ -232,6 +232,19 @@ describe("MessageNodeHandler — compatibilidad y datos no fiables", () => {
     expect(Object.keys(first.contextPatch)).toEqual(["__sent_once.n-mensaje.i"]);
   });
 
+  it("«ver una sola vez» sale en la imagen, el video y el audio; nunca en un archivo", async () => {
+    const node = makeNode({
+      config: {
+        items: [
+          { id: "a", kind: "audio", url: "https://blob.example/muestra.mp3", caption: "", sendOnce: false, viewOnce: true },
+          { id: "f", kind: "file", url: "https://blob.example/b.pdf", caption: "", sendOnce: false, viewOnce: true },
+          { id: "i", kind: "image", url: "https://blob.example/a.jpg", caption: "", sendOnce: false }
+        ]
+      }
+    });
+    expect((await run(node)).outputMessages.map((m) => m.media?.viewOnce ?? false)).toEqual([true, false, false]);
+  });
+
   it("emite siempre el evento de ejecución del nodo", async () => {
     expect((await run(makeNode())).domainEvents).toContain("message_node_executed:n-mensaje");
   });

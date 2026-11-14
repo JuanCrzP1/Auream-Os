@@ -76,14 +76,20 @@ export class UazapiClient {
   }
 
   /** `type`: image · video · audio · ptt · document (según la documentación de uazapi). */
-  public async sendMedia(token: string, number: string, media: { readonly type: string; readonly file: string; readonly text?: string; readonly docName?: string; readonly replyId?: string }): Promise<string | null> {
+  public async sendMedia(
+    token: string,
+    number: string,
+    media: { readonly type: string; readonly file: string; readonly text?: string; readonly docName?: string; readonly replyId?: string; readonly viewOnce?: boolean }
+  ): Promise<string | null> {
     return sentId(await this.http.request("POST", "/send/media", { token }, {
       number,
       type: media.type,
       file: media.file,
       ...(media.replyId ? { replyid: media.replyId } : {}),
       ...(media.text ? { text: media.text } : {}),
-      ...(media.docName ? { docName: media.docName } : {})
+      ...(media.docName ? { docName: media.docName } : {}),
+      // «Ver una sola vez»: uazapi lo admite en image, video, audio y ptt.
+      ...(media.viewOnce ? { viewOnce: true } : {})
     }));
   }
 

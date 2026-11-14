@@ -44,6 +44,16 @@ export interface MessageMediaItem extends MessageItemBase {
   readonly caption: string;
   /** Enviar una sola vez por conversación. */
   readonly sendOnce: boolean;
+  /**
+   * «Ver una sola vez» de WhatsApp (como en Leona): el cliente lo abre una vez
+   * y desaparece del chat. Solo imagen, video y audio; un archivo no puede.
+   */
+  readonly viewOnce?: boolean;
+}
+
+/** Qué medios admite «Ver una sola vez» en WhatsApp. */
+export function canViewOnce(kind: MessageMediaKind): boolean {
+  return kind !== "file";
 }
 
 /** Pausa entre dos bloques. No es el Programador, que suspende la sesión entera. */
@@ -85,7 +95,8 @@ function toItem(raw: unknown, index: number): MessageItem | null {
     fileName: text(record["fileName"]),
     ...(typeof record["mediaId"] === "string" && record["mediaId"] ? { mediaId: record["mediaId"] } : {}),
     caption: text(record["caption"]),
-    sendOnce: record["sendOnce"] === true
+    sendOnce: record["sendOnce"] === true,
+    ...(record["viewOnce"] === true && canViewOnce(kind as MessageMediaKind) ? { viewOnce: true } : {})
   };
 }
 

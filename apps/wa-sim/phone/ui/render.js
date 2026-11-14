@@ -94,6 +94,7 @@ export function renderThread(thread, messages, presence, onChoice) {
     const mine = !message.fromBusiness;
     const row = el("div", `bubble-row${mine ? " is-mine" : ""}`);
     const bubble = el("div", "bubble");
+    if (message.viewOnce) bubble.append(el("span", "bubble__tag", "① Ver una vez"));
     if (message.voice) bubble.append(el("span", "bubble__tag", "🎤 Nota de voz"));
     const file = media(message);
     if (file) bubble.append(file);

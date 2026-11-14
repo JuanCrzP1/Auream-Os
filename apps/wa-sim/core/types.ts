@@ -53,6 +53,8 @@ export interface SimMessage {
   readonly fileName: string | null;
   /** Nota de voz (`ptt`). */
   readonly voice: boolean;
+  /** «Ver una sola vez» (`viewOnce` de /send/media). */
+  readonly viewOnce?: boolean;
   readonly menu: { readonly type: "button" | "list"; readonly options: ReadonlyArray<MenuOption>; readonly button?: string } | null;
   /** Id del mensaje citado. */
   readonly replyTo: string | null;

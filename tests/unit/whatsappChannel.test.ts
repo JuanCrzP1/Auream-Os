@@ -97,7 +97,8 @@ describe("UazapiMessenger", () => {
       { ...base, kind: "media", content: "Catálogo", media: { type: "file", url: "https://blob/x.pdf", fileName: "precios.pdf" } },
       { ...base, content: "1. A\n2. B", interactive: { type: "buttons", body: "¿Qué quieres?", options: [{ id: "a", title: "Planes" }, { id: "b", title: "Asesor" }] } },
       { ...base, content: "…", interactive: { type: "list", body: "Elige", buttonLabel: "Ver", options: [{ id: "x", title: "Tenis", description: "Talla 40" }] } },
-      { ...base, kind: "reaction", content: "👍", replyToMessageId: "MSG1" }
+      { ...base, kind: "reaction", content: "👍", replyToMessageId: "MSG1" },
+      { ...base, kind: "media", content: "", media: { type: "audio", url: "https://blob/muestra.mp3", viewOnce: true } }
     ];
     for (const message of messages) await api.messenger.send(session, "573001112233", message);
     expect(api.calls.map((c) => [c.path, c.body])).toEqual([
@@ -105,7 +106,8 @@ describe("UazapiMessenger", () => {
       ["/send/media", { number: "573001112233", type: "document", file: "https://blob/x.pdf", text: "Catálogo", docName: "precios.pdf" }],
       ["/send/menu", { number: "573001112233", type: "button", text: "¿Qué quieres?", choices: ["Planes|a", "Asesor|b"] }],
       ["/send/menu", { number: "573001112233", type: "list", text: "Elige", choices: ["Tenis|x|Talla 40"], listButton: "Ver" }],
-      ["/message/react", { id: "MSG1", text: "👍" }]
+      ["/message/react", { id: "MSG1", text: "👍" }],
+      ["/send/media", { number: "573001112233", type: "audio", file: "https://blob/muestra.mp3", viewOnce: true }]
     ]);
     expect(api.calls.every((c) => c.token === TOKEN)).toBe(true);
   });

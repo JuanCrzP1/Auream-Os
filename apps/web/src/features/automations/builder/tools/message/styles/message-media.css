@@ -728,9 +728,21 @@ video.media-file__media {
   background: var(--mi-field);
 }
 
+.send-once__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 3px 0;
+}
+
 .send-once__label {
   font-size: 0.79rem;
   color: var(--text);
+}
+
+.send-once__hint {
+  font-size: 0.7rem;
+  color: var(--muted);
 }
 
 /* --- Subida -------------------------------------------------------------- */

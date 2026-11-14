@@ -33,7 +33,14 @@ export class GeminiClient implements AiProviderClient {
     const model = request.model.replace(/^models\//, "");
     const body = {
       ...(request.system ? { systemInstruction: { parts: [{ text: request.system }] } } : {}),
-      contents: request.messages.map((message) => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] })),
+      contents: request.messages.map((message) => ({
+        role: message.role === "assistant" ? "model" : "user",
+        // La foto o la nota de voz del cliente van junto al texto: Gemini las ve y las oye.
+        parts: [
+          ...(message.content || !message.attachments?.length ? [{ text: message.content }] : []),
+          ...(message.attachments ?? []).map((attachment) => ({ inline_data: { mime_type: attachment.mimeType, data: attachment.data } }))
+        ]
+      })),
       generationConfig: { maxOutputTokens: request.maxOutputTokens, ...(request.json ? { responseMimeType: "application/json" } : {}) }
     };
     const result = await requestJson(

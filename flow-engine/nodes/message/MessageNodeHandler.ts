@@ -129,7 +129,7 @@ export class MessageNodeHandler implements NodeHandler {
         ...base,
         kind: "media",
         content: texts[index]!,
-        media: { type: item.kind, url, ...(item.fileName ? { fileName: item.fileName } : {}) }
+        media: { type: item.kind, url, ...(item.fileName ? { fileName: item.fileName } : {}), ...(item.viewOnce ? { viewOnce: true } : {}) }
       });
     }
 

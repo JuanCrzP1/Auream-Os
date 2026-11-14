@@ -7,7 +7,7 @@ import { instanceOf, requireConnected } from "./auth";
 // Enviar y lo que rodea a un mensaje, como en uazapi:
 //
 //   POST /send/text         { number, text, replyid }
-//   POST /send/media        { number, type: image|video|audio|ptt|document, file, text, docName, replyid }
+//   POST /send/media        { number, type: image|video|audio|ptt|document, file, text, docName, replyid, viewOnce }
 //   POST /send/menu         { number, type: button|list|poll, text, choices, footerText, listButton }
 //   POST /message/react     { id, text }            reaccionar (vacío la quita)
 //   POST /message/presence  { number, presence, delay }   «escribiendo…»
@@ -62,9 +62,11 @@ export function registerMessageApi(router: Router, simulator: Simulator): void {
     if (!kind) return sendJson(context.response, 400, { error: `unsupported type ${type}` });
     const message = simulator.fromBusiness(request.instance, request.phone, {
       kind, text: text(request.body["text"]), mediaUrl: text(request.body["file"]) || null, fileName: text(request.body["docName"]) || null,
-      voice: type === "ptt" || type === "myaudio", replyTo: text(request.body["replyid"]) || null
+      voice: type === "ptt" || type === "myaudio", replyTo: text(request.body["replyid"]) || null,
+      // Como uazapi: solo imagen, video y audio; en un documento se ignora.
+      ...(request.body["viewOnce"] === true && type !== "document" ? { viewOnce: true } : {})
     });
-    store.record("in", `${type === "ptt" ? "nota de voz" : type} a ${request.phone}`);
+    store.record("in", `${type === "ptt" ? "nota de voz" : type}${message.viewOnce ? " (ver una vez)" : ""} a ${request.phone}`);
     sent(context, message.id);
   });
 

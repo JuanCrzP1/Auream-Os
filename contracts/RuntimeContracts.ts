@@ -77,6 +77,8 @@ export interface OutboundMedia {
   readonly fileName?: string;
   /** Audio grabado en el chat: sale como nota de voz (no como archivo de audio). */
   readonly voice?: boolean;
+  /** «Ver una sola vez»: el cliente lo abre una vez y desaparece (imagen, video, audio). */
+  readonly viewOnce?: boolean;
 }
 
 export interface OutboundMessage {

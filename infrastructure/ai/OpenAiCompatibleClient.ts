@@ -2,6 +2,7 @@ import type { AiModelOption, AiProviderId } from "../../contracts/AiContracts";
 import type { AiKeyCheck, AiModelList } from "../../domains/integrations/application/ports/AiProviderAccess";
 import type { AiGenerateResult } from "../../flow-engine/ports/AiGateway";
 import type { AiChatRequest, AiProviderClient, FetchLike } from "./AiProviderClient";
+import { compatibleContent, transcribeAudios, type CompatibleAudio } from "./aiAttachments";
 import { failureFromStatus, prettifyModelId, providerMessage, requestJson } from "./aiHttp";
 
 // ---------------------------------------------------------------------------
@@ -18,6 +19,8 @@ interface CompatibleOptions {
   readonly maxTokensParam: "max_completion_tokens" | "max_tokens";
   readonly extraHeaders?: Readonly<Record<string, string>>;
   readonly keepModel: (model: { id: string; name?: string }) => boolean;
+  /** Notas de voz: transcribirlas antes (OpenAI) o mandarlas al modelo (OpenRouter). */
+  readonly audio: CompatibleAudio;
   readonly fetchImpl?: FetchLike;
 }
 
@@ -43,9 +46,18 @@ export class OpenAiCompatibleClient implements AiProviderClient {
   }
 
   public async chat(request: AiChatRequest): Promise<AiGenerateResult> {
+    let messages = request.messages;
+    if (this.options.audio === "transcribe" && messages.some((message) => message.attachments?.some((attachment) => attachment.kind === "audio"))) {
+      const heard = await transcribeAudios(this.fetchImpl, this.options.baseUrl, request.apiKey, messages);
+      if (!heard.ok) return heard;
+      messages = heard.messages;
+    }
     const body = {
       model: request.model,
-      messages: [...(request.system ? [{ role: "system", content: request.system }] : []), ...request.messages],
+      messages: [
+        ...(request.system ? [{ role: "system", content: request.system }] : []),
+        ...messages.map((message) => ({ role: message.role, content: compatibleContent(message) }))
+      ],
       [this.options.maxTokensParam]: request.maxOutputTokens,
       ...(request.json ? { response_format: { type: "json_object" } } : {})
     };
@@ -114,6 +126,7 @@ export function createOpenAiClient(fetchImpl?: FetchLike, baseUrl = "https://api
     verifyPath: "/models",
     maxTokensParam: "max_completion_tokens",
     keepModel: isOpenAiChatModel,
+    audio: "transcribe",
     ...(fetchImpl ? { fetchImpl } : {})
   });
 }
@@ -127,6 +140,7 @@ export function createOpenRouterClient(fetchImpl?: FetchLike, baseUrl = "https:/
     maxTokensParam: "max_tokens",
     extraHeaders: { "x-title": "Auream" },
     keepModel: () => true,
+    audio: "input_audio",
     ...(fetchImpl ? { fetchImpl } : {})
   });
 }

@@ -97,6 +97,10 @@ describe("WhatsApp simulado ↔ cliente y parsers reales de uazapi", () => {
     const instance = [...app.store.instances.values()][0]!;
     const voice = await client().sendMedia(instance.token, "573005556677", { type: "ptt", file: "https://blob.test/nota.ogg" });
     expect(app.store.message(voice!)).toMatchObject({ kind: "audio", voice: true });
+    // «Ver una sola vez» viaja como en uazapi (`viewOnce`) y en un documento se ignora.
+    const once = await client().sendMedia(instance.token, "573005556677", { type: "audio", file: "https://blob.test/muestra.mp3", viewOnce: true });
+    const doc = await client().sendMedia(instance.token, "573005556677", { type: "document", file: "https://blob.test/a.pdf", viewOnce: true });
+    expect([app.store.message(once!)?.viewOnce, app.store.message(doc!)?.viewOnce]).toEqual([true, undefined]);
     await client().react(instance.token, voice!, "👍");
     expect(app.store.message(voice!)?.reaction).toBe("👍");
 

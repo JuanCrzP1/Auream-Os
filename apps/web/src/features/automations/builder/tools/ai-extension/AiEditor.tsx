@@ -100,10 +100,12 @@ export function AiEditor({ draft, onChange, resources }: ToolEditorProps) {
       </CardSection>
 
       <CardSection step={4} title="Entender archivos" description="Qué puede leer además del texto.">
-        <Notice>Se aplican cuando tu conexión de WhatsApp entregue archivos al flujo. Mientras tanto, la IA trabaja con el texto.</Notice>
-        <SwitchField label="Audios" hint="Transcribe notas de voz." checked={config.understandAudio} onChange={(understandAudio) => update({ understandAudio })} />
-        <SwitchField label="Imágenes" hint="Describe fotos y capturas." checked={config.understandImage} onChange={(understandImage) => update({ understandImage })} />
-        <SwitchField label="PDF" hint="Lee documentos." checked={config.understandPdf} onChange={(understandPdf) => update({ understandPdf })} />
+        <Notice>
+          Usa el archivo que acaba de mandar el cliente, o el que guardó «Esperar respuesta» si el mensaje para la IA es esa variable (por ejemplo {"{respuesta}"}).
+        </Notice>
+        <SwitchField label="Audios" hint="Oye las notas de voz y entiende lo que dicen." checked={config.understandAudio} onChange={(understandAudio) => update({ understandAudio })} />
+        <SwitchField label="Imágenes" hint="Ve las fotos y capturas que manda el cliente." checked={config.understandImage} onChange={(understandImage) => update({ understandImage })} />
+        <SwitchField label="PDF" hint="Lee el texto de los documentos PDF." checked={config.understandPdf} onChange={(understandPdf) => update({ understandPdf })} />
       </CardSection>
 
       <CardSection

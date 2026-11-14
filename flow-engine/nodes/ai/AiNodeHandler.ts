@@ -6,6 +6,7 @@ import { identityOf, type ContactDirectory } from "../../ports/ContactDirectory"
 import { templateResolver } from "../../templates/templateResolver";
 import type { NodeHandler } from "../NodeHandler";
 import { appendHistory, historyKey, readHistory } from "./aiHistory";
+import { prepareAiMedia, type AiMediaPorts } from "./aiMedia";
 import { runAiStep } from "./runAiStep";
 
 // ---------------------------------------------------------------------------
@@ -19,15 +20,16 @@ import { runAiStep } from "./runAiStep";
 // Un nodo de IA NO convierte el flujo en un agente: el flujo sigue siendo
 // determinístico; el motor conversacional de ventas es `ai-sales-engine/`.
 //
-// Archivos (audio, imagen, PDF): el canal todavía no entrega adjuntos al motor
-// (FASE D). Si el bloque los pide y llega uno, se DECLARA en el resultado en
-// lugar de fingir que se leyó.
+// Archivos (casillas «Audios», «Imágenes», «PDF», como en Leona): la nota de
+// voz o la foto del cliente van al modelo; del PDF se lee el texto aquí
+// (`aiMedia.ts`). Qué vio la IA queda en el resultado (`media`).
 // ---------------------------------------------------------------------------
 
 export class AiNodeHandler implements NodeHandler {
   public constructor(
     private readonly ai: AiGateway,
-    private readonly contacts: ContactDirectory
+    private readonly contacts: ContactDirectory,
+    private readonly media?: AiMediaPorts
   ) {}
 
   public supports(nodeType: FlowNode["type"]): boolean {
@@ -40,10 +42,11 @@ export class AiNodeHandler implements NodeHandler {
     const contact = await this.contacts.resolve(session.tenantId, identityOf(input.envelope));
     const history = config.keepContext ? readHistory(context, node.id) : [];
 
-    const step = await runAiStep(config, { tenantId: session.tenantId, resolve: templateResolver({ ...input, sessionContext: context }, contact), history }, this.ai);
+    const media = (rendered: string) => prepareAiMedia(config, node.id, rendered, input.envelope.payload, this.media);
+    const step = await runAiStep(config, { tenantId: session.tenantId, resolve: templateResolver({ ...input, sessionContext: context }, contact), history, media }, this.ai);
     const missingEvents = step.missingVariables.map((name) => `ai_variable_missing:${node.id}:${name}`);
-    const wantsMedia = config.understandAudio || config.understandImage || config.understandPdf;
-    const mediaEvents = wantsMedia && input.envelope.payload["media"] !== undefined ? [`ai_media_not_supported_yet:${node.id}`] : [];
+    const mediaEvents = step.mediaEvents ?? [];
+    const mediaResult = step.mediaKind ? { media: step.mediaKind } : {};
 
     if (!step.succeeded) {
       return {
@@ -51,7 +54,7 @@ export class AiNodeHandler implements NodeHandler {
         output: step.output,
         outputMessages: [],
         contextPatch: config.errorVariable ? { [config.errorVariable]: step.message } : {},
-        nodeResult: { reason: step.reason, message: step.message, model: config.model, durationMs: step.durationMs },
+        nodeResult: { reason: step.reason, message: step.message, model: config.model, durationMs: step.durationMs, ...mediaResult },
         domainEvents: [`ai_failed:${node.id}:${step.reason}`, ...missingEvents, ...mediaEvents]
       };
     }
@@ -72,6 +75,7 @@ export class AiNodeHandler implements NodeHandler {
       nodeResult: {
         model: config.model,
         durationMs: step.durationMs,
+        ...mediaResult,
         ...(step.intentKey !== null ? { intent: step.intentKey } : {}),
         ...(step.usage ? { usage: step.usage } : {})
       },

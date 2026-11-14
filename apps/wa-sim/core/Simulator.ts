@@ -18,7 +18,7 @@ import type { MessageKind, SimInstance, SimMessage } from "./types";
 /** Lo que tarda en llegar «entregado» después de enviar (como un celular con señal). */
 export const DELIVERY_DELAY_MS = 700;
 
-type NewMessage = Partial<Pick<SimMessage, "text" | "mediaUrl" | "mimeType" | "fileName" | "voice" | "menu" | "replyTo" | "choiceId">> & { readonly kind: MessageKind };
+type NewMessage = Partial<Pick<SimMessage, "text" | "mediaUrl" | "mimeType" | "fileName" | "voice" | "viewOnce" | "menu" | "replyTo" | "choiceId">> & { readonly kind: MessageKind };
 
 /** El QR de prueba: una imagen que dice dónde «escanearlo». */
 const QR_IMAGE = `data:image/svg+xml;base64,${Buffer.from(
@@ -122,6 +122,7 @@ export class Simulator {
     return {
       id: messageId(), instanceId: instance.id, contactPhone: phone, fromBusiness, kind: input.kind, text: input.text ?? "",
       mediaUrl: input.mediaUrl ?? null, mimeType: input.mimeType ?? null, fileName: input.fileName ?? null, voice: input.voice ?? false,
+      ...(input.viewOnce ? { viewOnce: true } : {}),
       menu: input.menu ?? null, replyTo: input.replyTo ?? null, choiceId: input.choiceId ?? null, reaction: null,
       status: fromBusiness ? "sent" : "read", at: new Date().toISOString()
     };
