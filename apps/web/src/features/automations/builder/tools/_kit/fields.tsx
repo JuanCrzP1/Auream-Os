@@ -254,18 +254,26 @@ export function InlineSelect<T extends string>({
   );
 }
 
-/** Variables que el usuario puede escribir entre llaves. */
-export function VariableHint({ variables }: { readonly variables: ReadonlyArray<string> }) {
+/**
+ * Cómo se usan las variables. La lista completa está en el ícono { } de cada
+ * campo; aquí solo se nombran las propias de este bloque (`variables`).
+ */
+export function VariableHint({ variables }: { readonly variables?: ReadonlyArray<string> }) {
   return (
     <>
-      <p className="kit-hint kit-variables">
-        Puedes usar variables:{" "}
-        {variables.map((variable) => (
-          <code key={variable} className="kit-variable">
-            {variable}
-          </code>
-        ))}
+      <p className="kit-hint">
+        Toca <code className="kit-variable">{"{ }"}</code> dentro del campo para elegir una variable, o escríbela entre llaves.
       </p>
+      {variables && variables.length > 0 ? (
+        <p className="kit-hint kit-variables">
+          De este bloque:{" "}
+          {variables.map((variable) => (
+            <code key={variable} className="kit-variable">
+              {variable}
+            </code>
+          ))}
+        </p>
+      ) : null}
       <p className="kit-hint">
         Si puede faltar, dale un valor por defecto: <code className="kit-variable">{"{first_name|amigo}"}</code>
       </p>

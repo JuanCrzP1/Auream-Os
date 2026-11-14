@@ -7,7 +7,6 @@ import { CardSection, ChatPreview, ChoiceCards, Counter, EmptyState, OutputsPrev
 import { ButtonsIcon, ListIcon } from "../_kit/icons";
 import { createLocalId } from "../_kit/createLocalId";
 import { removeById, replaceById } from "../_kit/read";
-import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import { MENU_LIMITS, menuOutputs, readMenuConfig, type MenuConfig, type MenuOption, type MenuTimeUnit } from "./menuConfig";
 import { menuTool } from "./definition";
 import { MenuIcon } from "./MenuIcon";
@@ -58,7 +57,7 @@ export function MenuEditor({ draft, onChange, resources }: ToolEditorProps) {
           ) : null}
           <TextField label="Pie (opcional)" value={config.footer} placeholder="Texto pequeño al final" onChange={(footer) => update({ footer })} />
         </div>
-        <VariableHint variables={CONTACT_VARIABLES} />
+        <VariableHint />
       </CardSection>
 
       <CardSection

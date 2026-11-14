@@ -11,7 +11,6 @@ import type { ToolEditorProps } from "../ToolUi";
 import { SwitchField } from "../_kit/Switch";
 import { TextAreaField, VariableHint } from "../_kit/fields";
 import { CardSection, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
-import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import { waitResponseTool } from "./definition";
 import { WaitResponseIcon } from "./WaitResponseIcon";
 import { WaitResponseTimeout } from "./editor/WaitResponseTimeout";
@@ -88,7 +87,7 @@ export function WaitResponseEditor({ draft, onChange, resources }: ToolEditorPro
           placeholder="Ej.: ¿En qué ciudad te encuentras?"
           onChange={(text) => onChange({ content: { ...draft.content, text } })}
         />
-        <VariableHint variables={CONTACT_VARIABLES} />
+        <VariableHint />
       </CardSection>
 
       <CardSection step={2} title="Tiempo de espera" description="Cuánto esperar antes de seguir por «Tiempo agotado».">

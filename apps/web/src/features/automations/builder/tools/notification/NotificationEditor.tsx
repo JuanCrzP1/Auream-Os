@@ -1,7 +1,6 @@
 import type { ToolEditorProps } from "../ToolUi";
 import { Field, TextAreaField, TextField, VariableHint } from "../_kit/fields";
 import { CardSection, ChatPreview, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
-import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import { CountryDialPicker } from "@shared/ui/country-dial/CountryDialPicker";
 import { readNotificationConfig, type NotificationConfig } from "./notificationConfig";
 import { notificationTool } from "./definition";
@@ -50,7 +49,7 @@ export function NotificationEditor({ draft, onChange, resources }: ToolEditorPro
           placeholder="Ej.: Nuevo lead interesado: {full_name}"
           onChange={(message) => update({ message })}
         />
-        <VariableHint variables={CONTACT_VARIABLES} />
+        <VariableHint />
         <ChatPreview message={config.message} caption="Así le llega a tu equipo" />
       </CardSection>
 

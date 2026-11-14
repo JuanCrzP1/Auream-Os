@@ -76,10 +76,24 @@ describe("el botón de variables", () => {
     expect(host("Pie (opcional)")).toBeNull();
   });
 
+  it("la pista no repite la lista: dice que se toque { } y no flota encima del formulario", () => {
+    render(<Editor Tool={NotificationEditor} config={{ message: "" }} />);
+    expect(screen.queryByText(/Puedes usar variables/)).not.toBeInTheDocument();
+    expect(screen.getByText(/dentro del campo para elegir una variable/)).toBeInTheDocument();
+    // La pista y la lista flotante no comparten estilo (antes la pista salía flotando).
+    expect(document.querySelector(".kit-var-popover")).toBeNull();
+  });
+
+  it("la descripción de una imagen se llama por su rótulo, sin el ícono", async () => {
+    render(<MessageEditor draft={{ name: "Mensaje", content: {}, config: { items: [{ id: "i", kind: "image", url: "", caption: "" }] } }} resources={resources} onChange={vi.fn()} />);
+    expect(screen.getByRole("textbox", { name: "Descripción de la imagen" })).toBeInTheDocument();
+  });
+
   it("la lista flota y se cierra al tocar fuera, sin cambiar nada", async () => {
     render(<Editor Tool={NotificationEditor} config={{ message: "Hola" }} />);
     await userEvent.click(screen.getByRole("button", { name: "Insertar variable" }));
     expect(screen.getByRole("dialog", { name: "Elegir una variable" }).parentElement).toBe(document.body);
+    expect(screen.getByRole("dialog")).toHaveClass("kit-var-popover");
     await userEvent.click(document.body);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(saved()).toMatchObject({ message: "Hola" });

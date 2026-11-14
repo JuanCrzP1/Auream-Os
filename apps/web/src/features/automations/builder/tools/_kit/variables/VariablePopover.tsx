@@ -55,7 +55,7 @@ export function VariablePopover({ anchor, onClose, children }: { readonly anchor
 
   const style = { top: place?.top ?? -9999, left: place?.left ?? -9999, width: WIDTH, ...(place?.accent ? { "--kit-accent": place.accent } : {}) } as CSSProperties;
   return createPortal(
-    <div ref={panel} className="kit-variables nodrag nowheel" role="dialog" aria-label="Elegir una variable" style={style}>
+    <div ref={panel} className="kit-var-popover nodrag nowheel" role="dialog" aria-label="Elegir una variable" style={style}>
       {children}
     </div>,
     document.body

@@ -9,6 +9,10 @@
   padding-right: 36px;
 }
 
+.kit-var-host--multiline > textarea {
+  padding-right: 46px;
+}
+
 .kit-var-host > .kit-input-wrap > .kit-input {
   padding-right: 80px;
 }
@@ -35,8 +39,10 @@
   transition: background 0.12s ease, color 0.12s ease;
 }
 
+/* Abajo a la derecha, sin tapar la esquina con la que se agranda el campo. */
 .kit-var-host--multiline .kit-var-corner {
   top: auto;
+  right: 16px;
   bottom: 6px;
   transform: none;
 }
@@ -55,7 +61,7 @@
 }
 
 /* La lista: capa propia sobre todo (fuera del bloque), colores globales. */
-.kit-variables {
+.kit-var-popover {
   position: fixed;
   z-index: 2000;
   display: grid;
@@ -73,21 +79,21 @@
   color: var(--text);
   box-shadow: 0 18px 40px -16px rgba(8, 6, 24, 0.45);
   font-family: var(--font-body);
-  animation: kit-variables-in 0.12s ease-out;
+  animation: kit-var-popover-in 0.12s ease-out;
 }
 
-@keyframes kit-variables-in {
+@keyframes kit-var-popover-in {
   from {
     opacity: 0;
     transform: translateY(-4px);
   }
 }
 
-.kit-variables__search {
+.kit-var-popover__search {
   height: 34px;
 }
 
-.kit-variables__list {
+.kit-var-popover__list {
   display: grid;
   align-content: start;
   gap: 8px;
@@ -95,12 +101,12 @@
   overflow-y: auto;
 }
 
-.kit-variables__group {
+.kit-var-popover__group {
   display: grid;
   gap: 1px;
 }
 
-.kit-variables__group h4 {
+.kit-var-popover__group h4 {
   margin: 2px 6px 3px;
   color: var(--muted);
   font-size: 0.66rem;
@@ -109,7 +115,7 @@
   text-transform: uppercase;
 }
 
-.kit-variables__option {
+.kit-var-popover__option {
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -124,19 +130,19 @@
   cursor: pointer;
 }
 
-.kit-variables__option:hover,
-.kit-variables__option:focus-visible {
+.kit-var-popover__option:hover,
+.kit-var-popover__option:focus-visible {
   background: color-mix(in srgb, var(--kit-accent, var(--primary)) 9%, transparent);
   outline: none;
 }
 
-.kit-variables__option code {
+.kit-var-popover__option code {
   flex: none;
   color: color-mix(in srgb, var(--kit-accent, var(--primary)) 85%, var(--text));
   font: 600 0.76rem ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.kit-variables__option span {
+.kit-var-popover__option span {
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
@@ -145,7 +151,7 @@
   white-space: nowrap;
 }
 
-.kit-variables__empty {
+.kit-var-popover__empty {
   margin: 0;
   padding: 6px 8px;
   color: var(--muted);

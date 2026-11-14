@@ -63,6 +63,8 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
           <textarea
             ref={captionRef}
             className="media-caption__input nodrag nowheel"
+          // Su nombre es el rótulo, sin el ícono de variables que está dentro de él.
+          aria-label={CAPTION_COPY[item.kind].label}
             value={item.caption}
             onChange={(event) => onEdit({ caption: event.target.value })}
             placeholder={CAPTION_COPY[item.kind].placeholder}

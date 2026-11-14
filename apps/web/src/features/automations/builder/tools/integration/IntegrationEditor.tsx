@@ -4,7 +4,6 @@ import { FieldPicker } from "../_kit/FieldPicker";
 import { CardSection, Counter, EmptyState, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { createLocalId } from "../_kit/createLocalId";
 import { removeById, replaceById } from "../_kit/read";
-import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import {
   HTTP_METHODS,
   integrationOutputs,
@@ -106,7 +105,7 @@ export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProp
       {hasBody ? (
         <CardSection step={3} title="Cuerpo" description="Lo que se envía al servicio.">
           <TextAreaField variables label="Contenido (JSON o texto)" value={config.body} monospace onChange={(body) => update({ body })} />
-          <VariableHint variables={CONTACT_VARIABLES} />
+          <VariableHint />
           <p className="kit-hint">También cualquier campo del contacto o dato guardado en la conversación, p. ej. {"{ciudad}"}.</p>
         </CardSection>
       ) : null}

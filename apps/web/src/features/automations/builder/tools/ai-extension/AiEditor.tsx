@@ -3,7 +3,6 @@ import type { ToolEditorProps } from "../ToolUi";
 import { SwitchField } from "../_kit/Switch";
 import { AddButton, InlineInput, ListCard, Notice, TextAreaField, TextField, VariableHint } from "../_kit/fields";
 import { FieldPicker } from "../_kit/FieldPicker";
-import { CONTACT_VARIABLES } from "../_kit/catalogs";
 import { CardSection, Counter, EmptyState, OutputsPreview, ToolEditorLayout } from "../_kit/layout";
 import { createLocalId } from "../_kit/createLocalId";
 import { removeById, replaceById } from "../_kit/read";
@@ -57,7 +56,7 @@ export function AiEditor({ draft, onChange, resources }: ToolEditorProps) {
           hint="Normalmente una variable. Las instrucciones van arriba, no aquí."
           onChange={(userMessage) => update({ userMessage })}
         />
-        <VariableHint variables={CONTACT_VARIABLES} />
+        <VariableHint />
       </CardSection>
 
       <CardSection step={3} title="Respuesta" description="Dónde queda lo que responde la IA.">

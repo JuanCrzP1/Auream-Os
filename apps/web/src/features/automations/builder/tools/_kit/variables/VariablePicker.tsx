@@ -88,14 +88,14 @@ export function VariableMenu({ onPick }: { readonly onPick: (name: string) => vo
 
   return (
     <>
-      <input className="kit-input kit-variables__search" type="search" value={query} placeholder="Buscar variable…" aria-label="Buscar variable" autoFocus onKeyDown={onKey} onChange={(event) => setQuery(event.target.value)} />
-      <div className="kit-variables__list">
-        {shown.length === 0 ? <p className="kit-variables__empty">Ninguna se llama así. Puedes escribirla entre llaves: {"{mi_dato}"}.</p> : null}
+      <input className="kit-input kit-var-popover__search" type="search" value={query} placeholder="Buscar variable…" aria-label="Buscar variable" autoFocus onKeyDown={onKey} onChange={(event) => setQuery(event.target.value)} />
+      <div className="kit-var-popover__list">
+        {shown.length === 0 ? <p className="kit-var-popover__empty">Ninguna se llama así. Puedes escribirla entre llaves: {"{mi_dato}"}.</p> : null}
         {shown.map((group) => (
-          <section key={group.id} className="kit-variables__group" aria-label={group.title}>
+          <section key={group.id} className="kit-var-popover__group" aria-label={group.title}>
             <h4>{group.title}</h4>
             {group.variables.map((variable) => (
-              <button key={variable.name} type="button" className="kit-variables__option" onMouseDown={(event) => event.preventDefault()} onClick={() => onPick(variable.name)}>
+              <button key={variable.name} type="button" className="kit-var-popover__option" onMouseDown={(event) => event.preventDefault()} onClick={() => onPick(variable.name)}>
                 <code>{`{${variable.name}}`}</code>
                 <span>{variable.label}</span>
               </button>
