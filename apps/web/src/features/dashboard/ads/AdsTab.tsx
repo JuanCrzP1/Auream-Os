@@ -45,9 +45,9 @@ export function AdsTab({ filters }: { readonly filters: DashboardFilters }) {
   const blind = salesUnknown(data.measurement, t.sales);
   const tops = [
     { label: "ROAS real", value: formatRoas(t.roas), note: `Meta dice ${formatRoas(t.roasMeta)}`, lead: true },
-    { label: "Ganancia", value: money(t.profit, data.currency), note: blind ? "Auream aún no ve esas ventas" : "ventas por anuncio − gasto", lead: true },
+    { label: "Ganancia", value: money(t.profit, data.currency), note: blind ? "Necesita tus ventas reales" : "ventas por anuncio − gasto", lead: true },
     { label: "Gasto", value: money(t.spend, data.currency), note: `${t.clicks.toLocaleString("es-CO")} clics · CTR ${formatPercent(t.ctr)}` },
-    { label: "Costo por venta", value: money(t.costPerSale, data.currency), note: blind ? "sin ventas que mirar" : `${t.sales} ventas por anuncio` },
+    { label: "Costo por venta", value: money(t.costPerSale, data.currency), note: `${blind ? "sin ventas reales" : `${t.sales} ventas por anuncio`}${t.costPerSaleMeta !== null ? ` · Meta dice ${money(t.costPerSaleMeta, data.currency)}` : ""}` },
     { label: "Costo por chat", value: money(t.costPerChat, data.currency), note: `${t.chats.toLocaleString("es-CO")} chats` }
   ];
   const best = [...data.rows].filter((row) => row.sales >= 3 && row.roas !== null).sort((a, b) => (b.roas ?? 0) - (a.roas ?? 0))[0];

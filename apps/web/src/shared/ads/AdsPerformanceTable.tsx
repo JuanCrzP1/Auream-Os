@@ -10,18 +10,19 @@ import { ADVICE_LABEL, formatCop, formatCount, formatRoas, STATUS_LABEL } from "
  */
 export function AdsPerformanceTable({ data }: { readonly data: AdsDashboardResponse }) {
   const money = (value: number | null) => formatCop(value, data.currency);
+  const meta = (value: string) => <span className="ads-table__meta"> / {value}</span>;
   const cells = (row: Omit<AdPerformanceRow, "id" | "name" | "level" | "status" | "parentName" | "dailyBudget" | "thumbnailUrl" | "advice" | "adviceReason">) => (
     <>
       <td>{money(row.spend)}</td>
       <td>{formatCount(row.chats)}</td>
       <td>{money(row.costPerChat)}</td>
-      <td><strong>{row.profit === null ? "—" : formatCount(row.sales)}</strong> <span className="ads-table__meta">/ {formatCount(row.metaPurchases)}</span></td>
-      <td>{row.profit === null ? "—" : money(row.revenue)}</td>
-      {row.profit === null ? <td>—</td> : (
+      <td><strong>{row.profit === null ? "—" : formatCount(row.sales)}</strong>{meta(formatCount(row.metaPurchases))}</td>
+      <td><strong>{row.profit === null ? "—" : money(row.revenue)}</strong>{meta(money(row.metaRevenue))}</td>
+      {row.profit === null ? <td title="Necesita tus ventas reales: con lo que reporta el píxel no se calcula">—</td> : (
         <td className={row.profit >= 0 ? "ads-table__good" : "ads-table__bad"}><strong>{row.profit < 0 ? "−" : ""}{money(Math.abs(row.profit))}</strong></td>
       )}
       <td><strong className={row.roas !== null && row.roas >= 3 ? "ads-table__good" : row.roas !== null && row.roas < 1 ? "ads-table__bad" : undefined}>{formatRoas(row.roas)}</strong> <span className="ads-table__meta">/ {formatRoas(row.roasMeta)}</span></td>
-      <td>{money(row.costPerSale)}</td>
+      <td><strong>{money(row.costPerSale)}</strong>{meta(money(row.costPerSaleMeta))}</td>
     </>
   );
   return (
@@ -34,11 +35,11 @@ export function AdsPerformanceTable({ data }: { readonly data: AdsDashboardRespo
             <th scope="col">Gasto</th>
             <th scope="col">Chats</th>
             <th scope="col">Costo / chat</th>
-            <th scope="col" title="Ventas que registró Auream / compras que vio el Píxel de Meta">Ventas <span>Auream / Meta</span></th>
-            <th scope="col">Facturación</th>
-            <th scope="col">Ganancia</th>
+            <th scope="col" title="Ventas anotadas en Auream / compras que vio el Píxel de Meta">Ventas <span>Auream / Meta</span></th>
+            <th scope="col" title="Lo que vendieron: con tus ventas reales / lo que reporta el Píxel de Meta">Facturación <span>Auream / Meta</span></th>
+            <th scope="col" title="Facturación real − gasto. Solo con tus ventas reales: con lo que reporta el píxel engaña">Ganancia</th>
             <th scope="col" title="Lo que vuelve por cada 1 gastado: con las ventas reales / según Meta">ROAS <span>Auream / Meta</span></th>
-            <th scope="col">Costo / venta</th>
+            <th scope="col" title="Gasto ÷ ventas: con tus ventas reales / con las compras que reporta Meta (su «Coste por resultado»)">Costo / venta <span>Auream / Meta</span></th>
           </tr>
         </thead>
         <tbody>

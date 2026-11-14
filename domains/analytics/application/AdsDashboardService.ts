@@ -46,6 +46,7 @@ function metrics(acc: Acc, seen: AdMeasurement): Totals {
     roasMeta: ratio(acc.metaRevenue, acc.spend),
     costPerChat: acc.chats > 0 ? round(acc.spend / acc.chats) : null,
     costPerSale: acc.sales > 0 ? round(acc.spend / acc.sales) : null,
+    costPerSaleMeta: acc.metaPurchases > 0 ? round(acc.spend / acc.metaPurchases) : null,
     ctr: acc.impressions > 0 ? Math.round((acc.clicks / acc.impressions) * 10000) / 10000 : null
   };
 }

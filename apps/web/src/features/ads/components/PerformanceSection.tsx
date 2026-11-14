@@ -10,7 +10,12 @@ import { timeAgo } from "@shared/format/timeAgo";
 import { RepeatView } from "./repeat/RepeatView";
 
 const LEVELS: ReadonlyArray<readonly [AdLevel, string]> = [["campaign", "Campañas"], ["adset", "Conjuntos"], ["ad", "Anuncios"]];
-const DAY = (offset: number) => new Date(Date.now() - offset * 86_400_000).toISOString().slice(0, 10);
+/** El día de hace `offset` días en la hora de quien mira (no en UTC: a las 7 p. m. de Colombia ya sería mañana). */
+const DAY = (offset: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - offset);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
 const PERIODS = [["7", "7 días"], ["30", "30 días"], ["90", "90 días"]] as const;
 const VIEWS = [["period", "Ventas del periodo"], ["repeat", "Con recompras"]] as const;
 

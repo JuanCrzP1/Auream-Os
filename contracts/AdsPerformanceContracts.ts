@@ -39,7 +39,10 @@ export interface AdPerformanceRow {
   readonly roas: number | null;
   readonly roasMeta: number | null;
   readonly costPerChat: number | null;
+  /** Gasto ÷ ventas reales (las anotadas en Auream). */
   readonly costPerSale: number | null;
+  /** Gasto ÷ compras que reporta Meta: su «Coste por resultado» de compras. */
+  readonly costPerSaleMeta: number | null;
   readonly ctr: number | null;
   readonly advice: AdAdvice;
   readonly adviceReason: string;

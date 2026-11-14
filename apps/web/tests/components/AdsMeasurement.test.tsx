@@ -20,7 +20,7 @@ import { summaryCards } from "../../src/features/dashboard/sales/summary/summary
 const reply = (body: unknown) => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) }) as unknown as Response;
 const trend = (value: number, previous: number) => ({ value, previous, change: null });
 const NONE: AdMeasurement = { state: "none", metaChats: 4726, arrivedChats: 0, metaPurchases: 805 };
-const blind = { spend: 1_750_508, impressions: 90000, clicks: 2100, chats: 1779, arrivedChats: 0, sales: 0, metaPurchases: 299, revenue: 0, metaRevenue: 350_000, profit: null, roas: null, roasMeta: 0.2, costPerChat: 984, costPerSale: null, ctr: 0.02 };
+const blind = { spend: 1_750_508, impressions: 90000, clicks: 2100, chats: 1779, arrivedChats: 0, sales: 0, metaPurchases: 299, revenue: 0, metaRevenue: 350_000, profit: null, roas: null, roasMeta: 0.2, costPerChat: 984, costPerSale: null, costPerSaleMeta: 5855, ctr: 0.02 };
 
 const performance = (measurement: AdMeasurement = NONE): AdsDashboardResponse => ({
   currency: "COP", level: "campaign", connected: true, measurement, unseenSales: 0, lateShare: null, lastSyncedAt: null,
@@ -33,7 +33,7 @@ const performance = (measurement: AdMeasurement = NONE): AdsDashboardResponse =>
 
 const sales = (measurement: AdMeasurement): SalesDashboardResponse => ({
   currency: "COP", missingRates: [], revenue: trend(0, 0), sales: trend(0, 0), averageTicket: null, leads: trend(0, 0), leadsFromAds: 0, conversion: null, conversionPrevious: null, convertedLeads: 0, reviewCount: 0,
-  ads: { spend: trend(4_681_440, 0), revenue: trend(0, 0), profit: trend(-4_681_440, 0), realProfit: null, roas: null, roasMeta: 0.2, costPerSale: null, costPerChat: 991, revenuePerChat: null, chats: 4726, attributedSales: 0, impressions: 90000, clicks: 2100, activeCampaigns: 5, measurement },
+  ads: { spend: trend(4_681_440, 0), revenue: trend(0, 0), profit: trend(-4_681_440, 0), realProfit: null, roas: null, roasMeta: 0.2, costPerSale: null, costPerSaleMeta: 6072, metaRevenue: 936_288, metaPurchases: 771, costPerChat: 991, revenuePerChat: null, chats: 4726, attributedSales: 0, impressions: 90000, clicks: 2100, activeCampaigns: 5, measurement },
   realProfit: null, profit: trend(-4_681_440, 0), otherSpend: null, otherExpenses: [], costsKnown: false,
   daily: [], funnel: null, byHour: [], byConnection: [], byProduct: [], byCountry: [], recentSales: [], canSeeAds: true, canExport: false
 });
@@ -69,7 +69,8 @@ describe("Meta Ads › Rendimiento sin medición", () => {
     expect(row).toHaveTextContent("Sus 1.779 chats no llegan a Auream");
     // Gasto, chats y costo por chat (de Meta) sí; ventas, facturación, ganancia y ROAS de Auream, con raya.
     const cells = [...row.querySelectorAll("td")].slice(2).map((cell) => cell.textContent);
-    expect(cells).toEqual(["$ 1.750.508", "1.779", "$ 984", "— / 299", "—", "—", "— / 0,2x", "—"]);
+    // Cada número en pareja «Auream / Meta»: lo de Meta se ve aunque Auream aún no tenga ventas; la ganancia solo con ventas reales.
+    expect(cells).toEqual(["$ 1.750.508", "1.779", "$ 984", "— / 299", "— / $ 350.000", "—", "— / 0,2x", "— / $ 5.855"]);
     expect(row.querySelector(".ads-table__bad")).toBeNull();
     expect(table.querySelector("tfoot")).toHaveTextContent("— / 805");
   });
@@ -82,8 +83,8 @@ describe("Dashboard sin medición", () => {
     expect(await screen.findByRole("status", { name: "Auream aún no ve los chats de tus anuncios" })).toBeInTheDocument();
     const tops = screen.getByRole("region", { name: "Resumen de anuncios" });
     expect(tops).toHaveTextContent("ROAS real—Meta dice 0,2x");
-    expect(tops).toHaveTextContent("Ganancia—Auream aún no ve esas ventas");
-    expect(tops).toHaveTextContent("Costo por venta—sin ventas que mirar");
+    expect(tops).toHaveTextContent("Ganancia—Necesita tus ventas reales");
+    expect(tops).toHaveTextContent("Costo por venta—sin ventas reales · Meta dice $ 5.855 COP");
     expect(screen.queryByText("¿Por qué Meta dice menos?")).toBeNull();
   });
 
@@ -98,7 +99,8 @@ describe("Dashboard sin medición", () => {
     render(<AdsHero view={sales(NONE)} periodWords="últimos 30 días" />);
     const hero = screen.getByRole("region", { name: "La plata de tus anuncios" });
     expect(hero).toHaveTextContent("ROAS real · últimos 30 días—Auream aún no ve los chats de tus anuncios: no hay con qué calcularlo.Meta dice 0,2x");
-    expect(hero).toHaveTextContent("Facturación por anuncios—Auream aún no ve esas ventas");
+    expect(hero).toHaveTextContent("Facturación por anuncios—Meta dice $ 936.288 COP");
+    expect(hero).toHaveTextContent("Costo por venta—sin ventas reales · Meta dice $ 6.072 COP");
     expect(hero).toHaveTextContent("Ganancia (ventas − anuncios)—sin esas ventas no se puede calcular");
     expect(hero).toHaveTextContent("Gasto en Meta$ 4.681.440");
     expect(hero).not.toHaveTextContent("4.681.440 COP−");

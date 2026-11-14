@@ -91,6 +91,9 @@ describe("Anuncios, cuando Auream no ve las ventas", () => {
     expect(view.measurement).toEqual({ state: "none", metaChats: 2918, arrivedChats: 0, metaPurchases: 504 });
     expect(view.rows.map((row) => [row.id, row.advice, row.roas, row.profit])).toEqual([["c1", "unmeasured", null, null], ["c2", "unmeasured", null, null], ["c3", "learning", null, null]]);
     expect(view.totals).toMatchObject({ spend: 2_931_653, chats: 2918, metaPurchases: 504, roas: null, profit: null, roasMeta: 0.2, costPerChat: 1004.68, costPerSale: null });
+    // Lo de Meta sí se ve: su costo por compra (su «Coste por resultado»), por campaña y en el total.
+    expect(view.rows[0]!.costPerSaleMeta).toBe(5854.54);
+    expect(view.totals.costPerSaleMeta).toBe(5816.77);
   });
 
   it("número recién conectado: llegó una parte de los chats y aún no se juzga, aunque ya haya ventas", async () => {
@@ -125,5 +128,6 @@ describe("Anuncios, cuando Auream no ve las ventas", () => {
   it("Dashboard › Ventas dice lo mismo: sin ROAS real ni «cada chat deja», con el mismo estado", async () => {
     const view = await new SalesDashboardService(noSales, elsewhere(), fx, tz, () => NOW).overview({ tenantId: "t", canSeeAds: true }, {});
     expect(view.ads).toMatchObject({ roas: null, revenuePerChat: null, roasMeta: 0.2, chats: 2918, costPerChat: 1004.68, measurement: { state: "none", metaChats: 2918, arrivedChats: 0, metaPurchases: 503 } });
+    expect(view.ads).toMatchObject({ costPerSaleMeta: 5828.34, metaRevenue: 600_000, metaPurchases: 503 });
   });
 });

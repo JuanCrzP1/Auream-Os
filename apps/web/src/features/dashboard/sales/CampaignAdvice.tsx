@@ -21,7 +21,7 @@ export function CampaignAdvice({ data, onSeeAll }: { readonly data: AdsDashboard
             <span className="campaign-advice__name"><strong>{row.name}</strong><span>{row.adviceReason}</span></span>
             <span className="campaign-advice__metric"><strong className={row.roas !== null && row.roas >= 3 ? "ads-table__good" : row.roas !== null && row.roas < 1 ? "ads-table__bad" : undefined}>{formatRoas(row.roas)}</strong><span>ROAS real</span></span>
             <span className="campaign-advice__metric"><strong className={row.profit === null || row.profit >= 0 ? undefined : "ads-table__bad"}>{row.profit !== null && row.profit < 0 ? "−" : ""}{money(row.profit === null ? null : Math.abs(row.profit), data.currency)}</strong><span>ganancia</span></span>
-            <span className="campaign-advice__metric"><strong>{money(row.costPerSale, data.currency)}</strong><span>costo por venta</span></span>
+            <span className="campaign-advice__metric"><strong>{money(row.costPerSale, data.currency)}</strong><span>costo por venta{row.costPerSaleMeta !== null ? ` · Meta: ${money(row.costPerSaleMeta, data.currency)}` : ""}</span></span>
           </li>
         ))}
       </ul>

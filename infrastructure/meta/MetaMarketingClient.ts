@@ -157,7 +157,7 @@ export class MetaMarketingClient implements AdsProvider {
     if (signed && error.code === 100 && /appsecret_proof/i.test(error.message ?? "")) return this.request(path, token, query, false);
     const detail = describe(error, response.status);
     if (error.code === 190 || response.status === 401) throw new AdsProviderError("Meta rechazó el permiso (venció o lo quitaron). Vuelve a conectar Meta Ads.", true, "token", detail);
-    if (error.code === 200 || error.code === 10) throw new AdsProviderError("Meta no dio permiso para leer los anuncios. Vuelve a conectar y acéptalo.", true, "permission", detail);
+    if (error.code === 200 || error.code === 10) throw new AdsProviderError("Meta no dio permiso para leer los anuncios. Si Meta bloqueó tu cuenta, desbloquéala y toca «Actualizar ahora»; si cambió el permiso, vuelve a conectar.", true, "permission", detail);
     if (error.code === 4 || error.code === 17 || error.code === 613 || error.code === 80004) throw new AdsProviderError("Meta está limitando las consultas; se reintenta más tarde.", false, null, detail);
     throw new AdsProviderError(`Meta respondió ${response.status}: ${scrub(error.error_user_msg || error.message || "error desconocido")}`, false, null, detail);
   }

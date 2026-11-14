@@ -57,10 +57,13 @@ export class AdsSyncService {
       if (first) await this.scheduler.scheduleSync(tenantId, accountId, now, { since: day(ADS_FIRST_SYNC_DAYS - 1), until: day(HALF) });
       if (!window) await this.scheduler.scheduleSync(tenantId, accountId, new Date(now.getTime() + ADS_SYNC_EVERY_HOURS * 3_600_000));
     } catch (error) {
-      const message = error instanceof AdsProviderError ? error.message : "No se pudo sincronizar con Meta. Se reintenta en la próxima vuelta.";
+      // Lo que dijo Meta, con su código (sin el token): en pantalla y en el registro, para ver la causa real.
+      const detail = error instanceof AdsProviderError && error.detail ? ` Meta dice: «${error.detail}».` : "";
+      const message = error instanceof AdsProviderError ? `${error.message}${detail}` : "No se pudo sincronizar con Meta. Se reintenta en la próxima vuelta.";
       await this.repository.markSynced(tenantId, accountId, message);
       if (error instanceof AdsProviderError && error.reconnect) {
         await this.repository.setConnectionError(tenantId, message);
+        this.onError(error, { step: "ads.sync", tenantId, accountId, reason: error.reason, meta: error.detail });
         return;
       }
       this.onError(error, { step: "ads.sync", tenantId, accountId });

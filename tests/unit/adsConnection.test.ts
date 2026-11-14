@@ -131,6 +131,19 @@ describe("AdsSyncService", () => {
     expect(w.scheduler.scheduleSync).toHaveBeenCalledTimes(1);
   });
 
+  it("si Meta bloquea, la cuenta guarda lo que dijo Meta con su código; al desbloquear, «Actualizar ahora» la deja al día sola", async () => {
+    const w = world();
+    await w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30));
+    w.scheduler.scheduleSync.mockClear();
+    w.provider.entities.mockRejectedValueOnce(new AdsProviderError("Meta no dio permiso para leer los anuncios.", true, "permission", "API access blocked. · código 200/5258005"));
+    await w.sync.sync(T, w.stored[0]!.id);
+    expect(w.getConnection()!.lastError).toBe("Meta no dio permiso para leer los anuncios. Meta dice: «API access blocked. · código 200/5258005».");
+    expect(w.stored[0]!.lastError).toContain("código 200/5258005");
+    await w.sync.sync(T, w.stored[0]!.id);
+    expect(w.getConnection()!.lastError).toBeNull();
+    expect(w.scheduler.scheduleSync).toHaveBeenCalledWith(T, w.stored[0]!.id, new Date(NOW.getTime() + 3 * 3_600_000));
+  });
+
   it("una cuenta que no está elegida no se sincroniza", async () => {
     const w = world([ACT("act_1"), ACT("act_2")]);
     await w.connectionServices.connectWithToken(w.actor, "EAAB" + "x".repeat(30));

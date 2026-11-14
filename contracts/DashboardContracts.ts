@@ -63,6 +63,10 @@ export interface AdsMoneySummary {
   /** Lo que Meta cree (sus compras del Píxel): suele ser menos. */
   readonly roasMeta: number | null;
   readonly costPerSale: number | null;
+  /** Lo que dice Meta: gasto ÷ sus compras, el valor de esas compras y cuántas son. */
+  readonly costPerSaleMeta: number | null;
+  readonly metaRevenue: number;
+  readonly metaPurchases: number;
   readonly costPerChat: number | null;
   readonly revenuePerChat: number | null;
   readonly chats: number;
