@@ -94,6 +94,11 @@ Una sola sintaxis para el builder y el motor (`contracts/TemplateVariables.ts`):
 - **Valores con tipo** (`contracts/FieldValues.ts`): la ficha guarda sí/no, fechas y números «a lo computador». En un mensaje (`text`) salen como persona («Sí», «13/11/1990»); en una integración, el Pixel, Registrar venta o el monto del Comprobante (`raw`, `json`, `url`, `header`) van crudos. El Condicional compara con tipo: «Sí» = `true`, «13/11/1990» = `1990-11-13`, «1.200.000» = `1200000`.
 - **Codificación según el destino**: texto tal cual en mensajes; componente de URL, cadena JSON escapada o cabecera sin saltos de línea en la Integración. Un dato del cliente nunca cambia la forma de la petición.
 - **Mensajes** (`templates/ConversationTemplates.ts`): Mensaje, Menú y Esperar respuesta resuelven sus textos; el contacto solo se consulta si el texto usa variables.
+- **Del sistema, como en Leona** (2026-11-14): reloj en la zona del negocio (`{fecha}` dd/MM/aaaa, `{data}` dd/MM, `{hora}`, `{dia}`, `{saludo}` — 5–11 h «Buenos días», 12–18 h «Buenas tardes», si no «Buenas noches»), `{created_at}` (cuándo llegó el cliente) y `{attendant_name}`, `{instance_name}`, `{instance_number}` (asesor y número de la conversación). Estos tres los lee el puerto `ports/ConversationFactsReader.ts` (`SqlConversationFacts`), **una vez por turno y solo si el flujo los nombra**; en el laboratorio salen de ejemplo.
+- **Nombres de Leona** (`contracts/VariableCatalog.ts`, `LEONA_VARIABLE_ALIASES`): `{phone_number}`, `{ai.response}`, `{ai.erro}`, `{ai.fail.reason}`, `{response.erro}` y `{comprovante.*}` valen lo mismo que su nombre en Auream; el alias solo se usa si la variable no existe con su propio nombre.
+- **Error de la Integración**: al salir por `failure` queda el motivo en `{integracion.error}` (= `{response.erro}`); un éxito posterior lo borra.
+- **Condicional con variables**: el «valor» de una regla puede llevar `{…}` (`{data}`, `{ref_anterior}`); se resuelve en crudo antes de comparar.
+- **En el editor**: cada campo de texto tiene el botón «{ } Variables» (`_kit/variables`), con buscador y por grupos (del cliente, campos del cliente, datos del negocio, del sistema, del anuncio, de otros bloques); la pone donde está el cursor.
 
 ### Peticiones salientes (Integración)
 

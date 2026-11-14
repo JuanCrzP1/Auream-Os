@@ -90,12 +90,17 @@ class TurnSandbox implements SimulationSandbox {
     const timezone = await this.deps.timezoneOf(this.tenantId);
     const tenants = new StaticTenantResolver({ [this.tenantId]: { tenantId: this.tenantId, tenantKey: this.tenantId, timezone, limits: SIMULATION_LIMITS } });
 
-    const result = await new ExecutionOrchestrator(tenants, registry, sessionService, loop, this.deps.business).handle(envelope);
+    // En el laboratorio no hay asesor ni número real: valores de ejemplo, para ver cómo quedan.
+    const conversation = { facts: async () => SAMPLE_CONVERSATION };
+    const result = await new ExecutionOrchestrator(tenants, registry, sessionService, loop, this.deps.business, conversation).handle(envelope);
     if (this.deps.fields) await keepTypedFields(this.deps.fields, this.tenantId, contacts, envelope, result.contextPatch ?? {});
     const after = (await sessions.find(sessionIdFor(this.tenantId, envelope.conversationKey))) ?? null;
     return { result, session: after, persona: contacts.current(), records: journal.entries(), counters: roundRobin.snapshot() };
   }
 }
+
+/** `{attendant_name}`, `{instance_name}` e `{instance_number}` en el laboratorio. */
+const SAMPLE_CONVERSATION = { assigneeName: "Asesor de prueba", connectionName: "Número de prueba", connectionNumber: "573000000000" };
 
 /** Lo que guardaron los bloques y es un campo queda en la ficha del cliente de prueba, convertido (como `ContactFieldSync`). */
 async function keepTypedFields(

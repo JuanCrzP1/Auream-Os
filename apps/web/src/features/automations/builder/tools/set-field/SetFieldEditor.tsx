@@ -44,6 +44,7 @@ export function SetFieldEditor({ draft, onChange, resources }: ToolEditorProps) 
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={setFieldTool.colors.header}
       outputs={null}
       Icon={SetFieldIcon}
@@ -84,6 +85,7 @@ export function SetFieldEditor({ draft, onChange, resources }: ToolEditorProps) 
 
       <CardSection step={3} title={mode === "value" ? "Valor" : "Número"}>
         <TextField
+          variables
           label={mode === "value" ? "Valor" : "Con este número"}
           value={config.value}
           maxLength={SET_FIELD_LIMITS.maxValue}

@@ -1,3 +1,4 @@
+import { VariableBar, useVariableInsertion } from "../../_kit/variables/VariablePicker";
 import type { MessageMediaKind } from "../types";
 import { hasMediaVariable, isMediaSource, isUsableUrl } from "../mediaSource";
 
@@ -30,12 +31,14 @@ export function UrlSource({ kind, position, url, onChange }: UrlSourceProps) {
   const acceptable = isAcceptable(url);
   const variable = hasMediaVariable(url);
   const hasUrl = url.trim().length > 0 && isUsableUrl(url.trim()) && !variable;
+  const picker = useVariableInsertion<HTMLInputElement>(url, onChange);
 
   return (
     <div className="media-url">
       <label className="media-url__field">
         <span className="media-url__label">URL del archivo o variable</span>
         <input
+          ref={picker.ref}
           type="text"
           inputMode="url"
           spellCheck={false}
@@ -47,6 +50,7 @@ export function UrlSource({ kind, position, url, onChange }: UrlSourceProps) {
           aria-invalid={!acceptable}
         />
       </label>
+      <VariableBar picker={picker} />
 
       {acceptable ? null : <p className="media-url__error">Debe empezar por http:// o https://, o ser una variable como {"{portada}"}</p>}
       {variable && acceptable ? <p className="media-url__hint">Se envía el enlace que tenga esta variable en ese momento (por ejemplo, el que guardó una Integración). Si está vacía, este archivo no sale.</p> : null}

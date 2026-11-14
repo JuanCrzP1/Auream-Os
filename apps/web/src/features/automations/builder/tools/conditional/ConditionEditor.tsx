@@ -59,6 +59,7 @@ function RuleValue({
     default:
       return (
         <InlineInput
+          variables={rule.category !== "tag" && rule.category !== "attendant"}
           value={rule.value}
           ariaLabel={label}
           placeholder={rule.category === "tag" ? "Nombre de la etiqueta" : rule.category === "attendant" ? "Nombre o correo del asesor" : "Valor o {variable}"}
@@ -79,6 +80,7 @@ export function ConditionEditor({ draft, onChange, resources }: ToolEditorProps)
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={conditionalTool.colors.header}
       outputs={conditionOutputs()}
       Icon={ConditionalIcon}

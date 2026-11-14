@@ -33,7 +33,8 @@ function toProfile({ contact, labels }: ContactWithLabels): ContactProfile {
     email: contact.email,
     tags: labels.map((label) => label.name),
     fields: contact.customFields,
-    ad: contact.adOrigin ?? null
+    ad: contact.adOrigin ?? null,
+    createdAt: contact.createdAt
   };
 }
 

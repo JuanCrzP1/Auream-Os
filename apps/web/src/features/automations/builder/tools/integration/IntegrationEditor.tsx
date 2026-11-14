@@ -36,6 +36,7 @@ export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProp
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={integrationTool.colors.header}
       outputs={integrationOutputs()}
       Icon={IntegrationIcon}
@@ -52,14 +53,13 @@ export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProp
               onChange={(method) => update({ method })}
             />
           </div>
-          <input
-            type="url"
-            className="kit-input kit-input--mono nodrag"
+          <InlineInput
+            variables
+            monospace
             value={config.url}
             placeholder="https://api.tuservicio.com/leads"
-            aria-label="URL"
-            spellCheck={false}
-            onChange={(event) => update({ url: event.target.value.trim() })}
+            ariaLabel="URL"
+            onChange={(url) => update({ url: url.trim() })}
           />
         </div>
       </CardSection>
@@ -84,6 +84,7 @@ export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProp
                     onChange={(key) => update({ headers: replaceById(config.headers, header.id, { key }) })}
                   />
                   <InlineInput
+                    variables
                     value={header.value}
                     placeholder="Valor"
                     monospace
@@ -104,7 +105,7 @@ export function IntegrationEditor({ draft, onChange, resources }: ToolEditorProp
 
       {hasBody ? (
         <CardSection step={3} title="Cuerpo" description="Lo que se envía al servicio.">
-          <TextAreaField label="Contenido (JSON o texto)" value={config.body} monospace onChange={(body) => update({ body })} />
+          <TextAreaField variables label="Contenido (JSON o texto)" value={config.body} monospace onChange={(body) => update({ body })} />
           <VariableHint variables={CONTACT_VARIABLES} />
           <p className="kit-hint">También cualquier campo del contacto o dato guardado en la conversación, p. ej. {"{ciudad}"}.</p>
         </CardSection>

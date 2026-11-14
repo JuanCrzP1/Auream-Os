@@ -1,0 +1,152 @@
+/* El botón «{ } Variables» y su lista, en línea debajo del campo. Tokens del tema. */
+.kit-variables-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--kit-accent, var(--primary)) 25%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 6%, var(--surface));
+  color: color-mix(in srgb, var(--kit-accent, var(--primary)) 85%, var(--text));
+  font: 700 0.72rem var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.kit-variables-toggle span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: -0.04em;
+}
+
+.kit-variables-toggle:hover,
+.kit-variables-toggle.is-open {
+  border-color: var(--kit-accent, var(--primary));
+  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 12%, var(--surface));
+}
+
+/* Rótulo con el botón a la derecha. */
+.kit-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kit-variables {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.kit-variables__search {
+  height: 34px;
+}
+
+.kit-variables__list {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.kit-variables__group {
+  display: grid;
+  gap: 1px;
+}
+
+.kit-variables__group h4 {
+  margin: 2px 6px 3px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.kit-variables__option {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kit-variables__option:hover,
+.kit-variables__option:focus-visible {
+  background: color-mix(in srgb, var(--kit-accent, var(--primary)) 9%, transparent);
+  outline: none;
+}
+
+.kit-variables__option code {
+  flex: none;
+  color: color-mix(in srgb, var(--kit-accent, var(--primary)) 85%, var(--text));
+  font: 600 0.76rem ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.kit-variables__option span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kit-variables__empty {
+  margin: 0;
+  padding: 6px 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Un campo de una línea (en una lista) con su botón al lado. */
+.kit-inline-vars {
+  display: grid;
+  min-width: 0;
+}
+
+.kit-inline-vars__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kit-inline-vars__row > .kit-input,
+.kit-inline-vars__row > .kit-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.kit-inline-vars__row .kit-variables-toggle {
+  height: 30px;
+}
+
+/* Barra bajo un campo propio (el texto del Mensaje, su leyenda o su enlace). */
+.kit-variables-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.kit-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -17,6 +17,7 @@ export function RecordSaleEditor({ draft, onChange, resources }: ToolEditorProps
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={recordSaleTool.colors.header}
       outputs={null}
       Icon={RecordSaleIcon}
@@ -41,8 +42,8 @@ export function RecordSaleEditor({ draft, onChange, resources }: ToolEditorProps
         {config.amountMode === "variable" ? (
           <>
             <div className="kit-grid">
-              <TextField label="Monto" value={config.amount} placeholder="{comprobante.valor}" hint="Una variable o un número: 49.900, $ 149.900, 1.234,50." onChange={(amount) => update({ amount })} />
-              <TextField label="Moneda" value={config.currency} placeholder="{comprobante.moneda}" hint="Una variable o el código: COP, MXN, USD…" onChange={(currency) => update({ currency })} />
+              <TextField variables label="Monto" value={config.amount} placeholder="{comprobante.valor}" hint="Una variable o un número: 49.900, $ 149.900, 1.234,50." onChange={(amount) => update({ amount })} />
+              <TextField variables label="Moneda" value={config.currency} placeholder="{comprobante.moneda}" hint="Una variable o el código: COP, MXN, USD…" onChange={(currency) => update({ currency })} />
             </div>
             <VariableHint variables={["{comprobante.valor}", "{comprobante.moneda}"]} />
           </>
@@ -54,6 +55,7 @@ export function RecordSaleEditor({ draft, onChange, resources }: ToolEditorProps
       <CardSection step={3} title="Cliente y pago" description="Opcional. Para reconocer la venta y no registrarla dos veces.">
         <div className="kit-grid">
           <TextField
+            variables
             label="Nombre del cliente"
             value={config.customerName}
             placeholder="{comprobante.nombre_pagador}"
@@ -61,6 +63,7 @@ export function RecordSaleEditor({ draft, onChange, resources }: ToolEditorProps
             onChange={(customerName) => update({ customerName })}
           />
           <TextField
+            variables
             label="Referencia del pago"
             value={config.reference}
             placeholder="{comprobante.referencia}"

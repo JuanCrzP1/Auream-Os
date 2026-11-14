@@ -72,6 +72,7 @@ export function WaitResponseEditor({ draft, onChange, resources }: ToolEditorPro
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={waitResponseTool.colors.header}
       Icon={WaitResponseIcon}
       title="Esperar respuesta"
@@ -81,6 +82,7 @@ export function WaitResponseEditor({ draft, onChange, resources }: ToolEditorPro
     >
       <CardSection step={1} title="Mensaje antes de esperar" description="Opcional. Déjalo vacío si la pregunta ya la hizo un bloque anterior.">
         <TextAreaField
+          variables
           label="Mensaje antes de esperar"
           value={message}
           placeholder="Ej.: ¿En qué ciudad te encuentras?"

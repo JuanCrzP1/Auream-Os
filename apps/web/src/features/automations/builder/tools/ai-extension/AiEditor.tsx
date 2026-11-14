@@ -31,6 +31,7 @@ export function AiEditor({ draft, onChange, resources }: ToolEditorProps) {
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={aiExtensionTool.colors.header}
       outputs={aiOutputs({ ...draft.config, ...config })}
       Icon={AiExtensionIcon}
@@ -43,12 +44,14 @@ export function AiEditor({ draft, onChange, resources }: ToolEditorProps) {
 
       <CardSection step={2} title="Instrucciones" description="Cómo debe comportarse y qué recibe.">
         <TextAreaField
+          variables
           label="Instrucciones del asistente"
           value={config.systemPrompt}
           placeholder="Ej.: Eres un asesor de ventas amable. Responde en máximo dos frases."
           onChange={(systemPrompt) => update({ systemPrompt })}
         />
         <TextField
+          variables
           label="Mensaje que recibe la IA"
           value={config.userMessage}
           monospace

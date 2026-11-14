@@ -28,7 +28,15 @@ export const BUILT_IN_VARIABLES: ReadonlyArray<BuiltInVariable> = [
   { name: "last_message", label: "Último mensaje", sample: "Quiero más información" },
   // Del reloj, en la zona del negocio. Un campo o dato del flujo con el mismo nombre manda.
   { name: "fecha", label: "Fecha", sample: "09/11/2026" },
-  { name: "hora", label: "Hora", sample: "14:35" }
+  { name: "hora", label: "Hora", sample: "14:35" },
+  // Con los nombres de Leona: un flujo traído de allá funciona sin cambiarlo.
+  { name: "data", label: "Fecha (día/mes)", sample: "09/11" },
+  { name: "dia", label: "Día de la semana", sample: "lunes" },
+  { name: "saludo", label: "Saludo (buenos días, tardes o noches)", sample: "Buenas tardes" },
+  { name: "created_at", label: "Cuándo llegó el cliente", sample: "09/11/2026 14:35:00" },
+  { name: "attendant_name", label: "Asesor que lo atiende", sample: "Camilo" },
+  { name: "instance_name", label: "Número conectado (su nombre)", sample: "Ventas" },
+  { name: "instance_number", label: "Número conectado", sample: "573001112233" }
 ];
 
 /** Mismo formato que la clave de un campo personalizado del contacto. */

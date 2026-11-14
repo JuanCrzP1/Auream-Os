@@ -24,6 +24,7 @@ import { MessageLibrary } from "./editor/MessageLibrary";
 import { MessageEmptyState } from "./editor/MessageEmptyState";
 import { MessageDropZone } from "./editor/MessageDropZone";
 import { MediaUploadProvider } from "./editor/MediaUploadContext";
+import { VariableSourcesProvider } from "../_kit/variables/VariableSources";
 
 /**
  * Constructor de la secuencia de un Mensaje. La secuencia se lee de `config`
@@ -120,10 +121,8 @@ export function MessageEditor({ draft, onChange, resources }: ToolEditorProps) {
 
   return (
     <MediaUploadProvider value={resources?.uploadMedia}>
-    <div
-      className="message-shell"
-      style={editorAccent(messageTool.colors.header)}
-    >
+    <VariableSourcesProvider resources={resources}>
+    <div className="message-shell" style={editorAccent(messageTool.colors.header)}>
       <EditorIntro
         compact
         Icon={MessageIcon}
@@ -199,6 +198,7 @@ export function MessageEditor({ draft, onChange, resources }: ToolEditorProps) {
         </section>
       </div>
     </div>
+    </VariableSourcesProvider>
     </MediaUploadProvider>
   );
 }

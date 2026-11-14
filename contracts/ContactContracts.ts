@@ -92,6 +92,8 @@ export interface ContactProfile {
   readonly fields: Readonly<Record<string, ContactFieldValue>>;
   /** El último anuncio de clic a WhatsApp por el que entró (`{source_url}`, `{ctwa_clid}`…). */
   readonly ad?: AdOrigin | null;
+  /** Cuándo llegó por primera vez (ISO): `{created_at}`. */
+  readonly createdAt?: string;
 }
 
 /** Cómo llega un contacto al motor: por canal y su identificador en él. */

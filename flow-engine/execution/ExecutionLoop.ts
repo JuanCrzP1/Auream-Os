@@ -2,6 +2,7 @@ import type { FlowSnapshot } from "../../contracts/FlowSnapshot";
 import type { InboundEnvelope, NodeExecutionResult, RuntimeInput, Session } from "../../contracts/RuntimeContracts";
 import { WAKE_CONTEXT_KEY, timerOf, type FlowRunResult, type FlowStep } from "../../contracts/FlowTimerContracts";
 import { HANDOFF_PAYLOAD } from "../../contracts/GoToFlowConfig";
+import type { ConversationFacts } from "../../contracts/ConversationFacts";
 import { pausedMs, stateOf, wakeUpOf } from "./turnState";
 
 import type { SessionStore, ContextWriter } from "../ports/RuntimePorts";
@@ -59,7 +60,7 @@ export class ExecutionLoop {
     snapshot: FlowSnapshot,
     initialSession: Session,
     envelope: InboundEnvelope,
-    options: { readonly timezone?: string; readonly business?: Readonly<Record<string, string | number | boolean>> } = {}
+    options: { readonly timezone?: string; readonly business?: Readonly<Record<string, string | number | boolean>>; readonly conversation?: ConversationFacts } = {}
   ): Promise<FlowRunResult> {
     let session = initialSession;
     const now = this.clock().toISOString();
@@ -134,6 +135,7 @@ export class ExecutionLoop {
         now,
         timezone,
         ...(options.business ? { business: options.business } : {}),
+        ...(options.conversation ? { conversation: options.conversation } : {}),
         // El despertador es solo para el bloque que lo pidió (el primero del turno).
         ...(hop === 0 && (timer || resumeOverdue) ? { timer: timer ? timer.reason : ("resume" as const) } : {}),
         inlinePauseUsedMs: pausedMs(aggregate.outputMessages)

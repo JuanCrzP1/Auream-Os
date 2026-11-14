@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { MessageMediaItem } from "../types";
 import { useAutoHeight } from "../../_kit/useAutoHeight";
+import { VariableBar, useVariableInsertion } from "../../_kit/variables/VariablePicker";
 import { MediaSourceTabs, type MediaSource } from "./MediaSourceTabs";
 import { FileSource, type FileSourceChange } from "./FileSource";
 import { UrlSource } from "./UrlSource";
@@ -35,6 +36,7 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
   // Se abre en la pestaña de donde salió el medio: enlace escrito o archivo.
   const [source, setSource] = useState<MediaSource>(item.url && !item.mediaId ? "url" : "file");
   const captionRef = useAutoHeight(item.caption);
+  const picker = useVariableInsertion(item.caption, (caption) => onEdit({ caption }), captionRef);
 
   return (
     <div className="message-item__body">
@@ -66,6 +68,7 @@ export function MediaItemEditor({ item, position, onEdit }: MediaItemEditorProps
           wrap="soft"
         />
       </label>
+      <VariableBar picker={picker} />
 
       <SendOnceSwitch checked={item.sendOnce} onChange={(sendOnce) => onEdit({ sendOnce })} position={position} />
     </div>

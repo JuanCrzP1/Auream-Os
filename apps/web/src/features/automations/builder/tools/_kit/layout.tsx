@@ -3,6 +3,8 @@ import type { ComponentType, ReactNode } from "react";
 import type { ToolOutput } from "../ToolDefinition";
 import { editorAccent } from "./fields";
 import { withSampleValues } from "./catalogs";
+import { VariableSourcesProvider } from "./variables/VariableSources";
+import type { ToolResources } from "../ToolResources";
 
 // ---------------------------------------------------------------------------
 // Estructura visual de los editores: cabecera, secciones como tarjetas
@@ -57,7 +59,7 @@ export function EditorIntro({
   );
 }
 
-/** Contenedor del editor: acento, desplazamiento y cabecera explicativa. */
+/** Contenedor del editor: acento, desplazamiento y cabecera explicativa. Con `resources`, el botón de variables ofrece también los campos y datos de la cuenta. */
 export function ToolEditorLayout({
   accent,
   Icon,
@@ -65,6 +67,7 @@ export function ToolEditorLayout({
   description,
   outputs,
   className,
+  resources,
   children
 }: {
   readonly accent: string;
@@ -74,13 +77,17 @@ export function ToolEditorLayout({
   readonly outputs?: ReadonlyArray<ToolOutput> | null;
   /** Clase raíz propia de la herramienta (para sus estilos y pruebas). */
   readonly className?: string;
+  /** Los recursos de la cuenta (sus campos y datos del negocio, para el botón de variables). */
+  readonly resources?: ToolResources | undefined;
   readonly children: ReactNode;
 }) {
   return (
-    <div className={`kit-editor kit-editor--cards${className ? ` ${className}` : ""}`} style={editorAccent(accent)}>
-      <EditorIntro Icon={Icon} title={title} description={description} outputs={outputs} />
-      {children}
-    </div>
+    <VariableSourcesProvider resources={resources}>
+      <div className={`kit-editor kit-editor--cards${className ? ` ${className}` : ""}`} style={editorAccent(accent)}>
+        <EditorIntro Icon={Icon} title={title} description={description} outputs={outputs} />
+        {children}
+      </div>
+    </VariableSourcesProvider>
   );
 }
 

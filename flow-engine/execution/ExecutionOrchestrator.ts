@@ -5,6 +5,8 @@ import { timerOf, type FlowRunResult } from "../../contracts/FlowTimerContracts"
 import type { Session } from "../../contracts/RuntimeContracts";
 
 import type { BusinessDataReader } from "../ports/BusinessDataReader";
+import type { ConversationFactsReader } from "../ports/ConversationFactsReader";
+import { CONVERSATION_FACT_VARIABLES } from "../../contracts/ConversationFacts";
 import type { SessionStore, TenantContextResolver } from "../ports/RuntimePorts";
 import { ExecutionLoop } from "./ExecutionLoop";
 
@@ -25,7 +27,9 @@ export class ExecutionOrchestrator {
     private readonly sessionService: SessionStore,
     private readonly executionLoop: ExecutionLoop,
     /** Los Datos del negocio (`{g_…}`), una vez por turno. Ausente: el motor no los conoce. */
-    private readonly business?: BusinessDataReader
+    private readonly business?: BusinessDataReader,
+    /** Quién atiende y por qué número (`{attendant_name}`…), una vez por turno si el flujo los usa. */
+    private readonly conversationFacts?: ConversationFactsReader
   ) {}
 
   public async handle(envelope: InboundEnvelope): Promise<FlowRunResult> {
@@ -45,7 +49,10 @@ export class ExecutionOrchestrator {
     const snapshot = await this.resolveSnapshot(initialSession, publishedSnapshot);
     // Un fallo al leerlos no tumba el turno: los textos quedan con su valor por defecto.
     const business = this.business ? await this.business.values(tenant.tenantId).catch(() => ({})) : undefined;
-    return this.executionLoop.run(snapshot, initialSession, envelope, { timezone: tenant.timezone, ...(business ? { business } : {}) });
+    // Solo si el flujo los nombra: así un turno normal no paga la consulta.
+    const conversation =
+      this.conversationFacts && usesConversationFacts(snapshot) ? await this.conversationFacts.facts(tenant.tenantId, envelope.conversationKey).catch(() => null) : null;
+    return this.executionLoop.run(snapshot, initialSession, envelope, { timezone: tenant.timezone, ...(business ? { business } : {}), ...(conversation ? { conversation } : {}) });
   }
 
   private async resolveSnapshot(session: Session, publishedSnapshot: FlowSnapshot): Promise<FlowSnapshot> {
@@ -59,4 +66,16 @@ export class ExecutionOrchestrator {
       session.flowVersionId
     );
   }
+}
+
+const usesFacts = new WeakMap<FlowSnapshot, boolean>();
+
+/** ¿Algún bloque del flujo nombra `{attendant_name}`, `{instance_name}` o `{instance_number}`? (Una vez por versión cargada.) */
+function usesConversationFacts(snapshot: FlowSnapshot): boolean {
+  const known = usesFacts.get(snapshot);
+  if (known !== undefined) return known;
+  const text = JSON.stringify(snapshot.nodes);
+  const uses = CONVERSATION_FACT_VARIABLES.some((name) => text.includes(`{${name}`));
+  usesFacts.set(snapshot, uses);
+  return uses;
 }

@@ -32,7 +32,7 @@ describe("NotificationNodeHandler", () => {
     const result = await new NotificationNodeHandler().execute(node(VENTA), input({ full_name: "Laura Gómez", "comprobante.valor": "1.250" }), session);
     expect(result.executionStatus).toBe("success");
     expect(result.outputMessages).toEqual([
-      { channel: "whatsapp", conversationKey: "c", content: "Venta realizada ✅\nNombre: Laura Gómez\nBs 1.250\nHora 14:35\nDía 09/11/2026", recipient: { phone: "573105550117", name: "Venta realizada Venezuela" } }
+      { channel: "whatsapp", conversationKey: "c", content: "Venta realizada ✅\nNombre: Laura Gómez\nBs 1.250\nHora 14:35\nDía 09/11", recipient: { phone: "573105550117", name: "Venta realizada Venezuela" } }
     ]);
   });
 
@@ -46,9 +46,9 @@ describe("NotificationNodeHandler", () => {
 });
 
 describe("variables del reloj", () => {
-  it("`{fecha}`, `{hora}` y `{data}` (nombre de Leona) en la zona del negocio; un dato del flujo con ese nombre manda", () => {
+  it("`{fecha}`, `{hora}` y `{data}` (día/mes, como en Leona) en la zona del negocio; un dato del flujo con ese nombre manda", () => {
     const resolve = templateResolver(input(), null);
-    expect([resolve("fecha"), resolve("hora"), resolve("data")]).toEqual(["09/11/2026", "14:35", "09/11/2026"]);
+    expect([resolve("fecha"), resolve("hora"), resolve("data")]).toEqual(["09/11/2026", "14:35", "09/11"]);
     expect(templateResolver(input({ fecha: "el martes" }), null)("fecha")).toBe("el martes");
   });
 });

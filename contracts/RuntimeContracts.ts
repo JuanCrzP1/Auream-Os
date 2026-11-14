@@ -1,3 +1,4 @@
+import type { ConversationFacts } from "./ConversationFacts";
 import type { FlowHandoff } from "./GoToFlowConfig";
 import type { FlowTimerReason } from "./FlowTimerContracts";
 
@@ -163,6 +164,12 @@ export interface RuntimeInput {
    * regla «Variable global» cuenta como no disponible).
    */
   readonly business?: Readonly<Record<string, string | number | boolean>>;
+  /**
+   * De la conversación: quién la atiende y por qué número (`{attendant_name}`,
+   * `{instance_name}`, `{instance_number}`). Se lee una vez por turno y solo
+   * si el flujo los usa. Ausente: el motor no los conoce (quedan vacíos).
+   */
+  readonly conversation?: ConversationFacts;
   /**
    * El bloque se ejecuta porque venció su despertador (FASE C6), no por un
    * mensaje: el Programador sigue, una espera sale por «Tiempo agotado», un

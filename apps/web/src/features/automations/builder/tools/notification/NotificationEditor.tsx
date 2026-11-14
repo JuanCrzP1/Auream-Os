@@ -7,12 +7,13 @@ import { readNotificationConfig, type NotificationConfig } from "./notificationC
 import { notificationTool } from "./definition";
 import { NotificationIcon } from "./NotificationIcon";
 
-export function NotificationEditor({ draft, onChange }: ToolEditorProps) {
+export function NotificationEditor({ draft, onChange, resources }: ToolEditorProps) {
   const config = readNotificationConfig(draft.config);
   const update = (patch: Partial<NotificationConfig>) => onChange({ config: { ...draft.config, ...config, ...patch } });
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={notificationTool.colors.header}
       outputs={null}
       Icon={NotificationIcon}
@@ -43,6 +44,7 @@ export function NotificationEditor({ draft, onChange }: ToolEditorProps) {
 
       <CardSection step={2} title="Mensaje" description="Qué dice el aviso. Las variables se reemplazan con los datos del contacto.">
         <TextAreaField
+          variables
           label="Texto del aviso"
           value={config.message}
           placeholder="Ej.: Nuevo lead interesado: {full_name}"

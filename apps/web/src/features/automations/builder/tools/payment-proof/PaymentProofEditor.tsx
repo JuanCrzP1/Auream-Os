@@ -47,6 +47,7 @@ export function PaymentProofEditor({ draft, onChange, resources }: ToolEditorPro
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={paymentProofTool.colors.header}
       outputs={paymentProofOutputs({ ...draft.config, ...config })}
       Icon={PaymentProofIcon}
@@ -55,6 +56,7 @@ export function PaymentProofEditor({ draft, onChange, resources }: ToolEditorPro
     >
       <CardSection step={1} title="Comprobante" description="Dónde está la imagen o el PDF que envió el cliente.">
         <TextField
+          variables
           label="Variable con el comprobante"
           value={config.source}
           monospace
@@ -151,6 +153,7 @@ export function PaymentProofEditor({ draft, onChange, resources }: ToolEditorPro
         {config.amountCheck !== "off" ? (
           <div className="kit-grid">
             <TextField
+              variables
               label="Monto esperado"
               value={config.expectedAmount}
               placeholder="49900 o {producto.precio}"

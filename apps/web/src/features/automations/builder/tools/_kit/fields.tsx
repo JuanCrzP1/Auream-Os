@@ -1,6 +1,7 @@
 import "./kit.css";
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { useAutoHeight } from "./useAutoHeight";
+import { useVariableInsertion, VariableMenu, VariableToggle } from "./variables/VariablePicker";
 
 // ---------------------------------------------------------------------------
 // Primitivas de formulario de los editores. Sin estado de negocio: reciben un
@@ -17,19 +18,32 @@ export function editorAccent(color: string): CSSProperties {
 export function Field({
   label,
   hint,
+  aside,
   children
 }: {
   readonly label: string;
   readonly hint?: string;
+  /** A la derecha del rótulo (p. ej. el botón de variables). */
+  readonly aside?: ReactNode;
   readonly children: (id: string) => ReactNode;
 }) {
   const id = useId();
+  const labelElement = (
+    <label className="kit-label" htmlFor={id}>
+      {label}
+    </label>
+  );
 
   return (
     <div className="kit-field">
-      <label className="kit-label" htmlFor={id}>
-        {label}
-      </label>
+      {aside ? (
+        <div className="kit-label-row">
+          {labelElement}
+          {aside}
+        </div>
+      ) : (
+        labelElement
+      )}
       {children(id)}
       {hint ? <p className="kit-hint">{hint}</p> : null}
     </div>
@@ -47,6 +61,8 @@ interface TextFieldProps {
   readonly invalid?: boolean;
   /** Límite de caracteres: muestra un contador y corta lo que sobre. */
   readonly maxLength?: number;
+  /** Acepta variables: muestra el botón «{ } Variables» que las inserta donde está el cursor. */
+  readonly variables?: boolean;
 }
 
 /** Contador «12/24» que se enciende al acercarse al límite. */
@@ -59,12 +75,14 @@ function CharCounter({ length, max }: { readonly length: number; readonly max: n
   );
 }
 
-export function TextField({ label, value, onChange, hint, placeholder, type = "text", monospace, invalid, maxLength }: TextFieldProps) {
+export function TextField({ label, value, onChange, hint, placeholder, type = "text", monospace, invalid, maxLength, variables }: TextFieldProps) {
+  const picker = useVariableInsertion<HTMLInputElement>(value, onChange);
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} {...(variables ? { aside: <VariableToggle open={picker.open} onToggle={picker.toggle} /> } : {})}>
       {(id) => (
         <div className={maxLength ? "kit-input-wrap" : undefined}>
           <input
+            ref={picker.ref}
             id={id}
             type={type}
             className={`kit-input nodrag${monospace ? " kit-input--mono" : ""}${invalid ? " kit-input--invalid" : ""}`}
@@ -77,6 +95,7 @@ export function TextField({ label, value, onChange, hint, placeholder, type = "t
             onChange={(event) => onChange(event.target.value)}
           />
           {maxLength ? <CharCounter length={value.length} max={maxLength} /> : null}
+          {variables && picker.open ? <VariableMenu onPick={picker.pick} onClose={picker.close} /> : null}
         </div>
       )}
     </Field>
@@ -91,7 +110,8 @@ export function InlineInput({
   ariaLabel,
   monospace,
   maxLength,
-  options
+  options,
+  variables
 }: {
   readonly value: string;
   readonly onChange: (value: string) => void;
@@ -101,11 +121,15 @@ export function InlineInput({
   readonly maxLength?: number;
   /** Valores que el navegador sugiere al escribir. Escribir otro sigue valiendo. */
   readonly options?: ReadonlyArray<string>;
+  /** Acepta variables: botón «{ }» al lado que las inserta donde está el cursor. */
+  readonly variables?: boolean;
 }) {
   const listId = useId();
+  const picker = useVariableInsertion<HTMLInputElement>(value, onChange);
   const hasOptions = options !== undefined && options.length > 0;
   const input = (
     <input
+      ref={picker.ref}
       type="text"
       list={hasOptions ? listId : undefined}
       className={`kit-input nodrag${monospace ? " kit-input--mono" : ""}`}
@@ -126,7 +150,7 @@ export function InlineInput({
     </datalist>
   ) : null;
 
-  return maxLength ? (
+  const field = maxLength ? (
     <div className="kit-input-wrap">
       {input}
       {datalist}
@@ -138,6 +162,16 @@ export function InlineInput({
       {datalist}
     </>
   );
+  if (!variables) return field;
+  return (
+    <div className="kit-inline-vars">
+      <div className="kit-inline-vars__row">
+        {field}
+        <VariableToggle open={picker.open} onToggle={picker.toggle} label="" />
+      </div>
+      {picker.open ? <VariableMenu onPick={picker.pick} onClose={picker.close} /> : null}
+    </div>
+  );
 }
 
 export function TextAreaField({
@@ -146,22 +180,27 @@ export function TextAreaField({
   onChange,
   hint,
   placeholder,
-  monospace
+  monospace,
+  variables
 }: Omit<TextFieldProps, "type" | "invalid">) {
   const ref = useAutoHeight(value);
+  const picker = useVariableInsertion<HTMLTextAreaElement>(value, onChange, ref);
 
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} {...(variables ? { aside: <VariableToggle open={picker.open} onToggle={picker.toggle} /> } : {})}>
       {(id) => (
-        <textarea
-          id={id}
-          ref={ref}
-          className={`kit-textarea nodrag nowheel${monospace ? " kit-input--mono" : ""}`}
-          value={value}
-          placeholder={placeholder}
-          rows={3}
-          onChange={(event) => onChange(event.target.value)}
-        />
+        <>
+          <textarea
+            id={id}
+            ref={ref}
+            className={`kit-textarea nodrag nowheel${monospace ? " kit-input--mono" : ""}`}
+            value={value}
+            placeholder={placeholder}
+            rows={3}
+            onChange={(event) => onChange(event.target.value)}
+          />
+          {variables && picker.open ? <VariableMenu onPick={picker.pick} onClose={picker.close} /> : null}
+        </>
       )}
     </Field>
   );

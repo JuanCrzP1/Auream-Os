@@ -71,7 +71,7 @@ export function TypedValue({ rule, field, label, onChange }: { rule: ConditionRu
       </span>
     );
   }
-  return <InlineInput value={rule.value} ariaLabel={label} placeholder="Valor o {variable}" onChange={onChange} />;
+  return <InlineInput variables value={rule.value} ariaLabel={label} placeholder="Valor o {variable}" onChange={onChange} />;
 }
 
 export function CustomFieldRule({

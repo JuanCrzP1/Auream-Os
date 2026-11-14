@@ -62,6 +62,7 @@ export function WaitResponseSaveSection({
           </label>
           {config.onMismatch === "retry" ? (
             <TextField
+              variables
               label="Mensaje al preguntar de nuevo"
               value={config.retryMessage ?? ""}
               placeholder={mismatchMessage(typed)}

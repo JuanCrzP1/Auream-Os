@@ -11,6 +11,7 @@ import { composeNodeRuntime } from "./composeNodeRuntime";
 import { SafeHttpRequester } from "../../../infrastructure/http/SafeHttpRequester";
 import { SqlRoundRobinCounter } from "../../../infrastructure/persistence/sql/SqlRoundRobinCounter";
 import { SqlReceiptRegistry } from "../../../infrastructure/persistence/sql/SqlReceiptRegistry";
+import { SqlConversationFacts } from "../../../infrastructure/persistence/sql/SqlConversationFacts";
 import { SqlSessionRepository } from "../../../infrastructure/persistence/sql/SqlSessionRepository";
 import { SessionService } from "../../../domains/sessions/application/SessionService";
 import { ContextService } from "../../../domains/sessions/application/ContextService";
@@ -69,7 +70,9 @@ export function composeProductionEngine(deps: ProductionEngineDependencies) {
     new SavedFlowRegistry(deps.workspaces),
     sessions,
     new ExecutionLoop(sessions, new ContextService(), nodeRuntime, new EdgeEvaluator(), new ExecutionEventTracker(new AnalyticsService())),
-    deps.businessValues
+    deps.businessValues,
+    // `{attendant_name}`, `{instance_name}`, `{instance_number}`.
+    new SqlConversationFacts(deps.sql)
   );
 
   return { engine, sessionRepository, tenants };

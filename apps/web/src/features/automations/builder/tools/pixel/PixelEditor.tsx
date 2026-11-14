@@ -19,6 +19,7 @@ export function PixelEditor({ draft, onChange, resources }: ToolEditorProps) {
 
   return (
     <ToolEditorLayout
+      resources={resources}
       accent={pixelTool.colors.header}
       outputs={null}
       Icon={PixelIcon}
@@ -44,6 +45,7 @@ export function PixelEditor({ draft, onChange, resources }: ToolEditorProps) {
           <>
             <div className="kit-grid">
               <TextField
+                variables
                 label="Valor"
                 value={config.value}
                 placeholder="49.900 o {comprobante.valor}"

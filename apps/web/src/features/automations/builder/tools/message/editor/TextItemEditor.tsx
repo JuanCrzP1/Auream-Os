@@ -1,5 +1,6 @@
 import type { MessageTextItem } from "../types";
 import { useAutoHeight } from "../../_kit/useAutoHeight";
+import { VariableBar, useVariableInsertion } from "../../_kit/variables/VariablePicker";
 
 interface TextItemEditorProps {
   readonly item: MessageTextItem;
@@ -13,6 +14,7 @@ interface TextItemEditorProps {
  */
 export function TextItemEditor({ item, position, onEdit }: TextItemEditorProps) {
   const fieldRef = useAutoHeight(item.text);
+  const picker = useVariableInsertion(item.text, (text) => onEdit({ text }), fieldRef);
 
   return (
     <div className="message-item__body">
@@ -27,6 +29,7 @@ export function TextItemEditor({ item, position, onEdit }: TextItemEditorProps) 
         wrap="soft"
         spellCheck
       />
+      <VariableBar picker={picker} />
     </div>
   );
 }
