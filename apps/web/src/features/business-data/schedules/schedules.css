@@ -1,0 +1,43 @@
+/* Cambios programados de un dato: tarjetas (lila si viene, ámbar si rige
+ * ahora), el formulario y el estado vacío. Solo tokens del tema. */
+.bd-schedules__lead { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.5; overflow-wrap: anywhere; }
+.bd-schedules__lead b { color: var(--text); font-weight: 700; }
+
+.bd-schedule { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent); border-radius: 16px; background: var(--surface); }
+.bd-schedule.is-active { border-color: color-mix(in srgb, var(--amber) 45%, transparent); background: color-mix(in srgb, var(--amber) 5%, var(--surface)); }
+.bd-schedule header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.bd-schedule header strong { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--text); font-size: 0.92rem; }
+.bd-schedule__icon { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 9px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
+.bd-schedule svg, .bd-schedules__empty-icon svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bd-schedule__state { padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); font-size: 0.7rem; font-weight: 800; white-space: nowrap; }
+.bd-schedule.is-active .bd-schedule__state { background: color-mix(in srgb, var(--amber) 18%, transparent); color: color-mix(in srgb, var(--amber) 55%, var(--text)); }
+.bd-schedule__range { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 0; color: var(--text); font-size: 0.84rem; font-weight: 600; }
+.bd-schedule__range small { color: var(--muted); font-size: 0.74rem; font-weight: 500; }
+.bd-schedule__value { margin: 0; padding: 9px 12px; border-radius: 4px 12px 12px 12px; background: var(--surface-alt); color: var(--text); font-size: 0.84rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bd-schedule__note { display: flex; gap: 7px; margin: 0; color: color-mix(in srgb, var(--amber) 60%, var(--text)); font-size: 0.76rem; font-weight: 600; line-height: 1.4; }
+.bd-schedule__note svg { margin-top: 1px; }
+.bd-schedule__actions, .bd-schedule__confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.bd-schedule__confirm span { flex: 1 1 160px; color: var(--text); font-size: 0.8rem; font-weight: 600; overflow-wrap: anywhere; }
+.bd-schedule__btn { height: 32px; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent); border-radius: 10px; background: var(--surface); color: var(--text); font: 700 0.8rem var(--font-body); cursor: pointer; }
+.bd-schedule__btn:hover:not(:disabled) { border-color: color-mix(in srgb, var(--primary) 40%, transparent); }
+.bd-schedule__btn.is-danger { border-color: transparent; color: color-mix(in srgb, var(--rose) 80%, var(--text)); }
+.bd-schedule__btn.is-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--rose) 8%, transparent); }
+.bd-schedule__confirm .bd-schedule__btn.is-danger { background: color-mix(in srgb, var(--rose) 12%, transparent); }
+
+.bd-schedules__add { display: flex; align-items: center; justify-content: center; height: 44px; border: 1.5px dashed color-mix(in srgb, var(--primary) 35%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--primary) 4%, transparent); color: var(--primary); font: 800 0.86rem var(--font-body); cursor: pointer; transition: background var(--speed-fast) ease; }
+.bd-schedules__add:hover, .bd-schedules__add:focus-visible { background: color-mix(in srgb, var(--primary) 8%, transparent); outline: none; }
+.bd-schedules__full { margin: 0; color: var(--muted); font-size: 0.8rem; }
+
+.bd-schedules__empty { display: grid; justify-items: center; gap: 6px; padding: 22px 16px; border: 1px dashed color-mix(in srgb, var(--primary) 22%, transparent); border-radius: 16px; text-align: center; }
+.bd-schedules__empty strong { color: var(--text); font-size: 0.9rem; }
+.bd-schedules__empty span:last-child { max-width: 320px; color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+.bd-schedules__empty-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); }
+.bd-schedules__empty-icon svg { width: 20px; height: 20px; }
+
+.bd-schedule-form { display: grid; gap: 12px; padding: 16px; border: 1.5px solid color-mix(in srgb, var(--primary) 35%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--primary) 3%, var(--surface)); }
+.bd-schedule-form, .bd-schedule-form * { min-width: 0; }
+.bd-schedule-form h4 { margin: 0; color: var(--text); font-size: 0.9rem; }
+.bd-schedule-form__when { display: grid; grid-template-columns: minmax(0, 1fr) 136px; gap: 6px; }
+.bd-schedule-form__hint { color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
+.bd-schedule-form__hint.is-problem { color: color-mix(in srgb, var(--rose) 80%, var(--text)); font-weight: 600; }
+.bd-schedule-form footer { display: flex; justify-content: flex-end; gap: 8px; }

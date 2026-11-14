@@ -6,7 +6,7 @@ import { operatorsFor } from "./conditionConfig";
 import { shapeOf, TypedValue } from "./CustomFieldRule";
 
 // ---------------------------------------------------------------------------
-// Una regla sobre un Dato del negocio («Variable global»): se elige de la
+// Una regla sobre un Dato del negocio: se elige de la
 // lista de Configuración › Datos del negocio y se compara con su tipo, igual
 // que un campo del cliente (Sí / No, número entre, fecha…). Un flujo traído de
 // Leona que nombra uno que aún no existe lo sigue mostrando, para crearlo.

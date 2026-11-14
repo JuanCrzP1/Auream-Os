@@ -13,6 +13,7 @@
 @keyframes bd-shimmer { to { background-position: -200% 0; } }
 
 .bd__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.bd__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .bd__who { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: 0.8rem; }
 .bd__who svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -31,7 +32,15 @@
 .bd-row__name { display: grid; gap: 2px; min-width: 0; }
 .bd-row__name strong { overflow: hidden; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
 .bd-row__name code { font-size: 0.78rem; }
-.bd-row__value { overflow: hidden; color: var(--text); font-size: 0.84rem; text-overflow: ellipsis; white-space: nowrap; }
+.bd-row__value { display: grid; gap: 5px; min-width: 0; }
+.bd-row__now { overflow: hidden; color: var(--text); font-size: 0.84rem; text-overflow: ellipsis; white-space: nowrap; }
+.bd-row__usual { overflow: hidden; color: var(--muted); font-size: 0.74rem; text-overflow: ellipsis; white-space: nowrap; }
+/* La etiqueta de un cambio programado: lila si viene, ámbar con su punto si rige ahora. */
+.bd-badge { display: inline-flex; align-items: center; gap: 6px; justify-self: start; max-width: 100%; padding: 2px 9px 2px 7px; overflow: hidden; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.bd-badge svg { width: 12px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.bd-badge--soon { background: color-mix(in srgb, var(--primary) 10%, transparent); color: color-mix(in srgb, var(--primary-hover) 85%, var(--text)); }
+.bd-badge--now { background: color-mix(in srgb, var(--amber) 16%, transparent); color: color-mix(in srgb, var(--amber) 55%, var(--text)); }
+.bd-badge--now i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 25%, transparent); }
 .bd-row__uses { color: var(--text); font-size: 0.82rem; }
 .bd-row__uses.is-idle { color: var(--muted); }
 .bd-row__chevron { color: var(--muted); font-size: 1.2rem; text-align: right; }
@@ -41,7 +50,8 @@
   .bd-table__head { display: none; }
   .bd-row { grid-template-columns: 1fr auto; grid-template-areas: "name chevron" "value value" "type uses"; row-gap: 6px; }
   .bd-row__name { grid-area: name; }
-  .bd-row__value { grid-area: value; white-space: normal; }
+  .bd-row__value { grid-area: value; }
+  .bd-row__now { white-space: normal; }
   .bd-row > span:nth-child(3) { grid-area: type; }
   .bd-row__uses { grid-area: uses; text-align: right; }
   .bd-row__chevron { grid-area: chevron; }

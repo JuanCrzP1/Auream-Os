@@ -3,12 +3,16 @@ title: Campos del cliente: lo que sabes de cada cliente, con tipo
 module: crm
 summary: Ponle nombre y tipo a los datos que guardan tus flujos (ciudad, presupuesto, cumpleaños) para verlos en la ficha y usarlos sin errores.
 order: 4
-updated: 2026-11-13
+updated: 2026-11-14
 keywords: campos, campos personalizados, datos del cliente, ficha, variables, ciudad, tipo, lista, ordenar valores, unir campos, deshacer, filtrar, lo que vende
-related: variables-y-nombre, primer-flujo, embudo-y-etapas
+related: datos-del-negocio, variables-y-nombre, primer-flujo, embudo-y-etapas
 ---
 
 Un **campo del cliente** es un dato que guardas de cada cliente: su ciudad, su presupuesto, su cumpleaños, si ya compró. Está en **Configuración › Datos › Campos del cliente**.
+
+## ¿En qué se diferencia de un dato del negocio?
+
+Un campo del cliente **cambia con cada persona**: Laura vive en Medellín y Pedro en Lima, y `{ciudad}` le dice a cada uno la suya. Un **dato del negocio** es **igual para todos**: tu horario o tu link de pago (`{g_horario}`). Si buscas eso, está en [Datos del negocio](datos-del-negocio).
 
 ## Para qué sirve
 

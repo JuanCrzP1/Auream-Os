@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { BusinessDataResponse, SaveBusinessDatumRequest } from "@contracts/BusinessDataContracts";
+import type { SaveBusinessScheduleRequest } from "@contracts/BusinessDataTimeline";
 import type { ContactFieldValue } from "@contracts/ContactContracts";
 import { RequestError } from "@shared/http/RequestError";
-import { createBusinessDatum, deleteBusinessDatum, fetchBusinessData, fetchBusinessValues, updateBusinessDatum } from "./businessDataApi";
+import {
+  createBusinessDatum,
+  deleteBusinessDatum,
+  fetchBusinessData,
+  fetchBusinessValues,
+  rescheduleBusinessDatum,
+  scheduleBusinessDatum,
+  unscheduleBusinessDatum,
+  updateBusinessDatum
+} from "./businessDataApi";
 
 /** `forbidden`: su rol no los ve · `unavailable`: el servidor no tiene el módulo. */
 export type BusinessDataStatus = "loading" | "ready" | "forbidden" | "unavailable" | "error";
@@ -57,7 +67,21 @@ export function useBusinessData() {
     await refresh();
   }, [refresh]);
 
-  return { data, list: data?.data ?? [], status, refresh, reload, create, update, remove };
+  /** Programar, editar y quitar cambios programados: después se vuelve a pedir la lista (usos y valores al día). */
+  const schedules = useMemo(() => {
+    const after = async <T,>(work: Promise<T>) => {
+      const result = await work;
+      await refresh();
+      return result;
+    };
+    return {
+      add: (id: string, request: SaveBusinessScheduleRequest) => after(scheduleBusinessDatum(id, request)),
+      change: (id: string, scheduleId: string, request: Partial<SaveBusinessScheduleRequest>) => after(rescheduleBusinessDatum(id, scheduleId, request)),
+      remove: (id: string, scheduleId: string) => after(unscheduleBusinessDatum(id, scheduleId))
+    };
+  }, [refresh]);
+
+  return { data, list: data?.data ?? [], status, refresh, reload, create, update, remove, schedules };
 }
 
 /**

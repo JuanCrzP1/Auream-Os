@@ -1,0 +1,14 @@
+/* Historial de un dato: una línea de tiempo con la inicial de quién lo hizo,
+ * lo de antes tachado y lo nuevo en negrita. Solo tokens del tema. */
+.bd-history { display: grid; margin: 0; padding: 0; list-style: none; }
+.bd-history li { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; padding-bottom: 18px; }
+.bd-history li:not(:last-child)::before { content: ""; position: absolute; top: 32px; bottom: 2px; left: 14px; width: 2px; background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.bd-history__avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); font-size: 0.78rem; font-weight: 800; }
+.bd-history p { margin: 4px 0 0; color: var(--text); font-size: 0.84rem; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; }
+.bd-history b, .bd-history strong { font-weight: 700; }
+.bd-history del { color: var(--muted); }
+.bd-history small { display: block; margin-top: 2px; color: var(--muted); font-size: 0.74rem; }
+.bd-history__restore { margin-top: 8px; max-width: 100%; height: 30px; padding: 0 11px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent); border-radius: 9px; background: var(--surface); color: var(--primary); font: 700 0.78rem var(--font-body); text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.bd-history__restore:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 6%, var(--surface)); }
+.bd-history__empty, .bd-history__foot { margin: 0; color: var(--muted); font-size: 0.78rem; line-height: 1.5; }
+.bd-history__loading { height: 180px; border-radius: 16px; background: linear-gradient(90deg, var(--surface) 0%, var(--surface-alt) 50%, var(--surface) 100%); background-size: 200% 100%; animation: bd-shimmer 1.2s linear infinite; }

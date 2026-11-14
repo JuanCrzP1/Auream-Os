@@ -92,14 +92,14 @@ export const SETTINGS_GROUPS: ReadonlyArray<SettingsNavGroup> = [
         label: "Campos del cliente",
         path: SETTINGS_ROUTES["contact-fields"],
         icon: Icons.contactFields,
-        description: "Lo que Auream sabe de cada cliente: de dónde sale, en cuántos está y qué flujos lo usan."
+        description: "Lo que sabes de cada cliente y cambia de uno a otro: su ciudad, su cumpleaños, su talla."
       },
       {
         id: "business-data",
         label: "Datos del negocio",
         path: SETTINGS_ROUTES["business-data"],
         icon: Icons.businessData,
-        description: "Lo que repites en tus mensajes (Pago Móvil, horario, dirección, enlaces), escrito una vez. Lo cambias aquí y cambia en todos tus flujos, difusiones y respuestas rápidas."
+        description: "Tu horario, tu dirección, tu link de pago: lo que les dices igual a todos tus clientes, escrito una sola vez."
       },
       {
         id: "labels",

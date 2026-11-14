@@ -44,7 +44,7 @@ export const RULE_CATEGORY_OPTIONS: ReadonlyArray<Option<RuleCategory>> = [
   { value: "attendant", label: "Asesor asignado" },
   { value: "contactField", label: "Dato del contacto" },
   { value: "customField", label: "Campo del cliente" },
-  { value: "globalVariable", label: "Dato del negocio (variable global)" }
+  { value: "globalVariable", label: "Dato del negocio" }
 ];
 
 const OPERATOR_LABELS: Readonly<Record<string, string>> = {

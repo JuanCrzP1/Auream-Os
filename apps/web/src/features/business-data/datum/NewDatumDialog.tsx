@@ -44,7 +44,7 @@ export function NewDatumDialog({ onCreate, onClose }: { readonly onCreate: (requ
         </div>
         <label className="ui-field">
           <span>Nombre</span>
-          <input className="ui-input" value={label} maxLength={LIMITS.maxLabel} placeholder="Pago Móvil, horario, enlace del grupo…" autoFocus onChange={(e) => setLabel(e.target.value)} />
+          <input className="ui-input" value={label} maxLength={LIMITS.maxLabel} placeholder="Horario, dirección, link de pago…" autoFocus onChange={(e) => setLabel(e.target.value)} />
           {key ? <span className="bd-dialog__key">En tus mensajes se escribe <code>{`{${key}}`}</code></span> : null}
         </label>
         <div className="ui-field">
@@ -58,7 +58,7 @@ export function NewDatumDialog({ onCreate, onClose }: { readonly onCreate: (requ
         </div>
         <label className="ui-field">
           <span>Para qué es <em className="bd-dialog__optional">(opcional)</em></span>
-          <input className="ui-input" value={description} maxLength={LIMITS.maxDescription} placeholder="La cuenta donde pagan los de Venezuela" onChange={(e) => setDescription(e.target.value)} />
+          <input className="ui-input" value={description} maxLength={LIMITS.maxDescription} placeholder="Lo que respondemos cuando preguntan a qué hora atendemos" onChange={(e) => setDescription(e.target.value)} />
         </label>
         {error ? <p className="ui-error" role="alert">{error}</p> : null}
         <div className="ui-dialog__footer">

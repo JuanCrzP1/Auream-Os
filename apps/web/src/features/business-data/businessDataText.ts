@@ -17,7 +17,7 @@ export const TYPE_HINT: Readonly<Record<BusinessDataType, string>> = {
 };
 
 export const PLACEHOLDER: Readonly<Record<BusinessDataType, string>> = {
-  text: "Pago Móvil 0424-6461556 · C.I. 20.862.003",
+  text: "Lunes a sábado, 8 a. m. a 6 p. m.",
   number: "12",
   date: "24/12/2026",
   boolean: ""

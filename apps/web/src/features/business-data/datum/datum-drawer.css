@@ -39,3 +39,17 @@
 .bd-uses__open { color: var(--primary); font-size: 0.8rem; font-weight: 700; text-decoration: none; }
 .bd-uses__open:hover { text-decoration: underline; }
 .bd-uses__empty { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+
+/* Pestañas del detalle: Dato · Cambios programados · Historial. */
+.bd-drawer__tabs { display: flex; gap: 4px; padding: 10px 20px 0; overflow-x: auto; border-bottom: 1px solid color-mix(in srgb, var(--primary) 12%, transparent); scrollbar-width: none; }
+.bd-drawer__tabs button { position: relative; display: inline-flex; flex: none; align-items: center; gap: 6px; padding: 10px 10px 12px; border: 0; background: none; color: var(--muted); font: 700 0.84rem var(--font-body); cursor: pointer; }
+.bd-drawer__tabs button:hover { color: var(--text); }
+.bd-drawer__tabs button.is-on { color: var(--primary); }
+.bd-drawer__tabs button.is-on::after { content: ""; position: absolute; right: 6px; bottom: -1px; left: 6px; height: 2px; border-radius: 2px; background: var(--primary); }
+.bd-drawer__tabs button:focus-visible { outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); outline-offset: -2px; border-radius: 8px; }
+.bd-drawer__count { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); font-size: 0.7rem; text-align: center; }
+
+/* «Así lo ve tu cliente» en cada momento: ahora, siempre o durante un cambio. */
+.bd-moments { display: inline-flex; flex-wrap: wrap; gap: 4px; justify-self: start; max-width: 100%; padding: 3px; border-radius: 10px; background: var(--chip-bg); }
+.bd-moments button { max-width: 100%; height: 28px; padding: 0 10px; overflow: hidden; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: 700 0.76rem var(--font-body); text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.bd-moments button.is-on { background: var(--surface); box-shadow: 0 2px 8px rgb(30 21 48 / 8%); color: var(--primary); }

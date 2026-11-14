@@ -101,7 +101,7 @@ export interface ToolResources extends ToolCapabilities {
   readonly productsStatus?: ToolAiCredentialsStatus;
   /** Campos del cliente: se eligen de una lista en Esperar respuesta, Menú, Integración, IA y Condicional. */
   readonly contactFields?: ToolContactFields;
-  /** Datos del negocio (`{g_…}`): la regla «Variable global» del Condicional los elige de una lista. */
+  /** Datos del negocio (`{g_…}`): la regla «Dato del negocio» del Condicional los elige de una lista. */
   readonly businessData?: ReadonlyArray<BusinessDatum>;
 }
 
