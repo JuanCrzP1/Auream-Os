@@ -74,6 +74,23 @@ describe("FlowDraftEditor", () => {
     expect(() => addBlock(draft, { type: "inventado" }, ids)).toThrow(/list_block_types/);
   });
 
+  it("un bloque puede ir donde se pida en el lienzo, al crearlo o después (también el inicio)", () => {
+    const { ids, draft, start } = setup();
+    const placed = addBlock(draft, { type: "message", after: { blockId: start }, position: { x: 1200.4, y: -80.6 } }, ids);
+    expect(placed.draft.nodes[placed.blockId]!.metadata["ui"]).toEqual({ x: 1200, y: -81 });
+
+    const moved = updateBlock(placed.draft, placed.blockId, { position: { x: 40, y: 900 } }, ids);
+    expect(moved.draft.nodes[placed.blockId]!.metadata["ui"]).toEqual({ x: 40, y: 900 });
+    expect(moved.draft.nodes[placed.blockId]!.config).toEqual(placed.draft.nodes[placed.blockId]!.config);
+    expect(edgesOf(moved.draft)).toEqual(edgesOf(placed.draft));
+
+    const startMoved = updateBlock(moved.draft, start, { position: { x: -300, y: 10 } }, ids);
+    expect(startMoved.draft.nodes[start]!.metadata["ui"]).toEqual({ x: -300, y: 10 });
+
+    expect(() => updateBlock(draft, start, { position: { x: Number.NaN, y: 0 } }, ids)).toThrow(/posición/);
+    expect(() => addBlock(draft, { type: "message", position: { x: 0, y: 1e9 } }, ids)).toThrow(/posición/);
+  });
+
   it("borrar quita el bloque y sus conexiones (el inicio no se borra); desconectar quita una salida", () => {
     const { ids, draft, start } = setup();
     const first = addBlock(draft, { type: "message", after: { blockId: start } }, ids);

@@ -4,7 +4,7 @@ import { blockOutputs, findBlockRules } from "../../../../contracts/blocks/block
 import { checkConnection, isValidOutput } from "../../../../contracts/blocks/connectionRules";
 import { NotFoundError } from "../../../../platform/observability/errors/NotFoundError";
 import { ValidationError } from "../../../../platform/observability/errors/ValidationError";
-import { placeNewBlock } from "./blockPlacement";
+import { placeNewBlock, type CanvasPoint } from "./blockPlacement";
 import { allEdgesOf, graphEdgesOf, graphNodesOf, withEdges } from "./draftGraph";
 import { prepareBlockConfig } from "./prepareBlockConfig";
 
@@ -46,6 +46,16 @@ function requireName(value: string | undefined, fallback: string): string {
   if (!name) throw new ValidationError("El nombre del bloque no puede quedar vacío.");
   if (name.length > MAX_NAME) throw new ValidationError(`El nombre del bloque admite hasta ${MAX_NAME} caracteres.`);
   return name;
+}
+
+/** Hasta dónde puede ir un bloque en el lienzo (en cualquier dirección). */
+const CANVAS_LIMIT = 100_000;
+
+/** Una posición pedida para el lienzo: dos números razonables, redondeados. */
+function requirePosition(value: CanvasPoint): CanvasPoint {
+  const fine = (n: unknown) => typeof n === "number" && Number.isFinite(n) && Math.abs(n) <= CANVAS_LIMIT;
+  if (!fine(value.x) || !fine(value.y)) throw new ValidationError(`La posición debe ser { x, y } con números entre -${CANVAS_LIMIT} y ${CANVAS_LIMIT}.`);
+  return { x: Math.round(value.x), y: Math.round(value.y) };
 }
 
 const describeOutputs = (outputs: ReadonlyArray<BlockOutput>) => outputs.map((output) => `«${output.id}» (${output.label})`).join(", ");
@@ -112,7 +122,7 @@ export function disconnectBlocks(draft: BuilderFlowSnapshot, request: { readonly
 
 export function addBlock(
   draft: BuilderFlowSnapshot,
-  request: { readonly type: string; readonly name?: string; readonly config?: BlockData; readonly after?: { readonly blockId: string; readonly output?: string | null } },
+  request: { readonly type: string; readonly name?: string; readonly config?: BlockData; readonly after?: { readonly blockId: string; readonly output?: string | null }; readonly position?: CanvasPoint },
   ids: EditIds
 ): EditResult<{ readonly blockId: string; readonly ignoredFields: ReadonlyArray<string>; readonly connection: ConnectionRef | null; readonly insertedBefore: string | null }> {
   const rules = findBlockRules(request.type);
@@ -122,6 +132,7 @@ export function addBlock(
   // La conexión se valida ANTES de crear nada: un error no deja bloques sueltos.
   const parent = request.after ? requireBlock(draft, request.after.blockId) : null;
   const output = parent ? resolveOutput(draft, parent, request.after?.output) : null;
+  const at = request.position ? requirePosition(request.position) : null;
   const slot = parent && output ? Math.max(0, (blockOutputs(parent.type, parent.config) ?? []).findIndex((item) => item.id === output)) : 0;
 
   const id = ids.newId(rules.type);
@@ -131,7 +142,7 @@ export function addBlock(
     name: requireName(request.name, rules.label),
     content: JSON.parse(JSON.stringify(rules.defaultContent)) as BlockData,
     config,
-    metadata: { ui: placeNewBlock(draft, parent?.id ?? null, slot) }
+    metadata: { ui: at ?? placeNewBlock(draft, parent?.id ?? null, slot) }
   };
   const added = { ...draft, nodes: { ...draft.nodes, [id]: node } };
   if (!parent) return { draft: added, blockId: id, ignoredFields, connection: null, insertedBefore: null };
@@ -150,14 +161,16 @@ export function addBlock(
 export function updateBlock(
   draft: BuilderFlowSnapshot,
   blockId: string,
-  request: { readonly name?: string; readonly config?: BlockData },
+  request: { readonly name?: string; readonly config?: BlockData; readonly position?: CanvasPoint },
   ids: EditIds
 ): EditResult<{ readonly ignoredFields: ReadonlyArray<string>; readonly removedConnections: ReadonlyArray<ConnectionRef> }> {
   const node = requireBlock(draft, blockId);
   const rules = findBlockRules(node.type);
   if (request.config !== undefined && (!rules || !rules.availableInPalette)) throw new ValidationError(`«${node.name}» es un bloque del sistema: solo se le puede cambiar el nombre.`);
   const prepared = request.config !== undefined && rules ? prepareBlockConfig(rules, node.config, request.config, ids.newId) : { config: node.config, ignoredFields: [] };
-  const next: BuilderFlowNode = { ...node, name: requireName(request.name, node.name), config: prepared.config };
+  // Mover un bloque (también el de inicio) solo cambia dónde se ve en el lienzo.
+  const metadata = request.position ? { ...node.metadata, ui: requirePosition(request.position) } : node.metadata;
+  const next: BuilderFlowNode = { ...node, name: requireName(request.name, node.name), config: prepared.config, metadata };
   const { draft: pruned, removed } = pruneDanglingEdges({ ...draft, nodes: { ...draft.nodes, [blockId]: next } });
   return { draft: pruned, ignoredFields: prepared.ignoredFields, removedConnections: removed };
 }

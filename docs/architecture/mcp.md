@@ -32,6 +32,7 @@ Detalles que importan:
 
 - **Productos:** `update_product` lee el producto y cambia solo lo pedido. Si llegan `prices`, reemplazan la lista completa. El servicio exige precio en al menos un país: el agente debe pedirlo, nunca inventarlo.
 - **Ventas:** sin producto, monto o moneda, una venta queda «Por revisar» y no suma. Anular (`status: void`) exige motivo.
+- **Flujos en el lienzo:** `add_block` y `update_block` aceptan `position` ({ x, y }, se guarda en `metadata.ui`, redondeada y dentro de ±100 000); `update_block` también mueve el inicio. Sin `position`, `placeNewBlock` lo pone a la derecha del anterior sin tapar otro.
 - **Disparadores:** el servicio combina lo que llega con el disparador actual. Conectar o desconectar un número NO está en el MCP: exige escanear el QR con el teléfono.
 - **CRM:** `move_contact_stage` cambia la etiqueta de etapa; no crea una venta. La configuración de embudos (crear, renombrar etapas) sigue en la web.
 - **Dashboard:** devuelve las mismas respuestas que la pantalla (`DashboardContracts`, `AttentionContracts`).
