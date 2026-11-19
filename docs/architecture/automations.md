@@ -86,7 +86,7 @@ Dos responsabilidades, dos módulos. La feature no tiene código suelto en su ra
 
 La traducción vive en un único punto, `apps/api/http/toAutomationListResponse.ts`, y `tests/contract/automationApiContract.test.ts` la protege.
 
-**El punto de cada tarjeta nunca miente.** `connectionStatus` mide solo si las flechas están unidas; `reviewErrors` y `reviewWarnings` traen lo mismo que «Revisión del flujo» en el editor (`reviewDraft`, la revisión compartida en `contracts/blocks/reviewFlow.ts`). La tarjeta pinta el peor estado: rojo con flechas sueltas o errores (por ejemplo un Píxel sin píxel elegido), ámbar con solo avisos, verde en orden; con problemas lo dice bajo el nombre («⚠ 3 puntos por revisar»). `tests/unit/deriveBuilderGraphSummary.test.ts` vigila que la lista y el editor digan lo mismo.
+**La tarjeta no juzga el flujo.** Muestra cuántos bloques tiene, sin punto de color ni «puntos por revisar»: un flujo a medias no es un flujo malo (Leona tampoco lo marca). `connectionStatus` solo sirve para saber si llegó el resumen. Lo que haría fallar un flujo se ve dentro del editor, en «Revisar flujo» (`flowProblems` en `services/reviewFlow.ts`: solo errores y ciclos sin fin, agrupados). La revisión completa (`contracts/blocks/reviewFlow.ts`, con avisos) la sigue recibiendo el agente por MCP.
 
 Existió una copia del tipo en `apps/web/.../list/types/automation.ts` que declaraba `updatedAt` en raíz mientras la API enviaba `metadata.updatedAt`: la tarjeta del hub renderizaba «Invalid Date» y ningún test lo detectaba, porque los fixtures del frontend codificaban la forma equivocada. Por eso el contrato es único.
 
@@ -125,7 +125,7 @@ El canvas está aislado: `BuilderCanvas` renderiza, y el estado del editor vive 
 |---|---|---|
 | Topbar | Arriba a la izquierda | Volver, nombre editable y estado del autoguardado (`SaveStatusPill`). Sin publicar, versión ni rollback |
 | Toolbox (`PalettePanel`) | Flotando sobre el lienzo | Las 12 herramientas |
-| Revisión del flujo (`review/FlowReviewPanel`) | Arriba a la derecha del lienzo | Lista lo que está mal o incompleto (`services/reviewFlow.ts`) y lleva a cada bloque. Solo informa |
+| Revisar flujo (`review/FlowReviewPanel`) | Arriba a la derecha del lienzo | Botón sin número ni color; al abrirlo, solo lo que haría fallar el flujo, agrupado (`flowProblems`), y lleva a cada bloque. Solo informa |
 | «Próximamente» (`canvas/NotExecutableTab`) | En cada nodo que el motor aún no ejecuta | Se configura, pero todavía no corre con clientes. Los problemas NO se marcan bloque a bloque (saturaba el lienzo): están en la revisión del flujo |
 | Editor del bloque (`ExpandedNodeOverlay`) | Sobre el nodo | El `Editor` de cada herramienta. Los nodos de sistema (Inicio, Finalizar) no se editan |
 | Aviso sin servidor (`OfflineNotice`) | Abajo al centro | Si la API no responde, el builder abre un respaldo en memoria: lo dice, no intenta guardar y ofrece «Reintentar» (recarga desde cero) |

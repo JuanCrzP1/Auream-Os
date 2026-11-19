@@ -16,7 +16,7 @@ Lo que NO es visual de cada bloque vive una sola vez en `contracts/blocks/` y lo
 | `blockCatalog.ts` | Las reglas de los 16 tipos (15 en la paleta + Inicio/Finalizar; los últimos: Guardar dato `set-field` e Ir a otro flujo `go-to-flow`, 2026-11-14) (`MENU_BLOCK`, `MESSAGE_BLOCK`…), `findBlockRules`, `blockOutputs` |
 | `outputs.ts` · `validation/*` | Salidas con nombre y validación de cada bloque |
 | `connectionRules.ts` | ¿Se puede trazar esta conexión? (una por salida, nada llega al inicio, salidas que existan) |
-| `reviewFlow.ts` | «Revisión del flujo»: errores y avisos, bloque a bloque |
+| `reviewFlow.ts` | «Revisar flujo»: la revisión compartida y `flowProblems` (solo lo que haría fallar el flujo, agrupado) |
 
 Una herramienta del editor es `{ ...X_BLOCK, <lo visual> }`; `tests/contract/blockCatalogParity.test.ts` impide que declare reglas propias. Los `validate*.ts`, `connectionRules.ts`, `reviewFlow.ts` y `nodeOutputs.ts` del editor solo adaptan el lienzo al grafo de `contracts/blocks/FlowGraph.ts`.
 

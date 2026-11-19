@@ -182,7 +182,7 @@ describe("ListAutomationsService", () => {
   it("proyecta cero y rojo cuando el workspace no existe", async () => {
     automationRepo.seed({ id: "f1", tenantId: "t1", key: "missing", name: "Flow", status: "draft", metadata: { createdAt: "x", updatedAt: "x" } });
     const result = await sut.execute("t1");
-    expect(result.flows[0]?.graphSummary).toEqual({ nodeCount: 0, connectionStatus: "disconnected", reviewErrors: 0, reviewWarnings: 0 });
+    expect(result.flows[0]?.graphSummary).toEqual({ nodeCount: 0, connectionStatus: "disconnected" });
     expect(workspaceRepo.count()).toBe(0);
   });
 

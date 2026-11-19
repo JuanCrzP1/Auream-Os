@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { reviewDraft } from "../../domains/automations/editing/domain/draftGraph";
 import { deriveBuilderGraphSummary } from "../../domains/automations/builder/application/deriveBuilderGraphSummary.js";
 import type { BuilderFlowSnapshot, NodeType } from "../../contracts/FlowSnapshot.js";
 
@@ -102,17 +101,6 @@ describe("deriveBuilderGraphSummary", () => {
     for (const caso of [preguntaSinFallback, ciclo, sinCerrar]) {
       expect(deriveBuilderGraphSummary(caso, tenantId).connectionStatus).toBe("connected");
     }
-  });
-
-  it("cuenta los errores y avisos de la revisión del editor: un Píxel sin píxel elegido nunca sale en verde", () => {
-    const conPixel = snapshot([["inicio", "start"], ["pixel", "pixel"]], [["inicio", "pixel"]]);
-    const summary = deriveBuilderGraphSummary(conPixel, tenantId);
-    const review = reviewDraft(conPixel);
-
-    // La lista y el editor dicen lo mismo, siempre.
-    expect({ errors: summary.reviewErrors, warnings: summary.reviewWarnings }).toEqual({ errors: review.errorCount, warnings: review.warningCount });
-    expect(summary.reviewErrors).toBeGreaterThan(0);
-    expect(review.issues.some((issue) => issue.message.includes("Elige el píxel de Meta"))).toBe(true);
   });
 });
 

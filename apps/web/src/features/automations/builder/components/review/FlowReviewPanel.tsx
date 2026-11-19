@@ -1,10 +1,10 @@
 import "./flow-review.css";
-import { useEffect, useId, useRef, useState } from "react";
-import type { FlowIssue, FlowReview } from "@features/automations/builder/services/reviewFlow";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { flowProblems, type FlowProblem, type FlowReview } from "@features/automations/builder/services/reviewFlow";
 
 interface FlowReviewPanelProps {
   readonly review: FlowReview;
-  /** Lleva el lienzo al bloque del problema y lo selecciona. */
+  /** Lleva el lienzo al bloque y lo selecciona. */
   readonly onFocusNode: (nodeId: string) => void;
 }
 
@@ -16,11 +16,10 @@ function CheckIcon() {
   );
 }
 
-function AlertIcon() {
+function ChecklistIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M8 2.2 14.3 13H1.7z" />
-      <path d="M8 6.4v3.2M8 11.4h.01" />
+      <path d="m2.5 4 1.2 1.2L6 3M2.5 10l1.2 1.2L6 9M8.5 4.2h5M8.5 10.2h5" />
     </svg>
   );
 }
@@ -33,31 +32,21 @@ function ChevronIcon() {
   );
 }
 
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
-
-function summaryLabel({ errorCount, warningCount }: FlowReview): string {
-  if (errorCount + warningCount === 0) return "Flujo en orden";
-  return plural(errorCount + warningCount, "punto por revisar", "puntos por revisar");
-}
-
-function IssueRow({ issue, onFocusNode }: { readonly issue: FlowIssue; readonly onFocusNode: (nodeId: string) => void }) {
-  const tone = `flow-review__issue flow-review__issue--${issue.severity}`;
+function ProblemRow({ problem, onGo }: { readonly problem: FlowProblem; readonly onGo: () => void }) {
   const body = (
     <>
       <span className="flow-review__issue-mark" aria-hidden="true" />
       <span className="flow-review__issue-text">
-        <span className="flow-review__sr">{issue.severity === "error" ? "Error: " : "Aviso: "}</span>
-        {issue.message}
+        {problem.message}
+        {problem.count > 1 ? <span className="flow-review__issue-count"> · {problem.count} {problem.nodeIds.length > 0 ? "bloques" : "veces"}</span> : null}
       </span>
     </>
   );
 
-  if (!issue.nodeId) return <li className={tone}>{body}</li>;
-
-  const nodeId = issue.nodeId;
+  if (problem.nodeIds.length === 0) return <li className="flow-review__issue">{body}</li>;
   return (
     <li>
-      <button type="button" className={`${tone} flow-review__issue--link`} onClick={() => onFocusNode(nodeId)}>
+      <button type="button" className="flow-review__issue flow-review__issue--link" onClick={onGo}>
         {body}
         <span className="flow-review__issue-go" aria-hidden="true">
           <ChevronIcon />
@@ -68,16 +57,18 @@ function IssueRow({ issue, onFocusNode }: { readonly issue: FlowIssue; readonly 
 }
 
 /**
- * Revisión del flujo: qué está mal o incompleto, siempre a mano en una esquina
- * del lienzo. Solo informa —los flujos se autoguardan, no se publican— y lleva
- * al bloque de cada problema. Las reglas viven en `services/reviewFlow.ts`.
+ * «Revisar flujo»: un botón tranquilo en la esquina del lienzo, sin número ni
+ * rojo —un flujo a medias no es un flujo malo, y Leona tampoco lo marca—. Al
+ * abrirlo dice solo lo que haría fallar el flujo, agrupado, y lleva al bloque;
+ * si el mismo problema está en varios, cada toque lleva al siguiente.
  */
 export function FlowReviewPanel({ review, onFocusNode }: FlowReviewPanelProps) {
   const [open, setOpen] = useState(false);
+  // Por problema, a cuál de sus bloques llevó el último toque.
+  const [visits, setVisits] = useState<Record<string, number>>({});
   const rootRef = useRef<HTMLDivElement>(null);
   const listId = useId();
-  const total = review.errorCount + review.warningCount;
-  const state = review.errorCount > 0 ? "error" : review.warningCount > 0 ? "warning" : "ok";
+  const problems = useMemo(() => flowProblems(review), [review]);
 
   useEffect(() => {
     if (!open) return;
@@ -95,58 +86,50 @@ export function FlowReviewPanel({ review, onFocusNode }: FlowReviewPanelProps) {
     };
   }, [open]);
 
+  const goTo = (problem: FlowProblem) => {
+    const turn = visits[problem.key] ?? 0;
+    setVisits((current) => ({ ...current, [problem.key]: turn + 1 }));
+    setOpen(false);
+    onFocusNode(problem.nodeIds[turn % problem.nodeIds.length]!);
+  };
+
   return (
     <div ref={rootRef} className="flow-review">
       <button
         type="button"
-        className={`flow-review__toggle flow-review__toggle--${state}`}
+        className="flow-review__toggle"
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="flow-review__toggle-icon">{state === "ok" ? <CheckIcon /> : <AlertIcon />}</span>
-        <span className="flow-review__label">{summaryLabel(review)}</span>
-        {review.errorCount > 0 ? (
-          <span className="flow-review__count flow-review__count--error" aria-label={plural(review.errorCount, "error", "errores")}>
-            {review.errorCount}
-          </span>
-        ) : null}
-        {review.warningCount > 0 ? (
-          <span className="flow-review__count flow-review__count--warning" aria-label={plural(review.warningCount, "aviso", "avisos")}>
-            {review.warningCount}
-          </span>
-        ) : null}
+        <span className="flow-review__toggle-icon">
+          <ChecklistIcon />
+        </span>
+        <span className="flow-review__label">Revisar flujo</span>
       </button>
 
       {open ? (
-        <section id={listId} className="flow-review__card" aria-label="Revisión del flujo">
+        <section id={listId} className="flow-review__card" aria-label="Revisar flujo">
           <header className="flow-review__header">
-            <h2>Revisión del flujo</h2>
+            <h2>Revisar flujo</h2>
             <p>
-              {total === 0
-                ? "Todo conectado y configurado. Los cambios se guardan solos."
-                : "Toca un punto para ir al bloque. Los cambios se guardan solos."}
+              {problems.length === 0
+                ? "Lo que aún no conectes simplemente termina ahí."
+                : "Esto haría fallar el flujo. Toca uno para ir al bloque."}
             </p>
           </header>
 
-          {total === 0 ? (
+          {problems.length === 0 ? (
             <div className="flow-review__empty">
               <span className="flow-review__empty-icon">
                 <CheckIcon />
               </span>
-              Sin nada por revisar
+              Nada que haga fallar el flujo
             </div>
           ) : (
             <ul className="flow-review__list">
-              {review.issues.map((issue) => (
-                <IssueRow
-                  key={issue.id}
-                  issue={issue}
-                  onFocusNode={(nodeId) => {
-                    setOpen(false);
-                    onFocusNode(nodeId);
-                  }}
-                />
+              {problems.map((problem) => (
+                <ProblemRow key={problem.key} problem={problem} onGo={() => goTo(problem)} />
               ))}
             </ul>
           )}

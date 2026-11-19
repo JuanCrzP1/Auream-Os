@@ -25,5 +25,5 @@ Un **flujo** es un recorrido de bloques que responde solo por WhatsApp. Se guard
 
 ## Que nada falle en silencio
 
-- **En la lista de Automatizaciones**, cada flujo tiene un punto: **verde** si está en orden, **ámbar** si tiene avisos y **rojo** si algo no funcionará (por ejemplo, un Píxel sin píxel elegido). Con problemas, lo dice bajo el nombre: «⚠ 3 puntos por revisar». Ábrelo y toca **puntos por revisar** para ir a cada bloque.
+- **Dentro del flujo**, toca **Revisar flujo** (arriba a la derecha) cuando quieras. Solo te dice lo que haría fallar el flujo, por ejemplo «una IA sin conexión elegida · 2 bloques». Toca uno y te lleva al bloque; si está en varios, cada toque te lleva al siguiente. Lo que aún no conectes no es un error: el flujo simplemente termina ahí.
 - **En la campana** te avisamos si un flujo falló en las últimas 24 horas mientras atendía clientes: qué bloque, por qué y cuántas veces. Por ejemplo: «El Píxel no envió el evento a Meta: el bloque no tiene píxel elegido». El aviso te lleva al flujo.

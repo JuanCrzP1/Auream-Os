@@ -1,4 +1,4 @@
-/* Revisión del flujo: cápsula en la esquina superior derecha del lienzo y su
+/* «Revisar flujo»: cápsula en la esquina superior derecha del lienzo y su
    tarjeta desplegable. Mismo cristal que la topbar y la Toolbox. */
 
 .flow-review {
@@ -49,53 +49,13 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
 }
 
 .flow-review__toggle-icon svg {
   width: 13px;
   height: 13px;
-}
-
-.flow-review__toggle--ok .flow-review__toggle-icon {
-  background: color-mix(in srgb, var(--status-active-text) 16%, transparent);
-  color: var(--status-active-text);
-}
-
-.flow-review__toggle--warning {
-  border-color: color-mix(in srgb, var(--amber) 45%, var(--line));
-}
-
-.flow-review__toggle--warning .flow-review__toggle-icon {
-  background: color-mix(in srgb, var(--amber) 18%, transparent);
-  color: var(--amber);
-}
-
-.flow-review__toggle--error {
-  border-color: color-mix(in srgb, var(--rose) 55%, var(--line));
-}
-
-.flow-review__toggle--error .flow-review__toggle-icon {
-  background: color-mix(in srgb, var(--rose) 18%, transparent);
-  color: var(--rose);
-}
-
-.flow-review__count {
-  min-width: 20px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-.flow-review__count--error {
-  background: color-mix(in srgb, var(--rose) 22%, transparent);
-  color: var(--rose);
-}
-
-.flow-review__count--warning {
-  background: color-mix(in srgb, var(--amber) 22%, transparent);
-  color: var(--amber);
 }
 
 /* --- Tarjeta ------------------------------------------------------------- */
@@ -174,18 +134,18 @@
   border-radius: 50%;
 }
 
-.flow-review__issue--error .flow-review__issue-mark {
-  background: var(--rose);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rose) 22%, transparent);
-}
-
-.flow-review__issue--warning .flow-review__issue-mark {
-  background: var(--amber);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent);
+.flow-review__issue-mark {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .flow-review__issue-text {
   flex: 1 1 auto;
+}
+
+.flow-review__issue-count {
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .flow-review__issue-go {
@@ -216,23 +176,13 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--status-active-text) 14%, transparent);
-  color: var(--status-active-text);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
 }
 
 .flow-review__empty-icon svg {
   width: 18px;
   height: 18px;
-}
-
-/* Solo para lectores de pantalla. */
-.flow-review__sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
 
 :root[data-theme="light"] .flow-review__toggle {

@@ -31,9 +31,7 @@ export function toAutomationSummary(
     updatedAt: flow.metadata.updatedAt,
     ...(flow.metadata.tags !== undefined ? { tags: flow.metadata.tags } : {}),
     nodeCount: graphSummary.nodeCount,
-    connectionStatus: graphSummary.connectionStatus,
-    reviewErrors: graphSummary.reviewErrors,
-    reviewWarnings: graphSummary.reviewWarnings
+    connectionStatus: graphSummary.connectionStatus
   };
 }
 

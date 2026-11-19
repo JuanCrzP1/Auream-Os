@@ -53,9 +53,9 @@ export function AutomationFlowCard({
 
   // El resumen del grafo lo calcula el servidor y llega en la respuesta. Si no
   // llega —una API anterior a estos campos— se omite entero en vez de pintar un
-  // contador sin número y un punto sin color que, además, se anunciaría como
-  // «desconectada»: ausente y desconectada no son lo mismo, y afirmar lo
-  // segundo cuando ocurre lo primero es mentir sobre el flujo.
+  // contador sin número. Sin punto de color ni «puntos por revisar»: un flujo a
+  // medias no es un flujo malo (Leona tampoco lo marca); lo que haría fallar
+  // un flujo se ve dentro, en «Revisar flujo».
   const hayResumen =
     typeof flow.nodeCount === "number" &&
     (flow.connectionStatus === "connected" || flow.connectionStatus === "disconnected");
@@ -85,7 +85,6 @@ export function AutomationFlowCard({
         <span className="hub-card__name">{flow.name}</span>
         {archived ? <span className="hub-card__archived-badge">Archivada</span> : null}
       </div>
-      {hayResumen ? <FlowReviewLine flow={flow} /> : null}
       {flow.tags && flow.tags.length > 0 && (
         <div className="hub-card__tags">
           {flow.tags.map((tag) => (
@@ -105,7 +104,6 @@ export function AutomationFlowCard({
                 <span className="hub-card__tools-icon" aria-hidden="true"><ToolsLayersIcon /></span>
                 {flow.nodeCount}
               </span>
-              <FlowHealth flow={flow} />
             </>
           )}
         </div>
@@ -124,25 +122,4 @@ export function AutomationFlowCard({
       </footer>
     </article>
   );
-}
-
-/** El peor estado del flujo: flechas sueltas o errores de la revisión del editor, solo avisos, o en orden. */
-function healthOf(flow: AutomationSummary) {
-  const errors = flow.reviewErrors ?? 0;
-  const pending = errors + (flow.reviewWarnings ?? 0);
-  const tone = flow.connectionStatus === "disconnected" || errors > 0 ? "disconnected" : pending > 0 ? "warning" : "connected";
-  const label = pending > 0 ? `${pending} ${pending === 1 ? "punto" : "puntos"} por revisar` : flow.connectionStatus === "connected" ? "En orden" : "Estructura desconectada";
-  return { pending, tone, label };
-}
-
-/** El punto del pie: rojo, ámbar o verde, como la revisión del editor (nunca un verde engañoso). */
-function FlowHealth({ flow }: { readonly flow: AutomationSummary }) {
-  const { tone, label } = healthOf(flow);
-  return <span className={`hub-card__connection-status hub-card__connection-status--${tone}`} role="img" aria-label={label} title={label} />;
-}
-
-/** Con problemas, lo dice en texto bajo el nombre, con las mismas palabras del editor. */
-function FlowReviewLine({ flow }: { readonly flow: AutomationSummary }) {
-  const { pending, tone, label } = healthOf(flow);
-  return pending > 0 ? <span className={`hub-card__review hub-card__review--${tone}`}>⚠ {label}</span> : null;
 }

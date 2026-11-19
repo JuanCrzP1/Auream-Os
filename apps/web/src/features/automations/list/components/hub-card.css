@@ -175,16 +175,6 @@
   height: 13px;
 }
 
-.hub-card__connection-status {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
-  border-radius: 50%;
-}
-
-.hub-card__connection-status--connected { background: var(--status-success); }
-.hub-card__connection-status--disconnected { background: var(--status-danger); }
-
 /* Folder grid */
 /* SIEMPRE PRESENTE, como el de una carpeta.
  *
@@ -241,14 +231,3 @@
   font-size: 0.68rem;
   font-weight: 600;
 }
-
-/* Lo que marca la revisión del editor, en la tarjeta (nunca un verde engañoso). */
-.hub-card__connection-status--warning { background: var(--amber); }
-
-.hub-card__review {
-  font-size: 0.74rem;
-  font-weight: 600;
-}
-
-.hub-card__review--disconnected { color: var(--status-danger); }
-.hub-card__review--warning { color: var(--amber); }

@@ -14,9 +14,7 @@ const flow: AutomationSummary = {
   updatedAt: "2024-06-15T00:00:00.000Z",
   tags: ["soporte", "ventas"],
   nodeCount: 6,
-  connectionStatus: "connected",
-  reviewErrors: 0,
-  reviewWarnings: 0
+  connectionStatus: "connected"
 };
 
 function renderCard(f: AutomationSummary = flow, props: Partial<{ onDelete: (f: AutomationSummary) => void; onRename: (f: AutomationSummary) => void }> = {}) {
@@ -57,47 +55,32 @@ describe("AutomationFlowCard", () => {
     expect(screen.getByText(/2024/)).toBeInTheDocument();
   });
 
-  it("renderiza el contador derivado, el SVG de herramientas y estado conectado", () => {
+  it("muestra cuántos bloques tiene, sin punto de color ni «puntos por revisar»", () => {
     renderCard();
 
     expect(screen.getByLabelText("6 nodos")).toBeInTheDocument();
     expect(document.querySelector(".hub-card__tools-icon svg")).not.toBeNull();
-    expect(screen.getByLabelText("En orden")).toHaveClass("hub-card__connection-status--connected");
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.queryByText(/por revisar/)).not.toBeInTheDocument();
   });
 
-  it("con errores de la revisión del editor sale en rojo y lo dice, aunque las flechas estén unidas", () => {
-    renderCard({ ...flow, reviewErrors: 1, reviewWarnings: 2 });
-    expect(screen.getByRole("img", { name: "3 puntos por revisar" })).toHaveClass("hub-card__connection-status--disconnected");
-    expect(screen.getByText("⚠ 3 puntos por revisar")).toHaveClass("hub-card__review--disconnected");
-  });
-
-  it("solo con avisos sale en ámbar", () => {
-    renderCard({ ...flow, reviewErrors: 0, reviewWarnings: 1 });
-    expect(screen.getByRole("img", { name: "1 punto por revisar" })).toHaveClass("hub-card__connection-status--warning");
-    expect(screen.getByText("⚠ 1 punto por revisar")).toHaveClass("hub-card__review--warning");
-  });
-
-  it("renderiza estado desconectado", () => {
+  it("un flujo a medias no se marca como malo en la lista (como en Leona)", () => {
     renderCard({ ...flow, connectionStatus: "disconnected" });
-    expect(screen.getByLabelText("Estructura desconectada")).toHaveClass("hub-card__connection-status--disconnected");
+    expect(screen.getByLabelText("6 nodos")).toBeInTheDocument();
+    expect(screen.queryByText(/por revisar|desconectada/i)).not.toBeInTheDocument();
   });
 
   it("omite el resumen entero cuando la respuesta no trae los campos", () => {
     // El caso real que ocurrió: una API sin `nodeCount` ni `connectionStatus`.
     // El tipo los declara obligatorios, pero el JSON de la red no lo garantiza
     // y `builderApiClient` no valida. Sin el guardia, la tarjeta pintaba un
-    // icono sin número y un punto con la clase `--undefined` —sin regla CSS, o
-    // sea invisible— y encima lo anunciaba como «Estructura desconectada»,
-    // afirmando algo que nadie ha comprobado.
+    // icono sin número.
     const { nodeCount: _n, connectionStatus: _c, ...sinResumen } = flow;
     renderCard(sinResumen as AutomationSummary);
 
     expect(screen.getByText(/2024/)).toBeInTheDocument();
     expect(document.querySelector(".hub-card__node-count")).toBeNull();
-    expect(document.querySelector(".hub-card__connection-status")).toBeNull();
     expect(document.querySelector(".hub-card__separator")).toBeNull();
-    expect(screen.queryByLabelText("Estructura desconectada")).not.toBeInTheDocument();
   });
 
   it("conserva la altura fija de 99 px", () => {
