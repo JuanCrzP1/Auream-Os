@@ -25,7 +25,8 @@ export class DealServices {
     private readonly followUps: FollowUpRepository,
     private readonly labeler: ContactLabeler,
     private readonly catalog: CrmProductCatalog,
-    private readonly team: CrmTeamDirectory
+    private readonly team: CrmTeamDirectory,
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   /** Cambiar el valor, el producto o el responsable de un cliente que está en el embudo. */
@@ -72,9 +73,12 @@ export class DealServices {
   public async contact(actor: CrmActor, contactId: string): Promise<ContactCrmResponse> {
     const contact = UUID.test(contactId) ? await this.labeler.snapshot(actor.tenantId, contactId) : null;
     if (!contact) throw new NotFoundError("Ese cliente no existe.");
+    // Todos sus seguimientos, sin filtrar por día: sin `bucket`, `now` y
+    // `endOfToday` no recortan nada (la consulta los pide siempre).
+    const now = this.now();
     const [deals, followUps, events, stored] = await Promise.all([
       this.contactDeals(actor.tenantId, contactId, contact.labelIds),
-      this.followUps.list(actor.tenantId, { assigneeId: null, contactId, now: new Date(), endOfToday: new Date(), limit: 50 }),
+      this.followUps.list(actor.tenantId, { assigneeId: null, contactId, now, endOfToday: now, limit: 50 }),
       this.events.forContact(actor.tenantId, contactId, HISTORY),
       this.deals.forContact(actor.tenantId, contactId)
     ]);

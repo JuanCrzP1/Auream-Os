@@ -30,6 +30,7 @@ import type { ContactFieldRepository, ContactFieldValues, FlowDrafts } from "./C
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_ADOPT = 50;
+const DAY_MS = 86_400_000;
 
 type FieldInput = { readonly label?: unknown; readonly key?: unknown; readonly type?: unknown; readonly options?: unknown };
 
@@ -40,7 +41,9 @@ export class ContactFieldServices {
     private readonly flows: FlowDrafts,
     private readonly newId: () => string = randomUUID,
     /** Lo hecho en los últimos días que aún se puede deshacer. Ausente: no se ofrece. */
-    private readonly operations?: Pick<FieldOperations, "recent">
+    private readonly operations?: Pick<FieldOperations, "recent">,
+    /** La hora (la real en producción; fija en las pruebas). */
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   public async list(tenantId: string, canManage: boolean): Promise<ContactFieldsResponse> {
@@ -51,7 +54,7 @@ export class ContactFieldServices {
     const loose = this.discoverFrom(observed, definitions, uses).filter((field) => !field.technical);
     const response = { fields, system: SYSTEM_CONTACT_FIELDS, totalContacts, undefinedKeys: loose.length, canManage };
     if (!canManage) return response;
-    const recent = (await this.operations?.recent(tenantId, new Date(Date.now() - FIELD_OPERATION_UNDO_DAYS * 86_400_000))) ?? [];
+    const recent = (await this.operations?.recent(tenantId, new Date(this.now().getTime() - FIELD_OPERATION_UNDO_DAYS * DAY_MS))) ?? [];
     return { ...response, suggestions: fieldSuggestions(definitions, observed, loose.map((field) => field.key), recent) };
   }
 

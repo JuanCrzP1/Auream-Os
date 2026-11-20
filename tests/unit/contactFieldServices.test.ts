@@ -26,13 +26,24 @@ const FLOW = {
   }
 } as unknown as BuilderFlowSnapshot;
 
+/** La hora de las pruebas: fija, para que nada dependa del día en que se corren. */
+const NOW = new Date("2026-11-10T12:00:00.000Z");
+
 function services() {
   const repository = new InMemoryContactFieldRepository();
   const seen = observedFrom({ ciudad: [["Medellín", 40], ["Bogotá", 20], ["Cali", 12]], resposta: [["Sí", 3]], pago_estado: [["ok", 9]], "mi dato": [["x", 2]], "año": [["2026", 1]] });
   let next = 0;
   const id = () => `00000000-0000-4000-8000-${String(++next).padStart(12, "0")}`;
   const values = new InMemoryContactFieldValues(new Map([[A, seen]]), 120);
-  return { repository, fields: new ContactFieldServices(repository, values, { drafts: async (tenantId) => (tenantId === A ? [FLOW] : []) }, id) };
+  // Lo hecho en los últimos días: guarda desde cuándo se pidió.
+  const since: Date[] = [];
+  const operations = {
+    recent: async (_tenantId: string, from: Date) => {
+      since.push(from);
+      return [];
+    }
+  };
+  return { repository, since, fields: new ContactFieldServices(repository, values, { drafts: async (tenantId) => (tenantId === A ? [FLOW] : []) }, id, operations, () => NOW) };
 }
 
 describe("el catálogo de campos", () => {
@@ -53,6 +64,14 @@ describe("el catálogo de campos", () => {
     expect(list.fields).toEqual([expect.objectContaining({ key: "ciudad", filled: 72, uses: [expect.objectContaining({ blockName: "¿Ciudad?", role: "fills" }), expect.objectContaining({ blockName: "Envío", role: "reads" })] })]);
     expect(list.system.map((field) => field.key)).toContain("first_name");
     expect((await fields.discover(A)).suggestions.map((entry) => entry.key)).not.toContain("ciudad");
+  });
+
+  it("lo que aún se puede deshacer se busca desde hace 7 días justos, con la hora de su reloj; sin permiso, ni se busca", async () => {
+    const { fields, since } = services();
+    await fields.list(A, false);
+    expect(since).toEqual([]);
+    await fields.list(A, true);
+    expect(since.map((date) => date.toISOString())).toEqual(["2026-11-03T12:00:00.000Z"]);
   });
 
   it("valida todo antes de guardar: si uno está mal no se crea ninguno", async () => {

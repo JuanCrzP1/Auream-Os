@@ -11,6 +11,11 @@ import type { Pipeline } from "../../../domains/crm/domain/Pipeline.js";
 // Un CRM en memoria para las pruebas: etiquetas, contactos (con la regla de
 // una etapa por embudo, como Contactos), embudos, registros e historial. El
 // etiquetador avisa al StageTracker igual que en producción.
+//
+// La hora es la del mundo (`clock`), no la del computador: el StageTracker la
+// usa para la regla de los días y los registros para sus fechas (como `now()`
+// en la base). Empieza el 10 de noviembre de 2026 a mediodía y solo se mueve
+// cuando la prueba lo pide, así nada depende del día en que se corre.
 // ---------------------------------------------------------------------------
 
 export const T = "tenant-a";
@@ -24,7 +29,11 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   const deals = new Map<string, Deal>();
   const history: Deal[] = [];
   const events: Array<CrmEventInput & { at: number }> = [];
-  let clock = 0;
+  /** Orden de llegada: ids y orden del historial. */
+  let seq = 0;
+  let at = Date.parse("2026-11-10T12:00:00.000Z");
+  const now = () => new Date(at);
+  const clock = { now, advance: (ms: number) => void (at += ms) };
 
   const pipelineOf = (record: PipelineRecord & { position: number }): Pipeline => ({
     id: record.id,
@@ -55,11 +64,11 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
     reopen: async (_t, p, c, entry) => {
       const before = deals.get(key(p, c));
       if (before) history.push({ ...before, current: false });
-      const now = new Date(Date.UTC(2026, 10, 10, 12, 0, clock++)).toISOString();
+      const stamp = now().toISOString();
       const deal: Deal = {
-        id: `deal-${clock}`, number: (before?.number ?? 0) + 1, current: true, tenantId: T, pipelineId: p, contactId: c, stageId: entry.stageId,
-        stageEnteredAt: now, wonAt: entry.won ? now : null, value: entry.value, productId: entry.productId, productName: entry.productName,
-        ownerId: entry.ownerId, openedAt: now, saleId: entry.saleId ?? null, adSourceId: entry.adSourceId ?? null
+        id: `deal-${++seq}`, number: (before?.number ?? 0) + 1, current: true, tenantId: T, pipelineId: p, contactId: c, stageId: entry.stageId,
+        stageEnteredAt: stamp, wonAt: entry.won ? stamp : null, value: entry.value, productId: entry.productId, productName: entry.productName,
+        ownerId: entry.ownerId, openedAt: stamp, saleId: entry.saleId ?? null, adSourceId: entry.adSourceId ?? null
       };
       deals.set(key(p, c), deal);
       return deal;
@@ -67,20 +76,20 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
     attachSale: async (_t, p, c, saleId) => void (deals.has(key(p, c)) && deals.set(key(p, c), { ...deals.get(key(p, c))!, saleId })),
     enter: async (_t, p, c, entry: DealEntry) => {
       const before = deals.get(key(p, c));
-      const now = new Date(Date.UTC(2026, 10, 10, 12, 0, clock++)).toISOString();
+      const stamp = now().toISOString();
       const deal: Deal = {
-        id: before?.id ?? `deal-${clock}`,
+        id: before?.id ?? `deal-${++seq}`,
         number: before?.number ?? 1,
         current: true,
-        openedAt: before?.openedAt ?? now,
+        openedAt: before?.openedAt ?? stamp,
         saleId: before?.saleId ?? null,
         adSourceId: before?.adSourceId ?? entry.adSourceId ?? null,
         tenantId: T,
         pipelineId: p,
         contactId: c,
         stageId: entry.stageId,
-        stageEnteredAt: before?.stageId === entry.stageId ? before.stageEnteredAt : now,
-        wonAt: before?.wonAt ?? (entry.won ? now : null),
+        stageEnteredAt: before?.stageId === entry.stageId ? before.stageEnteredAt : stamp,
+        wonAt: before?.wonAt ?? (entry.won ? stamp : null),
         value: before?.value ?? entry.value,
         productId: before?.productId ?? entry.productId,
         productName: before?.productId ? before.productName : entry.productName,
@@ -98,7 +107,7 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   };
 
   const eventLog: CrmEventLog = {
-    append: async (_t, event) => void events.push({ ...event, at: clock++ }),
+    append: async (_t, event) => void events.push({ ...event, at: seq++ }),
     forContact: async (_t, c, limit) =>
       events.filter((e) => e.contactId === c).reverse().slice(0, limit).map((e, i): CrmEventRecord => ({ ...e, id: `e${i}`, actorName: e.actorId, flowName: e.flowKey, createdAt: "" }))
   };
@@ -144,11 +153,11 @@ export function crmWorld(options: { members?: CrmTeamMember[] } = {}) {
   let turn = 0;
   const turns = { next: async () => turn++ };
   const errors: unknown[] = [];
-  tracker = new StageTracker(pipelineRepository, dealRepository, eventLog, labeler, catalog, team, turns, (error) => errors.push(error));
+  tracker = new StageTracker(pipelineRepository, dealRepository, eventLog, labeler, catalog, team, turns, (error) => errors.push(error), now);
   const pipelineServices = new PipelineServices(pipelineRepository, stageLabels, team, catalog);
 
   return {
-    labels, contacts, deals, history, events, errors, labeler, catalog, team, tracker, rules,
+    labels, contacts, deals, history, events, errors, labeler, catalog, team, tracker, rules, clock,
     pipelineRepository, dealRepository, eventLog, pipelineServices,
     addContact: (id: string, phone: string | null = "573001112233", held: string[] = [], fromAd = false) => void contacts.set(id, { phone, labels: new Set(held), fromAd }),
     labelsOf: (id: string) => [...contacts.get(id)!.labels]

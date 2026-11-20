@@ -99,6 +99,16 @@ No se hardcodean credenciales, ni siquiera de desarrollo. Vienen del entorno, y 
 
 CORS funciona por allowlist. `Access-Control-Allow-Origin: *` está prohibido.
 
+### 15. La hora se recibe, no se lee
+
+Todo lo que **decide** algo según la hora (un plazo, un límite, «hace cuántos días») recibe su reloj; no le pregunta la hora al computador:
+
+- Un servicio de `application/` recibe `now: () => Date = () => new Date()` como último parámetro del constructor. En producción usa ese valor por defecto, la hora real; las pruebas le pasan un reloj fijo.
+- Una regla pura de `domain/` recibe `now: Date` como parámetro (`readyToReopen(deal, now)`, `requireDueAt(value, now)`, `soldAtOf(value, now)`). En `domain/` no aparece `new Date()` ni `Date.now()`.
+- Anotar **cuándo pasó** algo (`updatedAt`, `createdAt`) no decide nada y puede usar la hora real.
+
+Las pruebas usan un reloj fijo y revisan el límite exacto (un momento antes y justo en el límite). Una prueba que compara una fecha fija con la hora real es una bomba de tiempo: `crmPurchases.test.ts` se rompió sola el 17 de noviembre de 2026, siete días después de su fecha fija, porque `StageTracker` leía la hora directo.
+
 ## Prohibiciones explícitas
 
 - `domains/*` → `infrastructure/*` concreto
@@ -114,6 +124,7 @@ CORS funciona por allowlist. `Access-Control-Allow-Origin: *` está prohibido.
 - Redefinir en cualquier módulo un contrato que ya vive en `contracts/`
 - Un nodo o estado de handoff dentro de `flow-engine` (pertenece al AI Sales Engine)
 - Credenciales hardcodeadas y `Access-Control-Allow-Origin: *`
+- `new Date()` o `Date.now()` en `domains/*/domain`, y un servicio que decide por la hora sin recibir `now`
 
 ## Verificación
 
@@ -151,6 +162,9 @@ find . -type f \( -name "*.ts" -o -name "*.tsx" \)   -not -path "*/node_modules/
 
 # 8. credenciales hardcodeadas / CORS abierto    (esperado: 0)
 grep -rn "Allow-Origin\", \"\*\"\|bfk_" apps --include=*.ts --include=*.tsx | wc -l
+
+# 9. reglas puras que leen la hora               (esperado: 0)
+grep -rnE "Date\.now\(\)|new Date\(\)" domains/*/domain domains/*/*/domain --include=*.ts | wc -l
 ```
 
 Estas comprobaciones son baratas y deberían ejecutarse antes de cada integración.

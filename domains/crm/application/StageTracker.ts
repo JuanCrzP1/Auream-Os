@@ -24,7 +24,8 @@ import type { CrmEventLog, DealRepository, PipelineRepository } from "./CrmRepos
 // sobre una compra que ya tenía su venta abre otra, ya ganada.
 //
 // Nunca lanza: un fallo del CRM no puede romper un flujo ni el chat (se avisa
-// por `onError`).
+// por `onError`). La hora la da `now` (la real en producción; fija en las
+// pruebas): la regla de los días no puede depender del día en que se corre.
 // ---------------------------------------------------------------------------
 
 export class StageTracker {
@@ -36,7 +37,8 @@ export class StageTracker {
     private readonly catalog: CrmProductCatalog,
     private readonly team: CrmTeamDirectory,
     private readonly turns: TurnCounter,
-    private readonly onError: (error: unknown, context: Record<string, unknown>) => void
+    private readonly onError: (error: unknown, context: Record<string, unknown>) => void,
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   public async labelsChanged(tenantId: string, contactId: string, change: { added: ReadonlyArray<string>; removed: ReadonlyArray<string> }, origin: LabelOrigin): Promise<void> {
@@ -81,7 +83,7 @@ export class StageTracker {
         // Ya compró (o no compró) y vuelve a escribir días después: otra compra.
         else if (step === "crm.contact_wrote" && held.outcome !== "open") {
           const current = await this.deals.find(tenantId, pipeline.id, contactId);
-          if (current && readyToReopen(current, new Date())) labels.push(entry.labelId);
+          if (current && readyToReopen(current, this.now())) labels.push(entry.labelId);
         }
       }
       if (labels.length > 0) await this.labeler.change(tenantId, contactId, { add: labels, remove: [] }, { kind: "auto" });

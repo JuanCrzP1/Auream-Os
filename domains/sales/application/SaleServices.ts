@@ -45,7 +45,9 @@ export class SaleServices {
     private readonly timezoneOf: (tenantId: string) => Promise<string>,
     private readonly events: SaleEvents = NO_SALE_EVENTS,
     /** Los chats, para anotar una venta desde uno (sin ellos, no se puede). */
-    private readonly chats: ChatSaleLinks | null = null
+    private readonly chats: ChatSaleLinks | null = null,
+    /** La hora (la real en producción; fija en las pruebas). */
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   public async list(actor: SaleActor, filters: SaleFilters): Promise<SaleListResponse> {
@@ -97,7 +99,7 @@ export class SaleServices {
         receiptReference: null,
         note: cleanText(input.note, 500) ?? "",
         recordedBy: actor.userId,
-        soldAt: soldAtOf(input.soldAt),
+        soldAt: soldAtOf(input.soldAt, this.now()),
         originKey: null
       },
       ...statusOf(initialStatus(draft))

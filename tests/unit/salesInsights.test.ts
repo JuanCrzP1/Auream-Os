@@ -19,7 +19,8 @@ async function setup() {
   const store = new InMemorySalesStore();
   const products = new ProductServices(new InMemoryProductRepository(store));
   const repository = new InMemorySaleRepository(store);
-  const sales = new SaleServices(repository, products, async () => "America/Bogota");
+  // Las ventas y la portada viven en la misma hora fija: nada depende del día en que se corre.
+  const sales = new SaleServices(repository, products, async () => "America/Bogota", undefined, null, () => NOW);
   const insights = new SalesInsights(repository, new InMemorySalesInsights(store), async () => "America/Bogota", () => NOW);
   const video = await products.create("t", { name: "Video", kind: "main", prices: [{ country: "CO", currency: "COP", amount: 100 }] });
   const portada = await products.create("t", { name: "Portada", kind: "upsell", prices: [{ country: "CO", currency: "COP", amount: 50 }] });

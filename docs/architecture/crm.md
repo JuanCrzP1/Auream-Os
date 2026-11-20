@@ -54,7 +54,7 @@ Cada compra es un registro de `crm_deals` con su número (`number`: 1.ª, 2.ª�
 | Cuándo | Qué pasa |
 |---|---|
 | La compra actual ya cerró (ganó o se perdió) y el cliente pasa a una etapa de «aún no compra» (un flujo, un asesor, el tablero) | Se abre la compra siguiente en esa etapa, con el valor por defecto y el mismo responsable. La anterior queda como estaba (`opensNewPurchase`) |
-| Vuelve a escribir y su compra cerró hace **7 días o más** (`REOPEN_AFTER_DAYS`) | Se abre la siguiente en la etapa de entrada. Antes de eso, un «gracias» no abre nada |
+| Vuelve a escribir y su compra cerró hace **7 días o más** (`REOPEN_AFTER_DAYS`, contados desde que entró a su última etapa) | Se abre la siguiente en la etapa de entrada. Antes de eso, un «gracias» no abre nada. La hora la da el reloj de `StageTracker` (regla 15 de [`dependency-rules.md`](dependency-rules.md)); `crmPurchases.test.ts` revisa el límite exacto |
 | Se aprueba una venta y la compra actual ya tenía **otra** venta | Se abre la siguiente, ya ganada, en la etapa de compra y con el valor real. La misma venta dos veces no cuenta doble |
 | Pasa de una etapa de compra a otra (Pagó → Entregado) | Sigue siendo la misma compra |
 

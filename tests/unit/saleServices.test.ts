@@ -12,11 +12,14 @@ import { InMemoryProductRepository, InMemorySaleRepository, InMemorySalesStore }
 // ---------------------------------------------------------------------------
 
 const ADMIN: SaleActor = { tenantId: "tenant-a", userId: "user-1", canRecord: true, canManage: true };
+/** La hora de las pruebas: fija, para que nada dependa del día en que se corren. */
+const NOW = new Date("2026-11-10T17:00:00.000Z");
+const MINUTE = 60_000;
 
 async function setup() {
   const store = new InMemorySalesStore();
   const products = new ProductServices(new InMemoryProductRepository(store));
-  const sales = new SaleServices(new InMemorySaleRepository(store), products, async () => "America/Bogota");
+  const sales = new SaleServices(new InMemorySaleRepository(store), products, async () => "America/Bogota", undefined, null, () => NOW);
   const video = await products.create("tenant-a", { name: "Video", kind: "main", prices: [{ country: "CO", currency: "COP", amount: 10000 }] });
   return { products, sales, video };
 }
@@ -78,6 +81,16 @@ describe("SaleServices", () => {
     expect((await sales.list(ADMIN, { search: "mañ" })).sales.map((s) => s.customerName)).toEqual(["Mañana"]);
   });
 
+  it("la fecha: sin fecha es ahora; hasta 5 minutos adelante se acepta (relojes desfasados), un momento más no", async () => {
+    const { sales, video } = await setup();
+    const at = (ms: number) => new Date(NOW.getTime() + ms).toISOString();
+    expect((await sales.record(ADMIN, { productId: video.id, amount: 1, currency: "COP" })).soldAt).toBe(NOW.toISOString());
+    expect((await sales.record(ADMIN, { productId: video.id, amount: 1, currency: "COP", soldAt: at(-30 * 24 * 60 * MINUTE) })).soldAt).toBe(at(-30 * 24 * 60 * MINUTE));
+    expect((await sales.record(ADMIN, { productId: video.id, amount: 1, currency: "COP", soldAt: at(5 * MINUTE) })).soldAt).toBe(at(5 * MINUTE));
+    await expect(sales.record(ADMIN, { productId: video.id, amount: 1, currency: "COP", soldAt: at(5 * MINUTE + 1) })).rejects.toThrow("no puede ser futura");
+    await expect(sales.record(ADMIN, { productId: video.id, amount: 1, currency: "COP", soldAt: "ayer" })).rejects.toThrow("no es válida");
+  });
+
   it("no acepta un producto archivado ni de otra cuenta, ni una venta de otra cuenta", async () => {
     const { sales, products, video } = await setup();
     await products.update("tenant-a", video.id, { name: "Video", kind: "main", status: "archived", prices: video.prices });
@@ -112,7 +125,7 @@ describe("SaleServices", () => {
       const store = new InMemorySalesStore();
       const products = new ProductServices(new InMemoryProductRepository(store));
       const approved: ApprovedSaleEvent[] = [];
-      const sales = new SaleServices(new InMemorySaleRepository(store), products, async () => "America/Bogota", { saleApproved: async (_t, sale) => void approved.push(sale) }, chats);
+      const sales = new SaleServices(new InMemorySaleRepository(store), products, async () => "America/Bogota", { saleApproved: async (_t, sale) => void approved.push(sale) }, chats, () => NOW);
       const video = await products.create("tenant-a", { name: "Video", kind: "main", prices: [{ country: "VE", currency: "USD", amount: 12 }] });
       return { sales, video, approved };
     }
@@ -134,7 +147,7 @@ describe("SaleServices", () => {
       const { sales } = await chatSetup();
       await expect(sales.record({ ...ADMIN, tenantId: "tenant-b" }, { conversationId: CHAT })).rejects.toThrow("Ese chat no existe.");
       await expect(sales.record(ADMIN, { conversationId: "no-es-uuid" })).rejects.toThrow("Ese chat no existe.");
-      const without = new SaleServices(new InMemorySaleRepository(new InMemorySalesStore()), new ProductServices(new InMemoryProductRepository(new InMemorySalesStore())), async () => "America/Bogota");
+      const without = new SaleServices(new InMemorySaleRepository(new InMemorySalesStore()), new ProductServices(new InMemoryProductRepository(new InMemorySalesStore())), async () => "America/Bogota", undefined, null, () => NOW);
       await expect(without.record(ADMIN, { conversationId: CHAT })).rejects.toThrow("Ese chat no existe.");
     });
   });

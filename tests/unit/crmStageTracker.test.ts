@@ -16,10 +16,16 @@ async function setup(options: { autoAssign?: boolean } = {}) {
   const world = crmWorld();
   const created = await world.pipelineServices.create(OWNER, { ...STARTER_PIPELINE, defaultProductId: "video", autoAssign: options.autoAssign ?? false });
   const stage = (name: string) => created.stages.find((candidate) => candidate.name === name)!;
-  const noFollowUps = { list: async () => [] } as unknown as FollowUpRepository;
+  const followUpQueries: Array<{ now: Date; endOfToday: Date }> = [];
+  const noFollowUps = {
+    list: async (_t: string, query: { now: Date; endOfToday: Date }) => {
+      followUpQueries.push(query);
+      return [];
+    }
+  } as unknown as FollowUpRepository;
   const board = new BoardServices(world.pipelineServices, {} as never, world.labeler);
-  const deals = new DealServices(world.pipelineServices, world.pipelineRepository, world.dealRepository, world.eventLog, noFollowUps, world.labeler, world.catalog, world.team);
-  return { world, pipeline: created, stage, board, deals };
+  const deals = new DealServices(world.pipelineServices, world.pipelineRepository, world.dealRepository, world.eventLog, noFollowUps, world.labeler, world.catalog, world.team, world.clock.now);
+  return { world, pipeline: created, stage, board, deals, followUpQueries };
 }
 
 describe("StageTracker", () => {
@@ -100,11 +106,13 @@ describe("mover y editar desde el tablero", () => {
   });
 
   it("la ficha dice en qué etapa va en cada embudo, aunque no tenga registro todavía", async () => {
-    const { world, pipeline, stage, deals } = await setup();
+    const { world, pipeline, stage, deals, followUpQueries } = await setup();
     const contactId = "11111111-1111-4111-8111-111111111111";
     world.addContact(contactId, null, [stage("Pagó").labelId]);
     const view = await deals.contact(OWNER, contactId);
     expect(view.deals).toEqual([expect.objectContaining({ pipelineId: pipeline.id, stageId: stage("Pagó").id, value: null, enteredAt: null })]);
+    // Sus seguimientos se piden con la hora del reloj de la ficha, no la del computador.
+    expect(followUpQueries.map((query) => [query.now.toISOString(), query.endOfToday.toISOString()])).toEqual([[world.clock.now().toISOString(), world.clock.now().toISOString()]]);
   });
 });
 
