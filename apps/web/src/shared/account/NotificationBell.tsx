@@ -56,6 +56,14 @@ export function NotificationBell() {
             ) : null}
             {feed?.items.map((item) => <NoticeRow key={item.id} item={item} onOpen={() => setOpen(false)} />)}
           </div>
+          {/* Los avisos al celular (y qué te suena) se configuran en tu cuenta. */}
+          <Link className="notice-list__settings" to="/settings/notifications" onClick={() => setOpen(false)}>
+            <span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" /></svg>
+              Configurar avisos
+            </span>
+            <span aria-hidden="true">→</span>
+          </Link>
         </SidebarPopover>
       ) : null}
     </>

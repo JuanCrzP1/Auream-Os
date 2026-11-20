@@ -4,6 +4,7 @@ import { AppearanceSettings } from "@features/account/components/AppearanceSetti
 import { CompanySettings } from "@features/account/components/CompanySettings";
 import { ProfileSettings } from "@features/account/components/ProfileSettings";
 import { LabelsSettings } from "@features/labels/LabelsSettings";
+import { NotificationSettings } from "@features/notification-settings/NotificationSettings";
 import { QuickRepliesSettings } from "@features/conversations/quick-replies/QuickRepliesSettings";
 import { TeamSettings } from "@features/team/components/TeamSettings";
 import { lastAppLocation } from "@shared/navigation/lastAppLocation";
@@ -19,6 +20,7 @@ const soon = (what: string) => <StateCard icon={StateIcons.sparkles} title="Muy 
 const CONTENT: Readonly<Record<SettingsSectionId, () => ReactElement>> = {
   profile: () => <ProfileSettings />,
   appearance: () => <AppearanceSettings />,
+  notifications: () => <NotificationSettings />,
   general: () => <CompanySettings />,
   team: () => <TeamSettings />,
   billing: () => soon("Aquí vas a ver tu plan, lo que consumes en el mes, tu método de pago y tus facturas."),

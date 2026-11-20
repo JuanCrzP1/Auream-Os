@@ -1,6 +1,7 @@
 import { ApiConfigError } from "./ApiConfigError";
 import { loadWhatsAppSimulator } from "./loadWhatsAppSimulator";
 import { loadTasksConfig, productionHostOf, type TasksConfig } from "./loadTasksConfig";
+import { loadPushConfig, type PushConfig } from "./loadPushConfig";
 import { join } from "node:path";
 import { readSecretKeyRing, type SecretKeyRing } from "../../../platform/security/secrets/AesGcmSecretCipher";
 
@@ -103,6 +104,8 @@ export interface ApiConfig {
   readonly whatsappWebhookBaseUrl: string | null;
   /** Cola de tareas (FASE C6): ver `loadTasksConfig`. */
   readonly tasks: TasksConfig;
+  /** Claves de los avisos al celular (`VAPID_*`). `null`: sin avisos al celular. */
+  readonly push: PushConfig | null;
 }
 
 /** ¿Es una zona IANA que el motor sabe usar? */
@@ -194,6 +197,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   // Con el simulador, los avisos vuelven a esta API local.
   const whatsappWebhookBaseUrl =
     env["WHATSAPP_WEBHOOK_BASE_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}/api` : simulator ? localApiBaseUrl : null);
+  const publicAppOrigin = env["PUBLIC_APP_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}` : (allowedOrigins[0] ?? "http://localhost:5173"));
   if (isProduction && store !== "sql") {
     throw new ApiConfigError("En producción las automatizaciones se guardan en PostgreSQL: AUTOMATIONS_STORE debe ser \"sql\".");
   }
@@ -211,7 +215,7 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     credentialsKeyRing,
     blobReadWriteToken: env["BLOB_READ_WRITE_TOKEN"]?.trim() || null,
     publicApiBaseUrl: env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`,
-    publicAppOrigin: env["PUBLIC_APP_URL"]?.trim().replace(/\/+$/, "") || (productionHost ? `https://${productionHost}` : (allowedOrigins[0] ?? "http://localhost:5173")),
+    publicAppOrigin,
     metaGraphVersion,
     metaApp: metaAppOf(env),
     metaOAuthRedirectUrl:
@@ -222,7 +226,8 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     whatsappWebhookBaseUrl,
     groupLinkBase: productionHost ? `https://${productionHost}/g` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/g`,
     helpDocsBase: productionHost ? `https://${productionHost}/api/help/docs` : `${env["PUBLIC_API_BASE_URL"]?.trim() || `http://localhost:${Number(env["PORT"] ?? DEFAULT_PORT)}`}/help/docs`,
-    tasks: loadTasksConfig(env, productionHost)
+    tasks: loadTasksConfig(env, productionHost),
+    push: loadPushConfig(env, publicAppOrigin)
   };
 }
 

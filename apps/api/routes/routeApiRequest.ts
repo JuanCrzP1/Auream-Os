@@ -20,6 +20,8 @@ import type { AuditLogger } from "../../../platform/observability/audit/AuditLog
 import { routeGroupLink } from "./routeGroupLink";
 import { routeHelpRequest, type HelpRoutes } from "./routeHelpRequest";
 import { routeNotificationsRequest } from "./routeNotificationsRequest";
+import { routeNotificationSettingsRequest } from "./routeNotificationSettingsRequest";
+import type { NotificationSettingsServices } from "../../../domains/notifications/application/NotificationSettingsServices";
 import { routeQuickRepliesRequest } from "./routeQuickRepliesRequest";
 import { routeContactFieldsRequest, type ContactFieldRoutes } from "./routeContactFieldsRequest";
 import { routeBusinessDataRequest } from "./routeBusinessDataRequest";
@@ -122,6 +124,8 @@ export interface ApiRouterDependencies {
   readonly helpServices?: HelpRoutes & { readonly docsBase: string };
   /** La campana (`/notifications`). Ausente: responde 503. */
   readonly notificationServices?: NotificationServices;
+  /** Configuración › Notificaciones: los avisos al celular de cada persona. Ausente: responde 503. */
+  readonly notificationSettings?: NotificationSettingsServices;
   /** Respuestas rápidas del chat (`/quick-replies`). Ausente: responde 503. */
   readonly quickReplyServices?: QuickReplyServices;
   /** Campos del cliente (`/contact-fields`): el catálogo y la ficha de cada cliente. Ausente: responde 503. */
@@ -244,6 +248,7 @@ export async function routeApiRequest(
   if (await routeGroupMembersRequest(request, response, url, dependencies.groupServices?.members, dependencies.auditLogger, requestContext)) return;
   if (await routeGroupsRequest(request, response, url, dependencies.groupServices, requestContext)) return;
   if (await routeHelpRequest(request, response, url, dependencies.helpServices, requestContext)) return;
+  if (await routeNotificationSettingsRequest(request, response, url, dependencies.notificationSettings, requestContext)) return;
   if (await routeNotificationsRequest(request, response, url, dependencies.notificationServices, requestContext)) return;
   if (await routeQuickRepliesRequest(request, response, url, dependencies.quickReplyServices, requestContext)) return;
   if (await routeContactFieldsRequest(request, response, url, dependencies.contactFieldServices, requestContext)) return;

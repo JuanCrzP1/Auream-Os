@@ -6,6 +6,7 @@ import { ClientImport } from "../../../domains/crm/application/ClientImport";
 import { SqlCrmImportCandidates } from "../../../infrastructure/persistence/sql/SqlCrmImportCandidates";
 import { DealServices } from "../../../domains/crm/application/DealServices";
 import { FollowUpServices } from "../../../domains/crm/application/FollowUpServices";
+import type { FollowUp } from "../../../domains/crm/domain/FollowUp";
 import { PipelineServices } from "../../../domains/crm/application/PipelineServices";
 import { StageTracker } from "../../../domains/crm/application/StageTracker";
 import type { ContactRepository, LabelRepository } from "../../../domains/contacts/application/ContactRepository";
@@ -36,6 +37,8 @@ export interface CrmDependencies {
   readonly labels: LabelRepository;
   readonly products: CrmProductCatalog;
   readonly onError: (error: unknown, context: Record<string, unknown>) => void;
+  /** Se creó o cambió un seguimiento (el aviso al celular a su hora). Ausente: nada. */
+  readonly onFollowUpScheduled?: (followUp: FollowUp) => Promise<void>;
 }
 
 export interface CrmModule {
@@ -63,7 +66,7 @@ export function composeCrmServices(deps: CrmDependencies): CrmModule {
       pipelines,
       board: new BoardServices(pipelines, new SqlCrmBoard(sql), labeler),
       deals: new DealServices(pipelines, pipelineRepository, deals, events, followUpRepository, labeler, deps.products, team),
-      followUps: new FollowUpServices(followUpRepository, labeler, team, timezoneOf),
+      followUps: new FollowUpServices(followUpRepository, labeler, team, timezoneOf, undefined, deps.onFollowUpScheduled),
       imports: new ClientImport(pipelines, new SqlCrmImportCandidates(sql), labeler)
     },
     ownerClaims: new DealOwnerClaims(deals, events, team),

@@ -29,8 +29,9 @@ function setup() {
   const world = crmWorld();
   world.addContact(CONTACT);
   const { repository, rows } = fakeRepository();
-  const services = new FollowUpServices(repository, world.labeler, world.team, async () => "America/Bogota", () => NOW);
-  return { services, repository, rows };
+  const scheduled: Array<{ id: string; dueAt: string; doneAt: string | null }> = [];
+  const services = new FollowUpServices(repository, world.labeler, world.team, async () => "America/Bogota", () => NOW, async (followUp) => void scheduled.push({ id: followUp.id, dueAt: followUp.dueAt, doneAt: followUp.doneAt }));
+  return { services, repository, rows, scheduled };
 }
 
 describe("el día de la empresa", () => {
@@ -57,6 +58,18 @@ describe("FollowUpServices", () => {
     const done = await services.update(OWNER, created.id, { done: true });
     expect(done.doneAt).toBe(NOW.toISOString());
     expect((await services.update(OWNER, created.id, { done: false })).doneAt).toBeNull();
+  });
+
+  it("al crearlo o cambiarlo avisa (el recordatorio al celular a su hora), con lo que quedó guardado", async () => {
+    const { services, scheduled } = setup();
+    const created = await services.create(OWNER, { contactId: CONTACT, title: "Llamar", dueAt: "2026-11-11T14:00:00.000Z" });
+    await services.update(OWNER, created.id, { dueAt: "2026-11-12T15:00:00.000Z" });
+    await services.update(OWNER, created.id, { done: true });
+    expect(scheduled).toEqual([
+      { id: created.id, dueAt: "2026-11-11T14:00:00.000Z", doneAt: null },
+      { id: created.id, dueAt: "2026-11-12T15:00:00.000Z", doneAt: null },
+      { id: created.id, dueAt: "2026-11-12T15:00:00.000Z", doneAt: NOW.toISOString() }
+    ]);
   });
 
   it("valida cliente, texto, fecha y responsable", async () => {

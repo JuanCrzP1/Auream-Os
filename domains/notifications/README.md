@@ -26,6 +26,9 @@ Avisar lo que pide atención en la cuenta y llevar a la pantalla donde se resuel
 - Infraestructura: `infrastructure/persistence/sql/SqlNotificationSignals.ts` (una consulta por aviso, solo los permitidos) y `SqlNotificationReads.ts` (`037_notifications.sql`).
 - API: `GET /notifications` y `POST /notifications/seen` (`apps/api/routes/routeNotificationsRequest.ts`, que decide qué avisos ve cada rol).
 
+## Avisos al celular (Web Push)
+Los avisos que suenan aunque Auream esté cerrado: `domain/PushMessages.ts` (qué dice cada uno), `domain/pushEndpoint.ts` (solo servicios de avisos reales), `application/PushNotifier.ts` (a quién y en qué dispositivos), `application/NotificationSettingsServices.ts` (Configuración › Notificaciones) y `application/pushTopicRules.ts` (quién puede recibir cada uno). Diseño completo: [`docs/architecture/notifications.md`](../../docs/architecture/notifications.md).
+
 ## No le pertenece
 - El bloque de flujo **Notificación**, que avisa por WhatsApp a alguien del equipo (`contracts/NotificationConfig.ts`).
 - Los datos de cada módulo: solo los lee.

@@ -16,6 +16,7 @@ import { createSqlClient } from "../../../infrastructure/persistence/sql/SqlClie
 import { SqlRateLimiter } from "../../../infrastructure/persistence/sql/SqlRateLimiter";
 import { SqlFlowTurnJournal } from "../../../infrastructure/persistence/sql/SqlFlowTurnJournal";
 import { SqlAuditEventStore } from "../../../infrastructure/persistence/sql/SqlAuditEventStore";
+import { composeNotificationPush } from "../composition/composeNotificationPush";
 import { AuditLogger } from "../../../platform/observability/audit/AuditLogger";
 import { composeTurnJournal } from "../composition/composeTurnJournal";
 import { composeWebhookServices } from "../composition/composeWebhookServices";
@@ -91,39 +92,6 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
   const documents = new TesseractDocumentReader();
   // Límite de peticiones compartido por todas las instancias (Neon). Si la base falla, deja pasar y lo avisa.
   const rateLimiter = new SqlRateLimiter(tenancy.sqlClient, undefined, (error) => logger.warn("rate_limit.store_failed", { error: error instanceof Error ? error.message : String(error) }));
-  // El CRM escucha a Contactos (las etapas son etiquetas) y a Ventas (quien compra pasa a «Pagó»).
-  // Se compone después de ellos porque usa sus servicios: sus avisos pasan por este relevo.
-  const crmEvents = new CrmEventsRelay();
-  const crmError = (error: unknown, context: Record<string, unknown> = {}) =>
-    logger.warn("crm.event_failed", { ...context, error: error instanceof Error ? error.message : String(error) });
-  // Ventas y Productos: el bloque Registrar venta guarda en los flujos reales y calcula sin guardar en la simulación.
-  const sales = composeSalesServices(config, tenancy.sqlClient, crmEvents);
-  // El laboratorio usa el tipo real de cada campo (solo lectura; no depende de los flujos).
-  const fieldCatalog = contactFieldCatalog(new SqlContactFieldRepository(tenancy.sqlClient));
-  // Datos del negocio (`{g_…}`): el laboratorio y los mensajes reales leen los mismos valores.
-  const businessValues = composeBusinessValues(tenancy.sqlClient);
-  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview, fieldCatalog, businessValues);
-  const contactsServices = composeContactsServices(tenancy.sqlClient, {
-    // Un cliente está en una sola etapa por embudo, venga la etiqueta de donde venga.
-    groups: new StageLabelRules(new SqlCrmPipelineRepository(tenancy.sqlClient)),
-    events: crmEvents,
-    onError: crmError
-  });
-  const crm = composeCrmServices({
-    config,
-    sql: tenancy.sqlClient,
-    contacts: contactsServices.repository,
-    labels: contactsServices.labelRepository,
-    products: sales.products,
-    onError: crmError
-  });
-  crmEvents.attach(crm.tracker);
-  const connectionsServices = composeConnectionsServices(tenancy.sqlClient, {
-    keyRing: config.credentialsKeyRing,
-    uazapi: config.uazapi,
-    webhookBaseUrl: config.whatsappWebhookBaseUrl,
-    rateLimiter
-  });
   const errorLogger = new ErrorLogger(logger);
   const background = createBackgroundTasks((error) => errorLogger.log(error instanceof Error ? error : new Error(String(error)), {}));
   // Cola de tareas (FASE C6): primero el programador (lo usan los flujos), después el trabajador.
@@ -142,6 +110,49 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     // Un despertador que no se pudo armar: lo cubren el tráfico de la app, la próxima ronda y la revisión cada 15 min.
     (error) => logger.warn("tasks.alarm_failed", { error: error instanceof Error ? error.message : String(error) })
   );
+  // Avisos al celular (Configuración › Notificaciones): cada módulo avisa su evento con un gancho y aquí se vuelve aviso.
+  const push = composeNotificationPush({
+    sql: tenancy.sqlClient,
+    keys: config.push,
+    background,
+    scheduler: scheduling.scheduler,
+    onError: (error, context) => logger.warn("push.failed", { ...context, error: error instanceof Error ? error.message : String(error) })
+  });
+  // El CRM escucha a Contactos (las etapas son etiquetas) y a Ventas (quien compra pasa a «Pagó»).
+  // Se compone después de ellos porque usa sus servicios: sus avisos pasan por este relevo.
+  const crmEvents = new CrmEventsRelay();
+  const crmError = (error: unknown, context: Record<string, unknown> = {}) =>
+    logger.warn("crm.event_failed", { ...context, error: error instanceof Error ? error.message : String(error) });
+  // Ventas y Productos: el bloque Registrar venta guarda en los flujos reales y calcula sin guardar en la simulación.
+  const sales = composeSalesServices(config, tenancy.sqlClient, { saleApproved: (tenantId, sale) => crmEvents.saleApproved(tenantId, sale), saleNeedsReview: push.saleNeedsReview });
+  // El laboratorio usa el tipo real de cada campo (solo lectura; no depende de los flujos).
+  const fieldCatalog = contactFieldCatalog(new SqlContactFieldRepository(tenancy.sqlClient));
+  // Datos del negocio (`{g_…}`): el laboratorio y los mensajes reales leen los mismos valores.
+  const businessValues = composeBusinessValues(tenancy.sqlClient);
+  const services = composeBuilderServices(config, tenancy.sqlClient, integrations.aiGateway, integrations.conversionTracker, documents, rateLimiter, sales.preview, fieldCatalog, businessValues);
+  const contactsServices = composeContactsServices(tenancy.sqlClient, {
+    // Un cliente está en una sola etapa por embudo, venga la etiqueta de donde venga.
+    groups: new StageLabelRules(new SqlCrmPipelineRepository(tenancy.sqlClient)),
+    events: crmEvents,
+    onError: crmError
+  });
+  const crm = composeCrmServices({
+    config,
+    sql: tenancy.sqlClient,
+    contacts: contactsServices.repository,
+    labels: contactsServices.labelRepository,
+    products: sales.products,
+    onError: crmError,
+    onFollowUpScheduled: push.followUpScheduled
+  });
+  crmEvents.attach(crm.tracker);
+  const connectionsServices = composeConnectionsServices(tenancy.sqlClient, {
+    keyRing: config.credentialsKeyRing,
+    uazapi: config.uazapi,
+    webhookBaseUrl: config.whatsappWebhookBaseUrl,
+    rateLimiter,
+    onDropped: push.numberDropped
+  });
   // Difusiones oye los mensajes entrantes («SALIR»), pero se arma después de Mensajería.
   const inboundListeners: { current: InboundListener[] } = { current: [] };
   // Campos del cliente: el catálogo y el paso de los datos de los flujos al cliente.
@@ -193,7 +204,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     connections: connectionsServices,
     onError: (error, context) => logger.warn("broadcasts.failed", { ...context, error: error instanceof Error ? error.message : String(error) })
   });
-  inboundListeners.current.push(broadcasts.optOuts);
+  inboundListeners.current.push(broadcasts.optOuts, push.inbound);
   // Grupos: campañas con enlace único, envíos a grupos y lo que vende cada uno.
   const groups = composeGroupServices({
     config,
@@ -218,7 +229,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     messagingServices.scheduled.handler,
     ...(ads.syncHandler ? [ads.syncHandler] : []),
     ...broadcasts.handlers,
-    ...groups.handlers
+    ...groups.handlers,
+    push.handler
   ]);
   // Medios de los bloques; el mismo almacén guarda las fotos de perfil y los logos (Mi perfil, Empresa).
   const mediaServices = composeMediaServices(config, tenancy.sqlClient, rateLimiter);
@@ -263,6 +275,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     groupServices: groups,
     helpServices: { ...help, docsBase: config.helpDocsBase },
     notificationServices: composeNotificationServices(tenancy.sqlClient, config.defaultTimezone),
+    notificationSettings: push.settings,
     quickReplyServices: quickReplies,
     contactFieldServices: { fields: contactFields.services, values: contactFields.values, tidy: contactFields.tidy, merge: contactFields.merge },
     businessDataServices: businessData,

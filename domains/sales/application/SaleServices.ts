@@ -18,7 +18,7 @@ import type { ChatSaleLink, ChatSaleLinks } from "./ChatSaleLinks";
 import type { ProductCatalog } from "./ProductCatalog";
 import { decodeCursor, encodeCursor, toSummary } from "./saleViews";
 import type { SaleQuery, SaleRepository } from "./SaleRepository";
-import { NO_SALE_EVENTS, approvedEventOf, type SaleEvents } from "./SaleEvents";
+import { NO_SALE_EVENTS, approvedEventOf, reviewEventOf, type SaleEvents } from "./SaleEvents";
 
 // ---------------------------------------------------------------------------
 // Ventas desde la API: la lista con filtros y totales, anotar una venta a mano
@@ -105,6 +105,7 @@ export class SaleServices {
       ...statusOf(initialStatus(draft))
     );
     if (sale.status === "approved") await this.events.saleApproved(actor.tenantId, approvedEventOf(sale));
+    if (sale.status === "review") await this.events.saleNeedsReview?.(actor.tenantId, reviewEventOf(sale));
     return toSummary(sale);
   }
 

@@ -1,5 +1,6 @@
 import { VerifyConnectionsService } from "../../../domains/connections/application/VerifyConnectionsService";
 import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
+import type { WhatsAppConnection } from "../../../domains/connections/domain/WhatsAppConnection";
 import { DisconnectConnectionService, RestartConnectionService } from "../../../domains/connections/application/ConnectionSessionServices";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlConnectionRepository } from "../../../infrastructure/persistence/sql/SqlConnectionRepository";
@@ -73,6 +74,8 @@ export interface ConnectionsOptions {
   readonly fetch?: FetchLike;
   /** Límite de las revisiones de estado (compartido en Neon). Ausente: sin límite. */
   readonly rateLimiter?: RateLimiter;
+  /** Un número conectado se cayó solo (el aviso al celular). Ausente: nada. */
+  readonly onDropped?: (connection: WhatsAppConnection) => Promise<void>;
 }
 
 /** Sin clave maestra no hay sesiones que cifrar: cualquier uso es un error. */
@@ -123,8 +126,8 @@ export function composeConnectionsServicesWith(stores: ConnectionsStores | Conne
     check: new CheckConnectionService(repository, linkers, cipher),
     disconnect: new DisconnectConnectionService({ repository, linkers, cipher }),
     restart: new RestartConnectionService({ repository, linkers, cipher }),
-    verify: new VerifyConnectionsService({ repository, linkers, cipher, ...(options.rateLimiter ? { limiter: options.rateLimiter } : {}) }),
-    providerEvents: new HandleProviderEventService(repository, cipher),
+    verify: new VerifyConnectionsService({ repository, linkers, cipher, ...(options.rateLimiter ? { limiter: options.rateLimiter } : {}), ...(options.onDropped ? { onDropped: options.onDropped } : {}) }),
+    providerEvents: new HandleProviderEventService(repository, cipher, undefined, options.onDropped),
     triggers: new ConnectionTriggerServices(repository, triggers, flows),
     channel: new ConnectionChannelServices(repository, composeMessengers(options), cipher),
     webhooks: new ProviderWebhookKeeper(linkers, cipher),

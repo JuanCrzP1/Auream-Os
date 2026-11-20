@@ -22,7 +22,10 @@ async function setup() {
     kind: "main",
     prices: [{ country: "CO", currency: "COP", amount: 10000 }, { country: "VE", currency: "USD", amount: 12 }]
   });
-  return { store, recorder: new FlowSaleRecorder(new InMemorySaleRepository(store), products), video };
+  const reviews: Array<{ id: string; reviewReason: string | null; recordedBy: string | null }> = [];
+  const approved: string[] = [];
+  const events = { saleApproved: async (_t: string, sale: { id: string }) => void approved.push(sale.id), saleNeedsReview: async (_t: string, sale: { id: string; reviewReason: string | null; recordedBy: string | null }) => void reviews.push({ id: sale.id, reviewReason: sale.reviewReason, recordedBy: sale.recordedBy }) };
+  return { store, recorder: new FlowSaleRecorder(new InMemorySaleRepository(store), products, events), video, reviews, approved };
 }
 
 const input = (over: Partial<FlowSaleInput> = {}): FlowSaleInput => ({
@@ -66,10 +69,14 @@ describe("FlowSaleRecorder", () => {
     expect(sale).toMatchObject({ status: "approved", amount: 12, currency: "USD", country: "VE" });
   });
 
-  it("sin precio en el país del cliente: «Por revisar» con el motivo, sin inventar un monto", async () => {
-    const { recorder, video } = await setup();
+  it("sin precio en el país del cliente: «Por revisar» con el motivo, sin inventar un monto; avisa una sola vez", async () => {
+    const { recorder, video, reviews, approved } = await setup();
     const sale = await recorder.record(TENANT, input({ productId: video.id, amountMode: "product", customerPhone: "5215512345678", reference: "R-MX" }));
     expect(sale).toMatchObject({ status: "review", amount: null, currency: null, reviewReason: "«Video» no tiene precio en México." });
+    // Quien revisa ventas se entera (aviso al celular); el mismo comprobante otra vez no vuelve a avisar.
+    await recorder.record(TENANT, input({ productId: video.id, amountMode: "product", customerPhone: "5215512345678", reference: "R-MX" }));
+    expect(reviews).toEqual([{ id: sale.id, reviewReason: "«Video» no tiene precio en México.", recordedBy: null }]);
+    expect(approved).toEqual([]);
   });
 
   it("monto ilegible, moneda desconocida o producto archivado: «Por revisar»", async () => {

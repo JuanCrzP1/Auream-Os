@@ -45,6 +45,7 @@ function fakeLinker(start: StartOutcome, checks: SessionState[] = []) {
 }
 
 function setup(qr: WhatsAppLinker = new UnconfiguredWhatsAppLinker()) {
+  const dropped: string[] = [];
   const repository = new InMemoryConnectionRepository();
   const cipher = new AesGcmSecretCipher({ current: "v1", keys: { v1: randomBytes(32) } });
   const linkers = new LinkersByMethod({ qr, cloud_api: new UnconfiguredWhatsAppLinker() });
@@ -56,7 +57,8 @@ function setup(qr: WhatsAppLinker = new UnconfiguredWhatsAppLinker()) {
     remove: new DeleteConnectionService(repository, linkers, cipher),
     link: new LinkConnectionService(repository, linkers, cipher),
     check: new CheckConnectionService(repository, linkers, cipher),
-    events: new HandleProviderEventService(repository, cipher)
+    events: new HandleProviderEventService(repository, cipher, undefined, async (connection) => void dropped.push(connection.id)),
+    dropped
   };
 }
 
@@ -211,10 +213,14 @@ describe("avisos del proveedor", () => {
     return { s, id: created.id };
   }
 
-  it("con el token correcto, «desconectada» se aplica", async () => {
+  it("con el token correcto, «desconectada» se aplica y avisa (una vez) que el número se cayó", async () => {
     const { s, id } = await linked();
     expect(await s.events.execute({ connectionId: id, secret: TOKEN, status: "disconnected" })).toBe(true);
     expect((await s.list.execute(T))[0]!.status).toBe("disconnected");
+    expect(s.dropped).toEqual([id]);
+    // Ya estaba desconectado: no vuelve a avisar.
+    await s.events.execute({ connectionId: id, secret: TOKEN, status: "disconnected" });
+    expect(s.dropped).toEqual([id]);
   });
 
   it("con otro token, o para una conexión que no existe, se ignora", async () => {
@@ -222,6 +228,7 @@ describe("avisos del proveedor", () => {
     expect(await s.events.execute({ connectionId: id, secret: "falso", status: "disconnected" })).toBe(false);
     expect(await s.events.execute({ connectionId: "33333333-3333-4333-8333-333333333333", secret: TOKEN, status: "disconnected" })).toBe(false);
     expect((await s.list.execute(T))[0]!.status).toBe("connected");
+    expect(s.dropped).toEqual([]);
   });
 });
 

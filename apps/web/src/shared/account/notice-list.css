@@ -102,3 +102,38 @@
   font-size: 0.8rem;
   line-height: 1.5;
 }
+
+/* Al pie de la campana: «Configurar avisos» (Configuración › Notificaciones). */
+.notice-list__settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line);
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.notice-list__settings span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.notice-list__settings svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.notice-list__settings:hover,
+.notice-list__settings:focus-visible {
+  background: var(--chip-bg-hover, var(--chip-bg));
+  outline: none;
+}

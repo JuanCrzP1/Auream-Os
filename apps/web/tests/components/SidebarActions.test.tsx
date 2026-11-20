@@ -50,6 +50,8 @@ describe("Campana y soporte junto a la cuenta", () => {
     expect(within(panel).getAllByText("Nuevo")).toHaveLength(1);
     await waitFor(() => expect(calls).toContain("POST /notifications/seen"));
     expect(screen.getByRole("button", { name: "Notificaciones" })).not.toHaveTextContent("1");
+    // Al pie: los avisos al celular se configuran en tu cuenta.
+    expect(within(panel).getByRole("link", { name: /Configurar avisos/ })).toHaveAttribute("href", "/settings/notifications");
   });
 
   it("soporte: WhatsApp y correo cuando el equipo los configuró", async () => {

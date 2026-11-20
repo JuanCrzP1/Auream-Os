@@ -1,0 +1,68 @@
+/* «En este dispositivo»: las indicaciones (iPhone, bloqueado) y la lista de dispositivos. */
+
+.notif-tip {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--primary) 7%, transparent);
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.notif-tip svg {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--primary);
+}
+
+.notif-tip--warn {
+  background: color-mix(in oklab, var(--amber, #d97706) 12%, transparent);
+}
+
+.notif-tip--warn svg {
+  color: var(--amber, #d97706);
+}
+
+.notif-devices {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  list-style: none;
+}
+
+.notif-devices li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.notif-devices li:first-child {
+  border-top: 0;
+}
+
+.notif-devices__icon {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.notif-devices__icon svg {
+  width: 18px;
+  height: 18px;
+}

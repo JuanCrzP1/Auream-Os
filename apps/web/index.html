@@ -7,6 +7,14 @@
     <!-- Isotipo oficial. Fuente única: src/shared/brand/. Vite lo procesa y le
          pone hash en el build; no hay copia en ninguna otra carpeta. -->
     <link rel="icon" type="image/png" href="./src/shared/brand/auream-mark-web.png" />
+    <!-- Auream instalable (necesario para los avisos en iPhone): manifiesto,
+         ícono de la pantalla de inicio y color de la barra. Archivos en public/. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="theme-color" content="#12101d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Auream" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <!-- Copia obligada de BRAND_NAME (src/shared/brand/brand.ts): este
          documento se sirve antes de que arranque React y no puede importarlo.
          Si cambia la marca, actualizar ambos. -->

@@ -1,6 +1,7 @@
 import type { SecretCipher } from "../../../platform/security/secrets/SecretCipher";
 import type { RateLimiter } from "../../../platform/security/rate-limiting/application/RateLimiter";
 import type { ConnectionRepository } from "./ConnectionRepository";
+import type { WhatsAppConnection } from "../domain/WhatsAppConnection";
 import { applyState, sessionOf } from "./connectionSession";
 import type { WhatsAppLinkers } from "./ports/WhatsAppLinker";
 
@@ -25,6 +26,8 @@ export interface VerifyConnectionsDependencies {
   /** Límite de revisiones por cuenta. Ausente: sin límite (pruebas). */
   readonly limiter?: RateLimiter;
   readonly now?: () => Date;
+  /** Un número «conectado» resultó caído. No debe lanzar. */
+  readonly onDropped?: (connection: WhatsAppConnection) => Promise<void>;
 }
 
 export interface VerifyConnectionsResult {
@@ -50,6 +53,7 @@ export class VerifyConnectionsService {
         const updated = applyState(connection, state, at);
         const changed = updated.status !== connection.status || updated.profileName !== connection.profileName || updated.profilePictureUrl !== connection.profilePictureUrl;
         if (changed) await this.deps.repository.save(updated);
+        if (updated.status === "disconnected") await this.deps.onDropped?.(connection);
         return changed;
       })
     );

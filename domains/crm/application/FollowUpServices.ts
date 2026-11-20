@@ -10,6 +10,8 @@ import { UUID, toFollowUpSummary, type CrmActor } from "./crmViews";
 // Seguimientos: «llamar mañana a las 3 p. m.», con su responsable. Se ven en
 // Vencidos · Hoy · Próximos (el día de la empresa) y en la ficha del cliente.
 // Crear, marcar como hecho y cambiar uno es de quien atiende (`crm.write`).
+// Al crearlo o cambiarlo avisa (`onScheduled`): el aviso al celular de su
+// responsable a la hora (la composición lo pone en la cola).
 // ---------------------------------------------------------------------------
 
 const PAGE = 100;
@@ -26,7 +28,9 @@ export class FollowUpServices {
     private readonly labeler: ContactLabeler,
     private readonly team: CrmTeamDirectory,
     private readonly timezoneOf: (tenantId: string) => Promise<string>,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    /** Se creó o cambió un seguimiento. No debe lanzar. */
+    private readonly onScheduled: (followUp: FollowUp) => Promise<void> = async () => {}
   ) {}
 
   public async list(actor: CrmActor, filters: FollowUpFilters): Promise<FollowUpListResponse> {
@@ -56,6 +60,7 @@ export class FollowUpServices {
       doneBy: null
     };
     await this.followUps.insert(followUp);
+    await this.onScheduled(followUp);
     return this.summary(actor.tenantId, followUp.id);
   }
 
@@ -63,14 +68,16 @@ export class FollowUpServices {
     const current = UUID.test(id) ? await this.followUps.find(actor.tenantId, id) : null;
     if (!current) throw new NotFoundError("Ese seguimiento no existe.");
     const done = input.done === undefined ? current.doneAt !== null : input.done === true;
-    await this.followUps.update({
+    const updated: FollowUp = {
       ...current,
       title: input.title === undefined ? current.title : requireFollowUpTitle(input.title),
       dueAt: input.dueAt === undefined ? current.dueAt : requireDueAt(input.dueAt, this.now()).toISOString(),
       assigneeId: input.assigneeId === undefined ? current.assigneeId : await this.requireAssignee(actor.tenantId, input.assigneeId),
       doneAt: done ? (current.doneAt ?? this.now().toISOString()) : null,
       doneBy: done ? (current.doneBy ?? actor.userId) : null
-    });
+    };
+    await this.followUps.update(updated);
+    await this.onScheduled(updated);
     return this.summary(actor.tenantId, id);
   }
 

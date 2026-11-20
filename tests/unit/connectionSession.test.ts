@@ -35,6 +35,7 @@ function setup() {
   const cipher = new AesGcmSecretCipher({ current: "v1", keys: { v1: randomBytes(32) } });
   const linkers = new LinkersByMethod({ qr: linker, cloud_api: new UnconfiguredWhatsAppLinker() });
   const deps = { repository, linkers, cipher };
+  const dropped: string[] = [];
   return {
     linker,
     repository,
@@ -43,7 +44,8 @@ function setup() {
     check: new CheckConnectionService(repository, linkers, cipher),
     disconnect: new DisconnectConnectionService(deps),
     restart: new RestartConnectionService(deps),
-    verify: new VerifyConnectionsService({ ...deps, limiter: new InMemoryRateLimiter() })
+    verify: new VerifyConnectionsService({ ...deps, limiter: new InMemoryRateLimiter(), onDropped: async (connection) => void dropped.push(connection.id) }),
+    dropped
   };
 }
 
@@ -126,6 +128,7 @@ describe("un número que el proveedor desconectó sin avisar (p. ej. el servidor
     expect(await s.verify.execute(T)).toEqual({ verified: true, changed: 1 });
     expect((await s.repository.findById(T, id))?.status).toBe("disconnected");
     expect(await s.verify.execute(T)).toEqual({ verified: false, changed: 0 });
+    expect(s.dropped).toEqual([id]);
   });
 
   it("si el proveedor falla con un número, ese se deja como está", async () => {

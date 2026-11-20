@@ -67,9 +67,9 @@ export interface MessagingServices {
   readonly scheduled: ScheduledMessages;
 }
 
-/** Oye cada mensaje entrante ya guardado (p. ej. Difusiones: «SALIR»). Nunca debe lanzar. */
+/** Oye cada mensaje entrante ya guardado (Difusiones: «SALIR»; Notificaciones: avisar a quien atiende el chat). Nunca debe lanzar. */
 export interface InboundListener {
-  heard(tenantId: string, message: { readonly phone: string; readonly text: string | null }): Promise<void>;
+  heard(tenantId: string, message: { readonly phone: string; readonly text: string | null; readonly connectionId: string; readonly kind: string }): Promise<void>;
 }
 
 export interface MessagingDependencies {
@@ -149,7 +149,7 @@ export function composeMessagingServices(deps: MessagingDependencies): Messaging
       execute: async (tenantId, message) => {
         const result = await inbound.execute(tenantId, message);
         if (result.outcome !== "duplicate") {
-          for (const listener of deps.inboundListeners?.current ?? []) await listener.heard(tenantId, { phone: message.phone, text: message.text }).catch(() => undefined);
+          for (const listener of deps.inboundListeners?.current ?? []) await listener.heard(tenantId, { phone: message.phone, text: message.text, connectionId: message.connectionId, kind: message.kind }).catch(() => undefined);
         }
         await deps.scheduler.nudgeIfDue();
         return result;

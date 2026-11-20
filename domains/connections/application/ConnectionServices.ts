@@ -166,7 +166,9 @@ export class HandleProviderEventService {
   public constructor(
     private readonly repository: ConnectionRepository,
     private readonly cipher: SecretCipher,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    /** Un número que estaba conectado se cayó solo (no lo desconectó una persona). No debe lanzar. */
+    private readonly onDropped: (connection: WhatsAppConnection) => Promise<void> = async () => {}
   ) {}
 
   public async execute(event: ProviderConnectionEvent): Promise<boolean> {
@@ -189,6 +191,7 @@ export class HandleProviderEventService {
           : { kind: "disconnected" };
     if (state.kind === "connected" && connection.status === "connected") return true;
     await this.repository.save(applyState(connection, state, this.now().toISOString()));
+    if (connection.status === "connected" && state.kind === "disconnected") await this.onDropped(connection);
     return true;
   }
 }

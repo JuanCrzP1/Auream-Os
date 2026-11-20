@@ -45,6 +45,8 @@ describe("Configuración", () => {
     expect(within(nav).getByText("Empresa")).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: /Equipo/ })).toHaveAttribute("aria-current", "page");
     expect(within(nav).getByRole("link", { name: /Plan y pagos/ })).toHaveTextContent("Pronto");
+    // Notificaciones es tuya (en todas tus empresas), junto a Mi perfil y Apariencia.
+    expect(within(nav).getAllByRole("link").map((link) => link.textContent?.replace("Pronto", ""))).toEqual(expect.arrayContaining(["Mi perfil", "Apariencia", "Notificaciones", "General", "Equipo", "Plan y pagos", "Seguridad"]));
     expect(screen.getByRole("heading", { level: 1, name: "Equipo" })).toBeInTheDocument();
     expect(screen.getByText("contenido de Equipo")).toBeInTheDocument();
   });

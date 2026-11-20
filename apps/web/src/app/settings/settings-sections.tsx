@@ -11,6 +11,7 @@ import { SidebarIcons } from "../navigation/sidebar/sidebar-icons";
 export const SETTINGS_ROUTES = {
   profile: "/settings/profile",
   appearance: "/settings/appearance",
+  notifications: "/settings/notifications",
   general: "/settings/general",
   team: "/settings/team",
   billing: "/settings/billing",
@@ -63,6 +64,12 @@ const Icons = {
     </>
   ),
   quickReplies: icon(<path d="M13 3 5 13.5h6L10 21l8-10.5h-6L13 3Z" />),
+  notifications: icon(
+    <>
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </>
+  ),
   security: icon(<path d="M12 3 4.5 6v5.5c0 4.6 3.1 8 7.5 9.5 4.4-1.5 7.5-4.9 7.5-9.5V6L12 3zM9.5 12l2 2 3.5-4" />)
 };
 
@@ -71,7 +78,8 @@ export const SETTINGS_GROUPS: ReadonlyArray<SettingsNavGroup> = [
     title: "Tu cuenta",
     items: [
       { id: "profile", label: "Mi perfil", path: SETTINGS_ROUTES.profile, icon: SidebarIcons.profile, description: "Tu foto, tus datos y tu contraseña. Son tuyos en todas las empresas a las que perteneces." },
-      { id: "appearance", label: "Apariencia", path: SETTINGS_ROUTES.appearance, icon: Icons.appearance, description: "Cómo se ve Auream en este equipo: claro, oscuro o como tu sistema." }
+      { id: "appearance", label: "Apariencia", path: SETTINGS_ROUTES.appearance, icon: Icons.appearance, description: "Cómo se ve Auream en este equipo: claro, oscuro o como tu sistema." },
+      { id: "notifications", label: "Notificaciones", path: SETTINGS_ROUTES.notifications, icon: Icons.notifications, description: "Para enterarte al instante de lo importante, aunque no tengas Auream abierto." }
     ]
   },
   {

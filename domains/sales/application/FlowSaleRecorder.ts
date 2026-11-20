@@ -2,7 +2,7 @@ import { countryOfPhone, findCountry } from "../../../contracts/Countries";
 import { parseCurrency, parseMoney } from "../domain/Money";
 import { cleanText, initialStatus, type NewSale } from "../domain/Sale";
 import type { ProductCatalog } from "./ProductCatalog";
-import { NO_SALE_EVENTS, approvedEventOf, type SaleEvents } from "./SaleEvents";
+import { NO_SALE_EVENTS, approvedEventOf, reviewEventOf, type SaleEvents } from "./SaleEvents";
 import type { SaleRepository } from "./SaleRepository";
 
 // ---------------------------------------------------------------------------
@@ -58,6 +58,7 @@ export class FlowSaleRecorder {
     const saved = await this.sales.insert(tenantId, sale, status, reviewReason);
     // Un comprobante repetido no vuelve a avisar.
     if (saved.created && saved.sale.status === "approved") await this.events.saleApproved(tenantId, approvedEventOf(saved.sale));
+    if (saved.created && saved.sale.status === "review") await this.events.saleNeedsReview?.(tenantId, reviewEventOf(saved.sale));
     return {
       id: saved.sale.id,
       status: saved.sale.status === "approved" ? "approved" : "review",

@@ -1,0 +1,93 @@
+/* Configuración › Notificaciones: dos tarjetas (este dispositivo y qué te
+   avisamos) con la misma piel que las demás secciones de la cuenta. Tokens del
+   tema: sirve en claro y en oscuro. */
+
+.notif-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notif-loading {
+  min-height: 220px;
+  border-radius: 20px;
+  background: var(--chip-bg);
+}
+
+.notif-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface, var(--bg-elevated));
+  box-shadow: var(--elevation-inset);
+}
+
+.notif-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notif-section__head h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.notif-section__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.notif-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.notif-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--status-active-text) 16%, transparent);
+  color: var(--status-active-text);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.notif-ok {
+  margin: 0;
+  color: var(--status-active-text);
+  font-size: 0.84rem;
+}
+
+/* El texto de cada fila (dispositivo o aviso): título y detalle. */
+.notif-devices__text,
+.notif-topics__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.notif-devices__text strong,
+.notif-topics__text strong {
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.notif-devices__text span,
+.notif-topics__text span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
