@@ -10,6 +10,8 @@ export interface McpToolContext {
   readonly tenantId: string;
   readonly credentialId: string;
   readonly credentialName: string;
+  /** Los permisos de la credencial (para mostrar solo lo que puede ver, p. ej. la plata). */
+  readonly scopes?: ReadonlySet<string>;
 }
 
 /** Esquema JSON de la entrada (subconjunto: objeto con propiedades simples). */
@@ -25,10 +27,17 @@ export interface McpTool {
   readonly description: string;
   /** `null`: no toca datos de la cuenta (p. ej. la documentación) y la ve cualquier credencial. */
   readonly scope: Scope | null;
+  /** Otros permisos que también exige (p. ej. ver los miembros de un grupo pide además contactos y ventas). */
+  readonly alsoRequires?: ReadonlyArray<Scope>;
   readonly inputSchema: McpInputSchema;
   /** Solo lee (el agente puede usarla sin pedir confirmación). */
   readonly readOnly: boolean;
   run(args: Readonly<Record<string, unknown>>, context: McpToolContext): Promise<unknown>;
+}
+
+/** La credencial tiene todos los permisos que la herramienta exige. */
+export function canUse(tool: Pick<McpTool, "scope" | "alsoRequires">, scopes: ReadonlySet<string>): boolean {
+  return [...(tool.scope === null ? [] : [tool.scope]), ...(tool.alsoRequires ?? [])].every((scope) => scopes.has(scope));
 }
 
 /** `null` si los argumentos cumplen el esquema; si no, por qué. */

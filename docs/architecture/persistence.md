@@ -34,7 +34,7 @@ Es la persistencia de **desarrollo local únicamente**. El aislamiento por tenan
 
 ### `persistence/memory` · `IMPLEMENTADO`
 
-Registries y repositorios en memoria: sesiones, registro de flows, credenciales de API, eventos de auditoría y suscripciones.
+Registries y repositorios en memoria: sesiones, registro de flows, credenciales de API, eventos de auditoría (para pruebas; en producción, `SqlAuditEventStore` sobre `audit_events`, `056`) y suscripciones.
 
 Se usa en pruebas y en el runtime de simulación del builder, donde cada simulación necesita un stack aislado y efímero. No sobrevive al reinicio, y no pretende hacerlo.
 

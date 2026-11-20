@@ -33,7 +33,7 @@ FunnelChat es la referencia del sector: un enlace que crea el grupo siguiente cu
   - **Copiar el enlace de este grupo:** el `inviteLink` guardado; la API solo lo entrega si el número conectado administra el grupo.
   - **Enviar solo a este grupo:** abre «Enviar a grupos» con ese grupo elegido (`?view=send&to=<campaña>&group=<grupo>` → `groupIds`).
   - **Sacar de la campaña** (con confirmación): `PATCH /groups/list/:id` con `campaignId: null`. El grupo sigue en WhatsApp; se puede volver a sumar desde «Mis grupos».
-  - Pendiente: ver los miembros de un grupo (necesita un endpoint nuevo).
+  - **Ver miembros:** el panel de miembros (también desde «N miembros ›» de la tarjeta, para todo el equipo, y desde «Mis grupos»).
 - **El cupo** se escribe libre y se ajusta a 20–1.024 al salir del campo, no mientras se escribe.
 
 ## Mis grupos
@@ -45,6 +45,21 @@ FunnelChat es la referencia del sector: un enlace que crea el grupo siguiente cu
 - Los que ya no aparecen quedan marcados, no se borran.
 - Las comunidades no se manejan todavía.
 - Un grupo que ya existía y que administras se puede sumar a una campaña (al final de la fila).
+
+## Miembros de un grupo
+
+Para qué sirve: saber **quién no ha comprado** y actuar, no solo mirar la lista. Las herramientas del sector listan y exportan participantes; ninguna dice quién compró.
+
+- **El panel** (`apps/web/src/features/groups/members`):
+  - arriba, «En el grupo» (lo que dice WhatsApp, igual que la tarjeta), «Compraron» con la plata y «Salieron»;
+  - los ocultos explicados: «Se listan los 789 con número visible. WhatsApp oculta el número de 23: no se pueden cruzar con ventas». Nunca un número engañoso;
+  - filtros con su conteo: Todos · Compraron · No compraron · Salieron · Administradores; buscador por nombre o número (al menos 3 dígitos);
+  - cada persona: nombre (si es contacto), número con bandera, «Entró hace…» o «Ya estaba» (llegó con la primera sincronización: su fecha de entrada no se sabe), «Salió hace…», «Compró $…» o «Abrir chat →». Tu número sale marcado y sin chat.
+- **«Compró»** es `SALES_OF_MEMBERS` (`infrastructure/persistence/sql/sqlGroupSales.ts`): la misma regla para la tarjeta del grupo, la campaña y la lista. Una prueba con la base real vigila que el conteo y la plata coincidan.
+- **Tu número** (el de cualquier conexión de la cuenta) nunca cuenta como «no compró» ni se etiqueta.
+- **Ponerles una etiqueta** (`groups.manage` + `contacts.write`): se propone «<grupo> – no compró» (hasta 40 caracteres). Va por tandas de `GROUP_LABEL_BATCH`, la web sigue sola hasta terminar y se puede detener. Nunca repite: solo a quien aún no la tiene, sin importar mayúsculas. Usa el mismo `GroupLabeler` que la etiqueta al entrar (crea el contacto si falta). **A propósito no hay «escribirles a todos» aquí:** mandar privados en cantidad a gente de un grupo es lo que más bloquea números; con la etiqueta, el envío sale por Difusiones, con ritmo seguro.
+- **Descargar** (`groups.manage` + `contacts.read`): CSV del filtro (hasta `GROUP_MEMBERS_EXPORT_MAX`), en la hora de la empresa, número como texto (`phoneText`) y una columna de monto por moneda (sin `sales.read`, sin plata). **Queda registrado** en la auditoría (`audit_events`, tipo `data.exported`: quién, qué grupo, filtro y filas). Sin registro no sale el archivo: si el registro falla, la descarga falla. La descarga de Ventas del Dashboard sigue la misma regla.
+- **Permisos:** verlos pide `groups.read` + `contacts.read`; la plata, además `sales.read`.
 
 ## Lo automático (avisos `groups` de uazapi)
 
@@ -86,6 +101,9 @@ Se leen de donde viven (`SqlGroupResults`):
 | `GET /groups` · `GET /groups/list` · `GET /groups/campaigns/:id` | `groups.read` |
 | `POST /groups/campaigns` · `PUT /groups/campaigns/:id` · `POST /groups/campaigns/:id/open\|close` | `groups.manage` |
 | `POST /groups/sync` · `PATCH /groups/list/:id` · `POST /groups/posts` · `POST /groups/posts/:id/cancel` | `groups.manage` |
+| `GET /groups/list/:id/members?filter&search&offset` | `groups.read` + `contacts.read` (la plata, con `sales.read`) |
+| `POST /groups/list/:id/members/label` | `groups.manage` + `contacts.write` |
+| `GET /groups/list/:id/members/export?filter` | `groups.manage` + `contacts.read` · queda registrado |
 | `GET /g/:slug` | público (límite por IP) |
 
 En Vercel, `/g/(.*)` se reescribe a la función de la API (`vercel.json`).
@@ -100,16 +118,23 @@ En Vercel, `/g/(.*)` se reescribe a la función de la API (`vercel.json`).
 - `group_posts`
 - `group_post_deliveries`
 
+La lista de miembros no agrega tablas: lee `wa_group_members` con `contacts`, `sales` y `whatsapp_connections`. Las descargas quedan en `audit_events` (`056_audit_events.sql`, de toda la plataforma).
+
 ## Pruebas
 
 **Backend:**
 - `tests/unit/groupRules.test.ts`
 - `tests/unit/groupEngine.test.ts`
+- `tests/unit/groupMembers.test.ts`
 - `tests/security/routeGroups.test.ts`
+- `tests/security/routeGroupMembers.test.ts`
 - `tests/integration/groupsPersistence.test.ts` (PostgreSQL real)
+- `tests/integration/groupMembersPersistence.test.ts` (PostgreSQL real: los filtros, «compró» igual que la tarjeta, la etiqueta sin repetir y la auditoría)
 
 **Web:**
 - `apps/web/tests/components/GroupsPage.test.tsx`
+- `apps/web/tests/components/GroupCardActions.test.tsx`
+- `apps/web/tests/components/GroupMembersPanel.test.tsx`
 
 ## Segunda etapa
 

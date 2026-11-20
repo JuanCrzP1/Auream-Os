@@ -2,11 +2,12 @@ import "./group-actions-menu.css";
 import { useEffect, useRef, useState } from "react";
 import type { GroupSummary } from "@contracts/GroupContracts";
 
-export type GroupAction = "copy" | "send" | "detach";
+export type GroupAction = "members" | "copy" | "send" | "detach";
 
 /** Las acciones de un grupo, según lo que se puede hacer con él. */
 export function groupActions(group: GroupSummary): ReadonlyArray<{ readonly action: GroupAction; readonly label: string; readonly danger?: true }> {
   return [
+    { action: "members" as const, label: "Ver miembros" },
     ...(group.inviteLink ? [{ action: "copy" as const, label: "Copiar el enlace de este grupo" }] : []),
     ...(group.isAdmin ? [{ action: "send" as const, label: "Enviar solo a este grupo" }] : []),
     { action: "detach" as const, label: "Sacar de la campaña", danger: true as const }

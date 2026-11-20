@@ -4,6 +4,7 @@ import { CampaignServices } from "../../../domains/groups/application/CampaignSe
 import { GroupActivity } from "../../../domains/groups/application/GroupActivity";
 import type { GroupEngine } from "../../../domains/groups/application/GroupEngine";
 import { GroupMaker } from "../../../domains/groups/application/GroupMaker";
+import { GroupMemberServices } from "../../../domains/groups/application/GroupMemberServices";
 import { GroupServices } from "../../../domains/groups/application/GroupServices";
 import { GroupSync } from "../../../domains/groups/application/GroupSync";
 import { LinkService } from "../../../domains/groups/application/LinkService";
@@ -16,6 +17,7 @@ import type { TaskScheduler } from "../../../domains/scheduling/application/Task
 import type { ContactDirectory } from "../../../flow-engine/ports/ContactDirectory";
 import type { SqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlGroupCampaigns } from "../../../infrastructure/persistence/sql/SqlGroupCampaigns";
+import { SqlGroupMembers } from "../../../infrastructure/persistence/sql/SqlGroupMembers";
 import { SqlGroupPosts } from "../../../infrastructure/persistence/sql/SqlGroupPosts";
 import { SqlGroupResults } from "../../../infrastructure/persistence/sql/SqlGroupResults";
 import { SqlTenantResolver } from "../../../infrastructure/persistence/sql/SqlTenantResolver";
@@ -40,6 +42,8 @@ export interface GroupDependencies {
 export interface GroupModule {
   readonly campaigns: CampaignServices;
   readonly groups: GroupServices;
+  /** Los miembros de cada grupo: verlos, etiquetarlos y descargarlos. */
+  readonly members: GroupMemberServices;
   readonly posts: PostServices;
   readonly link: LinkService;
   /** Entradas y salidas que avisa el proveedor. */
@@ -74,6 +78,7 @@ export function composeGroupServices(deps: GroupDependencies): GroupModule {
   return {
     campaigns,
     groups: new GroupServices(engine, sync),
+    members: new GroupMemberServices(engine, new SqlGroupMembers(sql)),
     posts,
     link: new LinkService(engine, maker),
     activity,

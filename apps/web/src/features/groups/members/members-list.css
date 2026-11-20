@@ -1,0 +1,103 @@
+/* Cada miembro del grupo: quién es, cuándo entró o salió y qué compró. En el
+ * celular, el resultado baja a su propia línea. */
+
+.gr-members__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-members__item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-areas: "avatar who result" "avatar when result";
+  align-items: center;
+  gap: 2px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.gr-members__avatar {
+  display: grid;
+  grid-area: avatar;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.gr-members__who {
+  display: flex;
+  grid-area: who;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+  font-size: 0.88rem;
+}
+
+.gr-members__who strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-members__tags {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.gr-members__tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.gr-members__tag--own {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.gr-members__when {
+  grid-area: when;
+  font-size: 0.78rem;
+}
+
+.gr-members__result {
+  grid-area: result;
+  font-size: 0.84rem;
+  text-align: right;
+}
+
+.gr-members__bought {
+  color: var(--status-active-text);
+}
+
+.gr-members__empty {
+  margin: 12px 0;
+  text-align: center;
+}
+
+.gr-members__more {
+  align-self: center;
+}
+
+@media (max-width: 520px) {
+  .gr-members__item {
+    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-areas: "avatar who" "avatar when" ". result";
+  }
+
+  .gr-members__result {
+    text-align: left;
+  }
+}

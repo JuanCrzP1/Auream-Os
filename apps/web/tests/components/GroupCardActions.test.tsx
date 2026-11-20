@@ -40,6 +40,9 @@ function stub() {
     if (url.pathname === "/groups/list") return reply(200, { groups: [GROUP], syncedAt: null, canManage: true });
     if (url.pathname === "/groups/list/g1" && method === "PATCH") return reply(200, { groups: [{ ...GROUP, campaignId: null }], syncedAt: null, canManage: true });
     if (url.pathname === `/groups/campaigns/${ID}`) return reply(200, DETAIL);
+    if (url.pathname === "/groups/list/g1/members") {
+      return reply(200, { group: { id: "g1", name: "VIP #1", position: 1, connectionName: "flujo 1", members: 2, syncedAt: null }, counts: { all: 2, buyers: 0, nonBuyers: 1, left: 0, admins: 1 }, hidden: 0, revenue: [], members: [], nextOffset: null, canLabel: true, canExport: true });
+    }
     if (url.pathname === "/groups/posts") return reply(201, {});
     if (url.pathname === "/connections") return reply(200, { connections: [{ id: "c1", name: "flujo 1", method: "qr", status: "connected" }] });
     return reply(404, {});
@@ -51,6 +54,19 @@ const openMenu = async () => userEvent.click(await screen.findByRole("button", {
 beforeEach(() => vi.restoreAllMocks());
 
 describe("Acciones de cada grupo", () => {
+  it("ver los miembros: desde «N miembros ›» de la tarjeta o desde el menú; se cierra con Escape", async () => {
+    stub();
+    page(`/groups?campaign=${ID}`);
+    await userEvent.click(await screen.findByRole("button", { name: "Ver los 2 miembros de VIP #1" }));
+    expect(await screen.findByRole("dialog", { name: "VIP #1" })).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "VIP #1" })).not.toBeInTheDocument();
+    await openMenu();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Ver miembros" }));
+    expect(await screen.findByRole("dialog", { name: "VIP #1" })).toBeInTheDocument();
+    expect(calls.filter((call) => call.path === "/groups/list/g1/members")).toHaveLength(2);
+  });
+
   it("copia el enlace de ese grupo", async () => {
     stub();
     const writeText = vi.fn(async () => undefined);

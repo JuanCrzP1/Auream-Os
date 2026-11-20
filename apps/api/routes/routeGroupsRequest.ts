@@ -3,6 +3,7 @@ import type { RequestContext } from "../../../platform/identity/contracts/Reques
 import { requireScope } from "../../../platform/authorization/guards/requireScope";
 import { GroupPermissions } from "../../../platform/authorization/permissions/GroupPermissions";
 import type { CampaignServices, GroupActor } from "../../../domains/groups/application/CampaignServices";
+import type { GroupMemberServices } from "../../../domains/groups/application/GroupMemberServices";
 import type { GroupServices } from "../../../domains/groups/application/GroupServices";
 import type { PostServices } from "../../../domains/groups/application/PostServices";
 import { parseJsonBody } from "../http/parseJsonBody";
@@ -21,12 +22,16 @@ import { sendJson } from "../http/sendJson";
 //   PATCH  /groups/list/:id                 sumar a una campaña o sacarlo    (groups.manage)
 //   POST   /groups/posts                    enviar o programar a grupos      (groups.manage)
 //   POST   /groups/posts/:id/cancel         cancelar un envío                (groups.manage)
+//
+// Los miembros de un grupo (`/groups/list/:id/members…`): `routeGroupMembersRequest`.
 // ---------------------------------------------------------------------------
 
 export interface GroupRoutes {
   readonly campaigns: CampaignServices;
   readonly groups: GroupServices;
   readonly posts: PostServices;
+  /** Los miembros de cada grupo. Ausente: esas rutas responden 503. */
+  readonly members?: GroupMemberServices;
 }
 
 const ID = "([0-9a-f-]{36})";

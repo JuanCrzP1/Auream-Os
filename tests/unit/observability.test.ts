@@ -81,12 +81,12 @@ describe("DomainError hierarchy", () => {
 });
 
 describe("AuditLogger + InMemoryAuditEventStore", () => {
-  it("registra eventos con type, tenantId, actorId", () => {
+  it("registra eventos con type, tenantId, actorId", async () => {
     const store = new InMemoryAuditEventStore();
     const auditLogger = new AuditLogger(store);
 
-    auditLogger.recordPublish("tenant-a", "actor-1", "req-1", "flow-x");
-    const events = store.findByTenant("tenant-a");
+    await auditLogger.recordPublish("tenant-a", "actor-1", "req-1", "flow-x");
+    const events = await store.findByTenant("tenant-a");
 
     expect(events).toHaveLength(1);
     expect(events[0]!.type).toBe("flow.published");
@@ -96,40 +96,52 @@ describe("AuditLogger + InMemoryAuditEventStore", () => {
     expect(events[0]!.timestamp).toBeDefined();
   });
 
-  it("aísla eventos entre tenants", () => {
+  it("aísla eventos entre tenants", async () => {
     const store = new InMemoryAuditEventStore();
     const auditLogger = new AuditLogger(store);
 
-    auditLogger.recordPublish("tenant-a", "actor-1", "req-1", "flow-x");
-    auditLogger.recordPublish("tenant-b", "actor-2", "req-2", "flow-y");
+    await auditLogger.recordPublish("tenant-a", "actor-1", "req-1", "flow-x");
+    await auditLogger.recordPublish("tenant-b", "actor-2", "req-2", "flow-y");
 
-    expect(store.findByTenant("tenant-a")).toHaveLength(1);
-    expect(store.findByTenant("tenant-b")).toHaveLength(1);
-    expect(store.findByTenant("tenant-a")[0]!.tenantId).toBe("tenant-a");
+    expect(await store.findByTenant("tenant-a")).toHaveLength(1);
+    expect(await store.findByTenant("tenant-b")).toHaveLength(1);
+    expect((await store.findByTenant("tenant-a"))[0]!.tenantId).toBe("tenant-a");
   });
 
-  it("findByType filtra correctamente", () => {
+  it("findByType filtra correctamente", async () => {
     const store = new InMemoryAuditEventStore();
     const auditLogger = new AuditLogger(store);
 
-    auditLogger.recordPublish("tenant-a", "actor-1", "req-1", "flow-x");
-    auditLogger.recordRollback("tenant-a", "actor-1", "req-2", "flow-x");
-    auditLogger.recordAuthFailed("tenant-a", "actor-1", "req-3", "token inválido");
+    await auditLogger.recordPublish("tenant-a", "actor-1", "req-1", "flow-x");
+    await auditLogger.recordRollback("tenant-a", "actor-1", "req-2", "flow-x");
+    await auditLogger.recordAuthFailed("tenant-a", "actor-1", "req-3", "token inválido");
 
-    const published = store.findByType("tenant-a", "flow.published");
+    const published = await store.findByType("tenant-a", "flow.published");
     expect(published).toHaveLength(1);
     expect(published[0]!.type).toBe("flow.published");
   });
 
-  it("findByTenant respeta el límite", () => {
+  it("findByTenant respeta el límite y trae los más recientes primero", async () => {
     const store = new InMemoryAuditEventStore();
     const auditLogger = new AuditLogger(store);
 
     for (let i = 0; i < 10; i++) {
-      auditLogger.recordPublish("tenant-a", "actor-1", `req-${i}`, "flow-x");
+      await auditLogger.recordPublish("tenant-a", "actor-1", `req-${i}`, "flow-x");
     }
 
-    const limited = store.findByTenant("tenant-a", 3);
-    expect(limited).toHaveLength(3);
+    const limited = await store.findByTenant("tenant-a", 3);
+    expect(limited.map((event) => event.requestId)).toEqual(["req-9", "req-8", "req-7"]);
+  });
+
+  it("una descarga queda con quién, qué, de dónde, cuántas filas y cuándo (la hora de su reloj)", async () => {
+    const store = new InMemoryAuditEventStore();
+    const auditLogger = new AuditLogger(store, () => new Date("2026-11-10T12:00:00.000Z"), () => "evt-1");
+
+    await auditLogger.recordDataExport("tenant-a", "user-1", "req-1", { kind: "group_members", subjectId: "group-1", rows: 812, filters: { filter: "nonBuyers" } });
+
+    expect(await store.findByType("tenant-a", "data.exported")).toEqual([{
+      id: "evt-1", type: "data.exported", tenantId: "tenant-a", actorId: "user-1", requestId: "req-1", timestamp: "2026-11-10T12:00:00.000Z",
+      metadata: { kind: "group_members", subjectId: "group-1", rows: 812, filters: { filter: "nonBuyers" } }
+    }]);
   });
 });

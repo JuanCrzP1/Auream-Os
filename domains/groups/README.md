@@ -17,6 +17,6 @@ Grupos que venden: campañas con un **enlace único** que lleva al grupo con cup
 
 ## Capas
 - `domain/`: reglas puras.
-- `application/`: `CampaignServices`, `GroupServices` («Mis grupos»), `PostServices` + `PostDispatcher` (envíos), `LinkService` (el enlace público), `GroupMaker` (crear el grupo siguiente), `GroupActivity` (avisos y bienvenida), `GroupSync`. Puertos en `GroupPorts.ts`.
-- Persistencia: `infrastructure/persistence/sql/Sql{GroupCampaigns,WaGroups,GroupPosts,GroupResults}.ts` (`035_groups.sql`).
+- `application/`: `CampaignServices`, `GroupServices` («Mis grupos»), `GroupMemberServices` (los miembros: verlos, etiquetarlos, descargarlos; puertos en `GroupMemberPorts.ts`), `PostServices` + `PostDispatcher` (envíos), `LinkService` (el enlace público), `GroupMaker` (crear el grupo siguiente), `GroupActivity` (avisos y bienvenida), `GroupSync`. Puertos en `GroupPorts.ts`.
+- Persistencia: `infrastructure/persistence/sql/Sql{GroupCampaigns,WaGroups,GroupPosts,GroupResults,GroupMembers}.ts` (`035_groups.sql`); «compró en el grupo», una sola regla en `sqlGroupSales.ts`.
 - Composición: `apps/api/composition/composeGroupServices.ts`, `groupGateway.ts`, `groupTaskAdapters.ts`.

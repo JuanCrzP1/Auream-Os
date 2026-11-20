@@ -57,6 +57,8 @@ Cada herramienta aparece solo si la credencial tiene permiso en su área.
 | Ver difusiones y sus resultados | `list_broadcasts`, `get_broadcast`, `list_broadcast_recipients` | Difusiones |
 | Crear, pausar, seguir o cancelar una difusión | `preview_broadcast_audience`, `create_broadcast`, `change_broadcast` | Difusiones (editar) |
 | Ver campañas de grupos, sus grupos y lo vendido | `list_group_campaigns`, `get_group_campaign`, `list_groups` | Grupos y comunidades |
+| Ver quién está en un grupo y quién compró | `list_group_members` | Grupos y comunidades + Contactos + Ventas |
+| Etiquetar a los miembros de un grupo (p. ej., los que no compraron) | `label_group_members` | Grupos y comunidades (editar) + Contactos (editar) |
 | Crear o editar campañas, enviar a grupos, sumar o sacar grupos | `create_group_campaign`, `update_group_campaign`, `set_group_campaign_link`, `sync_groups`, `set_group_campaign`, `send_to_groups`, `cancel_group_post` | Grupos y comunidades (editar) |
 
 ## Tareas completas
@@ -72,6 +74,7 @@ Cada herramienta aparece solo si la credencial tiene permiso en su área.
 - **Una difusión:** `list_connections` (números conectados) → `list_labels` si filtra por etiqueta o etapa → `preview_broadcast_audience` → **dile a la persona a cuántos les llega, el texto y cuándo, y espera su sí** → `create_broadcast` (2 o 3 textos parecidos mejor que uno solo; `{first_name}` pone el nombre). Nunca subas el tope ni quites «SALIR» para que llegue más rápido.
 - **Responder con una respuesta rápida:** `list_quick_replies` (búscala por atajo) → `list_conversations` → confirma con la persona → `send_quick_reply`. Si no existe, propón crearla con `create_quick_reply`.
 - **Lanzar una campaña de grupos:** `list_connections` (solo números por QR) → confirma nombre, números y cupo → `create_group_campaign` → comparte el `link` (agrega `?src=instagram` para saber de dónde llegan). Para avisar a todos los grupos: `send_to_groups` con `campaign_ids`, confirmado antes.
+- **¿Quién no ha comprado en un grupo?:** `list_groups` (o `get_group_campaign`) → `list_group_members` con `filter: nonBuyers` (`counts` dice cuántos; `hidden`, cuántos tienen el número oculto por WhatsApp) → si la persona quiere hacer algo con ellos, propón una etiqueta y, con su sí, `label_group_members` (repítela mientras `remaining` sea mayor que 0). Para escribirles, una difusión con esa etiqueta (`preview_broadcast_audience` y confirmar). Nunca les escribas uno por uno con `send_message`: pone en riesgo el número.
 - **Corregir ventas «Por revisar»:** `list_sales` con `status: review` → completa producto, monto y moneda con `update_sale` → apruébala (`status: approved`) solo si la persona lo confirma.
 
 ## Cómo responder a la persona

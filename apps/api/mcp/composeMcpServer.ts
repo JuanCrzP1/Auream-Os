@@ -36,6 +36,8 @@ import { salesLineTools } from "./tools/salesLineTools";
 import { otherExpenseTools } from "./tools/otherExpenseTools";
 import { broadcastTools } from "./tools/broadcastTools";
 import { groupTools, type GroupToolServices } from "./tools/groupTools";
+import { groupMemberTools } from "./tools/groupMemberTools";
+import type { GroupMemberServices } from "../../../domains/groups/application/GroupMemberServices";
 import { quickReplyTools } from "./tools/quickReplyTools";
 import type { AudienceServices } from "../../../domains/broadcasts/application/AudienceServices";
 import type { BroadcastServices } from "../../../domains/broadcasts/application/BroadcastServices";
@@ -94,6 +96,8 @@ export interface McpDependencies {
   readonly broadcasts?: { readonly broadcasts: Pick<BroadcastServices, "list" | "detail" | "recipients" | "create" | "pause" | "resume" | "cancel">; readonly audiences: Pick<AudienceServices, "preview"> };
   /** Grupos y comunidades: campañas, grupos y envíos (área «Grupos y comunidades»). */
   readonly groups?: GroupToolServices;
+  /** Los miembros de cada grupo (verlos y etiquetarlos). */
+  readonly groupMembers?: Pick<GroupMemberServices, "page" | "label">;
   /** Respuestas rápidas: verlas, organizarlas y enviarlas a un chat. */
   readonly quickReplies?: Pick<QuickReplyServices, "list" | "create" | "update" | "remove" | "markUsed">;
   /** Datos del negocio (`{g_…}`): una respuesta rápida enviada por un agente los lleva puestos, como en el chat. */
@@ -141,6 +145,7 @@ export function composeMcpServer(deps: McpDependencies): McpServer {
     ...(deps.otherExpenses ? otherExpenseTools(deps.otherExpenses) : []),
     ...(deps.broadcasts ? broadcastTools(deps.broadcasts.broadcasts, deps.broadcasts.audiences) : []),
     ...(deps.groups ? groupTools(deps.groups) : []),
+    ...(deps.groupMembers ? groupMemberTools(deps.groupMembers) : []),
     ...(deps.quickReplies ? quickReplyTools(deps.quickReplies, deps.messaging?.conversations ?? null, deps.businessValues ?? null) : []),
     ...(deps.help ? helpTools(deps.help) : [])
   ];

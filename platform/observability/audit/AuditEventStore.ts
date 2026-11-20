@@ -1,9 +1,12 @@
 import type { AuditEvent } from "./AuditEvent";
 
-// Interfaz del store de auditoría.
-// Las implementaciones concretas viven en infrastructure/ (in-memory, SQL, almacenamiento externo).
+// Interfaz del store de auditoría. Solo agrega: un evento nunca se cambia.
+// Las implementaciones concretas viven en infrastructure/ (memoria para las
+// pruebas, PostgreSQL en producción).
 export interface AuditEventStore {
-  append(event: AuditEvent): void;
-  findByTenant(tenantId: string, limit?: number): ReadonlyArray<AuditEvent>;
-  findByType(tenantId: string, type: AuditEvent["type"], limit?: number): ReadonlyArray<AuditEvent>;
+  append(event: AuditEvent): Promise<void>;
+  /** Los más recientes primero. */
+  findByTenant(tenantId: string, limit?: number): Promise<ReadonlyArray<AuditEvent>>;
+  /** Los más recientes primero. */
+  findByType(tenantId: string, type: AuditEvent["type"], limit?: number): Promise<ReadonlyArray<AuditEvent>>;
 }

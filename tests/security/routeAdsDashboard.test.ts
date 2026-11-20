@@ -9,6 +9,8 @@ import type { DashboardModule } from "../../apps/api/composition/composeAdsServi
 import { AccessError } from "../../platform/authorization/domain/AccessError.js";
 import { ROLE_SCOPES } from "../../platform/authorization/roles/RoleDefinitions.js";
 import { makeContext } from "./helpers/access.js";
+import { AuditLogger } from "../../platform/observability/audit/AuditLogger.js";
+import { InMemoryAuditEventStore } from "../../infrastructure/persistence/memory/InMemoryAuditEventStore.js";
 
 // ---------------------------------------------------------------------------
 // Meta Ads y el Dashboard por HTTP: el gasto, el ROAS y la conexión con Meta
@@ -48,9 +50,9 @@ async function runDashboard(m: ReturnType<typeof dashboard>, path: string, role:
   return (await runDashboardFull(m, path, role)).statusCode;
 }
 
-async function runDashboardFull(m: ReturnType<typeof dashboard>, path: string, role: keyof typeof ROLE_SCOPES) {
+async function runDashboardFull(m: ReturnType<typeof dashboard>, path: string, role: keyof typeof ROLE_SCOPES, audit: AuditLogger | null = new AuditLogger(new InMemoryAuditEventStore())) {
   const r = res();
-  await routeDashboardRequest(req("GET", path), r as never, new URL(`http://x${path}`), m as unknown as DashboardModule, ctx(role));
+  await routeDashboardRequest(req("GET", path), r as never, new URL(`http://x${path}`), m as unknown as DashboardModule, ctx(role), audit ?? undefined);
   return r;
 }
 
@@ -109,11 +111,24 @@ describe("Dashboard", () => {
     await expect(runDashboard(m, "/dashboard/sales/export", "operator")).rejects.toBeInstanceOf(AccessError);
     await expect(runDashboard(m, "/dashboard/sales/export", "viewer")).rejects.toBeInstanceOf(AccessError);
     expect(m.export.export).not.toHaveBeenCalled();
-    const r = await runDashboardFull(m, "/dashboard/sales/export?from=2026-10-01&to=2026-10-31&line=l1", "tenant_admin");
+    const store = new InMemoryAuditEventStore();
+    const r = await runDashboardFull(m, "/dashboard/sales/export?from=2026-10-01&to=2026-10-31&line=l1", "tenant_admin", new AuditLogger(store));
     expect(r.statusCode).toBe(200);
+    // Queda registrado quién la bajó, con qué filtros y cuántas filas.
+    expect(await store.findByType("tenant-a", "data.exported")).toEqual([expect.objectContaining({ actorId: "user-a", metadata: { kind: "sales", subjectId: null, rows: 1, filters: { from: "2026-10-01", to: "2026-10-31", lineId: "l1" } } })]);
     expect(m.export.export).toHaveBeenCalledWith("tenant-a", expect.objectContaining({ from: "2026-10-01", to: "2026-10-31", lineId: "l1" }));
     expect(r.headers).toMatchObject({ "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="ventas_2026-10-01_a_2026-10-31.csv"', "Cache-Control": "no-store", "X-Export-Rows": "1", "X-Export-Truncated": "false" });
     expect(r.body).toBe("\uFEFFCliente;Monto\r\n'=cmd;1,5\r\n");
+  });
+
+  it("Descargar ventas: sin registro de auditoría no sale el archivo; si el registro falla, tampoco", async () => {
+    const m = dashboard();
+    const none = await runDashboardFull(m, "/dashboard/sales/export", "tenant_owner", null);
+    expect(none.statusCode).toBe(503);
+    expect(none.headers["Content-Type"]).not.toContain("text/csv");
+    expect(m.export.export).not.toHaveBeenCalled();
+    const broken = new AuditLogger({ append: async () => { throw new Error("db down"); }, findByTenant: async () => [], findByType: async () => [] });
+    await expect(runDashboardFull(m, "/dashboard/sales/export", "tenant_owner", broken)).rejects.toThrow("db down");
   });
 
   it("Comparar líneas: lo ve todo el equipo; el gasto y la ganancia, solo con ads.read; solo pasa periodo y moneda", async () => {

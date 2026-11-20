@@ -15,6 +15,8 @@ import type { TaskRunner } from "../../../domains/scheduling/application/TaskRun
 import { createSqlClient } from "../../../infrastructure/persistence/sql/SqlClient";
 import { SqlRateLimiter } from "../../../infrastructure/persistence/sql/SqlRateLimiter";
 import { SqlFlowTurnJournal } from "../../../infrastructure/persistence/sql/SqlFlowTurnJournal";
+import { SqlAuditEventStore } from "../../../infrastructure/persistence/sql/SqlAuditEventStore";
+import { AuditLogger } from "../../../platform/observability/audit/AuditLogger";
 import { composeTurnJournal } from "../composition/composeTurnJournal";
 import { composeWebhookServices } from "../composition/composeWebhookServices";
 import { composeMcpServer } from "../mcp/composeMcpServer";
@@ -270,6 +272,8 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
     salesLineServices: salesLines.lines,
     otherExpenseServices: otherExpenses.expenses,
     simulatorTools: composeSimulatorTools(config, connectionsServices.channel, scheduling.scheduler),
+    // Quién descargó datos de clientes, en PostgreSQL (`056_audit_events.sql`).
+    auditLogger: new AuditLogger(new SqlAuditEventStore(tenancy.sqlClient)),
     webhookServices: composeWebhookServices({ config, sql: tenancy.sqlClient, contacts: contactsServices, connections: connectionsServices, messaging: messagingServices }),
     mcpServer: composeMcpServer({
       config,
@@ -287,6 +291,7 @@ export function composeApiApplication(env: NodeJS.ProcessEnv = process.env): Api
       otherExpenses: otherExpenses.expenses,
       broadcasts: { broadcasts: broadcasts.broadcasts, audiences: broadcasts.audiences },
       groups: { campaigns: groups.campaigns, groups: groups.groups, posts: groups.posts },
+      groupMembers: groups.members,
       quickReplies,
       businessValues,
       businessData: { list: async (tenantId) => (await businessData.list(tenantId, false)).data },

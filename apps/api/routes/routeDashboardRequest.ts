@@ -8,12 +8,14 @@ import type { DashboardModule } from "../composition/composeAdsServices";
 import { sendJson } from "../http/sendJson";
 import { sendCsvFile } from "../http/sendCsvFile";
 import { SalesPermissions } from "../../../platform/authorization/permissions/SalesPermissions";
+import type { AuditLogger } from "../../../platform/observability/audit/AuditLogger";
 
 // ---------------------------------------------------------------------------
 // Dashboard de la cuenta activa (solo lectura).
 //
 //   GET /dashboard/sales?…        Ventas      (analytics.read; el gasto, con ads.read)
-//   GET /dashboard/sales/export?… Descargar ventas en CSV (analytics.read + sales.manage: trae teléfonos)
+//   GET /dashboard/sales/export?… Descargar ventas en CSV (analytics.read + sales.manage: trae teléfonos;
+//                                 queda registrado quién la bajó, y sin registro no sale)
 //   GET /dashboard/ads?…&level    Anuncios    (ads.read)
 //   GET /dashboard/ads/repeat?…&level&window  Con recompras: clientes nuevos de cada
 //                                 anuncio y sus recompras a 30, 60 o 90 días (ads.read)
@@ -56,7 +58,8 @@ export async function routeDashboardRequest(
   response: ServerResponse,
   url: URL,
   module: DashboardModule | undefined,
-  context: RequestContext
+  context: RequestContext,
+  audit?: AuditLogger
 ): Promise<boolean> {
   const path = url.pathname;
   if (path !== "/dashboard" && !path.startsWith("/dashboard/")) return false;
@@ -94,7 +97,15 @@ export async function routeDashboardRequest(
     // Trae los teléfonos de los clientes: solo quien administra Ventas (dueños y administradores).
     requireScope(context, ANALYTICS_READ, tenantId);
     requireScope(context, SalesPermissions.manage, tenantId);
-    sendCsvFile(response, await module.export.export(tenantId, filtersOf(url)));
+    // Sin registro no hay descarga: nunca sale un archivo con datos de clientes sin dejar rastro.
+    if (!audit) {
+      sendJson(response, 503, { message: "La descarga no está disponible en este servidor." });
+      return true;
+    }
+    const filters = filtersOf(url);
+    const table = await module.export.export(tenantId, filters);
+    await audit.recordDataExport(tenantId, context.actorId, context.requestId, { kind: "sales", subjectId: null, rows: table.rows.length, filters: { ...filters } });
+    sendCsvFile(response, table);
     return true;
   }
   if (path === "/dashboard/lines" && module.lines) {

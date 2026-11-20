@@ -15,6 +15,8 @@ import { routeSalesRequest, type SalesRoutes } from "./routeSalesRequest";
 import { routeCrmRequest, type CrmRoutes } from "./routeCrmRequest";
 import { routeBroadcastsRequest, type BroadcastRoutes } from "./routeBroadcastsRequest";
 import { routeGroupsRequest, type GroupRoutes } from "./routeGroupsRequest";
+import { routeGroupMembersRequest } from "./routeGroupMembersRequest";
+import type { AuditLogger } from "../../../platform/observability/audit/AuditLogger";
 import { routeGroupLink } from "./routeGroupLink";
 import { routeHelpRequest, type HelpRoutes } from "./routeHelpRequest";
 import { routeNotificationsRequest } from "./routeNotificationsRequest";
@@ -139,6 +141,8 @@ export interface ApiRouterDependencies {
   readonly otherExpenseServices?: OtherExpenseServices;
   /** WhatsApp simulado (solo desarrollo): «Adelantar el tiempo». Ausente: la ruta no existe. */
   readonly simulatorTools?: SimulatorTools;
+  /** Auditoría (descargas con datos de clientes). Ausente: esas descargas responden 503. */
+  readonly auditLogger?: AuditLogger;
 }
 
 export async function routeApiRequest(
@@ -237,6 +241,7 @@ export async function routeApiRequest(
   if (await routeSalesRequest(request, response, url, dependencies.salesServices, requestContext)) return;
   if (await routeCrmRequest(request, response, url, dependencies.crmServices, requestContext)) return;
   if (await routeBroadcastsRequest(request, response, url, dependencies.broadcastServices, requestContext)) return;
+  if (await routeGroupMembersRequest(request, response, url, dependencies.groupServices?.members, dependencies.auditLogger, requestContext)) return;
   if (await routeGroupsRequest(request, response, url, dependencies.groupServices, requestContext)) return;
   if (await routeHelpRequest(request, response, url, dependencies.helpServices, requestContext)) return;
   if (await routeNotificationsRequest(request, response, url, dependencies.notificationServices, requestContext)) return;
@@ -244,7 +249,7 @@ export async function routeApiRequest(
   if (await routeContactFieldsRequest(request, response, url, dependencies.contactFieldServices, requestContext)) return;
   if (await routeBusinessDataRequest(request, response, url, dependencies.businessDataServices, requestContext)) return;
   if (await routeAdsRequest(request, response, url, dependencies.adsServices?.connection, requestContext)) return;
-  if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext)) return;
+  if (await routeDashboardRequest(request, response, url, dependencies.adsServices?.dashboard, requestContext, dependencies.auditLogger)) return;
   if (await routeSalesLinesRequest(request, response, url, dependencies.salesLineServices, requestContext)) return;
   if (await routeOtherExpensesRequest(request, response, url, dependencies.otherExpenseServices, requestContext)) return;
   if (await routeIntegrationsRequest(request, response, url, integrationsServices, requestContext)) return;

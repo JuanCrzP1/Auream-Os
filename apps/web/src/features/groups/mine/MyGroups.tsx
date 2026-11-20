@@ -4,6 +4,7 @@ import type { CampaignSummary, GroupListResponse } from "@contracts/GroupContrac
 import { apiErrorMessage } from "@shared/http/apiErrorMessage";
 import { timeAgo } from "@shared/format/timeAgo";
 import { count, GROUP_STATE, money } from "../groupsFormat";
+import { GroupMembersPanel } from "../members/GroupMembersPanel";
 import { groupsApi } from "../services/groupsApi";
 
 /** Los grupos de tus números conectados: traerlos de WhatsApp y sumarlos a una campaña. */
@@ -11,6 +12,7 @@ export function MyGroups({ campaigns, canManage }: { readonly campaigns: Readonl
   const [data, setData] = useState<GroupListResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [membersOf, setMembersOf] = useState<{ readonly id: string; readonly name: string } | null>(null);
 
   const load = useCallback(async () => setData(await groupsApi.list().catch(() => null)), []);
   useEffect(() => {
@@ -61,7 +63,9 @@ export function MyGroups({ campaigns, canManage }: { readonly campaigns: Readonl
                 <span><strong>{group.name || "Sin nombre"}</strong><small>{group.isAdmin ? (group.announce ? "Administras · solo admins escriben" : "Administras") : "No eres administrador"}</small></span>
               </span>
               <span role="cell" className="ui-muted">{group.connectionName}</span>
-              <span role="cell">{count(group.members)}</span>
+              <span role="cell">
+                <button type="button" className="ui-link gr-mine__members" aria-label={`Ver los ${count(group.members)} miembros de ${group.name || "este grupo"}`} onClick={() => setMembersOf({ id: group.id, name: group.name })}>{count(group.members)} ›</button>
+              </span>
               <span role="cell"><span className="gr-mine__in">+{count(group.joined)}</span> · <span className="gr-mine__out">−{count(group.left)}</span></span>
               <span role="cell">
                 {canManage && group.isAdmin ? (
@@ -78,6 +82,7 @@ export function MyGroups({ campaigns, canManage }: { readonly campaigns: Readonl
           ))}
         </div>
       ) : null}
+      {membersOf ? <GroupMembersPanel groupId={membersOf.id} groupName={membersOf.name} onClose={() => setMembersOf(null)} /> : null}
     </section>
   );
 }

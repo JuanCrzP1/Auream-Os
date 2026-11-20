@@ -1,6 +1,6 @@
 import type { McpAccess } from "../../../domains/mcp/domain/McpCredential";
 import { DomainError } from "../../../platform/observability/errors/DomainError";
-import { invalidArguments, type McpTool } from "./McpTool";
+import { canUse, invalidArguments, type McpTool } from "./McpTool";
 
 // ---------------------------------------------------------------------------
 // El protocolo MCP (JSON-RPC 2.0) del servidor de Auream, sin estado: cada
@@ -87,21 +87,21 @@ export class McpProtocol {
   }
 
   private allowed(access: McpAccess): McpTool[] {
-    return this.tools.filter((tool) => tool.scope === null || access.scopes.has(tool.scope));
+    return this.tools.filter((tool) => canUse(tool, access.scopes));
   }
 
   private async call(id: string | number | null, params: Record<string, unknown>, access: McpAccess): Promise<JsonRpcResponse> {
     const name = params["name"];
     const tool = this.tools.find((candidate) => candidate.name === name);
     if (!tool) return error(id, -32602, `Herramienta desconocida: ${String(name)}.`);
-    if (tool.scope !== null && !access.scopes.has(tool.scope)) return error(id, -32602, `La credencial no tiene permiso para «${tool.name}».`);
+    if (!canUse(tool, access.scopes)) return error(id, -32602, `La credencial no tiene permiso para «${tool.name}».`);
     const args = typeof params["arguments"] === "object" && params["arguments"] !== null ? (params["arguments"] as Record<string, unknown>) : {};
     const invalid = invalidArguments(tool.inputSchema, args);
     if (invalid) return error(id, -32602, invalid);
 
     const started = this.now();
     try {
-      const value = await tool.run(args, { tenantId: access.tenantId, credentialId: access.credentialId, credentialName: access.credentialName });
+      const value = await tool.run(args, { tenantId: access.tenantId, credentialId: access.credentialId, credentialName: access.credentialName, scopes: access.scopes });
       this.onToolCall(access, { tool: tool.name, ok: true, ms: this.now() - started });
       return { jsonrpc: "2.0", id, result: toResult(value) };
     } catch (cause) {

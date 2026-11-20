@@ -124,3 +124,12 @@
     display: none;
   }
 }
+
+/* «812 ›»: abre el panel de miembros del grupo. */
+.gr-mine__members {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}

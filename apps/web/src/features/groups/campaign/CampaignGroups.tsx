@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { GroupSummary } from "@contracts/GroupContracts";
 import { ConfirmDialog } from "@shared/ui/dialog/ConfirmDialog";
 import { count, GROUP_STATE, money } from "../groupsFormat";
+import { GroupMembersPanel } from "../members/GroupMembersPanel";
 import { GroupActionsMenu, type GroupAction } from "./GroupActionsMenu";
 
 interface Props {
@@ -20,8 +21,10 @@ export function CampaignGroups({ groups, capacity, open, canManage, onSendTo, on
   const nextPosition = groups.reduce((max, group) => Math.max(max, group.position ?? 0), 0) + 1;
   const [detaching, setDetaching] = useState<GroupSummary | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [membersOf, setMembersOf] = useState<GroupSummary | null>(null);
 
   const act = (group: GroupSummary, action: GroupAction) => {
+    if (action === "members") setMembersOf(group);
     if (action === "send") onSendTo(group.id);
     if (action === "detach") setDetaching(group);
     if (action === "copy" && group.inviteLink) {
@@ -48,7 +51,9 @@ export function CampaignGroups({ groups, capacity, open, canManage, onSendTo, on
               <span className="gr-groups__name" title={group.name}>{group.name}</span>
               <span className="ui-muted gr-groups__small">{group.connectionName}{group.isAdmin ? "" : " · ya no eres administrador"}</span>
               <span className="gr-groups__bar" aria-label={`${fill} % del cupo`}><span className={group.state === "full" ? "gr-groups__full" : undefined} style={{ width: `${fill}%` }} /></span>
-              <span className="gr-groups__line"><span>{count(group.members)} miembros</span><strong>{group.buyers > 0 ? money(group.revenue).main : "—"}</strong></span>
+              <span className="gr-groups__line">
+                <button type="button" className="ui-link gr-groups__members" aria-label={`Ver los ${count(group.members)} miembros de ${group.name}`} onClick={() => setMembersOf(group)}>{count(group.members)} miembros ›</button>
+                <strong>{group.buyers > 0 ? money(group.revenue).main : "—"}</strong></span>
               <span className="ui-muted gr-groups__small">+{count(group.joined)} entraron · {count(group.left)} salieron</span>
               {copied === group.id ? <span className="gr-groups__copied" role="status">Enlace del grupo copiado</span> : null}
             </article>
@@ -61,6 +66,7 @@ export function CampaignGroups({ groups, capacity, open, canManage, onSendTo, on
           </article>
         ) : null}
       </div>
+      {membersOf ? <GroupMembersPanel groupId={membersOf.id} groupName={membersOf.name} onClose={() => setMembersOf(null)} /> : null}
       {detaching ? (
         <ConfirmDialog
           title={`¿Sacar «${detaching.name}» de la campaña?`}

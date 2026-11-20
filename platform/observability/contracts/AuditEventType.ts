@@ -9,4 +9,6 @@ export type AuditEventType =
   | "access.denied"
   | "access.granted"
   | "subscription.changed"
-  | "version.activated";
+  | "version.activated"
+  // Alguien descargó datos de clientes (ventas, miembros de un grupo…).
+  | "data.exported";

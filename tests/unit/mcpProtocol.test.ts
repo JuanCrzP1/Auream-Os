@@ -36,6 +36,19 @@ describe("McpProtocol", () => {
     expect(result.tools.map((item) => [item.name, item.annotations.readOnlyHint])).toEqual([["list_contacts", true], ["list_flows", true]]);
   });
 
+  it("una herramienta que exige varios permisos (p. ej. los miembros de un grupo: grupos, contactos y ventas) solo aparece y corre con todos; recibe los permisos de la credencial", async () => {
+    const run = vi.fn(async (_args: Readonly<Record<string, unknown>>, context: { scopes?: ReadonlySet<string> }) => ({ seesSales: context.scopes?.has("sales.read") ?? false }));
+    const members: McpTool = { ...tool("list_group_members", "groups.read"), alsoRequires: ["contacts.read", "sales.read"] as Scope[], run };
+    const protocol = new McpProtocol([members], { name: "a", version: "1" });
+    const listed = async (scopes: Scope[]) => ((await protocol.handle(call(1, "tools/list"), access(scopes)))?.result as { tools: Array<{ name: string }> }).tools.map((item) => item.name);
+    expect(await listed(["groups.read", "contacts.read"])).toEqual([]);
+    expect(await listed(["groups.read", "contacts.read", "sales.read"])).toEqual(["list_group_members"]);
+    expect((await protocol.handle(call(2, "tools/call", { name: "list_group_members", arguments: { id: "g" } }), access(["groups.read", "sales.read"])))?.error?.message).toMatch(/no tiene permiso/);
+    expect(run).not.toHaveBeenCalled();
+    const ok = await protocol.handle(call(3, "tools/call", { name: "list_group_members", arguments: { id: "g" } }), access(["groups.read", "contacts.read", "sales.read"]));
+    expect((ok?.result as { structuredContent: unknown }).structuredContent).toEqual({ seesSales: true });
+  });
+
   it("tools/call: sin permiso, herramienta desconocida o argumentos inválidos son errores del protocolo", async () => {
     const protocol = new McpProtocol([tool("tag_contact", "contacts.write")], { name: "a", version: "1" });
     expect((await protocol.handle(call(1, "tools/call", { name: "tag_contact", arguments: { id: "x" } }), access(["contacts.read"])))?.error?.message).toMatch(/no tiene permiso/);

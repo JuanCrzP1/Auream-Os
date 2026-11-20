@@ -1,0 +1,164 @@
+/* Los miembros de un grupo: un panel a la derecha (en el celular, toda la
+ * pantalla), con la misma cabecera lila suave que la ficha del CRM. Tokens
+ * del tema, así sirve en claro y en oscuro. */
+
+.gr-members__overlay {
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 0;
+}
+
+.gr-members {
+  display: flex;
+  flex-direction: column;
+  width: min(600px, 100vw);
+  height: 100%;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: -24px 0 48px -24px rgb(30 21 48 / 25%);
+  animation: gr-members-in var(--speed-base) var(--ease-out);
+}
+
+@keyframes gr-members-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.gr-members__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(170deg, color-mix(in srgb, var(--primary) 9%, var(--surface)) 0%, var(--surface) 85%);
+}
+
+.gr-members__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gr-members__kicker {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gr-members__close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--chip-bg);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.gr-members__header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  overflow-wrap: anywhere;
+}
+
+.gr-members__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 0.84rem;
+}
+
+.gr-members__sync {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.gr-members__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 0;
+}
+
+.gr-members__stats div {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.gr-members__stats dt {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.gr-members__stats dd {
+  display: flex;
+  flex-direction: column;
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.gr-members__stats small {
+  color: var(--status-active-text);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+}
+
+.gr-members__hidden {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+}
+
+.gr-members__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 16px 24px 28px;
+}
+
+.gr-members__search {
+  width: 100%;
+}
+
+.gr-members__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 12px;
+}
+
+.gr-members__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gr-members__download {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 520px) {
+  .gr-members__header,
+  .gr-members__body {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+}

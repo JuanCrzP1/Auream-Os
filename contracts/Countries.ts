@@ -82,3 +82,19 @@ export function countryOfPhone(phone: string | null | undefined): string | null 
     .sort((a, b) => b.dial.length - a.dial.length)[0];
   return match?.code ?? null;
 }
+
+/** Indicativos de más largo a más corto («593» antes que «59…»). */
+const DIALS = [...new Set(COUNTRIES.map((country) => country.dial))].sort((a, b) => b.length - a.length);
+
+/**
+ * El número para una hoja de cálculo: «57 301 381 5302». Con espacios la hoja
+ * lo deja como texto (sin «+», que Excel tomaría como fórmula, ni «5,73E+11»,
+ * como haría con solo dígitos). Lo usan todas las descargas.
+ */
+export function phoneText(digits: string): string {
+  const dial = DIALS.find((code) => digits.startsWith(code)) ?? "";
+  const national = digits.slice(dial.length);
+  const blocks: string[] = [national.slice(-4)];
+  for (let end = national.length - 4; end > 0; end -= 3) blocks.unshift(national.slice(Math.max(0, end - 3), end));
+  return [dial, ...blocks].filter(Boolean).join(" ");
+}

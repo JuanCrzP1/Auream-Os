@@ -3,7 +3,7 @@ import { csvCell, toCsv } from "../../apps/api/http/csv.js";
 import type { FxRates } from "../../domains/analytics/application/CurrencyConverter.js";
 import type { AdsReader } from "../../domains/analytics/application/DashboardReaders.js";
 import { DashboardScopeResolver } from "../../domains/analytics/application/DashboardScopeResolver.js";
-import { phoneText } from "../../domains/analytics/application/SalesExportTable.js";
+import { phoneText } from "../../contracts/Countries.js";
 import { SalesExportService, type SaleExportRow, type SalesExportReader } from "../../domains/analytics/application/SalesExportService.js";
 
 // ---------------------------------------------------------------------------

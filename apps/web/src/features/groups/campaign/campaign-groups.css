@@ -104,3 +104,12 @@
   font-size: 0.75rem;
   font-weight: 600;
 }
+
+/* «812 miembros ›»: abre el panel de miembros (todo el equipo puede verlos). */
+.gr-groups__members {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
