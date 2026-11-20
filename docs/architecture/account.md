@@ -30,6 +30,7 @@ Cerrar sesión
 - **La tarjeta de la empresa** (`shared/account/AccountCompany.tsx`) sirve **solo para cambiar de empresa**; la configuración es su propia opción. Con una sola empresa es una tarjeta quieta (no se toca). Con varias lleva ⇅ y despliega la lista, con la actual marcada (✓); elegir otra la activa y recarga limpio. Escape recoge la lista sin cerrar el menú.
 - **Cerrar sesión** se ve como las demás opciones: el rojo queda para lo que borra cosas.
 - **En modo oscuro** el menú lleva un tono un poco más claro que la barra, borde lila y un brillo suave del mismo color: sin eso se confundía con la barra. En claro queda igual.
+- **Con el menú abierto, la tarjeta se marca en lila suave** (borde, fondo y la ⇅ en lila): se ve de dónde salió el menú. No lleva el degradado de la barra, que significa «estás en esta página».
 - **Cerrar**: la flecha junto al nombre y el correo, Escape, tocar otra vez la tarjeta, elegir algo o tocar fuera: el menú baja y se desvanece (0,14 s; sin animación si el equipo pide menos movimiento) y el foco vuelve a la tarjeta. Al cambiar de página se quita enseguida.
 - **Teclado**: el foco entra al menú; flechas, Inicio y Fin lo recorren.
 - **Tema**: claro, oscuro o «sistema» (sigue al equipo y cambia solo con él). El script anti-parpadeo de `index.html` también entiende «sistema».

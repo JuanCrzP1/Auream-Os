@@ -31,10 +31,21 @@
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
-.account-card__button:hover,
-.account-card__button.is-open {
+.account-card__button:hover {
   background: var(--surface-glass, var(--chip-bg));
   border-color: var(--line);
+}
+
+/* Con el menú abierto se marca en lila suave: se ve de dónde salió el menú.
+   No lleva el degradado de la barra, que dice «estás en esta página». */
+.account-card__button.is-open {
+  background: color-mix(in oklab, var(--primary) 12%, var(--surface));
+  border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 14%, transparent);
+}
+
+.account-card__button.is-open .account-card__chevron {
+  color: var(--primary);
 }
 
 .account-card__button:focus-visible {
