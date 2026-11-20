@@ -36,19 +36,27 @@ export const AccountMenuIcons = {
       <path d="M10 17l-5-5 5-5M5 12h11" />
     </svg>
   ),
-  chevron: (
-    <svg viewBox="0 0 24 24" {...STROKE} strokeWidth={2}>
-      <path d="M9 6l6 6-6 6" />
-    </svg>
-  ),
+  /** ⌄ junto a tu nombre: baja (cierra) el menú. */
   chevronDown: (
     <svg viewBox="0 0 24 24" {...STROKE} strokeWidth={2.2}>
       <path d="M6 9l6 6 6-6" />
     </svg>
+  ),
+  /** ⇅ en la tarjeta de la empresa: se puede cambiar de empresa. */
+  switch: (
+    <svg viewBox="0 0 24 24" {...STROKE} strokeWidth={2}>
+      <path d="M8 10l4-4 4 4M8 14l4 4 4-4" />
+    </svg>
+  ),
+  /** ✓ junto a la empresa en la que estás. */
+  check: (
+    <svg viewBox="0 0 24 24" {...STROKE} strokeWidth={2.2}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
   )
 } as const;
 
-/** Tu cuenta y tu empresa. Los datos de la empresa se abren también desde su tarjeta, arriba del menú. */
+/** Tu cuenta y la configuración (la tarjeta de la empresa, arriba, sirve solo para cambiar de empresa). */
 export const accountMenuLinks: ReadonlyArray<AccountMenuLink> = [
   { label: "Mi perfil", hint: "Tu foto, tus datos y tu contraseña", path: SETTINGS_ROUTES.profile, icon: SidebarIcons.profile },
   { label: "Configuración", hint: "Empresa, equipo, apariencia y más", path: SETTINGS_ROUTES.general, icon: SidebarIcons.settings }

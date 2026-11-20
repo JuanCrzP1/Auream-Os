@@ -13,21 +13,24 @@ Abajo en la barra lateral, como en las apps con barra lateral (Slack, Linear, No
 ```
 (foto) Nombre            ⌄     ← la flecha baja (cierra) el menú
        correo de acceso
-[logo] Empresa activa · rol  ›        ← abre Configuración → General; con varias empresas, «Cambiar a …»
+[logo] Empresa activa · rol  ⇅        ← solo para cambiar de empresa (la ⇅, solo con varias)
 ──────────────────────
 Mi perfil                     /settings/profile
 Configuración                 /settings/general
 ──────────────────────
 TEMA  [☀ Claro] [☾ Oscuro] [▭ Sistema]
-Ayuda               Pronto    /help
+Ayuda                         /help
 ──────────────────────
 Cerrar sesión
 ```
 
 - Lo del día a día queda en la barra; lo administrativo, en Configuración. El menú es corto (como Linear o Vercel): Equipo, Plan y pagos y Seguridad son secciones de Configuración, no opciones sueltas. Las opciones están en `app/navigation/account/account-menu-items.tsx`.
-- **«Pronto»** (Ayuda): la opción ya se ve, pero su módulo llega después. Abre una página «Próximamente», en vez de mandar a otra pantalla sin avisar.
+- **«Pronto»**: una opción puede verse antes de que llegue su módulo (`soon` en `account-menu-items.tsx`); abre una página «Próximamente» en vez de mandar a otra pantalla sin avisar.
 - **Al ancho de la barra**: las etiquetas largas bajan a un segundo renglón en vez de cortarse, y el tema pone el icono sobre el nombre.
-- **Cerrar**: la flecha junto al nombre y el correo, Escape, elegir algo o tocar fuera: el menú baja y se desvanece (0,14 s; sin animación si el equipo pide menos movimiento) y el foco vuelve a la tarjeta. Al cambiar de página se quita enseguida.
+- **La tarjeta de la empresa** (`shared/account/AccountCompany.tsx`) sirve **solo para cambiar de empresa**; la configuración es su propia opción. Con una sola empresa es una tarjeta quieta (no se toca). Con varias lleva ⇅ y despliega la lista, con la actual marcada (✓); elegir otra la activa y recarga limpio. Escape recoge la lista sin cerrar el menú.
+- **Cerrar sesión** se ve como las demás opciones: el rojo queda para lo que borra cosas.
+- **En modo oscuro** el menú lleva un tono un poco más claro que la barra, borde lila y un brillo suave del mismo color: sin eso se confundía con la barra. En claro queda igual.
+- **Cerrar**: la flecha junto al nombre y el correo, Escape, tocar otra vez la tarjeta, elegir algo o tocar fuera: el menú baja y se desvanece (0,14 s; sin animación si el equipo pide menos movimiento) y el foco vuelve a la tarjeta. Al cambiar de página se quita enseguida.
 - **Teclado**: el foco entra al menú; flechas, Inicio y Fin lo recorren.
 - **Tema**: claro, oscuro o «sistema» (sigue al equipo y cambia solo con él). El script anti-parpadeo de `index.html` también entiende «sistema».
 - `AccountProvider` (`shared/account/AccountContext.tsx`) carga el perfil y la empresa una vez y los comparte. Por eso cambiar la foto en Mi perfil la cambia al instante en la tarjeta. Un fallo pasajero se reintenta solo (2 s, 4 s y 8 s).

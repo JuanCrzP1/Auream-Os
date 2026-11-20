@@ -6,13 +6,11 @@ import { useActiveTenant } from "@shared/auth/tenant/ActiveTenantContext";
 import { useSignOut } from "@shared/auth/hooks/useSignOut";
 import { AccountMenuIcons, accountHelpLink, accountMenuLinks, type AccountMenuLink } from "@app/navigation/account/account-menu-items";
 import { AccountAvatar } from "./AccountAvatar";
+import { AccountCompany } from "./AccountCompany";
 import { useAccount } from "./AccountContext";
 import { ThemeSwitch } from "./ThemeSwitch";
-import { roleLabel } from "@shared/team/teamRoles";
 
 const FOCUSABLE = '[role="menuitem"], [role="menuitemradio"]';
-/** Los datos de la empresa: Configuración → General. */
-const SETTINGS_PATH = "/settings/general";
 
 function MenuLink({ link, onNavigate }: { readonly link: AccountMenuLink; readonly onNavigate: () => void }) {
   return (
@@ -26,10 +24,11 @@ function MenuLink({ link, onNavigate }: { readonly link: AccountMenuLink; readon
 
 /**
  * El menú de la cuenta (se abre desde la tarjeta de abajo en la barra lateral,
- * con su mismo ancho): quién eres, en qué empresa estás (su tarjeta abre sus
- * datos; con varias, cambiar de empresa), tu perfil, la configuración y lo que
- * llega pronto, el tema, la ayuda y cerrar sesión. La flecha junto al nombre
- * lo baja (lo cierra). Con teclado: flechas, Inicio/Fin y Escape.
+ * con su mismo ancho): quién eres, en qué empresa estás (con varias, su
+ * tarjeta sirve para cambiar de empresa; nada más), tu perfil, la
+ * configuración, el tema, la ayuda y cerrar sesión. La flecha junto a tu
+ * nombre lo baja (lo cierra); también tocando afuera, tocando otra vez la
+ * tarjeta o con Escape. Con teclado: flechas, Inicio/Fin.
  */
 export function AccountMenu({ onClose, closing = false }: { readonly onClose: (refocus?: boolean) => void; readonly closing?: boolean }) {
   const { profile, company, displayName, email } = useAccount();
@@ -43,7 +42,6 @@ export function AccountMenu({ onClose, closing = false }: { readonly onClose: (r
 
   const memberships = tenants.status === "ready" ? tenants.tenants : [];
   const active = memberships.find((tenant) => tenant.tenantId === activeTenantId) ?? null;
-  const others = memberships.filter((tenant) => tenant.tenantId !== activeTenantId);
   const companyName = company?.name ?? active?.tenantName ?? "";
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -84,24 +82,7 @@ export function AccountMenu({ onClose, closing = false }: { readonly onClose: (r
       </div>
 
       {companyName ? (
-        <Link role="menuitem" to={SETTINGS_PATH} className="account-menu__company" title="Datos de la empresa" onClick={() => onClose(false)}>
-          <AccountAvatar name={companyName} imageUrl={company?.logoUrl ?? null} size={28} shape="square" />
-          <span className="account-menu__who">
-            <strong>{companyName}</strong>
-            <span>{active ? roleLabel(active.role) : "Empresa"}</span>
-          </span>
-          <span className="account-menu__chevron" aria-hidden="true">{AccountMenuIcons.chevron}</span>
-        </Link>
-      ) : null}
-      {others.length > 0 ? (
-        <div className="account-menu__group" aria-label="Cambiar de empresa">
-          {others.map((tenant) => (
-            <button key={tenant.tenantId} type="button" role="menuitem" className="account-menu__item" onClick={() => switchTo(tenant.tenantId)}>
-              <AccountAvatar name={tenant.tenantName} imageUrl={null} size={22} shape="square" />
-              <span className="account-menu__label">Cambiar a {tenant.tenantName}</span>
-            </button>
-          ))}
-        </div>
+        <AccountCompany name={companyName} logoUrl={company?.logoUrl ?? null} memberships={memberships} activeTenantId={activeTenantId} onSwitch={switchTo} />
       ) : null}
 
       <div className="account-menu__group">
@@ -116,7 +97,7 @@ export function AccountMenu({ onClose, closing = false }: { readonly onClose: (r
       </div>
 
       <div className="account-menu__group">
-        <button type="button" role="menuitem" className="account-menu__item account-menu__item--danger" onClick={() => void signOut()}>
+        <button type="button" role="menuitem" className="account-menu__item" onClick={() => void signOut()}>
           <span className="account-menu__icon" aria-hidden="true">{AccountMenuIcons.signOut}</span>
           <span className="account-menu__label">Cerrar sesión</span>
         </button>

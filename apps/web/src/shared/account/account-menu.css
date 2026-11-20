@@ -18,6 +18,19 @@
   animation: account-menu-in 0.14s ease-out;
 }
 
+/* En oscuro el menú tenía casi el color de la barra y se confundía con ella:
+   un tono más claro, el borde lila y un brillo suave del mismo color lo
+   despegan. En claro ya se distingue y queda igual. */
+:root[data-theme="dark"] .account-menu {
+  border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+  background: color-mix(in oklab, var(--surface) 90%, var(--primary) 10%);
+  box-shadow:
+    var(--elevation-inset),
+    0 0 0 1px color-mix(in oklab, var(--primary) 18%, transparent),
+    0 18px 48px -8px color-mix(in oklab, var(--primary) 38%, transparent),
+    0 24px 56px -12px rgba(0, 0, 0, 0.9);
+}
+
 @keyframes account-menu-in {
   from {
     opacity: 0;
@@ -113,19 +126,4 @@
   font-size: 0.6rem;
   font-weight: 650;
   letter-spacing: 0.02em;
-}
-
-.account-menu__item--danger,
-.account-menu__item--danger .account-menu__icon {
-  color: var(--status-danger, #e5484d);
-}
-
-.account-menu__item--danger:hover,
-.account-menu__item--danger:focus-visible {
-  background: color-mix(in oklab, var(--status-danger, #e5484d) 12%, transparent);
-  color: var(--status-danger, #e5484d);
-}
-
-.account-menu__item--danger:hover .account-menu__icon {
-  color: var(--status-danger, #e5484d);
 }
